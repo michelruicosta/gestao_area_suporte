@@ -172,20 +172,9 @@ garantir que a regra não gera surpresas.
 
 ---
 
-### Passo 9 — Investigar: anexo XML não foi capturado pelo Script 02
+~~Passo 9 — Investigar: anexo XML não foi capturado pelo Script 02~~ ✅ CONCLUÍDO (2026-07-07 — ver REGISTRO_CORRECOES.md)
 
-**Problema:** o cliente disse "Segue o COS4010 em anexo" e o arquivo existe no Gmail, mas
-`anexos_detectados: []` está vazio no JSON 01. O analista fica sem o arquivo sem saber.
-
-**Thread que revelou o bug:** Auditoria #19 — Amaril Franklin (Philippe Augusto), assunto
-contendo "COS4010", arquivo XML `17312661_4010_0...`.
-- Buscar no JSON 01 por: remetente "Philippe" ou assunto "COS4010"
-
-**O que fazer:**
-1. Verificar no Script 02 (`scripts/02_coletar_emails_gmail.py`) se há filtro que descarta XML
-2. Se houver: remover o filtro ou adicionar XML à lista de extensões permitidas
-3. Implementar alerta: quando corpo menciona "segue em anexo" mas `anexos_detectados: []`,
-   marcar `conteudo_incompleto = True` para o analista saber que algo faltou
+⚠️ **Pendência derivada:** implementar alerta `conteudo_incompleto = True` quando corpo menciona "em anexo" mas `anexos_detectados: []` — registrado como item separado abaixo.
 
 ---
 
@@ -205,6 +194,19 @@ mas foi ignorado pelo Script 02. A thread ficou com só 1 mensagem no sistema.
    está no FROM e o destinatário é externo (sem `@finaud.com.br` no TO)
 3. Se não estiver: a regra de encaminhamento automático da conta da Andrea não está copiando
    os emails enviados para a caixa do `coleta.oraculo` — ajustar a regra de encaminhamento
+
+---
+
+### 🔴 URGENTE — Verificar leitura do conteúdo dos anexos (pós-validação Fase 1)
+
+**Problema:** o sistema detecta que o anexo existe e salva o nome do arquivo (ex.: `2011 (DDR) (28).xlsx`), mas não sabemos se consegue **abrir e ler o conteúdo** do arquivo.
+
+**Revelado no contexto de:** Passo 7 — Guru CTVM, que enviou o DDR em anexo sem nenhuma data no texto. Se o sistema conseguisse ler o conteúdo do xlsx, poderia extrair a data de competência de dentro do arquivo — que seria mais preciso do que usar a data de envio como fallback.
+
+**O que verificar:**
+1. O Script 02 baixa os anexos para disco? Em qual pasta?
+2. O Script 05 tenta abrir o arquivo baixado para extrair datas ou texto?
+3. Se não tenta: avaliar se vale implementar leitura básica de xlsx/pdf para extração de data
 
 ---
 

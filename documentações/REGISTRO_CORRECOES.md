@@ -2,6 +2,20 @@
 
 ---
 
+### 2026-07-07 — [TESTE] Passo 9 — Anexos XML passam a ser capturados
+
+**🔎 Em miúdos:** arquivos XML que os clientes enviavam (ex.: COS4010 da Amaril Franklin) eram silenciosamente ignorados pelo sistema — o analista não sabia que o arquivo tinha chegado.
+
+**Problema:** `EXTENSOES_RELEVANTES_ANEXOS` no Script 02 (linha 50) não incluía `.xml`. O sistema via o anexo no Gmail, verificava a extensão, não encontrava `.xml` na lista e descartava sem registrar — resultado: `anexos_detectados: []` no JSON 01.
+
+**Correção:** `scripts/02_coletar_emails_gmail.py` linha 50 — adicionado `".xml"` à lista de extensões relevantes.
+
+**Impacto:** e-mails futuros com `.xml` passam a ter o anexo registrado e baixado. Histórico do TESTE (2 e-mails da Amaril Franklin) requer nova coleta para ser retroativo.
+
+**Validação:** ✅ VALIDADO — 656 testes passando, 28 falhas pré-existentes, zero regressões.
+
+---
+
 ### 2026-07-07 — [TESTE] Passo 8 — Detecção RETORNO_BACEN ampliada: rejeitado, recusado, aviso bacen
 
 **🔎 Em miúdos:** o sistema não reconhecia quando um cliente escrevia "arquivo rejeitado" ou "DLO recusado" — classificava como DLO ou DDR normal. Agora esses termos também ativam o RETORNO_BACEN.

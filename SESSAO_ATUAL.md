@@ -58,7 +58,9 @@
 - **Feito:** ✅ config + Script 05 atualizados. 656 testes passando, zero regressões.
 
 ### Passo 9 — Anexo XML não capturado (Amaril Franklin)
-- **Análise:** ⬜ não iniciada
+- **Análise:** `.xml` ausente de `EXTENSOES_RELEVANTES_ANEXOS` no Script 02 linha 50. 2 e-mails da Amaril Franklin afetados no TESTE (COS4010 e DRM 06/2026).
+- **Decisão:** adicionar `.xml` à lista. Histórico requer nova coleta.
+- **Feito:** ✅ Script 02 linha 50 corrigido. 656 testes passando, zero regressões.
 
 ### Passo 10 — E-mail de analista não capturado (Green DTVM)
 - **Análise:** ⬜ não iniciada
