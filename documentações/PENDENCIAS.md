@@ -61,7 +61,7 @@ assunto "Conexão | nº 58 | julho 2026". Classificada incorretamente como DDR_2
 
 ---
 
-### Passo 3 — Corrigir prazo padrão do RETORNO_BACEN de D+5 para D+3
+### ~~Passo 3 — Corrigir prazo padrão do RETORNO_BACEN de D+5 para D+3~~ ✅ CONCLUÍDO
 
 **Problema:** quando o BC rejeita um relatório sem informar prazo explícito no email, o sistema
 usa D+5 dias úteis como fallback. Michel confirmou que o prazo correto é D+3 dias úteis.
