@@ -8,6 +8,55 @@
 
 ---
 
+## 📓 Diário da sessão (2026-07-07)
+
+> **Como usar:** cada passo do plano de correção do TESTE tem uma entrada aqui.
+> Formato: análise feita → decisão tomada → o que foi executado.
+> A IA que abrir o próximo chat lê isto e **não precisa re-analisar** — parte da decisão já tomada.
+
+---
+
+### Passo 3 ✅ — Prazo RETORNO_BACEN: D+5 → D+3
+- **Análise:** config tinha `D+5_UTIL`; código do calculador já suporta D+3 (usado por outros CADOCs); `D+3_UTIL` não precisava ser criado.
+- **Decisão:** corrigir config JSON + texto do log no Script 05 + 4 testes que afirmavam D+5.
+- **Feito:** commit `d999034` — 5 arquivos alterados.
+
+---
+
+### Passo 4 — Incluir nome dos anexos na detecção de CADOC
+- **Análise completa feita (07/07):**
+  - 20 dos 47 e-mails do TESTE têm `anexos_detectados` no JSON 01.
+  - Script 05 linha 1923: `texto_completo = f"{assunto} {corpo}"` — nomes de arquivo ficam de fora.
+  - O campo `anexos_detectados` **não é repassado ao JSON 02** — downstream nunca vê os nomes.
+  - Guru CTVM (`2011 (DDR) (28).xlsx`): já classifica DDR_2011 corretamente pelo **corpo** ("4111 (Saldos Diários)\n2011 (DDR)") — anexo não é necessário.
+  - TC/Economatica (`Saldos 4111.xlsx`): corpo genérico, "4111" só no nome do arquivo → classifica como **SUPORTE** (errado).
+  - Dos 20 anexos, **apenas 1 muda** com a correção: TC/Economatica SUPORTE → 4111.
+  - Cadastro `cadastro_clientes_cadoc.json`: TC não tem 4111 cadastrado — mas o cadastro **não influencia** a classificação do Script 05, apenas estatísticas. Não precisa alterar.
+- **Decisão:** alterar só 1 linha (Script 05 linha 1923) — adicionar `nomes_anexos` ao `texto_completo`.
+- **Feito:** ✅ commit `(ver abaixo)` — Script 05 linhas 1922–1923 alteradas.
+
+---
+
+### Passo 5 — "Balancete de Câmbio" → DDR_2011 (Western Union)
+- **Análise:** ⬜ não iniciada
+
+### Passo 6 — Consulta de norma → SUPORTE (Terra Investimentos)
+- **Análise:** ⬜ não iniciada
+
+### Passo 7 — Fallback de data para Guru CTVM
+- **Análise:** ⬜ não iniciada — sabe-se que Guru classifica DDR_2011 corretamente (via corpo); problema é ausência de data → sem card na tela.
+
+### Passo 8 — RETORNO_BACEN prevalece sobre outros CADOCs na thread (Intra)
+- **Análise:** ⬜ não iniciada
+
+### Passo 9 — Anexo XML não capturado (Amaril Franklin)
+- **Análise:** ⬜ não iniciada
+
+### Passo 10 — E-mail de analista não capturado (Green DTVM)
+- **Análise:** ⬜ não iniciada
+
+---
+
 ## 📍 Estado de agora (2026-07-07 — encerramento TESTE)
 
 > **Este arquivo é do AMBIENTE TESTE** (`oraculo_360_finaud_TESTE`).

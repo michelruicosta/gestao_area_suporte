@@ -79,7 +79,7 @@ Thread de referência: Intra Investimentos (#07) — email de rejeição do BC s
 
 ---
 
-### Passo 4 — Incluir nome dos anexos na detecção de CADOC
+### ~~Passo 4 — Incluir nome dos anexos na detecção de CADOC~~ ✅ CONCLUÍDO
 
 **Problema:** o Script 05 detecta o CADOC do email usando apenas o assunto + corpo do texto.
 O nome dos arquivos anexados não entra nessa busca. Emails com assunto genérico mas nome de

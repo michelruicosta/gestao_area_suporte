@@ -1919,8 +1919,9 @@ class Oraculo:
                 self.log("ERRO", f"Falha ao processar FORCAPITAL: {e}")
                 return {"exibir_card": False, "cadoc": "FORCAPITAL", "lista_prazos": [], "tipo_painel": "", "retorno_bacen": retorno_bacen}
         
-        # Identifica tipo de relatório (busca em assunto + corpo atual; assunto desambigua DLO vs DDR em citações)
-        texto_completo = f"{assunto} {corpo}"
+        # Identifica tipo de relatório (busca em assunto + corpo + nomes de anexos; assunto desambigua DLO vs DDR em citações)
+        nomes_anexos = " ".join(a.get("nome_original", "") for a in item.get("anexos_detectados") or [])
+        texto_completo = f"{assunto} {corpo} {nomes_anexos}"
         cadoc, termo = self.validador.identificar_cadoc(texto_completo, assunto)
         # Mencionar "4111" no assunto não é envio de relatório — erro na tela → SUPORTE (D+5)
         if self.validador.assunto_indica_suporte_erro_tela_ou_acesso(assunto):

@@ -2,6 +2,24 @@
 
 ---
 
+### 2026-07-07 — [TESTE] Passo 4 — Nome do anexo incluído na detecção de CADOC
+
+**🔎 Em miúdos:** o sistema ignorava o nome dos arquivos anexados ao detectar o tipo de relatório. E-mail da TC/Economatica com arquivo "Saldos 4111.xlsx" era classificado como SUPORTE porque "4111" aparecia só no nome do arquivo, não no assunto nem no texto do e-mail.
+
+**Problema:** Script 05, linha 1923 — `texto_completo = f"{assunto} {corpo}"`. O campo `anexos_detectados` (com `nome_original` de cada arquivo) estava disponível no `item` mas não era incluído na busca de CADOC.
+
+**Correção:** Script 05 linha 1922–1923 — adicionadas 2 linhas:
+```python
+nomes_anexos = " ".join(a.get("nome_original", "") for a in item.get("anexos_detectados") or [])
+texto_completo = f"{assunto} {corpo} {nomes_anexos}"
+```
+
+**Impacto verificado:** dos 20 e-mails com anexos no TESTE, apenas 1 muda de classificação (TC/Economatica: SUPORTE → 4111). Os outros 19 ficam iguais (CADOC já detectado via assunto ou corpo).
+
+**Validação:** ✅ VALIDADO — 16 testes do classificador passando, zero regressões. A falha `test_relatorio_interno_risk_driver` é pré-existente (método não existe no TESTE, existe na produção).
+
+---
+
 ### 2026-07-07 — [TESTE] Passo 3 — Prazo RETORNO_BACEN corrigido de D+5 para D+3
 
 **🔎 Em miúdos:** quando o BACEN rejeita um relatório, o sistema calculava 5 dias úteis como prazo para a Finaud responder. O prazo correto é 3 dias úteis. Corrigido na configuração e no texto do log.
