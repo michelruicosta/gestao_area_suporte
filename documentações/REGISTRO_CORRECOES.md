@@ -2,6 +2,23 @@
 
 ---
 
+### 2026-07-07 — [TESTE] Passo 10 — E-mail ausente no JSON 01: investigado e encerrado
+
+**🔎 Em miúdos:** o e-mail da Andrea de 13:02 (03/07) para a Barbara (Green DTVM) não estava no JSON 01. Investigamos fundo e descobrimos que o Script 02 estava correto — o e-mail simplesmente nunca chegou na caixa `coleta.oraculo`, pois a regra de roteamento automático do Google Workspace foi configurada no próprio dia 03/07, mas depois das 13:02. E-mails enviados antes da ativação da regra não foram capturados retroativamente.
+
+**Problema:** e-mail enviado antes da regra de roteamento estar ativa. Não é bug de código.
+
+**Investigação realizada:**
+- Script `_diagnostico_coleta_02.py` criado e executado para 03/07: IMAP retornou 47 e-mails, JSON 01 tem 47 — 0 ausentes. Coleta 100% correta.
+- Busca sem filtro de data por todos os e-mails da Andrea: 13:02 não existe em nenhuma pasta (inbox, spam, lixeira, todos os e-mails) da conta `coleta.oraculo`.
+- Diagnóstico para 06/07 (dia seguinte): IMAP retornou 96 e-mails, todos capturáveis — regra funcionando normalmente.
+
+**Correção:** nenhuma alteração de código. A lacuna (13:02 de 03/07) é pontual e irrecuperável — ocorreu na janela de implantação da regra.
+
+**Validação:** ✅ VALIDADO — Script 02 correto. Coleta funcionando 100% a partir da ativação da regra.
+
+---
+
 ### 2026-07-07 — [TESTE] Passo 9 — Anexos XML passam a ser capturados
 
 **🔎 Em miúdos:** arquivos XML que os clientes enviavam (ex.: COS4010 da Amaril Franklin) eram silenciosamente ignorados pelo sistema — o analista não sabia que o arquivo tinha chegado.

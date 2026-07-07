@@ -178,22 +178,7 @@ garantir que a regra não gera surpresas.
 
 ---
 
-### Passo 10 — Investigar: email enviado por colaborador não capturado
-
-**Problema:** o email que a Andrea (analista) enviou para a Barbara (cliente da Green DTVM)
-às 13:02 de 03/07 não aparece no JSON 01. O email existe no Gmail da conta `coleta.oraculo`
-mas foi ignorado pelo Script 02. A thread ficou com só 1 mensagem no sistema.
-
-**Thread que revelou o bug:** Auditoria #20 — Green DTVM (DRM 2060 — arquivo rejeitado).
-- Buscar no JSON 01 por: remetente Green DTVM ou assunto "DRM 2060"
-- Thread aparece com só 1 email (o "Ok obrigada" da Barbara às 18:21) — o da Andrea de 13:02 falta
-
-**O que fazer:**
-1. Verificar se o email da Andrea→Barbara está visível na caixa `coleta.oraculo` (IMAP)
-2. Se estiver: checar se o Script 02 tem filtro que descarta emails onde `@finaud.com.br`
-   está no FROM e o destinatário é externo (sem `@finaud.com.br` no TO)
-3. Se não estiver: a regra de encaminhamento automático da conta da Andrea não está copiando
-   os emails enviados para a caixa do `coleta.oraculo` — ajustar a regra de encaminhamento
+~~Passo 10 — Investigar: email enviado por colaborador não capturado~~ ✅ CONCLUÍDO (2026-07-07 — ver REGISTRO_CORRECOES.md)
 
 ---
 

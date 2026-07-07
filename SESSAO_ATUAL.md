@@ -62,8 +62,11 @@
 - **Decisão:** adicionar `.xml` à lista. Histórico requer nova coleta.
 - **Feito:** ✅ Script 02 linha 50 corrigido. 656 testes passando, zero regressões.
 
-### Passo 10 — E-mail de analista não capturado (Green DTVM)
-- **Análise:** ⬜ não iniciada
+### Passo 10 ✅ — E-mail de analista não capturado (Green DTVM)
+- **Análise:** diagnóstico com script `_diagnostico_coleta_02.py` — IMAP 03/07 retornou 47 e-mails, JSON 01 tem 47, 0 ausentes. Script 02 correto.
+- **Causa:** e-mail da Andrea de 13:02 foi enviado antes da regra de roteamento Google Workspace estar ativa (configurada no dia 03/07, mas após 13:02 e antes de 14:59). Lacuna de implantação — irrecuperável.
+- **Confirmação:** diagnóstico para 06/07 retornou 96 e-mails sem erros — regra funcionando normalmente após ativação.
+- **Feito:** ✅ nenhuma alteração de código. Registrado no REGISTRO_CORRECOES.md.
 
 ---
 
