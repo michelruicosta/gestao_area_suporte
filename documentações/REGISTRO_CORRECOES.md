@@ -2,6 +2,20 @@
 
 ---
 
+### 2026-07-07 — [TESTE] Passo 7 — Fallback de data: e-mails sem data no texto agora aparecem no painel
+
+**🔎 Em miúdos:** e-mails como o do Guru CTVM ("Informações Diárias") não têm nenhuma data escrita no texto — nem no assunto nem no corpo. O sistema procurava uma data, não encontrava e simplesmente escondia o card do painel. Agora, quando isso acontece, o sistema usa a data em que o e-mail foi enviado como substituta para calcular o prazo.
+
+**Problema:** `scripts/05_classificar_emails_regulatorio.py` linhas 2028-2030 — quando as buscas em assunto, corpo e corpus da thread retornavam vazio, o sistema retornava `exibir_card: False`. O Guru CTVM (DDR_2011) tinha assunto genérico e corpo só com "Segue em anexo: 4111... 2011 (DDR).": sem data em lugar nenhum → sumia do painel.
+
+**Correção:** ao invés de retornar `exibir_card: False`, o sistema verifica se `data_referencia` (data de envio do e-mail, já parseada na linha 1996) está disponível e a usa como `data_base` para calcular o prazo normalmente. Log de aviso indica que foi usado fallback.
+
+**Impacto verificado:** 2 e-mails afetados no TESTE após todos os passos anteriores: Guru CTVM (DDR_2011, data-base: 03/07/2026, prazo: 08/07/2026) e e-mail do banco com balancete de câmbio (DDR_2011 após Passo 5).
+
+**Validação:** ✅ VALIDADO — 656 testes passando, 28 falhas pré-existentes (dados de produção ausentes no TESTE), zero regressões novas.
+
+---
+
 ### 2026-07-07 — [TESTE] Passo 6 — Consulta sobre norma BCB → SUPORTE
 
 **🔎 Em miúdos:** quando um cliente perguntava sobre uma norma do Banco Central (ex.: "Norma BCB - Risco de Liquidez"), o sistema detectava o termo "Risco de Liquidez" e classificava como DRL_2160 — como se fosse envio de relatório. Agora o sistema identifica que é uma dúvida e classifica como SUPORTE.

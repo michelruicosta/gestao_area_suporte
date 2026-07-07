@@ -48,7 +48,9 @@
 - **Feito:** ✅ commit `(ver abaixo)` — Script 05 linha 1348.
 
 ### Passo 7 — Fallback de data para Guru CTVM
-- **Análise:** ⬜ não iniciada — sabe-se que Guru classifica DDR_2011 corretamente (via corpo); problema é ausência de data → sem card na tela.
+- **Análise:** DDR_2011 é DIARIA; sem data em assunto/corpo/thread → retornava `exibir_card: False`. `data_referencia` (data de envio) já estava disponível na linha 1996.
+- **Decisão:** usar `data_referencia` como fallback quando `todas_datas` continua vazio após busca no corpus da thread.
+- **Feito:** ✅ Script 05 linhas 2028-2036 — fallback com log de aviso. 656 testes passando, 28 pré-existentes, zero regressões.
 
 ### Passo 8 — RETORNO_BACEN prevalece sobre outros CADOCs na thread (Intra)
 - **Análise:** ⬜ não iniciada

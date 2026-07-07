@@ -143,23 +143,7 @@ impacto da Instrução Normativa BCB nº 755 no preenchimento do DRL 2160.
 
 ---
 
-### Passo 7 — Fallback de data: usar data do email quando não há data no arquivo
-
-**Problema:** quando o cliente envia o arquivo sem data no nome nem no assunto, o sistema não
-consegue extrair a data-base e não exibe o card na tela (sem prazo = sem urgência visível).
-
-**Thread que revelou o bug:** Auditoria #06 — Guru CTVM, assunto "Informações Diárias",
-arquivo `2011 (DDR) (28).xlsx` — sem data. Sistema classificou DDR_2011 corretamente mas
-não gerou card nem prazo.
-- Buscar no JSON 01 por: remetente Guru CTVM + assunto "Informações Diárias"
-
-**O que fazer:**
-- Arquivo: `scripts/05_classificar_emails_regulatorio.py`
-- Na lógica de extração de data-base: quando `data_base = None` após tentar assunto + nome do arquivo,
-  usar `data_do_email` (campo `data` do email) como fallback
-- Michel confirmou: "se for assim já corrigimos" — fallback pela data do email é aceitável
-
-**Como validar:** processar a thread da Guru e confirmar que card aparece na tela com prazo calculado.
+~~Passo 7 — Fallback de data: usar data do email quando não há data no arquivo~~ ✅ CONCLUÍDO (2026-07-07 — ver REGISTRO_CORRECOES.md)
 
 ---
 

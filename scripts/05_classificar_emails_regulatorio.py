@@ -2026,8 +2026,14 @@ class Oraculo:
                     self.log("FONTE", f"✓ Encontrou {len(datas_thread)} datas no corpus da thread")
                     todas_datas = datas_thread
             if not todas_datas:
-                self.log("INFO", "Nenhuma data encontrada na thread do dia")
-                return {"exibir_card": False, "cadoc": cadoc, "lista_prazos": [], "tipo_painel": "", "retorno_bacen": retorno_bacen}
+                # FALLBACK: usa a data de envio do e-mail quando não há data no conteúdo
+                # Ex.: Guru CTVM "Informações Diárias" — corpo só tem "Segue em anexo: 4111... 2011 (DDR)."
+                if data_referencia:
+                    self.log("INFO", f"Nenhuma data no conteúdo — usando data de envio do e-mail como fallback: {data_referencia.strftime('%d/%m/%Y')}")
+                    todas_datas = [(data_referencia, data_referencia.strftime("%d/%m/%Y"), "data_envio", False)]
+                else:
+                    self.log("INFO", "Nenhuma data encontrada na thread do dia")
+                    return {"exibir_card": False, "cadoc": cadoc, "lista_prazos": [], "tipo_painel": "", "retorno_bacen": retorno_bacen}
         
         # FILTRO DE QUANTIDADE (CORREÇÃO 3): Detecta listas/tabelas de competências
         # Se encontrou muitas datas mensais, provavelmente é lista de referência
