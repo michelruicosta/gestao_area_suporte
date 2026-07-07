@@ -1,0 +1,74 @@
+# --- Segurança (CRÍTICO - NUNCA REMOVA) ---
+.env
+*.env
+data/tokens/*
+credentials.json
+token.json
+client_secret.json
+oraculo-ia-coleta.json
+chave_app_coleta.oraculo@finaud.com.br.txt
+
+# --- Pastas de Dados Confidenciais (BLINDAGEM TOTAL) ---
+# Bloqueia a pasta data/ inteira — contém dados operacionais sensíveis
+# (anexos de e-mails, JSONs de pipeline, backups, logs, etc.).
+data/
+
+# --- Lixo e Temporários ---
+lixeira_testes/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+logs/
+
+# --- IDE e Sistema ---
+.vscode/
+.idea/
+.cursor/
+
+# .claude/ é ignorada, EXCETO os comandos do Gestor (versionados de propósito)
+.claude/*
+!.claude/commands/
+.DS_Store
+*.log
+
+# --- Desenvolvimento / debug ---
+_debug/
+cookies.txt
+*.bak_passo*
+
+# Scripts ad-hoc / temporários (prefixo "_") — investigações pontuais
+# que não devem ir para o repo.
+_archive/
+_run_pipeline_*.py
+_tmp_*.py
+_analisar_*.py
+_extrair_*.py
+_inspecionar_*.py
+_levantar_*.py
+_qualidade_*.py
+_preview_*.html
+_simular_*.py
+_testar_*.py
+_diagnostico_*.py
+_diag_*.py
+_check_*.py
+_ver_*.py
+_validar_*.py
+_trace_*.py
+_investigar_*.py
+_revisar_*.py
+_auditar_*.py
+_debug_*.py
+
+# Rascunhos de análise soltos na raiz (prefixo "tmp") — não vão para o repo
+tmp*.py
+tmp*.txt
+
+# Backups gerados pelos scripts (nao devem ir para o repo)
+*.backup_*
+*.backup_log_*
+*.backup_todos_*
+*.backup_unif_*
