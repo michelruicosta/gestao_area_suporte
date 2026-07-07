@@ -42,8 +42,10 @@
 - **Decisão:** inserir regra específica (`balancete de câmbio` → DDR_2011) antes da genérica (`balancete` → DLO_2061). Regex aceita acento (`c[aâ]mbio`).
 - **Feito:** ✅ commit `(ver abaixo)` — Script 05 linhas 1341–1345.
 
-### Passo 6 — Consulta de norma → SUPORTE (Terra Investimentos)
-- **Análise:** ⬜ não iniciada
+### Passo 6 ✅ — Consulta de norma → SUPORTE (Terra Investimentos)
+- **Análise:** "Risco de Liquidez" no assunto ativava DRL_2160. Causa: termo cadastrado no config como indicador de DRL. "Norma BCB" no assunto é sinal de dúvida, não de envio. Apenas 1 e-mail afetado no TESTE.
+- **Decisão:** nova regra antes do `#PF23` — se assunto tem "Norma BCB", "IN BCB" ou "Instrução Normativa" → SUPORTE imediato, antes de qualquer CADOC ser avaliado.
+- **Feito:** ✅ commit `(ver abaixo)` — Script 05 linha 1348.
 
 ### Passo 7 — Fallback de data para Guru CTVM
 - **Análise:** ⬜ não iniciada — sabe-se que Guru classifica DDR_2011 corretamente (via corpo); problema é ausência de data → sem card na tela.

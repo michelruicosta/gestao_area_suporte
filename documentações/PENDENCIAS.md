@@ -122,7 +122,7 @@ Classificado como DLO_2061 — correto seria DDR_2011.
 
 ---
 
-### Passo 6 — Detectar consultas sobre normas e forçar SUPORTE
+### ~~Passo 6 — Detectar consultas sobre normas e forçar SUPORTE~~ ✅ CONCLUÍDO
 
 **Problema:** quando um cliente pergunta sobre como uma norma afeta o preenchimento de um
 relatório (ex.: "como preencher o DRL após a nova IN BCB nº 755?"), o sistema detecta "DRL"

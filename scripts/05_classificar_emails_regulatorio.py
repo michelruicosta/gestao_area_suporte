@@ -1345,6 +1345,11 @@ class ValidadorContextual:
         if assunto and re.search(r"(?i)\bbalancete\b", assunto):
             return "DLO_2061", "balancete"
 
+        # Consulta sobre norma regulatória → SUPORTE (é uma dúvida, não envio de relatório)
+        # "Norma BCB", "IN BCB" e "Instrução Normativa" no assunto indicam pergunta, não relatório.
+        if assunto and re.search(r"(?i)\bnorma\s+bcb\b|\bIN\s+BCB\b|\binstrução\s+normativa\b|\binstrucao\s+normativa\b", assunto):
+            return "SUPORTE", "consulta norma BCB"
+
         # #PF23 Situação 2: se o assunto sozinho identifica exatamente 1 CADOC, usar esse.
         # Evita que citações de CADOCs no corpo (histórico, assinatura) sobreponham o assunto.
         if assunto:

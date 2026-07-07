@@ -2,6 +2,20 @@
 
 ---
 
+### 2026-07-07 — [TESTE] Passo 6 — Consulta sobre norma BCB → SUPORTE
+
+**🔎 Em miúdos:** quando um cliente perguntava sobre uma norma do Banco Central (ex.: "Norma BCB - Risco de Liquidez"), o sistema detectava o termo "Risco de Liquidez" e classificava como DRL_2160 — como se fosse envio de relatório. Agora o sistema identifica que é uma dúvida e classifica como SUPORTE.
+
+**Problema:** a função `identificar_cadoc` detectava "Risco de Liquidez" no assunto e retornava DRL_2160 sem verificar se o e-mail era uma pergunta. A expressão "Norma BCB" no assunto é sinal inequívoco de consulta/dúvida, não de envio de relatório.
+
+**Correção:** `scripts/05_classificar_emails_regulatorio.py` — nova regra inserida antes do `#PF23` (linha 1348): se assunto contém `"Norma BCB"`, `"IN BCB"` ou `"Instrução Normativa"` → retorna `SUPORTE` imediatamente, antes que qualquer termo de CADOC seja avaliado.
+
+**Impacto verificado:** 1 e-mail afetado no TESTE (Terra Investimentos: DRL_2160 → SUPORTE). Zero outros e-mails com esses padrões no assunto.
+
+**Validação:** ✅ VALIDADO — 16 testes do classificador passando, zero regressões.
+
+---
+
 ### 2026-07-07 — [TESTE] Passo 5 — "Balancete de Câmbio" corrigido para DDR_2011
 
 **🔎 Em miúdos:** a regra que detecta "balancete" no assunto enviava tudo para DLO. "Balancete de Câmbio" é um documento diferente — pertence ao DDR. Agora o sistema distingue os dois.
