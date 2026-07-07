@@ -2,6 +2,20 @@
 
 ---
 
+### 2026-07-07 — [TESTE] Passo 5 — "Balancete de Câmbio" corrigido para DDR_2011
+
+**🔎 Em miúdos:** a regra que detecta "balancete" no assunto enviava tudo para DLO. "Balancete de Câmbio" é um documento diferente — pertence ao DDR. Agora o sistema distingue os dois.
+
+**Problema:** regra `#PF30` (linha 1341) usava `\bbalancete\b` para retornar DLO_2061 sem exceção. O assunto "Posição de Câmbio CAM0050 BACEN, Balancete de Câmbio PDF/Excel" da Western Union caía nessa regra e era classificado como DLO_2061.
+
+**Correção:** `scripts/05_classificar_emails_regulatorio.py` linhas 1341–1345 — adicionada regra específica antes da genérica:
+- `balancete de câmbio` (com variação de acento) no assunto → DDR_2011
+- `balancete` (sozinho) no assunto → DLO_2061 (comportamento anterior preservado)
+
+**Validação:** ✅ VALIDADO — 16 testes do classificador passando, zero regressões.
+
+---
+
 ### 2026-07-07 — [TESTE] Passo 4 — Nome do anexo incluído na detecção de CADOC
 
 **🔎 Em miúdos:** o sistema ignorava o nome dos arquivos anexados ao detectar o tipo de relatório. E-mail da TC/Economatica com arquivo "Saldos 4111.xlsx" era classificado como SUPORTE porque "4111" aparecia só no nome do arquivo, não no assunto nem no texto do e-mail.

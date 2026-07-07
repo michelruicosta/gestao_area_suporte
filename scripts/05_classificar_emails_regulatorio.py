@@ -1338,7 +1338,10 @@ class ValidadorContextual:
         if assunto and re.search(r"(?i)\bS5\b", assunto):
             return "S5", "S5"
 
-        # #PF30: Balancete no assunto → DLO_2061 (COS4010/4016 = insumo do DLO)
+        # #PF30: Balancete de Câmbio → DDR_2011 (posição cambial, insumo do DDR)
+        # Balancete sem "câmbio" → DLO_2061 (balanço patrimonial, insumo do DLO)
+        if assunto and re.search(r"(?i)\bbalancete\s+de\s+c[aâ]mbio\b", assunto):
+            return "DDR_2011", "balancete de câmbio"
         if assunto and re.search(r"(?i)\bbalancete\b", assunto):
             return "DLO_2061", "balancete"
 

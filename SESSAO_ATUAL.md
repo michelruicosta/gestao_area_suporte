@@ -37,8 +37,10 @@
 
 ---
 
-### Passo 5 — "Balancete de Câmbio" → DDR_2011 (Western Union)
-- **Análise:** ⬜ não iniciada
+### Passo 5 ✅ — "Balancete de Câmbio" → DDR_2011 (Western Union)
+- **Análise:** regra `#PF30` usava `\bbalancete\b` genérico → tudo ia para DLO_2061. "Balancete de Câmbio" é documento cambial do DDR, não balanço patrimonial do DLO.
+- **Decisão:** inserir regra específica (`balancete de câmbio` → DDR_2011) antes da genérica (`balancete` → DLO_2061). Regex aceita acento (`c[aâ]mbio`).
+- **Feito:** ✅ commit `(ver abaixo)` — Script 05 linhas 1341–1345.
 
 ### Passo 6 — Consulta de norma → SUPORTE (Terra Investimentos)
 - **Análise:** ⬜ não iniciada

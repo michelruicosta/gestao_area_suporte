@@ -102,7 +102,7 @@ do arquivo, não no assunto nem no corpo.
 
 ---
 
-### Passo 5 — Refinar regra "Balancete de Câmbio" para DDR_2011
+### ~~Passo 5 — Refinar regra "Balancete de Câmbio" para DDR_2011~~ ✅ CONCLUÍDO
 
 **Problema:** a regra `#PF30` do Script 05 classifica qualquer email com "balancete" no assunto
 como DLO_2061. "Balancete de Câmbio" é um documento específico do DDR_2011 (não do DLO).
