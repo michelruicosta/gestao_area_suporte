@@ -2,6 +2,22 @@
 
 ---
 
+### 2026-07-07 — [TESTE] Passo 8 — Detecção RETORNO_BACEN ampliada: rejeitado, recusado, aviso bacen
+
+**🔎 Em miúdos:** o sistema não reconhecia quando um cliente escrevia "arquivo rejeitado" ou "DLO recusado" — classificava como DLO ou DDR normal. Agora esses termos também ativam o RETORNO_BACEN.
+
+**Problema:** `termos_assunto` no config e a função `texto_mandatorio_retorno_bacen_critica_e_documento` no Script 05 só cobriam "crítica", "indício", "inconsistência" e similares. Termos diretos como "rejeitado", "rejeição", "recusado", "recusa" e "aviso bacen" eram ignorados — 35 e-mails na produção perdidos.
+
+**Correção:**
+- `data/json/config/mapeamento_regras_negocio.json` — adicionado a `termos_assunto`: `"rejeitado"`, `"rejeição"`, `"rejeicao"`, `"recusado"`, `"recusa"`, `"aviso bacen"`
+- `scripts/05_classificar_emails_regulatorio.py` — expandido `tem_sinal_bc` em `texto_mandatorio_retorno_bacen_critica_e_documento` para incluir os mesmos termos no corpo (exige menção a documento regulatório junto)
+
+**Impacto verificado (TESTE):** simulação na produção: 39 e-mails passam a RETORNO_BACEN, todos corretos. FogBugz não afetado (barrado pelo filtro `eh_email_interno` antes da classificação).
+
+**Validação:** ✅ VALIDADO — 656 testes passando, 28 falhas pré-existentes, zero regressões. Casos-alvo confirmados via teste unitário direto no `ValidadorContextual`.
+
+---
+
 ### 2026-07-07 — [TESTE] Passo 7 — Fallback de data: e-mails sem data no texto agora aparecem no painel
 
 **🔎 Em miúdos:** e-mails como o do Guru CTVM ("Informações Diárias") não têm nenhuma data escrita no texto — nem no assunto nem no corpo. O sistema procurava uma data, não encontrava e simplesmente escondia o card do painel. Agora, quando isso acontece, o sistema usa a data em que o e-mail foi enviado como substituta para calcular o prazo.

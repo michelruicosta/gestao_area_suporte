@@ -1420,10 +1420,10 @@ class ValidadorContextual:
 
     def texto_mandatorio_retorno_bacen_critica_e_documento(self, assunto: str, corpo: str) -> bool:
         """
-        Assunto + corpo: se há «crítica/critica» ou «retorno bacen» (frases) **e** menção a documento
-        regulatório (DDR, 4111, DLO, DLI, DRL, RA, DRM ou códigos 2060/2061/2062/2160), força tipificação
-        Retorno Bacen — evita classificar só como DLO/DLI quando a queixa está no texto (ex.: RE: DLO_2061…
-        com «tivemos essa critica no DLO» no corpo).
+        Assunto + corpo: se há sinal de rejeição/crítica do BC («crítica», «retorno bacen», «rejeitado»,
+        «recusado», «aviso bacen») **e** menção a documento regulatório (DDR, 4111, DLO, DLI, DRL, RA,
+        DRM ou códigos 2060/2061/2062/2160), força tipificação Retorno Bacen — evita classificar só como
+        DLO/DLI quando a queixa está no texto (ex.: RE: DLO_2061… com «arquivo rejeitado» no corpo).
         """
         blob = f"{assunto or ''}\n{corpo or ''}"
         if not blob.strip():
@@ -1433,6 +1433,10 @@ class ValidadorContextual:
             bool(re.search(r"(?i)\bcr[ií]tica\b", blob))
             or "retorno do bacen" in low
             or "retorno bacen" in low
+            or bool(re.search(r"(?i)\brejeit(ado|ados|ada|adas)\b", blob))
+            or bool(re.search(r"(?i)\brecus(ado|ada|a)\b", blob))
+            or "aviso bacen" in low
+            or "avisos do bacen" in low
         )
         if not tem_sinal_bc:
             return False

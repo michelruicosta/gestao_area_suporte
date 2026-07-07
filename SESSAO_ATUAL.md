@@ -52,8 +52,10 @@
 - **Decisão:** usar `data_referencia` como fallback quando `todas_datas` continua vazio após busca no corpus da thread.
 - **Feito:** ✅ Script 05 linhas 2028-2036 — fallback com log de aviso. 656 testes passando, 28 pré-existentes, zero regressões.
 
-### Passo 8 — RETORNO_BACEN prevalece sobre outros CADOCs na thread (Intra)
-- **Análise:** ⬜ não iniciada
+### Passo 8 — Detecção RETORNO_BACEN ampliada
+- **Análise:** investigação completa nos 2 ambientes: 35 e-mails perdidos na produção; 5 falsos positivos FogBugz descartados (barrados por `eh_email_interno`); 2 borderlines confirmados como legítimos.
+- **Decisão:** adicionar `rejeitado/rejeição/recusado/recusa/aviso bacen` a `termos_assunto` no config + expandir `tem_sinal_bc` no corpo do Script 05.
+- **Feito:** ✅ config + Script 05 atualizados. 656 testes passando, zero regressões.
 
 ### Passo 9 — Anexo XML não capturado (Amaril Franklin)
 - **Análise:** ⬜ não iniciada
