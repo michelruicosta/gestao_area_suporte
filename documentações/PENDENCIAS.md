@@ -199,7 +199,7 @@ garantir que a regra não gera surpresas.
 
 ---
 
-### Passo 11 — Corrigir manualmente thread "Conexão" no JSON 02
+### ~~Passo 11 — Corrigir manualmente thread "Conexão" no JSON 02~~ ✅ CONCLUÍDO (2026-07-07 — Passo 2 (filtro BACEN) corrigiu automaticamente ao reprocessar via Fase 2)
 
 **Problema:** o JSON 02 ainda tem `cadoc=DDR_2011` e prazos falsos para a newsletter do BACEN.
 O Script 05 em modo incremental não reprocessa threads já classificadas — correção manual necessária.
@@ -215,32 +215,11 @@ O Script 05 em modo incremental não reprocessa threads já classificadas — co
 
 ---
 
-### Passo 12 — Reprocessar todos os dados do TESTE do zero
-
-**O que fazer (em sequência):**
-1. Rodar Script 05 em modo **completo** (sem `ORACULO_INCREMENTAL=1`) para reclassificar todas as threads com as regras corrigidas
-2. Rodar Script 09 para integrar os dados novos
-3. Rodar Script 11 sem `data_ref` (varredura completa) para reprocessar a triagem
-
-**Como validar:** conferir as 9 threads problemáticas identificadas na auditoria e confirmar que todas estão corretas agora.
+### ~~Passo 12 — Reprocessar todos os dados do TESTE do zero~~ ✅ CONCLUÍDO (2026-07-07 — pipeline completo 01→16 rodado pela tela; backup em `20260707_1742_pre_fase2_reprocessamento/`)
 
 ---
 
-### Passo 13 — Validar as 9 correções thread por thread
-
-Abrir o painel do TESTE e confirmar cada uma:
-
-| Thread | Antes | Depois esperado |
-|---|---|---|
-| "Conexão" BACEN (`GMTHRID_1869725950497986970`) | DDR_2011 com 2 prazos falsos | IGNORADO, sem card |
-| Guru CTVM — "Informações Diárias" | DDR_2011 sem card | DDR_2011 com card e prazo |
-| Intra Investimentos | DDR_2011 | RETORNO_BACEN |
-| TC/Economatica — "Saldos 4111.xlsx" | SUPORTE | 4111 |
-| Western Union — "Balancete de Câmbio" | DLO_2061 | DDR_2011 |
-| Terra Investimentos — "IN BCB nº 755" | DRL_2160 | SUPORTE |
-| Amaril Franklin — COS4010 | anexo faltando | anexo capturado |
-| Green DTVM — Andrea→Barbara | 1 mensagem | 2 mensagens |
-| Threads RETORNO_BACEN sem prazo | D+5 | D+3 |
+### ~~Passo 13 — Validar as 9 correções thread por thread~~ ✅ CONCLUÍDO (2026-07-07 — todas validadas; ver REGISTRO_CORRECOES.md entrada 2026-07-07 Fase 2)
 
 ---
 

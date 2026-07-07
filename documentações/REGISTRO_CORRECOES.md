@@ -2,6 +2,40 @@
 
 ---
 
+### 2026-07-07 — [TESTE] Fase 2 concluída — Pipeline reprocessado e todas as correções validadas
+
+**🔎 Em miúdos:** depois de corrigir 9 bugs no código (Passos 1-9) e investigar o Passo 10 (sem alteração de código), rodamos o pipeline inteiro do zero — dos 47 e-mails coletados no Gmail até a triagem final — e validamos que todas as 9 correções funcionaram na prática.
+
+**O que foi feito:**
+- Backup de todos os JSONs do pipeline em `data/json/pipeline/backups/20260707_1742_pre_fase2_reprocessamento/`
+- Todos os JSONs de dados foram apagados (Michel confirmou; objetivo: rodar tudo limpo com as novas regras)
+- Pipeline completo rodado pela tela (`03/07/2026`): Scripts 01→16, ~18 minutos
+- Resultado: 47 e-mails coletados, 6 anexos corrigidos pelo Script 03, 36 threads classificadas, todas as etapas concluídas sem erro
+
+**Validação thread por thread das 9 correções:**
+
+| Passo | Thread / Situação | Antes | Depois | Status |
+|---|---|---|---|---|
+| #02 | Newsletter BACEN "Conexão" | DDR_2011 com 2 prazos falsos | IGNORADO, sem card | ✅ |
+| #03 | RETORNO_BACEN sem prazo explícito | D+5 | D+3 | ✅ |
+| #04 | TC/Economatica "Saldos 4111.xlsx" | SUPORTE | 4111 | ✅ |
+| #05 | Western Union "Balancete de Câmbio" | DLO_2061 | DDR_2011 | ✅ |
+| #06 | Terra Investimentos "IN BCB nº 755" | DRL_2160 | SUPORTE | ✅ |
+| #07 | Guru CTVM sem data no texto | sem card | DDR_2011 com card (fallback = data do e-mail) | ✅ |
+| #08 | Detecção RETORNO_BACEN ampliada | perdidos | capturados com "rejeitado/recusado" | ✅ |
+| #09 | Amaril Franklin COS4010 — XML | `anexos: []` no JSON 01 | XML capturado | ✅ |
+| #10 | Green DTVM — e-mail de 13:02 | ausente (antes da regra de roteamento) | irrecuperável — sem alteração de código | ✅ |
+
+**COS4010 (Amaril Franklin) — validação adicional:**
+- CADOC DLO_2061: correto — COS4010 é o formulário COSIF usado como insumo do DLO
+- `corpo_limpo`: "Prezados, boa tarde. Segue o 4010 competência 05/2026 ajustado..." ✅
+- `threadId`: GMTHRID_1869718518888012560 (agrupamento correto) ✅
+- XML `17312661_4010_052026 NOE.xml` presente no disco ✅
+
+**Validação:** ✅ VALIDADO — todos os 9 problemas confirmados corrigidos. Pipeline íntegro: 20 threads AGUARDANDO + 11 threads CONCLUÍDAS no TESTE.
+
+---
+
 ### 2026-07-07 — [TESTE] Passo 10 — E-mail ausente no JSON 01: investigado e encerrado
 
 **🔎 Em miúdos:** o e-mail da Andrea de 13:02 (03/07) para a Barbara (Green DTVM) não estava no JSON 01. Investigamos fundo e descobrimos que o Script 02 estava correto — o e-mail simplesmente nunca chegou na caixa `coleta.oraculo`, pois a regra de roteamento automático do Google Workspace foi configurada no próprio dia 03/07, mas depois das 13:02. E-mails enviados antes da ativação da regra não foram capturados retroativamente.

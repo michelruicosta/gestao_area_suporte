@@ -70,6 +70,15 @@
 
 ---
 
+### Fase 2 ✅ — Pipeline reprocessado e todas as correções validadas (2026-07-07)
+- **Backup:** `data/json/pipeline/backups/20260707_1742_pre_fase2_reprocessamento/` (9 arquivos)
+- **Pipeline:** Scripts 01→16 rodados pela tela (`03/07/2026`). Resultado: 47 e-mails, 36 threads.
+- **Resultado da triagem:** 20 AGUARDANDO + 11 CONCLUÍDAS no TESTE.
+- **Validação:** todas as 9 correções confirmadas na prática. Ver REGISTRO_CORRECOES.md entrada 2026-07-07 Fase 2.
+- **COS4010 Amaril Franklin:** DLO_2061 correto ✅ | XML capturado ✅ | corpo extraído ✅ | thread agrupada ✅
+
+---
+
 ## 📍 Estado de agora (2026-07-07 — encerramento TESTE)
 
 > **Este arquivo é do AMBIENTE TESTE** (`oraculo_360_finaud_TESTE`).
@@ -78,30 +87,34 @@
 
 | Conta coleta | E-mails coletados | Ambiente | Branch |
 |---|---|---|---|
-| coleta.oraculo@finaud.com.br | 47 (03/07/2026) | **TESTE** | desenvolvimento-front_end |
+| coleta.oraculo@finaud.com.br | 47 (03/07/2026) | **TESTE** | master |
 
 > **Como funciona a coleta no TESTE:** o script 02 faz login com `coleta.oraculo@finaud.com.br`
 > no Gmail via IMAP, mas a busca retorna e-mails que têm `@finaud.com.br` no remetente OU no
 > destinatário — ou seja, captura e-mails endereçados ao `suporte@finaud.com.br`, `andrea@finaud.com.br`
 > etc., desde que estejam visíveis nessa caixa. `coleta.oraculo` é a conta de acesso, não o filtro.
 
-Último /fechar: 2026-07-07 (sessão TESTE — auditoria completa 36 threads) — memórias revisadas ✅
+**Situação das Fases:**
+- ✅ **Fase 1** — 9 bugs corrigidos (Passos 1-9) + Passo 10 investigado
+- ✅ **Fase 2** — Pipeline reprocessado + todas as 9 correções validadas
+- 🔴 **Fase 3** — TESTE vira nova produção — **aguardando: Michel quer mais melhorias antes**
 
-### 🔥 Próximo passo — 9 pendências 🔴 URGENTES para a próxima sessão
+**1 item ainda aberto na Fase 1 (não bloqueador para Fase 3, mas vai melhorar o sistema):**
 
-Todas registradas em `documentações/PENDENCIAS.md` (seção AMBIENTE TESTE):
+| # | Problema | Arquivo | Status |
+|---|---|---|---|
+| Passo 8 | Thread não herda RETORNO_BACEN do segundo email | Script 09 — prioridade de CADOC | 🔴 ABERTO |
+| Verificar leitura de conteúdo dos anexos | xlsx/xml/pdf: sistema abre e lê? | Scripts 02/05 | 🔴 ABERTO |
 
-| # | Problema | Arquivo |
-|---|---|---|
-| #06 | Guru CTVM — sem data no arquivo, sem prazo, sem card | Script 05 — fallback de data |
-| #07-P1 | "Cadastro" na assinatura dispara DDR_2011 | Script 05 — detecção de CADOC |
-| #07-P2 | Thread não herda RETORNO_BACEN do segundo email | Script 09 — prioridade de CADOC |
-| #08 | Nome do anexo não entra na detecção de CADOC | Script 05 — `identificar_cadoc` |
-| #12 | Prazo RETORNO_BACEN: D+5 no config, deveria ser D+3 | `mapeamento_regras_negocio.json` |
-| #19 | Anexo XML existe no Gmail mas não foi capturado | Script 02 — captura de anexos |
-| #20 | Email da Andrea para cliente presente no `coleta.oraculo` mas ausente no JSON 01 | Script 02 — coleta IMAP |
-| #29 | "Balancete de Câmbio" → DLO_2061, deveria ser DDR_2011 | Script 05 — regra #PF30 |
-| #32 | Consulta sobre norma BCB → DRL_2160, deveria ser SUPORTE | Script 05 — detecção de consulta |
+Último /fechar: 2026-07-07 (Fase 2 concluída — 9 correções validadas, TESTE pronto para melhorias) — memórias revisadas ✅
+
+### 🔥 Próximo passo — melhorias antes de tornar TESTE a produção
+
+---
+
+1. **Passo 8** — implementar lógica no Script 09: se algum email da thread é RETORNO_BACEN, a thread toda vira RETORNO_BACEN. Ver `PENDENCIAS.md` seção Fase 1.
+2. **Verificar leitura de anexos** — o sistema detecta que o arquivo chegou, mas consegue abrir e ler o conteúdo? (xlsx, xml, pdf). Ver `PENDENCIAS.md` seção Fase 1.
+3. **Outras melhorias que Michel definir** — após concluir, ir para Fase 3 (tornar TESTE a produção).
 
 ---
 
@@ -176,7 +189,7 @@ sistema sem filtro.
 
 | AG (aguardando) | CO (concluídas) | Total | pytest (pre-commit) | Última carga triagem (02→11) | Último enriquecimento (12→17) |
 |-----------------|-----------------|-------|--------|------------------------------|-------------------------------|
-| 996 | 3.741 | 4.737 | **220 passed, 1.5s** | **06/07/2026** ✅ | **06/07/2026** ✅ |
+| 996 | 3.741 | 4.737 | **220 passed, 1.5s** | **07/07/2026** ✅ | **07/07/2026** ✅ |
 
 - Branch ativa: **`desenvolvimento-front_end`** (sincronizada com GitHub ✅ — push 02/07/2026)
 - Branch estável: **`main`** (PR #2 mergeado em 23/06)
