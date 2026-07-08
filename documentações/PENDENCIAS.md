@@ -252,48 +252,6 @@ Após o git estar funcionando:
 
 ---
 
-## 🟡 Separar supervisores de triagem: DDR_2011, 4111 e DRL_2160 estão no mesmo arquivo (registrado 2026-07-08)
-
-**Contexto e risco identificado:**
-Hoje, os três CADOCs DDR_2011, 4111 e DRL_2160 são triados por um único arquivo: `scripts/triagem/ddr4111.py`. Eles foram agrupados porque, na época da implementação, as regras de triagem eram idênticas (cliente envia insumo → Finaud gera → Finaud entrega ZIP → CONCLUÍDO). O código funciona — mas a estrutura cria um risco futuro real: se qualquer um desses CADOCs mudar de regra, será necessário separar o arquivo com cuidado para não quebrar os outros dois.
-
-**Por que separar agora (antes que o risco vire problema):**
-São três documentos regulatórios distintos do BACEN:
-- **DDR_2011** — Demonstrativo de Derivativos (diário)
-- **4111** — Documento de posições financeiras (diário)
-- **DRL_2160** — Demonstrativo de Risco de Liquidez (mensal, formato diferente)
-
-Já existem diferenças hoje: o DRL_2160 é mensal (DDR e 4111 são diários), e o nome do arquivo ZIP do DRL usa `2160` enquanto os outros usam `2011` e `4111`. Futuramente, o BACEN pode mudar o formato de entrega do DRL, ou a Finaud pode passar a transmitir o DRL diretamente ao BACEN (sem enviar ao cliente). Nesse dia, qualquer mudança no `ddr4111.py` precisará ser feita com bisturi para não impactar os outros dois.
-
-**O que fazer:**
-1. Criar `scripts/triagem/ddr.py` — supervisor exclusivo do DDR_2011
-2. Criar `scripts/triagem/doc4111.py` — supervisor exclusivo do 4111
-3. Criar `scripts/triagem/drl.py` — supervisor exclusivo do DRL_2160
-4. Cada arquivo herda as regras atuais do `ddr4111.py` (copiar e ajustar o `CADOCS`, `NOME` e os termos específicos)
-5. Atualizar `scripts/triagem/motor.py` para importar e chamar os três supervisores separados
-6. Remover (ou arquivar em `_archive/`) o `ddr4111.py`
-7. Atualizar `scripts/triagem/constantes.py`: separar `CADOC_TRIAGEM_DDR4111` em três constantes — `CADOC_TRIAGEM_DDR`, `CADOC_TRIAGEM_4111`, `CADOC_TRIAGEM_DRL`
-8. Rodar `pytest tests/ -q -m "not agent and not pdf and not integration"` e confirmar zero regressões
-9. Registrar no REGISTRO_CORRECOES.md
-
-**Arquivos a tocar:**
-- `scripts/triagem/ddr4111.py` — origem (virar `_archive/`)
-- `scripts/triagem/ddr.py` — criar
-- `scripts/triagem/doc4111.py` — criar
-- `scripts/triagem/drl.py` — criar
-- `scripts/triagem/motor.py` — atualizar importações
-- `scripts/triagem/constantes.py` — separar constante
-
-**Atenção antes de executar:**
-- Verificar se `ddr4111.py` é importado em algum outro lugar além do `motor.py`: `grep -r "ddr4111" scripts/`
-- Verificar se algum teste referencia `ddr4111` diretamente: `grep -r "ddr4111" tests/`
-- Fazer backup dos JSONs antes de qualquer reprocessamento de threads (regra obrigatória)
-- Seguir o protocolo de 7 passos (Passo 0: escopo; Passo 1: simular; etc.)
-
-**Prioridade:** 🟡 Média — o sistema funciona hoje. Fazer antes que algum CADOC mude de regra e force a separação às pressas.
-
----
-
 ## 🔴 Tela de Triagem — revisão UX com o Fable (registrado 2026-07-02)
 
 **Contexto:** após concluir a revisão do Painel de Gestão (2ª rodada), Michel quer revisar a tela de Triagem (`/operacional`) — o coração do sistema, onde os analistas trabalham o dia inteiro.
