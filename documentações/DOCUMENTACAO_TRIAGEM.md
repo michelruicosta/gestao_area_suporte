@@ -1050,9 +1050,11 @@ ainda precisa agir**. Substituir por `FINAUD` e `CLIENTE`.
 4. Cliente transmite ao BACEN
 5. **Conclusão = Finaud enviou o anexo ao cliente** — não é necessária confirmação do cliente
 
-> ⚠️ **Gap técnico identificado:** o campo `anexos_detectados` existe nos dados mas o motor
-> hoje detecta o envio por palavras no texto ("segue em anexo"). Threads onde a Finaud enviou
-> o arquivo sem escrever essa frase podem ficar como AGUARDANDO indevidamente.
+> **Entrega e pós-entrega — como o motor se comporta:**
+>
+> - **Finaud envia o ZIP do DDR** (com ou sem a frase "segue em anexo") → thread marcada como **CONCLUÍDO** automaticamente. O motor detecta tanto pelo texto quanto pelo nome do arquivo ZIP (`CNPJ_2011_DATA_I_versao.zip`).
+> - **Cliente responde com agradecimento** ("obrigado", "recebi", "tudo certo") após a entrega → thread **permanece CONCLUÍDO**.
+> - **Cliente responde com pergunta ou nova demanda** após a entrega → thread **reabre como AGUARDANDO** automaticamente (regra R9-C).
 
 ---
 
@@ -1399,7 +1401,11 @@ Analisadas **203 threads CO do DDR_2011** que receberam mensagem nova após o fe
 4. Cliente transmite o arquivo ao BACEN
 5. **Conclusão = Finaud enviou o arquivo ao cliente** — não é necessária confirmação de transmissão ao BACEN
 
-> ⚠️ **Gap técnico:** o motor detecta a entrega do 4111 pelo **texto** da mensagem ("segue em anexo", "seguem arquivos Cadoc"). Se a Finaud entregar o arquivo sem escrever uma dessas frases (ex.: apenas com anexo e assunto), a thread pode ficar como AGUARDANDO indevidamente. Mesmo gap do DDR_2011.
+> **Entrega e pós-entrega — como o motor se comporta:**
+>
+> - **Finaud envia o ZIP do 4111** (com ou sem a frase "segue em anexo") → thread marcada como **CONCLUÍDO** automaticamente. O motor detecta tanto pelo texto quanto pelo nome do arquivo ZIP (`CNPJ_4111_DATA_I_versao.zip`).
+> - **Cliente responde com agradecimento** ("obrigado", "recebi", "tudo certo") após a entrega → thread **permanece CONCLUÍDO**.
+> - **Cliente responde com pergunta ou nova demanda** após a entrega → thread **reabre como AGUARDANDO** automaticamente (regra R9-C).
 
 **Total:** 376 threads (275 Concluídas · 99 Aguardando)
 
@@ -1559,7 +1565,15 @@ Analisadas **203 threads CO do DDR_2011** que receberam mensagem nova após o fe
 5. Cliente transmite o arquivo ao BACEN
 6. **Conclusão = Finaud enviou o arquivo ao cliente** — não é necessária confirmação de transmissão ao BACEN
 
-> ⚠️ **Gap técnico:** a planilha Excel enviada pelo cliente chega como anexo — o motor detecta o envio pelo **texto** da mensagem ("segue planilha", "em anexo"). Se o cliente enviar a planilha sem escrever nenhuma dessas frases no corpo do e-mail, o motor pode não reconhecer e deixar a thread como AGUARDANDO indevidamente. Mesmo gap do DDR_2011.
+> **Dois cenários distintos — como o motor se comporta em cada um:**
+>
+> **Cenário A — Finaud entrega o arquivo DRL_2160 ao cliente:**
+> - **Finaud envia o ZIP do DRL** (com ou sem a frase "segue em anexo") → thread marcada como **CONCLUÍDO** automaticamente pelo nome do arquivo... **mas atenção:** a detecção por nome de arquivo ZIP (`CNPJ_2160_DATA_I_versao.zip`) está desabilitada para DRL. O motor depende do texto da mensagem. Se a Finaud entregar sem mencionar "segue em anexo" ou "DRL", a thread pode ficar como AGUARDANDO indevidamente. *(gap aberto — pendente decisão de habilitar §5-anexo para DRL)*
+> - **Cliente responde com agradecimento** após a entrega → thread **permanece CONCLUÍDO**.
+> - **Cliente responde com pergunta ou nova demanda** após a entrega → thread **reabre como AGUARDANDO** automaticamente (regra R9-C).
+>
+> **Cenário B — cliente envia planilha Excel para a Finaud gerar o DRL:**
+> - A planilha é o **insumo** — o motor aguarda o cliente entregar os dados. Status correto: **AGUARDANDO**. Não há gap aqui; o comportamento é o esperado.
 
 **Total:** 143 threads (49 Aguardando · 89 Concluído · 5 ainda não triadas)
 
@@ -1746,7 +1760,11 @@ Analisadas **203 threads CO do DDR_2011** que receberam mensagem nova após o fe
 5b. Finaud transmite diretamente ao BACEN em nome do cliente (serviço adicional contratado — ver sub-caso R1 abaixo)
 6. **Conclusão = Finaud entregou o arquivo ao cliente ou Finaud transmitiu ao BACEN**
 
-> ⚠️ **Gap técnico:** o motor detecta a entrega do DLI pelo **texto** da mensagem ("segue anexo a remessa DLI", "seguem anexos DLIs 2062"). Se a Finaud entregar sem escrever essas frases, a thread pode ficar como AGUARDANDO indevidamente. Mesmo gap do DDR/4111/DRL.
+> **Entrega e pós-entrega — como o motor se comporta:**
+>
+> - **Finaud envia o ZIP do DLI** (com ou sem a frase "segue em anexo") → thread marcada como **CONCLUÍDO** automaticamente. O motor detecta tanto pelo texto quanto pelo nome do arquivo ZIP (`CNPJ_2062_DATA_I_versao.zip`).
+> - **Cliente responde com agradecimento** ("obrigado", "recebi", "tudo certo") após a entrega → thread **permanece CONCLUÍDO**.
+> - **Cliente responde com pergunta ou nova demanda** após a entrega → thread **reabre como AGUARDANDO** automaticamente (regra R9-C).
 
 > 📌 **Nota — clientes S5:** quando o cliente é classificado como S5 (menor porte), o DLI é calculado automaticamente pelo próprio BACEN com base no COS4010 — a Finaud não gera o arquivo. Threads S5 sobre DLI_2062 são de caráter consultivo/informativo e não seguem o fluxo padrão acima.
 
@@ -1933,7 +1951,11 @@ Analisadas **14 threads CO do DLI_2062** que receberam mensagem nova após o fec
 5a. Se Finaud enviou ao cliente: **Conclusão = Finaud entregou o arquivo**
 5b. Se Finaud transmitiu ao BACEN: **Conclusão = protocolo de aceite recebido**
 
-> ⚠️ **Gap técnico:** o motor detecta a entrega do DLO pelo texto da mensagem. Se a Finaud entregar sem mencionar "segue em anexo" ou "DLO", a thread pode ficar AGUARDANDO indevidamente. Diferença específica do DLO em relação ao DLI: o insumo são **dois arquivos** (COSIF + LEC) — o motor não distingue se está aguardando um ou os dois.
+> **Entrega e pós-entrega — como o motor se comporta:**
+>
+> - **Finaud envia o ZIP do DLO** (com ou sem a frase "segue em anexo") → thread marcada como **CONCLUÍDO** automaticamente. O motor detecta tanto pelo texto quanto pelo nome do arquivo ZIP (`CNPJ_2061_DATA_I_versao.zip`). *(Nota: o insumo são dois arquivos — COSIF + LEC — mas o motor não distingue se está aguardando um ou os dois; ao detectar a entrega do ZIP final, marca como concluído.)*
+> - **Cliente responde com agradecimento** ("obrigado", "recebi", "tudo certo") após a entrega → thread **permanece CONCLUÍDO**.
+> - **Cliente responde com pergunta ou nova demanda** após a entrega → thread **reabre como AGUARDANDO** automaticamente (regra R9-C).
 
 **Total:** 499 threads (295 Aguardando · 187 Concluídas · 17 não triadas)
 

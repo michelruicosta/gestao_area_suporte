@@ -2,6 +2,50 @@
 
 ---
 
+### 2026-07-08 — [TRIAGEM] S5: detecção automática de entrega por nome de arquivo habilitada
+
+**🔎 Em miúdos:** o motor passou a reconhecer quando a Finaud envia o "Relatório Quantitativo" (PDF ou Excel) para um cliente S5 e marcar a thread como CONCLUÍDO automaticamente — igual ao que já acontecia com os outros CADOCs que enviam ZIP.
+
+**Problema:** o CADOC S5 ("Resultado Quantitativo") era o único que não tinha detecção automática por nome de arquivo. Quando a Finaud enviava o PDF ou Excel do relatório, o motor só conseguia reconhecer isso pelo texto da mensagem ("segue em anexo", etc.). Se a mensagem não tivesse essa frase, a thread ficava como AGUARDANDO indevidamente.
+
+**Correção:**
+- `scripts/triagem/helpers.py` — função `tem_anexo_cadoc()`:
+  - Adicionado `"S5": ["quantitativo"]` ao dicionário de termos
+  - Adicionada lógica de extensões separada para S5 (`.pdf`, `.xls`, `.xlsx`) vs demais CADOCs (`.zip`, `.xls`, `.xlsx`, `.csv`, `.txt`) — PDFs são bloqueados para outros CADOCs para evitar confundir com PDFs de balancete enviados por clientes
+  - Corrigido campo de leitura: a função agora lê `nome_original` além de `nome` (o campo real do JSON é `nome_original`)
+- `scripts/triagem/s5.py` — `com_sec5_anexo=False` → `com_sec5_anexo=True`
+
+**Contexto:** durante a investigação identificou-se também que DRL_2160 já estava funcionando corretamente (mesmo supervisor do DDR/4111 com `com_sec5_anexo=True` já ativo). A documentação (DOCUMENTACAO_TRIAGEM.md) que dizia ser um "gap" estava desatualizada — corrigida nesta mesma sessão.
+
+**Validação:** ✅ VALIDADO — 66 testes em `test_triagem_helpers.py` passando, incluindo 7 testes novos que cobrem:
+- S5 detectado por PDF com "quantitativo"
+- S5 detectado por Excel com "quantitativo"
+- Balancete PDF não detectado como S5
+- PDF do S5 não dispara para outros CADOCs
+- CADOC sem termos mapeados (FORCAPITAL) retorna False
+- DDR por ZIP, 4111 por ZIP (regressão confirmada)
+
+sem teste adicional além dos acima: backfill não aplicável (zero threads S5 no ambiente de teste)
+
+---
+
+### 2026-07-08 — [DOC] DOCUMENTACAO_TRIAGEM.md: avisos de "gap técnico" atualizados para texto padrão
+
+**🔎 Em miúdos:** substituímos os avisos de "gap técnico" desatualizados em 5 CADOCs por um texto padronizado que explica como o motor realmente funciona — detecção por ZIP, comportamento com agradecimento e com nova demanda do cliente.
+
+**Problema:** os 5 CADOCs (DDR_2011, 4111, DLI_2062, DLO_2061, DRL_2160) tinham avisos dizendo que o motor só detectava entregas pelo texto da mensagem — o que não era mais verdade desde que a §5-anexo foi implementada. A documentação estava desatualizada em relação ao código.
+
+**Correção:** `documentações/DOCUMENTACAO_TRIAGEM.md` — substituídos os 5 blocos de "Gap técnico" pelo padrão:
+- Finaud envia ZIP → CONCLUÍDO automático (detecção por texto E por nome do arquivo)
+- Cliente agradece → permanece CONCLUÍDO
+- Cliente abre nova demanda → reabre como AGUARDANDO (regra R9-C)
+- DRL_2160: texto padrão idêntico (§5-anexo já estava ativo via supervisor ddr4111.py)
+- S5: texto padrão com PDF/Excel no lugar de ZIP (correção de código feita nesta sessão)
+
+**Validação:** ✅ VALIDADO — verificação manual dos 5 blocos editados confirma texto correto em cada CADOC.
+
+---
+
 ### 2026-07-07 — [TESTE] Mapeamento de padrões de anexos — PADROES_ANEXOS.md criado
 
 **🔎 Em miúdos:** mapeamos todos os tipos de arquivo que aparecem nos e-mails do histórico de produção (8825 e-mails, 4786 threads). Resultado: 9 padrões identificados. Saber o que cada arquivo significa é o primeiro passo para criar regras automáticas de triagem baseadas em anexos.
