@@ -1,5 +1,7 @@
 # Padrões de Anexos — Oráculo 360 Finaud
 
+> **Contexto geral do projeto:** ver `documentações/MAPA_DO_PROJETO.md`
+
 Documento vivo. Cada padrão é mapeado a partir do histórico real de produção e validado com Michel antes de ser gravado aqui. Serve de consulta para o sistema e para futuras sessões.
 
 **Como usar:** antes de implementar qualquer regra que envolva anexos, consultar este documento primeiro. Se o padrão não estiver aqui, mapear e registrar antes de implementar.
