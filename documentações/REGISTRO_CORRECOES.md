@@ -2,6 +2,27 @@
 
 ---
 
+### 2026-07-08 — [ARQUITETURA] Separação dos supervisores DDR_2011, 4111 e DRL_2160 em arquivos independentes
+
+**🔎 Em miúdos:** o arquivo que cuidava de 3 CADOCs ao mesmo tempo foi separado em 3 arquivos independentes. Agora, se as regras do DDR_2011 precisarem mudar, só o arquivo do DDR é tocado — 4111 e DRL_2160 ficam intactos.
+
+**Problema:** `scripts/triagem/ddr4111.py` gerenciava DDR_2011, 4111 e DRL_2160 juntos no mesmo arquivo. Qualquer mudança de regra em um CADOC exigia mexer no arquivo dos três — risco de efeito colateral e falta de clareza sobre quais regras pertencem a qual CADOC.
+
+**Correção:**
+- Criados 3 supervisores independentes:
+  - `scripts/triagem/ddr.py` — regras exclusivas do DDR_2011
+  - `scripts/triagem/cadoc4111.py` — regras exclusivas do 4111
+  - `scripts/triagem/drl.py` — regras exclusivas do DRL_2160
+- `scripts/triagem/constantes.py` — adicionadas `CADOC_TRIAGEM_DDR`, `CADOC_TRIAGEM_4111`, `CADOC_TRIAGEM_DRL`; `CADOC_TRIAGEM_DDR4111` mantida para retrocompat
+- `scripts/triagem_auto_ddr4111.py` — dispatcher atualizado para rotear "DDR"→ddr.py, "4111"→cadoc4111.py, "DRL"→drl.py; `run_triagem_ddr4111` agora faz 3 passes sequenciais
+- `scripts/triagem/ddr4111.py` — mantido para retrocompat com testes e registros legados
+
+**Validação:** ✅ VALIDADO — 269 testes dos módulos core passando; as 2 falhas pré-existentes (TestEventosPorCadocs) não relacionadas a esta mudança.
+
+sem teste: refactor estrutural puro — nenhuma regra de triagem foi alterada; testes existentes cobrem o comportamento intacto.
+
+---
+
 ### 2026-07-08 — [TRIAGEM] S5: detecção automática de entrega por nome de arquivo habilitada
 
 **🔎 Em miúdos:** o motor passou a reconhecer quando a Finaud envia o "Relatório Quantitativo" (PDF ou Excel) para um cliente S5 e marcar a thread como CONCLUÍDO automaticamente — igual ao que já acontecia com os outros CADOCs que enviam ZIP.
