@@ -99,22 +99,29 @@
 - ✅ **Fase 2** — Pipeline reprocessado + todas as 9 correções validadas
 - 🔴 **Fase 3** — TESTE vira nova produção — **aguardando: Michel quer mais melhorias antes**
 
-**1 item ainda aberto na Fase 1 (não bloqueador para Fase 3, mas vai melhorar o sistema):**
+**Todos os itens da Fase 1 encerrados ✅**
 
-| # | Problema | Arquivo | Status |
-|---|---|---|---|
-| Passo 8 | Thread não herda RETORNO_BACEN do segundo email | Script 09 — prioridade de CADOC | 🔴 ABERTO |
-| Verificar leitura de conteúdo dos anexos | xlsx/xml/pdf: sistema abre e lê? | Scripts 02/05 | 🔴 ABERTO |
+| # | Problema | Status |
+|---|---|---|
+| Passo 8 (Parte 2) | Herança RETORNO_BACEN no Script 09 | ✅ 0 threads afetadas — resolvido na raiz pelo Passo 8 Parte 1 |
+| Leitura de conteúdo dos anexos | Sistema abre xlsx/xml/pdf? | ✅ Confirmado: não lê conteúdo — limitação documentada |
 
-Último /fechar: 2026-07-07 (Fase 2 concluída — 9 correções validadas, TESTE pronto para melhorias) — memórias revisadas ✅
+Último /fechar: 2026-07-07 (sessão de mapeamento de anexos — PADROES_ANEXOS.md criado, Fase 1 100% encerrada) — memórias revisadas ✅
 
-### 🔥 Próximo passo — melhorias antes de tornar TESTE a produção
+### 🔥 Próximo passo — melhorias baseadas em padrões de anexos
 
 ---
 
-1. **Passo 8** — implementar lógica no Script 09: se algum email da thread é RETORNO_BACEN, a thread toda vira RETORNO_BACEN. Ver `PENDENCIAS.md` seção Fase 1.
-2. **Verificar leitura de anexos** — o sistema detecta que o arquivo chegou, mas consegue abrir e ler o conteúdo? (xlsx, xml, pdf). Ver `PENDENCIAS.md` seção Fase 1.
-3. **Outras melhorias que Michel definir** — após concluir, ir para Fase 3 (tornar TESTE a produção).
+**Sessão de hoje (07/07 — mapeamento de anexos):**
+- Investigação completa: Passo 8 Parte 2 → 0 threads afetadas (encerrado) · leitura de conteúdo → limitação confirmada (encerrado)
+- Criado `documentações/PADROES_ANEXOS.md` com 9 padrões do histórico de produção (commit `275d187`)
+- Insight: só o Padrão A tem potencial CONCLUÍDO automático; os demais indicam AGUARDANDO quando o cliente envia
+
+**Próxima sessão — ponto de partida:**
+1. **Padrão A → CONCLUÍDO automático** — quando Finaud envia ZIP no padrão BACEN, a thread fecha automaticamente. Ver `PENDENCIAS.md` seção "Padrões de anexos como condições de triagem".
+2. **Padrões como condições AGUARDANDO** — quando o cliente envia arquivo reconhecível (template, COSIF, dados financeiros) → confirmar que thread está aguardando ação da Finaud.
+3. **Extração de data do nome do arquivo** — ZIPs com data no nome (`YYYYMMDD` ou `DDMMYYYY`) podem fornecer data de competência mais precisa que o fallback de data do email.
+4. **Após melhorias**: ir para Fase 3 (TESTE vira nova produção).
 
 ---
 

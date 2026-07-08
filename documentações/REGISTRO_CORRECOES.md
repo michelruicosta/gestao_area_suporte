@@ -2,6 +2,60 @@
 
 ---
 
+### 2026-07-07 — [TESTE] Mapeamento de padrões de anexos — PADROES_ANEXOS.md criado
+
+**🔎 Em miúdos:** mapeamos todos os tipos de arquivo que aparecem nos e-mails do histórico de produção (8825 e-mails, 4786 threads). Resultado: 9 padrões identificados. Saber o que cada arquivo significa é o primeiro passo para criar regras automáticas de triagem baseadas em anexos.
+
+**O que foi feito:**
+- Investigação dos ZIPs do histórico: padrão BACEN (`CNPJ_CADOC_DATA_I/D_versão.zip`), padrão Amaril Franklin (data pura `DDMMYYYY.zip`), ZIPs de retorno CRD (nome numérico), ZIPs problemáticos reenviados pelo cliente
+- Investigação de arquivos COSIF (COS4010, COS4016, MDR da Wise para 4060/4066)
+- Investigação de templates da Finaud (`Importacao_LEC`, `Importacao_DRL`, `DOC_4111`, `RD_PREFIXADA`, `RD_LFT`)
+- Criado `documentações/PADROES_ANEXOS.md` com 9 padrões: A (ZIP CADOC Finaud), B (ZIP Amaril Franklin), C (ZIP CADOC cliente), D (retorno CRD), E (dados financeiros), E2 (comunicação BACEN), F (templates Finaud), G (e-mails informativos Finaud/INTERNO), H (COSIF)
+- **Insight chave:** só o Padrão A (Finaud envia ZIP CADOC) tem potencial para regra CONCLUÍDO automático; todos os outros padrões indicam AGUARDANDO quando o cliente envia
+
+**Correção de código:** nenhuma — esta sessão foi exclusivamente de investigação e documentação.
+
+**Validação:** ✅ VALIDADO — documento consultável em `documentações/PADROES_ANEXOS.md`; commit `275d187`.
+
+---
+
+### 2026-07-07 — [TESTE] Passo 8 (Parte 2) — Herança RETORNO_BACEN no Script 09: 0 threads afetadas
+
+**🔎 Em miúdos:** verificamos se havia threads no histórico que deveriam ter RETORNO_BACEN mas ficaram com outro CADOC por causa de um email anterior diferente. Resultado: nenhuma foi afetada — a ampliação da detecção (Passo 8 Parte 1) resolveu o problema na raiz.
+
+**Problema original:** Script 09 não tinha lógica de prioridade — se o primeiro email da thread era DDR_2011 e o segundo era RETORNO_BACEN, a thread ficava DDR_2011.
+
+**Investigação:** varredura completa do JSON 02 para encontrar threads com emails mistos (CADOC ≠ RETORNO_BACEN mas algum email = RETORNO_BACEN). Resultado: 0 threads nessa condição.
+
+**Explicação:** a ampliação da detecção no Passo 8 (Parte 1) — adicionando "rejeitado/rejeição/recusa/aviso bacen" — fez com que os e-mails que antes eram classificados errado passassem a ser RETORNO_BACEN desde o Script 05. Com a classificação correta na origem, o Script 09 não precisou de lógica de prioridade.
+
+**Correção:** nenhuma alteração no Script 09 foi necessária.
+
+**Validação:** ✅ VALIDADO — 0 threads afetadas confirmado na varredura do JSON 02.
+
+**sem teste: investigação analítica — sem código de produção alterado.**
+
+---
+
+### 2026-07-07 — [TESTE] Leitura de conteúdo de anexos: limitação conhecida documentada
+
+**🔎 Em miúdos:** o sistema sabe que um arquivo chegou (detecta o nome), mas não abre e nem lê o que está dentro. Isso foi confirmado e documentado como limitação do sistema atual.
+
+**O que foi verificado:**
+- Script 02: baixa os arquivos para `data/anexos/` — o arquivo fica no disco
+- Script 05: usa `texto_completo = f"{assunto} {corpo}"` — nome do arquivo foi adicionado no Passo 4, mas conteúdo interno (tabelas do xlsx, texto do pdf, dados do xml) nunca é lido
+- Nenhum script da rotina abre anexos para extrair dados
+
+**Limitação confirmada:** sem leitura de conteúdo interno. Para datas: usa-se nome do arquivo (quando segue padrão BACEN) ou fallback para data do email (Passo 7).
+
+**Relevância para próximas melhorias:** padrões do `PADROES_ANEXOS.md` podem ser usados como condições de triagem (ex.: "cliente enviou arquivo com padrão F → AGUARDANDO"), sem precisar abrir o conteúdo.
+
+**Correção:** nenhuma — confirmação e documentação de comportamento existente.
+
+**sem teste: sem código de produção alterado.**
+
+---
+
 ### 2026-07-07 — [TESTE] Fase 2 concluída — Pipeline reprocessado e todas as correções validadas
 
 **🔎 Em miúdos:** depois de corrigir 9 bugs no código (Passos 1-9) e investigar o Passo 10 (sem alteração de código), rodamos o pipeline inteiro do zero — dos 47 e-mails coletados no Gmail até a triagem final — e validamos que todas as 9 correções funcionaram na prática.

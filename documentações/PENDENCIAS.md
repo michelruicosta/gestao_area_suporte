@@ -147,28 +147,7 @@ impacto da Instrução Normativa BCB nº 755 no preenchimento do DRL 2160.
 
 ---
 
-### Passo 8 — Regra de prioridade: RETORNO_BACEN prevalece sobre outros CADOCs na thread
-
-**Problema:** quando uma thread tem dois emails — o primeiro classificado como DDR_2011 e o
-segundo como RETORNO_BACEN — o CADOC da thread fica DDR_2011 (do primeiro email). Não existe
-lógica de prioridade: "se algum email da thread é RETORNO_BACEN, a thread inteira é RETORNO_BACEN."
-
-**Thread que revelou o bug:** Auditoria #07 — Intra Investimentos, assunto
-"SUPORTE - FINAUD - INTRA INVESTIMENTOS". Primeiro email: rejeição do BC (deveria ser
-RETORNO_BACEN mas foi classificado como DDR_2011 pela assinatura "Certificação PQO Cadastro").
-Segundo email: resposta da Finaud, classificado corretamente como RETORNO_BACEN.
-- Buscar no JSON 01 por: remetente Intra Investimentos
-
-**O que fazer:**
-- Arquivo: `scripts/09_integrar_dados_painel.py`
-- Na lógica que define o `cadoc` da thread (agrega emails individuais → thread):
-  verificar se algum email da thread tem `cadoc = RETORNO_BACEN`
-  se sim → `cadoc` da thread = `RETORNO_BACEN`, independente dos outros emails
-
-**Atenção:** antes de implementar, verificar no JSON 02 quantas threads têm esse padrão para
-garantir que a regra não gera surpresas.
-
-**Como validar:** processar a thread da Intra e confirmar `cadoc = RETORNO_BACEN`.
+~~Passo 8 — Regra de prioridade: RETORNO_BACEN prevalece sobre outros CADOCs na thread~~ ✅ CONCLUÍDO (2026-07-07 — varredura do JSON 02 confirmou 0 threads afetadas; ampliação da detecção no Passo 8 Parte 1 resolveu o problema na raiz; ver REGISTRO_CORRECOES.md)
 
 ---
 
@@ -182,16 +161,27 @@ garantir que a regra não gera surpresas.
 
 ---
 
-### 🔴 URGENTE — Verificar leitura do conteúdo dos anexos (pós-validação Fase 1)
+~~🔴 URGENTE — Verificar leitura do conteúdo dos anexos (pós-validação Fase 1)~~ ✅ CONCLUÍDO (2026-07-07 — confirmado: sistema não lê conteúdo interno; Script 02 baixa arquivos para `data/anexos/`; Script 05 usa nome do arquivo mas não abre; limitação conhecida documentada no REGISTRO_CORRECOES.md)
 
-**Problema:** o sistema detecta que o anexo existe e salva o nome do arquivo (ex.: `2011 (DDR) (28).xlsx`), mas não sabemos se consegue **abrir e ler o conteúdo** do arquivo.
+---
 
-**Revelado no contexto de:** Passo 7 — Guru CTVM, que enviou o DDR em anexo sem nenhuma data no texto. Se o sistema conseguisse ler o conteúdo do xlsx, poderia extrair a data de competência de dentro do arquivo — que seria mais preciso do que usar a data de envio como fallback.
+### Padrões de anexos como condições de triagem (melhorias futuras)
 
-**O que verificar:**
-1. O Script 02 baixa os anexos para disco? Em qual pasta?
-2. O Script 05 tenta abrir o arquivo baixado para extrair datas ou texto?
-3. Se não tenta: avaliar se vale implementar leitura básica de xlsx/pdf para extração de data
+**Contexto:** mapeamento completo dos 9 padrões de anexos feito em 07/07/2026 — ver `documentações/PADROES_ANEXOS.md`.
+
+**O que implementar (prioridade a definir com Michel):**
+
+1. **Padrão A → CONCLUÍDO automático:** quando a Finaud envia ZIP no padrão BACEN (`CNPJ_CADOC_DATA_I/D_versao.zip`) em um email da Finaud (`lado = FINAUD`) → marcar thread como CONCLUÍDO automaticamente.
+   - Arquivo alvo: `scripts/triagem/motor.py` ou supervisor de cada CADOC
+   - Validar: não disparar para emails do CLIENTE com mesmo padrão (Padrão C)
+
+2. **Padrões C/D/E/E2/F/H → AGUARDANDO:** quando o cliente envia um arquivo reconhecível (dados financeiros, template da Finaud preenchido, COSIF, retorno CRD) → pode ser usado para confirmar que a pendência ainda está em aberto.
+   - Uso mais sutil: evidência de que o cliente está cooperando mas ainda aguarda ação da Finaud
+
+3. **Extração de data do nome do arquivo (Padrão A/B):** ZIP com `DATA` no nome (`CNPJ_CADOC_YYYYMMDD_...`) ou ZIP Amaril Franklin (`DDMMYYYY.zip`) → extrair data de competência do nome antes de usar fallback de data do email.
+   - Arquivo alvo: `scripts/05_classificar_emails_regulatorio.py`
+
+**Próximo passo sugerido:** implementar item 1 (mais alto valor, mais direto). Discutir com Michel antes.
 
 ---
 
