@@ -1197,6 +1197,7 @@ def _processar_threads(threads_raw: List[Dict[str, Any]], _anexos_por_id: dict =
             "threadId": thread.get("threadId"),
             "assunto": thread.get("assunto"),
             "cliente": cliente,
+            "empresa": _resolver_empresa({"assunto": thread.get("assunto", ""), "mensagens": mensagens_formatadas}),
             "responsavel": thread.get("responsavel"),
             "responsabilidade": thread.get("pendencia", ""),  # FINAUD ou CLIENTE
             "lado_responsavel": thread.get("pendencia", ""),  # Alias
