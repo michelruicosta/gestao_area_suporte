@@ -563,24 +563,149 @@ Era necessário antes de começar a implementação para evitar ruído de vocabu
 
 ---
 
-## ▶️ Próximo passo
+## ▶️ Próximo passo — Sessão dedicada: rastrear a tela operacional campo a campo
 
-### 🔴 Sessão dedicada — rastreamento campo a campo da tela operacional
+### Por que estamos fazendo isso
 
-**Objetivo único:** entender o sistema de trás para frente, confirmado por Michel.
+O sistema cresceu por cima de si mesmo. Cada bug corrigido revelava outro
+caminho escondido. O mesmo dado calculado em dois lugares. Caminhos A e B
+para a mesma informação. Bugs que voltam porque a causa raiz nunca foi atacada.
 
-**Como começar:**
-1. Michel abre `localhost:5000/operacional` e faz login
-2. Michel lista em voz alta todos os campos que vê — no card e no modal (esperamos ~12-15)
-3. A IA rastreia cada campo: onde nasce → por onde passa → onde pode quebrar → como chega na tela
-4. Michel confirma cada passo — a garantia de cobertura vem dele, não da IA
-5. Resultado: mapa completo, confirmado, base para simplificar
+Michel identificou que não adianta continuar corrigindo sintomas sem entender
+o sistema de verdade. A decisão foi: parar tudo, mapear o sistema de trás para
+frente, confirmado por Michel — não pela IA.
 
-**O que essa sessão NÃO faz:** não corrige nada, não implementa nada. Só mapeia.
+### O que a IA lê antes de Michel abrir a tela
 
-**Por que antes de qualquer outra coisa:** sem esse mapa, continuamos corrigindo sintomas sem saber se há mais caminhos escondidos. Com o mapa, sabemos exatamente o que simplificar e onde.
+Antes de começar o rastreamento, a IA lê obrigatoriamente:
 
-**Itens que ficam pausados até o mapa estar pronto:**
+1. GUIA_CAMPOS_OPERACIONAL.md — ver o que já está documentado e quais campos faltam
+2. documentações/LINHAGEM_DADOS_OPERACIONAL.md — mapa já existente do caminho dos dados
+3. scripts/09_integrar_dados_painel.py — script que monta o JSON 03
+4. painel_oraculo.py — o que o painel calcula ao vivo
+
+Com esses 4 arquivos lidos, a IA já chega sabendo os caminhos conhecidos —
+o rastreamento confirma ou corrige, em vez de descobrir do zero.
+
+### Como a sessão começa
+
+1. Michel abre localhost:5000/operacional e faz login
+2. Michel lista em voz alta todos os campos que vê — no card e no modal
+3. A IA confirma a lista e começamos a rastrear um por um
+
+### Como rastreamos cada campo
+
+Para cada campo, sempre a mesma sequência:
+
+1. Michel nomeia — "esse campo aqui mostra o nome da empresa"
+2. A IA rastreia em 4 perguntas:
+   - Onde aparece na tela? (qual linha de código serve esse campo)
+   - Onde foi gravado? (qual arquivo JSON)
+   - Qual script gravou? (qual etapa do pipeline)
+   - De onde o script tirou? (e-mail original, cadastro, config)
+3. A IA aponta os riscos em cada passo
+4. Michel confirma — "faz sentido" ou "isso não bate com o que vejo"
+
+### O que o rastreamento de cada campo deve cobrir
+
+Não basta documentar o caminho quando tudo funciona. Cada campo precisa ter:
+
+1. Caminho feliz — o que acontece quando tudo funciona
+2. O que pode dar errado em cada passo
+3. O que o sistema faz quando dá errado: avisa? silencia? grava errado? grava vazio?
+4. O que Michel faz para corrigir
+5. Se a correção reflete na hora ou exige rodar o pipeline de novo
+
+### O que garante que a IA não esquece de registrar
+
+Após Michel confirmar cada campo, a IA declara obrigatoriamente:
+
+  "Campo [nome] confirmado. Vou registrar agora no
+  GUIA_CAMPOS_OPERACIONAL.md antes de continuar."
+
+Só depois de registrar e mostrar o que foi escrito, a IA passa para o próximo campo.
+Se a IA pular esse passo, Michel interrompe: "Registrou o campo anterior?"
+
+### Como garantir que nada ficou de fora
+
+Ao final de todos os campos, Michel olha a tela e responde:
+"tem algum dado aqui que a gente não rastreou?"
+Se sim, rastreia. Se não, o mapa está completo.
+
+### Regra: a tela manda, não a IA
+
+Se a IA disser "o caminho está limpo" e Michel disser "mas eu vejo dado errado
+na tela" — para tudo e investiga antes de continuar. O que Michel vê é a verdade.
+
+### Regra: dependência entre campos
+
+Se um campo depender de outro ainda não rastreado, a IA anota a dependência,
+sugere a ordem e não avança sem Michel confirmar.
+
+### Regra: nenhuma correção durante o rastreamento
+
+A IA registra o bug no PENDENCIAS.md e continua.
+Exceção: Michel decide explicitamente "esse precisa corrigir agora."
+
+### O que fazer depois que o mapa estiver confirmado
+
+Passo 1 — Classificar: limpo / dupla computação / calculado ao vivo / falha silenciosa
+Passo 2 — Decidir com Michel: antes e depois em linguagem simples, Michel aprova
+Passo 3 — Corrigir: simular → Michel aprova → corrigir → testar → registrar → validar na tela
+Ordem: problemas que causam dado errado na tela vêm antes.
+
+### Onde ficam registradas as correções
+
+1. GUIA_CAMPOS_OPERACIONAL.md — status muda de ⚠️ para ✅ com linha explicativa
+2. REGISTRO_CORRECOES.md — entrada datada: Em miúdos + Problema + Correção + Validação
+
+### Onde fica o rastreamento — GUIA_CAMPOS_OPERACIONAL.md
+
+Não criamos documento novo. Campos 1–3 que já existem ganham a estrutura nova.
+Campos 4–11 entram já no formato certo.
+
+Cada campo terá:
+- O que mostra na tela
+- Caminho completo (as 4 perguntas)
+- O que pode dar errado em cada passo
+- O que o sistema faz quando dá errado
+- O que Michel faz para corrigir
+- Se a correção reflete na hora ou exige rodar o pipeline
+- Status: limpo / dupla computação / ⚠️ problema DD/MM / ✅ corrigido DD/MM
+- Como consultar quando algo der errado
+
+### Como e quando o documento é atualizado
+
+Campo confirmado → IA declara → IA registra → IA mostra → próximo campo.
+
+Se a sessão terminar antes de rastrear tudo:
+- /fechar registra quais campos foram confirmados e quais faltam
+- Próxima sessão começa pelo primeiro campo sem status preenchido
+- Nenhum campo é refeito
+
+### Como as sessões se conectam
+
+/iniciar lê SESSAO_ATUAL.md e sabe onde paramos.
+/fechar salva o que foi feito e o que falta.
+GUIA_CAMPOS_OPERACIONAL.md é o fio entre todas as sessões.
+
+### EM ANDAMENTO — Campo Empresa (iniciado em 09/07/2026)
+
+Rastreamento iniciado como exemplo do método. Continuar na próxima sessão.
+
+Perguntas pendentes de verificação no código (Script 02 e Script 09):
+
+1. De qual campo exato do e-mail vem o remetente? É só o From: ou tem fallback
+   para Reply-To ou CC? (sabemos que Bug B era exatamente Reply-To sendo confundido
+   com remetente — isso precisa estar documentado aqui)
+2. O que acontece se o remetente vier vazio ou malformado?
+3. O que acontece se o mesmo e-mail chegar duas vezes?
+4. O que o Script 09 faz quando o domínio não está no cadastro?
+   Grava vazio? Grava null? Ignora? Avisa na tela?
+5. Se Michel corrigir o cadastro manualmente, o campo reflete na hora
+   ou precisa rodar o pipeline de novo? Qual script?
+
+Itens pausados até o mapa estar pronto:
 - Campos 4–11 do GUIA_CAMPOS_OPERACIONAL.md
 - Bug A (domínios faltantes no cadastro)
 - Tela de Triagem com Fable
