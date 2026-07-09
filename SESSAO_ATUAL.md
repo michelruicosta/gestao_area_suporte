@@ -8,6 +8,55 @@
 
 ---
 
+## 📓 Diário da sessão (2026-07-09)
+
+---
+
+### Campo `empresa` nas threads do JSON 03 ✅
+
+- **Problema:** campo `empresa` vinha vazio para todas as 36 threads da tela operacional, mesmo após Script 09 ter rodado em 08/07.
+- **Causa raiz:** Script 09 tem dois fluxos — eventos (antigo) e threads (novo). O campo `empresa` foi adicionado ao fluxo de eventos mas não ao dict `thread_formatada` em `_processar_threads`. A tela usa o fluxo novo.
+- **Correção:** adicionado `_resolver_empresa(...)` dentro do dict `thread_formatada` em `scripts/09_integrar_dados_painel.py`.
+- **Testes:** 5 testes criados em `tests/test_09_integrador_empresa.py` — todos passando ✅
+- **Validação:** API `/api/dados?data=2026-07-03` confirmou 42/42 registros com empresa preenchida.
+- **Commit:** `8296568`
+
+### Descoberta estratégica — padrão de dupla computação (não registrado em código)
+
+**O que identificamos nesta sessão:**
+
+O sistema tem um padrão sistêmico: o mesmo dado é calculado em dois lugares diferentes. Quando um lugar é corrigido, o outro continua errado — e o bug parece resolvido mas volta de outro ângulo.
+
+**Exemplos confirmados:**
+- `empresa`: calculado no Script 09 (pipeline) E no painel ao vivo — corrigido hoje no Script 09
+- `responsavel_pela_acao`: calculado ao vivo no painel a cada requisição — não está gravado no JSON 03
+- Categorias `4111` e `DDR4111`: mesmo CADOC com dois nomes em lugares diferentes
+
+**Decisão tomada:** antes de qualquer correção nova, perguntar "dois lugares calculam o mesmo dado?". Se sim, atacar a raiz — escolher um lugar como fonte única e remover o outro. Nunca corrigir os dois em paralelo.
+
+**O que NÃO fizemos:** não registramos a regra no CLAUDE.md nem atualizamos o PENDENCIAS.md. Ficou para a próxima sessão — mas com clareza do que e como.
+
+---
+
+### Conversa estratégica — complexidade do sistema
+
+Michel identificou que o sistema cresceu por adição de sintomas, não por eliminação de causas. Resultado: vários campos chegam na tela por dois caminhos diferentes, empresa aparece no card (caminho A) e no modal (caminho B), cliente e Finaud já se confundiram em campos de origem.
+
+**Decisão: abrir uma sessão dedicada com objetivo único:**
+
+Rastrear cada campo visível na tela operacional de trás para frente — da tela até o e-mail original — um campo por vez. Michel confirma cada passo porque ele conhece o negócio. A garantia de cobertura vem de Michel olhar a tela e confirmar que nenhum campo ficou de fora.
+
+**Como a sessão deve começar:**
+1. Michel abre a tela operacional (`localhost:5000/operacional`)
+2. Michel lista todos os campos que vê — card + modal (são cerca de 12-15)
+3. A IA rastreia cada campo do início ao fim: onde nasce, por onde passa, onde pode quebrar, como chega na tela
+4. Para cada campo: mostra o caminho em linguagem simples, Michel confirma ou corrige
+5. Ao final: mapa completo e confirmado por Michel — não por estimativa da IA
+
+**O que essa sessão entrega:** visão completa do sistema confirmada pelo dono, não pela IA. Base para simplificar com segurança.
+
+---
+
 ## 📓 Diário da sessão (2026-07-08)
 
 ---
@@ -516,11 +565,26 @@ Era necessário antes de começar a implementação para evitar ruído de vocabu
 
 ## ▶️ Próximo passo
 
-1. **Sempre ao iniciar:** `python executar_tudo.py --status` + verificar seção "🔗 AGUARDANDO GATILHO" do `PENDENCIAS.md`.
-2. **Verificar campo `empresa` no JSON 03** — rodar Script 09 e confirmar que o campo aparece nos eventos. O código está pronto; o arquivo pode estar desatualizado.
-3. **Continuar `GUIA_CAMPOS_OPERACIONAL.md`** — documentar campos 4 a 11 (status, responsável, CADOC, prazo, etc.) seguindo o mesmo template dos campos 1–3.
-4. **Corrigir Bug A** — cadastrar domínios faltantes no `cadastro_clientes_cadoc.json`: Oz Câmbio, Lastro, Galápagos Capital, Terra Investimentos, Intra Investimentos.
-5. **Após isso:** retomar 🔴 Tela de Triagem com Fable OU 🔴 Pacote 1 da Análise Fable — Michel escolhe a ordem.
+### 🔴 Sessão dedicada — rastreamento campo a campo da tela operacional
+
+**Objetivo único:** entender o sistema de trás para frente, confirmado por Michel.
+
+**Como começar:**
+1. Michel abre `localhost:5000/operacional` e faz login
+2. Michel lista em voz alta todos os campos que vê — no card e no modal (esperamos ~12-15)
+3. A IA rastreia cada campo: onde nasce → por onde passa → onde pode quebrar → como chega na tela
+4. Michel confirma cada passo — a garantia de cobertura vem dele, não da IA
+5. Resultado: mapa completo, confirmado, base para simplificar
+
+**O que essa sessão NÃO faz:** não corrige nada, não implementa nada. Só mapeia.
+
+**Por que antes de qualquer outra coisa:** sem esse mapa, continuamos corrigindo sintomas sem saber se há mais caminhos escondidos. Com o mapa, sabemos exatamente o que simplificar e onde.
+
+**Itens que ficam pausados até o mapa estar pronto:**
+- Campos 4–11 do GUIA_CAMPOS_OPERACIONAL.md
+- Bug A (domínios faltantes no cadastro)
+- Tela de Triagem com Fable
+- Pacote 1 da Análise Fable
 
 Demais pendências abertas: ver `documentações/PENDENCIAS.md`.
 
