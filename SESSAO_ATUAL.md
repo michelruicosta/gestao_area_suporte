@@ -8,6 +8,34 @@
 
 ---
 
+## 📓 Diário da sessão (2026-07-08)
+
+---
+
+### Alerta CLIENTE_DESCONHECIDO ✅
+- **O que foi feito:** 7º alerta adicionado ao sistema de notificações — quando chega e-mail sem remetente identificável, o sistema avisa por e-mail listando os casos com assunto e data.
+- **Arquivos:** `data/json/config/alertas.json` + `painel_oraculo.py`
+- **Registrado:** REGISTRO_CORRECOES.md entrada 2026-07-08 17:00
+
+### Arquitetura — `empresa` movida para Script 09 ✅ (com ressalva)
+- **O que foi feito:** a resolução do nome oficial da empresa saiu do painel (ao vivo) e passou para o Script 09 (pipeline). Código implementado e Script 09 rodado.
+- **⚠️ Ressalva:** ao verificar o JSON 03 atual, o campo `empresa` não está presente (0 threads com empresa). O Script 09 tem o código, mas o arquivo pode estar desatualizado. Verificar e rodar o Script 09 de novo no início da próxima sessão.
+- **Arquivos:** `scripts/09_integrar_dados_painel.py` + `painel_oraculo.py`
+- **Registrado:** REGISTRO_CORRECOES.md entrada 2026-07-08 22:03
+
+### Documentação — GUIA e LINHAGEM ✅
+- **`documentações/GUIA_CAMPOS_OPERACIONAL.md`:** campos 1, 2 e 3 documentados com história, regras e passo a passo técnico. Campos 4–11 pendentes.
+- **`documentações/LINHAGEM_DADOS_OPERACIONAL.md`:** criado — mapa completo do caminho de cada dado desde o e-mail até a tela. Inclui: fluxo pipeline, todos os campos dos 6 arquivos fonte explicados em linguagem simples, e matriz final (campo na tela → arquivo de origem → script que criou).
+- **`documentações/MAPA_DO_PROJETO.md`:** nova linha na seção "Tela e painel" apontando para a linhagem.
+- **`documentações/PENDENCIAS.md`:** item arquitetural registrado (🟡 médio prazo) — cálculos de `empresa` e `responsavel_pela_acao` ainda feitos ao vivo no painel.
+
+### Descobertas da sessão
+- A tela `/operacional` usa **6 arquivos JSON** (não 3 como parecia): JSON 03 + triagem AG/CO + pares de threads + cadastro de clientes + rótulos de empresa
+- Os campos `lado_responsavel`, `secao_operacional` e `data_ultima_msg` no JSON 03 são duplicatas (aliases) — candidatos a remoção futura
+- Bug B (CC/Reply-To capturado como cliente) e registro de novos colaboradores Finaud (`miguel.santos`, `sarah.sa`) ficaram para próxima sessão
+
+---
+
 ## 📓 Diário da sessão (2026-07-07)
 
 > **Como usar:** cada passo do plano de correção do TESTE tem uma entrada aqui.
@@ -489,12 +517,14 @@ Era necessário antes de começar a implementação para evitar ruído de vocabu
 ## ▶️ Próximo passo
 
 1. **Sempre ao iniciar:** `python executar_tudo.py --status` + verificar seção "🔗 AGUARDANDO GATILHO" do `PENDENCIAS.md`.
-2. **🔴 Tela de Triagem com Fable** OU **🔴 Pacote 1 da Análise Fable** — Michel escolhe qual vem primeiro.
-3. **🟡 Pacote 2 + Padronização de categorias** — desbloqueada: a Análise Fable (pré-requisito) foi entregue em 02/07.
-4. **🟡 Revisão das demais telas** · **🟡 Renumeração dos scripts + JSONs**.
-5. **🔵 BACKLOG:** Pacote 3 performance (absorve o item ijson) · Pacote 4 faxina (pode ser fatiado).
+2. **Verificar campo `empresa` no JSON 03** — rodar Script 09 e confirmar que o campo aparece nos eventos. O código está pronto; o arquivo pode estar desatualizado.
+3. **Continuar `GUIA_CAMPOS_OPERACIONAL.md`** — documentar campos 4 a 11 (status, responsável, CADOC, prazo, etc.) seguindo o mesmo template dos campos 1–3.
+4. **Corrigir Bug A** — cadastrar domínios faltantes no `cadastro_clientes_cadoc.json`: Oz Câmbio, Lastro, Galápagos Capital, Terra Investimentos, Intra Investimentos.
+5. **Após isso:** retomar 🔴 Tela de Triagem com Fable OU 🔴 Pacote 1 da Análise Fable — Michel escolhe a ordem.
 
-Demais pendências abertas: ver `PENDENCIAS.md`.
+Demais pendências abertas: ver `documentações/PENDENCIAS.md`.
+
+Último /fechar: 2026-07-08 — memórias revisadas ✅
 
 ### Feito nesta sessão (01/07/2026 — itens pequenos do backlog + carga + 23 validações)
 

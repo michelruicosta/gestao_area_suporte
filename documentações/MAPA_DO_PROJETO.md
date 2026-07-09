@@ -123,8 +123,10 @@ A fonte completa é o `CLAUDE.md`. Resumo:
 
 | Pergunta | Documento |
 |---|---|
-| Como cada tela do painel funciona (especificação)? | `documentações/ESPEC_TELA_OPERACIONAL.md` |
+| O que é cada campo da tela operacional? De onde vem? Quais regras? | `documentações/GUIA_CAMPOS_OPERACIONAL.md` ← **guia definitivo campo a campo** |
+| De onde vem cada dado? Qual JSON? Qual script criou? | `documentações/LINHAGEM_DADOS_OPERACIONAL.md` ← **mapa de origem dos dados** |
 | Revisão de UX das telas (olhar de usuário novo)? | `documentações/REVISAO_TELAS.md` |
+| Validação campo a campo com dados reais de produção (diário de análise)? | `documentações/VALIDACAO_CAMPOS_TELA.md` |
 
 ---
 
@@ -251,7 +253,7 @@ Tela web   →  lê:     threads_aguardando_auto.json + threads_concluidas_auto.
 | `scripts/09_integrar_dados_painel.py` | `03_integrador_dados_site.json` | Scripts 11, 13, 14, 15, 16 (todos leem o 03) · tela web |
 | `scripts/05_classificar_emails_regulatorio.py` | `02_classificação_dados_brutos_gmail_editado.json` | Script 09 (lê o 02) |
 | `scripts/02_coletar_emails_gmail.py` | `02_classificação_dados_brutos_gmail_editado.json` | Script 05 (lê o 02) |
-| `painel_oraculo.py` (tela web) | Templates em `templates/` | `pipeline_jobs.py` · `ESPEC_TELA_OPERACIONAL.md` |
+| `painel_oraculo.py` (tela web) | Templates em `templates/` | `pipeline_jobs.py` · `GUIA_CAMPOS_OPERACIONAL.md` |
 | `pipeline_jobs.py` | Cargas disparadas pela tela | Logs em `logs/pipeline/` · MEL-07 (scripts_status) |
 | Regras de triagem (qualquer) | Motor + JSONs de saída | Backfill retroativo obrigatório · `DOCUMENTACAO_TRIAGEM.md` · testes |
 

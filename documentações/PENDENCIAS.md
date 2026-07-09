@@ -252,6 +252,96 @@ Após o git estar funcionando:
 
 ---
 
+## 🟡 Auto-cadastro de empresas e colaboradores (2026-07-08)
+
+**Contexto:** levantado durante a validação campo a campo da tela operacional — campos `empresa` e `colaborador` nunca preenchidos no JSON.
+
+**Regra definida com Michel:**
+- Quando chega um e-mail de domínio desconhecido → sistema cadastra automaticamente a empresa (nome derivado do domínio) + adiciona o colaborador (nome + e-mail)
+- Dispara **notificação na tela** para Michel confirmar ou corrigir o nome da empresa
+- Quando o domínio já existe no cadastro → adiciona o colaborador silenciosamente (sem notificação)
+- O cadastro (`cadastro_clientes_cadoc.json`) é a **fonte oficial** do nome da empresa
+
+**Regra de exibição na tela:**
+- Finaud envia → mostra colaborador da Finaud + empresa "Finaud"
+- Cliente envia → mostra colaborador da empresa cliente + nome da empresa cliente
+
+**Novos colaboradores Finaud a cadastrar (imediato):**
+- `miguel.santos@finaud.com.br`
+- `sarah.sa@finaud.com.br`
+
+**O que implementar:**
+1. Script 09 (ou Script 06): detectar domínio do remetente, consultar cadastro, cadastrar empresa/colaborador automaticamente
+2. Painel: tela de notificações para confirmação/correção de empresas novas
+3. Campo `empresa` passar a ser preenchido sempre (via cadastro)
+4. Campo `colaborador` passar a ser preenchido com nome + e-mail do remetente
+
+**Arquivos:** `scripts/09_integrar_dados_painel.py`, `data/json/config/cadastro_clientes_cadoc.json`, `painel_oraculo.py` (notificações)
+
+---
+
+## ✅ Arquitetura — tela consulta múltiplos arquivos ao vivo em vez de ler JSON pronto (2026-07-08)
+**Resolvido em 2026-07-08** — campo `empresa` movido para Script 09. Ver REGISTRO_CORRECOES.md entrada 2026-07-08 22:03.
+
+<!--
+
+**Contexto:** identificado durante a validação campo a campo da tela operacional.
+
+**Problema:** o painel (`painel_oraculo.py`) consulta `cadastro_clientes_cadoc.json` na hora de servir os dados para a tela, para enriquecer o campo `empresa` com o nome oficial da empresa. Isso significa que a tela não apenas lê o JSON — ela também faz lookups em outros arquivos a cada carregamento.
+
+**Por que é errado:** a tela deveria apenas consumir o que já está pronto no JSON. Carregar dados de múltiplos arquivos ao vivo torna o sistema mais lento, mais difícil de entender e mais fácil de quebrar silenciosamente.
+
+**Correção:** mover a resolução do campo `empresa` para o Script 09 (`09_integrar_dados_painel.py`): na hora de montar o evento, consultar `cadastro_clientes_cadoc.json`, resolver o nome oficial da empresa pelo e-mail ou domínio do cliente, e já gravar `empresa` no `03_integrador_dados_site.json`. A tela passa a ler o campo pronto, sem consulta adicional.
+
+**Arquivos envolvidos:**
+- `scripts/09_integrar_dados_painel.py` — adicionar a lógica de resolução de `empresa`
+- `painel_oraculo.py` — remover a função `_enriquecer_threads_com_empresa` e suas chamadas
+- `data/json/pipeline/03_integrador_dados_site.json` — passará a ter o campo `empresa` preenchido
+-->
+
+---
+
+## 🟡 Campo "Cliente" — bugs identificados na validação de campos (2026-07-08)
+
+**Contexto:** levantado durante a validação campo a campo da tela operacional (`VALIDACAO_CAMPOS_TELA.md`).
+
+### Bug A — Alias de departamento capturado como nome de cliente
+**Problema:** quando a empresa usa um email de departamento como remetente (`compliance@empresa.com.br`, `financeiro@empresa.com.br`, `risco@empresa.com.br`), o sistema exibe o alias ("compliance", "Financeiro", "risco") em vez do nome da empresa — impossível saber de qual cliente se trata.
+**Casos confirmados em produção:** 20 threads — Oliveira Trust, Monopólio, Atual Câmbio, Accredito SCD, Trustee DTVM, Carol DTVM, BR Capital DTVM, Traders DTVM.
+**Correção:** cadastrar os emails de alias em `data/json/config/cadastro_clientes_cadoc.json` mapeando para o nome correto da empresa.
+**Arquivo:** `data/json/config/cadastro_clientes_cadoc.json`
+
+### Bug B — Campo CC/Reply-To capturado como nome de cliente
+**Problema:** em 8 threads, o sistema confundiu o campo CC ou Reply-To do email com o remetente principal e usou esse conteúdo como nome do cliente. Resultado: aparece `cc: Adriana Martins` ou `responder a: Celso Julich Junior - Unicred do Brasil` no lugar do nome do cliente.
+**Casos confirmados em produção:** ECSA (5 threads), Unicred do Brasil (2 threads), UY3 (1 thread).
+**Correção:** Script 05 (`scripts/05_classificar_emails_regulatorio.py`) — na função `montar_contatos_origem_destino_para_item` (linha ~2115), o campo `reply_to_raw` está sendo usado como remetente real quando é de domínio externo. A correção é ignorar o `Reply-To` ao montar o `contato_origem` e usar sempre o campo `DE:` original.
+**Arquivo:** `scripts/05_classificar_emails_regulatorio.py` — função `montar_contatos_origem_destino_para_item`, linha ~2115
+
+### Bug C — Cliente DESCONHECIDO sem alerta
+✅ **Resolvido em 2026-07-08** — alerta `cliente_desconhecido` adicionado ao sistema de notificações (`alertas.json` + `painel_oraculo.py`). Ver REGISTRO_CORRECOES.md entrada 2026-07-08 17:00.
+
+---
+
+## 🟡 Arquitetura — cálculos feitos na hora de servir que deveriam estar no pipeline (2026-07-08)
+
+**Contexto:** identificado durante o mapeamento de linhagem de dados da tela operacional.
+
+**Problema:** a tela faz dois cálculos que deveriam estar prontos no JSON 03:
+- `empresa`: o Script 09 já tenta resolver, mas o `painel_operacional_snapshot.py` refaz o cálculo na hora de servir, usando `cadastro_clientes_cadoc.json` e `rotulos_empresa_gestao.json`
+- `responsavel_pela_acao`: calculado a cada requisição relendo o array `mensagens` do JSON 03 — não está gravado no arquivo
+
+Não está quebrado — funciona. Mas dificulta manutenção (quando algo dá errado, não se sabe se o problema está no Script 09 ou no painel) e pode causar lentidão em cargas grandes.
+
+**O que fazer:**
+1. Mover a resolução completa de `empresa` para o Script 09 — incluindo as regras de `rotulos_empresa_gestao.json`
+2. Pré-calcular `responsavel_pela_acao` no Script 09 e gravar no JSON 03
+3. Remover a lógica duplicada do `painel_operacional_snapshot.py`
+
+**Arquivos:** `scripts/09_integrar_dados_painel.py`, `scripts/painel_operacional_snapshot.py`, `painel_oraculo.py`
+**Quando fazer:** na revisão de enxugamento da aplicação — não é urgente.
+
+---
+
 ## 🔴 Tela de Triagem — revisão UX com o Fable (registrado 2026-07-02)
 
 **Contexto:** após concluir a revisão do Painel de Gestão (2ª rodada), Michel quer revisar a tela de Triagem (`/operacional`) — o coração do sistema, onde os analistas trabalham o dia inteiro.

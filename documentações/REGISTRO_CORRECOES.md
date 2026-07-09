@@ -2,6 +2,37 @@
 
 ---
 
+### 2026-07-08 22:03 — [ARQUITETURA] Campo `empresa` movido do painel para o Script 09
+
+**🔎 Em miúdos:** antes, toda vez que a tela abria, o sistema consultava o cadastro de empresas ao vivo para descobrir o nome oficial de cada cliente. Agora o Script 09 já faz essa consulta e grava o nome no arquivo de dados — a tela só lê o que está pronto.
+
+**Problema:** `painel_oraculo.py` consultava `cadastro_clientes_cadoc.json` a cada carregamento de `/api/threads` via `_enriquecer_threads_com_empresa()`. Isso tornava a tela responsável por lógica que deveria estar no pipeline, deixando o JSON incompleto e a tela mais lenta.
+
+**Correção:**
+- `scripts/09_integrar_dados_painel.py` — adicionadas funções `_carregar_cadastro_empresas_09()` e `_resolver_empresa()` (resolução por e-mail exato → domínio → nome no assunto); campo `"empresa"` adicionado ao dicionário de cada evento
+- `painel_oraculo.py` — removida chamada `_enriquecer_threads_com_empresa(threads)` do endpoint `/api/threads`
+- `data/json/pipeline/03_integrador_dados_site.json` — regravado com Script 09; backup em `data/json/pipeline/backups/20260708_2203_arquitetura_empresa_script09/`
+
+**Validação:** ✅ VALIDADO — 34/47 eventos com `empresa` preenchida; 13 sem empresa são domínios fora do cadastro (comportamento correto — tela usa `cliente` como fallback). Script 09 concluiu sem erros.
+
+sem teste: lógica de resolução de empresa é nova no Script 09; Flask não disponível no ambiente de teste para cobrir o endpoint. Validação manual: verificar na tela se o nome da empresa aparece corretamente nos cards.
+
+---
+
+### 2026-07-08 17:00 — [ALERTA] Notificação de e-mail com cliente desconhecido adicionada ao sistema de alertas
+
+**🔎 Em miúdos:** quando chegava um e-mail sem remetente identificável, a tela exibia "CLIENTE DESCONHECIDO" sem avisar ninguém. Agora existe um alerta que pode ser disparado para notificar por e-mail quais são esses casos.
+
+**Problema:** o campo `DE:` de alguns e-mails vinha vazio ou sem dados válidos. O sistema gravava `CLIENTE_DESCONHECIDO` no JSON e a tela exibia `📩 CLIENTE_DESCONHECIDO` sem nenhum aviso — o caso podia passar despercebido indefinidamente.
+
+**Correção:**
+- `data/json/config/alertas.json` — adicionado 7º alerta: `cliente_desconhecido`, severidade Atenção, destinatário `michel@finaud.com.br` (configurável em `/admin/alertas`)
+- `painel_oraculo.py` — adicionada lógica de envio no `api_alertas_enviar`: busca eventos com `cliente = CLIENTE_DESCONHECIDO`, monta tabela com assunto e data de cada caso e envia e-mail pelo template padrão de alertas
+
+**Validação:** ⚠️ VALIDAÇÃO PENDENTE — sem teste: Flask não disponível no ambiente de teste; lógica nova está dentro do handler de alerta que depende do contexto Flask para ser testado. Validar manualmente em `/admin/alertas` → disparar o alerta e confirmar recebimento do e-mail.
+
+---
+
 ### 2026-07-08 — [ARQUITETURA] Separação dos supervisores DDR_2011, 4111 e DRL_2160 em arquivos independentes
 
 **🔎 Em miúdos:** o arquivo que cuidava de 3 CADOCs ao mesmo tempo foi separado em 3 arquivos independentes. Agora, se as regras do DDR_2011 precisarem mudar, só o arquivo do DDR é tocado — 4111 e DRL_2160 ficam intactos.
