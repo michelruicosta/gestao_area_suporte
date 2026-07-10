@@ -183,7 +183,7 @@ Rastrear cada campo visível na tela operacional de trás para frente — da tel
 | Passo 8 (Parte 2) | Herança RETORNO_BACEN no Script 09 | ✅ 0 threads afetadas — resolvido na raiz pelo Passo 8 Parte 1 |
 | Leitura de conteúdo dos anexos | Sistema abre xlsx/xml/pdf? | ✅ Confirmado: não lê conteúdo — limitação documentada |
 
-Último /fechar: 2026-07-07 (sessão de mapeamento de anexos — PADROES_ANEXOS.md criado, Fase 1 100% encerrada) — memórias revisadas ✅
+Último /fechar: 2026-07-09 (sessão de rastreamento campo a campo — Campo 3 Empresa 100% documentado com 5 passos, serve de modelo para os demais) — memórias revisadas ✅
 
 ### 🔥 Próximo passo — melhorias baseadas em padrões de anexos
 
@@ -618,13 +618,18 @@ Não basta documentar o caminho quando tudo funciona. Cada campo precisa ter:
 
 ### O que garante que a IA não esquece de registrar
 
-Após Michel confirmar cada campo, a IA declara obrigatoriamente:
+**Regra obrigatória — passo a passo por passo:**
+Para cada passo (1, 2, 3, 4, 5) dentro de cada campo:
+1. A IA apresenta o texto do passo no chat
+2. Aguarda Michel dizer "sim" ou pedir ajuste
+3. Só após aprovação explícita grava no `GUIA_CAMPOS_OPERACIONAL.md`
+4. Passa para o próximo passo
 
-  "Campo [nome] confirmado. Vou registrar agora no
-  GUIA_CAMPOS_OPERACIONAL.md antes de continuar."
+**Nunca gravar sem mostrar antes.** Se a IA gravar sem apresentar, Michel interrompe:
+> "Você gravou sem mostrar — traga o texto para eu revisar."
 
-Só depois de registrar e mostrar o que foi escrito, a IA passa para o próximo campo.
-Se a IA pular esse passo, Michel interrompe: "Registrou o campo anterior?"
+Após Michel confirmar cada campo completo, a IA declara:
+> "Campo [nome] concluído — todos os 5 passos aprovados e gravados. Próximo campo: [nome]."
 
 ### Como garantir que nada ficou de fora
 
@@ -689,9 +694,24 @@ Se a sessão terminar antes de rastrear tudo:
 /fechar salva o que foi feito e o que falta.
 GUIA_CAMPOS_OPERACIONAL.md é o fio entre todas as sessões.
 
-### EM ANDAMENTO — Campo Empresa (iniciado em 09/07/2026)
+### ✅ Campo Empresa — rastreamento completo (09/07/2026)
 
-Rastreamento iniciado como exemplo do método. Continuar na próxima sessão.
+Todos os 5 passos rastreados e gravados em `documentações/GUIA_CAMPOS_OPERACIONAL.md`.
+Este campo agora serve de **modelo e exemplo** para os demais campos (4–11).
+
+**O que foi documentado:**
+- Passo 1: origem — Script 02 (coleta), Script 05 (remetente real + Bug B Reply-To), Script 09 (_resolver_empresa)
+- Passo 2: gravação no JSON 03 — `thread_formatada["empresa"]` em `_processar_threads()`, backup automático, riscos de corrupção
+- Passo 3: entrega pela API — `/api/dados` → `_empresa_gestao_final()` + `_rotulo_empresa_gestao_para_api()`, dupla computação identificada
+- Passo 4: exibição na tela — card (fallback: empresa → cliente → DESCONHECIDO), modal (badge oculto se vazio)
+- Passo 5: caminho feliz completo em tabela linha a linha
+
+**Próximo:** Campo 4 — rastrear na próxima sessão usando o mesmo método de 5 passos.
+
+**Sessão seguinte deve começar lendo:**
+1. `documentações/GUIA_CAMPOS_OPERACIONAL.md` — para ver onde parou
+2. `email_operacional.html` — para Michel listar os campos visíveis no card e modal
+3. `scripts/09_integrar_dados_painel.py` + `painel_oraculo.py` — fontes dos campos
 
 Perguntas pendentes de verificação no código (Script 02 e Script 09):
 

@@ -2,6 +2,25 @@
 
 ---
 
+### 2026-07-09 — [DOCUMENTAÇÃO] Campo Empresa rastreado campo a campo — 5 passos completos
+
+**🔎 Em miúdos:** mapeamos de ponta a ponta como o nome da empresa de um cliente vai do e-mail até a tela — passando por 3 scripts, 1 arquivo de dados e o servidor web. Descobrimos que o nome da empresa é calculado em dois lugares diferentes (dupla computação), o que pode causar resultados diferentes dependendo de onde o erro acontece.
+
+**O que foi feito:** rastreamento completo do campo Empresa na tela operacional em 5 passos:
+- Passo 1: origem — como o e-mail entra (Script 02), como o remetente real é identificado (Script 05, Bug B Reply-To), como o nome é resolvido no cadastro (Script 09 `_resolver_empresa`)
+- Passo 2: gravação no JSON 03 — `thread_formatada["empresa"]` em `_processar_threads()`, backup automático, riscos de corrupção
+- Passo 3: entrega pela API — `/api/dados` + dupla computação + `_rotulo_empresa_gestao_para_api()`
+- Passo 4: exibição na tela — card (fallback empresa→cliente→DESCONHECIDO), modal (badge oculto se vazio)
+- Passo 5: caminho feliz completo em tabela linha a linha
+
+**Onde ficou registrado:** `documentações/GUIA_CAMPOS_OPERACIONAL.md` — Campo 3 Empresa, status ✅ Concluído.
+
+**Validação:** ✅ VALIDADO — todos os passos aprovados por Michel antes de gravar. Campo serve de modelo para os campos 4–11.
+
+sem teste: documentação pura, sem mudança de código.
+
+---
+
 ### 2026-07-08 22:03 — [ARQUITETURA] Campo `empresa` movido do painel para o Script 09
 
 **🔎 Em miúdos:** antes, toda vez que a tela abria, o sistema consultava o cadastro de empresas ao vivo para descobrir o nome oficial de cada cliente. Agora o Script 09 já faz essa consulta e grava o nome no arquivo de dados — a tela só lê o que está pronto.
