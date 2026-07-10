@@ -428,3 +428,24 @@ Cada item dentro de `mensagens` = uma mensagem.
 | Cross-cliente | Mesma crítica em clientes diferentes também gera alerta |
 | Estado de alertas | Alertas já enviados ficam gravados — não envia duplicata |
 | Destinatários | Configurados em `data/json/config/alertas.json` por tipo de alerta |
+
+---
+
+## 11. Scripts de consulta — use antes de investigar, não reescreva do zero
+
+Pasta: `scripts/consultas/`
+
+Estes scripts são **somente leitura** — não alteram nenhum dado. Use sempre que precisar investigar o sistema. Rodam nos dois ambientes (produção e teste).
+
+> **Regra para toda IA:** antes de escrever um script de investigação novo, verificar se já existe um aqui. Reescrever do zero desperdiça tempo e arrisca usar a lógica errada.
+
+| Script | O que faz | Quando usar |
+|---|---|---|
+| `diagnostico_cenarios_email.py` | Mapeia todos os cenários de e-mail (A, B1, B2/B3, B4, Finaud→Cliente, Interno) nos dois ambientes. Mostra quantos e-mails existem em cada cenário e quantos aparecem na tela. Aponta furos reais (e-mails fora da tela que deveriam estar). | Ao investigar se algum tipo de e-mail não está sendo capturado ou exibido corretamente |
+
+**Como rodar:**
+```powershell
+python scripts/consultas/diagnostico_cenarios_email.py
+```
+
+**Nota técnica (para a IA, não para Michel):** o script usa `x_gm_thrid` como ID real da thread no Gmail — não o campo `threadId` do JSON 01, que para e-mails enviados pela Finaud pode conter o `message_id` no lugar do GMTHRID, causando falso "não encontrado".

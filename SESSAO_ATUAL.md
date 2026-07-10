@@ -8,6 +8,28 @@
 
 ---
 
+## 📓 Diário da sessão (2026-07-10)
+
+---
+
+### Reorganização do GUIA_CAMPOS_OPERACIONAL.md — Campos 3, 4 e 5 ✅
+
+**O que estava errado:** Campo 3 (Empresa) misturava conteúdo de três campos distintos da tela (Remetente, Cliente e Empresa) numa única seção.
+
+**O que foi feito:**
+- Campo 3 → **Remetente** — Script 02 (coleta bruta) + Script 05 (regra Reply-To + grupo suporte) + todos os cenários (A, B1, B2/B3, B4, BCC, FC, FF)
+- Campo 4 → **Cliente** — nome da pessoa no badge do card, derivado do remetente_real
+- Campo 5 → **Empresa** — manteve os 5 passos de rastreamento; renumerado
+
+**Diagnóstico completo de cenários (10/07/2026):**
+- Varrida: 8.825 e-mails produção + 47 teste com `scripts/consultas/diagnostico_cenarios_email.py`
+- Resultado: **zero furos** — todos os cenários funcionando corretamente nos dois ambientes
+- Script salvo em `scripts/consultas/` e documentado em `MAPA_DO_PROJETO.md` seção 11
+
+**Arquivos alterados:** `documentações/GUIA_CAMPOS_OPERACIONAL.md`, `documentações/MAPA_DO_PROJETO.md`, `documentações/REGISTRO_CORRECOES.md`, `scripts/consultas/diagnostico_cenarios_email.py` (novo)
+
+---
+
 ## 📓 Diário da sessão (2026-07-09)
 
 ---
@@ -183,9 +205,23 @@ Rastrear cada campo visível na tela operacional de trás para frente — da tel
 | Passo 8 (Parte 2) | Herança RETORNO_BACEN no Script 09 | ✅ 0 threads afetadas — resolvido na raiz pelo Passo 8 Parte 1 |
 | Leitura de conteúdo dos anexos | Sistema abre xlsx/xml/pdf? | ✅ Confirmado: não lê conteúdo — limitação documentada |
 
-Último /fechar: 2026-07-09 (sessão de rastreamento campo a campo — Campo 3 Empresa 100% documentado com 5 passos, serve de modelo para os demais) — memórias revisadas ✅
+Último /fechar: 2026-07-10 (sessão de documentação — Campos 3/4/5 reorganizados; diagnóstico completo de cenários de e-mail; zero furos) — memórias revisadas ✅
 
-### 🔥 Próximo passo — melhorias baseadas em padrões de anexos
+### 🔥 Próximo passo — revisão completa do Campo 5 (Empresa)
+
+**Por que:** Michel quer revisar o Campo 5 (Empresa) de ponta a ponta usando o mesmo método de rastreamento campo a campo que fizemos nos campos anteriores.
+
+**Como começar:**
+1. Abrir `documentações/GUIA_CAMPOS_OPERACIONAL.md` → seção Campo 5 — Empresa
+2. Revisar cada passo (1 a 5) com Michel confirmando
+3. Identificar se há furos, dupla computação ou comportamentos inesperados
+4. Registrar qualquer correção no `REGISTRO_CORRECOES.md`
+
+**Após Campo 5:** continuar com Campo 6 em diante (Responsável, Status, Categoria, etc.)
+
+---
+
+### 🔥 Próximo passo (anterior) — melhorias baseadas em padrões de anexos
 
 ---
 

@@ -311,11 +311,14 @@ Após o git estar funcionando:
 **Correção:** cadastrar os emails de alias em `data/json/config/cadastro_clientes_cadoc.json` mapeando para o nome correto da empresa.
 **Arquivo:** `data/json/config/cadastro_clientes_cadoc.json`
 
-### Bug B — Campo CC/Reply-To capturado como nome de cliente
-**Problema:** em 8 threads, o sistema confundiu o campo CC ou Reply-To do email com o remetente principal e usou esse conteúdo como nome do cliente. Resultado: aparece `cc: Adriana Martins` ou `responder a: Celso Julich Junior - Unicred do Brasil` no lugar do nome do cliente.
-**Casos confirmados em produção:** ECSA (5 threads), Unicred do Brasil (2 threads), UY3 (1 thread).
-**Correção:** Script 05 (`scripts/05_classificar_emails_regulatorio.py`) — na função `montar_contatos_origem_destino_para_item` (linha ~2115), o campo `reply_to_raw` está sendo usado como remetente real quando é de domínio externo. A correção é ignorar o `Reply-To` ao montar o `contato_origem` e usar sempre o campo `DE:` original.
-**Arquivo:** `scripts/05_classificar_emails_regulatorio.py` — função `montar_contatos_origem_destino_para_item`, linha ~2115
+### ~~Bug B — Campo CC/Reply-To capturado como nome de cliente~~ ⚠️ NÃO CONFIRMADO
+
+**Investigado em 09/07/2026:** varredura completa de 8.825 e-mails de produção não encontrou nenhum caso com o padrão descrito (`cc:` ou `responder a:` no nome do contato). A regra do Reply-To no Script 05 está funcionando corretamente — ela só é acionada para e-mails recebidos pelo grupo `suporte@finaud.com.br` (1.603 casos confirmados), que é o comportamento esperado.
+
+**ECSA:** Adriana Martins é da Açoriana Corretora (`adm@acorianacorretora.com.br`) — e-mail diferente do domínio ECSA. Não é problema de Reply-To.
+**Unicred / UY3:** clientes identificados corretamente nos dados de produção.
+
+**Conclusão:** o Bug B foi documentado como "confirmado em produção" sem verificação nos dados. Não há correção necessária no código. Item encerrado.
 
 ### Bug C — Cliente DESCONHECIDO sem alerta
 ✅ **Resolvido em 2026-07-08** — alerta `cliente_desconhecido` adicionado ao sistema de notificações (`alertas.json` + `painel_oraculo.py`). Ver REGISTRO_CORRECOES.md entrada 2026-07-08 17:00.

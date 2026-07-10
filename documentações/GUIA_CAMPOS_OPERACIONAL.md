@@ -6,7 +6,7 @@
 > Leia junto com: [Linhagem de Dados](LINHAGEM_DADOS_OPERACIONAL.md)
 > — mostra o caminho completo de cada campo desde o e-mail até a tela (todos os JSONs intermediários).
 >
-> _Atualizado: 2026-07-08_
+> _Atualizado: 2026-07-10_
 
 ---
 
@@ -55,19 +55,17 @@ sem ser alterado e aparece na tela exatamente como chegou, prefixos incluídos.
 
 ---
 
-## Campo 3 — Empresa
+## Campo 3 — Remetente
 
-> **Status do rastreamento:** ✅ Concluído em 09/07/2026 — todos os 5 passos rastreados.
-> Este campo serve de **exemplo do método** para os demais campos.
+> **Status do rastreamento:** ✅ Concluído em 10/07/2026.
 
-**O que mostra na tela:** nome oficial da empresa do cliente — aparece no card da lista
-e no badge "Empresa" do modal.
+**O que mostra na tela:** aparece no histórico de mensagens de cada thread — linha
+"Remetente: Ana Paola do Nascimento - Unicred do Brasil · ana.paola@unicred.com.br".
+É a informação bruta de quem enviou cada mensagem individual da conversa.
 
 ---
 
-### Passo 1 — Origem: como o e-mail entra no sistema e como o nome da empresa é resolvido
-
-**Etapa 1.1 — Coleta do e-mail (Script 02)**
+### Passo 1 — Coleta do e-mail bruto (Script 02)
 
 `02_coletar_emails_gmail.py` acessa o Gmail via IMAP com a conta `coleta.oraculo@finaud.com.br`
 e extrai o campo `remetente` exatamente como vem do servidor — sem interpretação.
@@ -98,54 +96,137 @@ se o endereço é válido ou se faz sentido.*
   `regulatorio@bacen.gov.br`. O Script 02 anota os dois — `remetente` e `reply_to_raw`
   — sem decidir qual é o "real". Essa decisão fica para o Script 05.*
 
-**Etapa 1.2 — Identificação do remetente real (Script 05)**
+---
 
-`05_classificar_emails_regulatorio.py` lê o `remetente` do JSON 01 e determina o
-`remetente_real`. Se o campo `Reply-To` estiver preenchido e não for da Finaud, o sistema
-usa o `Reply-To` como remetente real — ignorando o `From:`.
+### Passo 2 — Identificação do remetente real (Script 05)
 
-*Em linguagem simples: o sistema tenta descobrir quem realmente mandou o e-mail. Mas tem
-uma regra problemática: se o e-mail tiver um campo "responder para" preenchido com endereço
-de fora da Finaud, o sistema assume que esse é o remetente real — mesmo que não seja.
-Isso é o Bug B conhecido: o sistema confunde "quem quer receber a resposta" com
-"quem mandou o e-mail".*
+O script 05 precisa saber **quem está do outro lado da conversa**. O campo `De:` do e-mail
+nem sempre tem essa resposta — e o principal motivo é o comportamento do grupo `suporte@finaud.com.br`.
+
+**Por que o Gmail substitui o remetente no grupo suporte**
+
+O `suporte@finaud.com.br` é uma lista de distribuição do Google Groups. Quando um cliente
+envia um e-mail para esse endereço, o Gmail não entrega o e-mail diretamente — ele redistribui
+para todos os membros do grupo. Nessa redistribuição, o Gmail **substitui o `De:` original do
+cliente** pelo endereço do grupo, e coloca o remetente real no campo `Reply-To:`. Isso acontece
+porque o grupo precisa aparecer como origem para que as respostas sejam enviadas corretamente
+para todos os membros — não apenas para quem enviou.
+
+**Exemplo real — o que chega no e-mail:**
+
+```
+De:       'Leonardo Ueda' via Suporte <suporte@finaud.com.br>
+Reply-To: leonardo.ueda@westernunion.com
+Para:     suporte@finaud.com.br
+Assunto:  Re: Western Union - DLO março/26
+```
+
+Sem a regra, o sistema identificaria o remetente como `suporte@finaud.com.br` — ou seja,
+a própria Finaud — e descartaria o e-mail como interno. O cliente ficaria invisível.
+
+**A regra no script 05 (`scripts/05_classificar_emails_regulatorio.py`, linhas 605–608):**
+
+```python
+remetente_real = email_remetente
+if email_reply and not eh_email_finaud_check(email_reply, dominios_finaud):
+    remetente_real = email_reply
+```
+
+Em linguagem simples: "se existe um `Reply-To:` e ele não é da Finaud, use ele como
+remetente real em vez do `De:`".
+
+**O que aconteceria sem essa regra**
+
+Todos os e-mails que chegam pelo grupo suporte (1.741 casos em produção) seriam classificados
+como e-mails internos da Finaud e ignorados. Nenhum desses clientes apareceria na tela —
+a conversa existiria no Gmail mas seria invisível no sistema.
+
+---
+
+### Todos os cenários de remetente mapeados
+
+> **Validação (10/07/2026):** varredura completa de 8.825 e-mails em produção e 47 em teste —
+> todos os cenários abaixo estão funcionando corretamente, zero furos encontrados.
+> Script de consulta: `scripts/consultas/diagnostico_cenarios_email.py`
+
+#### Lado do cliente — quando alguém de fora envia para a Finaud
+
+| Cenário | De: | Para: | CC: | Reply-To: | Como identifica o cliente | Contato no card | Empresa no card | Responsável no card | Funciona? |
+|---|---|---|---|---|---|---|---|---|---|
+| **A** — Cliente envia direto para colaboradora | `gustavo@banvox.com.br` | `monica@finaud.com.br` | — | vazio | Campo `De:` | Gustavo Do Carmo Rudink | Banvox | Monica Macedo | ✅ 1.342 casos |
+| **B1** — Cliente envia para o grupo suporte | `'Gustavo' via Suporte <suporte@finaud.com.br>` | `suporte@finaud.com.br` | — | `gustavo@banvox.com.br` | Campo `Reply-To:` | Leonardo Ueda | Western Union | Quem responder | ✅ 1.741 casos |
+| **B2/B3** — Cliente envia com suporte no Para/CC | `marcos@smartsafe.com.br` | `monica@finaud.com.br` | `suporte@finaud.com.br` | vazio | Campo `De:` | Marcos Franco | Smartsafe Brasil | Monica Macedo | ✅ 753 casos |
+| **B4** — Grupo reencaminha cópia interna para membros | `suporte@finaud.com.br` | `rodrigo@finaud.com.br` | — | vazio | Não aplicável — e-mail interno | — | — | — | ✅ não exibe na tela — correto |
+| **BCC** — Suporte em cópia oculta | `gustavo@banvox.com.br` | `monica@finaud.com.br` | — | vazio | Campo `De:` (igual ao A) | Gustavo Do Carmo Rudink | Banvox | Monica Macedo | ✅ tratado como A |
+
+#### Lado da Finaud — quando uma colaboradora envia ou responde
+
+| Cenário | De: | Para: | Como o sistema trata | Contato no card | Empresa no card | Responsável no card | Funciona? |
+|---|---|---|---|---|---|---|---|
+| **FC** — Finaud responde ou envia para cliente | `andrea@finaud.com.br` | `wilson@ozcambio.com.br` | Entra na mesma thread do cliente — é mais uma mensagem da conversa | Wilson Lima | Oz Câmbio | Andrea Inacio | ✅ 3.191 casos |
+| **FF** — Finaud envia internamente (colaboradora para colaboradora) | `riskdriver@finaud.com.br` | `michel@finaud.com.br` | Thread interna — aparece na tela com `cliente = Finaud` | Michel | Bacen / vazio | Michel | ✅ 1.790 casos |
+
+> **Nota FC:** quando a Andrea responde para o cliente, o e-mail entra na thread existente
+> do cliente (mesmo ID de conversa no Gmail). O card continua mostrando o cliente como contato
+> principal — a resposta da Andrea só aumenta o contador de mensagens.
+
+> **Nota FF:** e-mails do `riskdriver@finaud.com.br` são relatórios automáticos do sistema
+> de risco. E-mails do `contato@finaud.com.br` são avisos do BACEN redistribuídos internamente.
+> Ambos aparecem na tela como threads internas da Finaud, não como threads de clientes.
+
+---
+
+## Campo 4 — Cliente
+
+> **Status do rastreamento:** ✅ Concluído em 10/07/2026.
+
+**O que mostra na tela:** nome da pessoa que enviou o e-mail — aparece no badge "Cliente"
+do modal (ex: "Ana Paola do Nascimento - Unicred do Brasil") e como linha de apoio no card
+da lista.
+
+**De onde vem:** diretamente do `remetente_real` resolvido pelo Script 05 (Campo 3 — Remetente,
+Passo 2). O Script 09 copia esse valor para o campo `cliente` no JSON 03 sem alteração.
+
+*Em linguagem simples: o sistema pega o nome da pessoa que enviou o e-mail — já com o
+ajuste do Reply-To quando necessário — e exibe como "Cliente" no card. Não há lógica
+adicional: é o mesmo remetente real do Campo 3, só exibido com outro rótulo na tela.*
+
+**Arquivo e campo:** `03_integrador_dados_site.json` → campo `cliente`
 
 **O que pode dar errado:**
 
-- **`Reply-To` de domínio diferente** → empresa identificada errada
+- **Nome codificado** (ex: `=?UTF-8?Q?Ana_Paola?=`) → aparece com símbolos estranhos na tela
 
-  *Em linguagem simples: o e-mail veio da ECSA, mas o "responder para" apontava para
-  outro endereço. O sistema achou que o e-mail era de outra empresa.*
+  *Em linguagem simples: e-mails com nomes acentuados às vezes chegam com uma codificação
+  especial. A função `decodeMimeHeader()` na tela tenta converter — mas pode falhar em
+  alguns casos.*
 
-  *Exemplo real: 5 threads da ECSA apareciam com `cc: Adriana Martins` como cliente porque
-  o Reply-To era de outro domínio. O sistema trocou o remetente real pelo endereço de resposta.*
+- **E-mail do grupo suporte sem Reply-To** (cenário B4) → cliente fica como `suporte@finaud.com.br`
 
-- **Remetente de departamento** (ex: `compliance@empresa.com`) → domínio correto mas nome
-  pode não estar no cadastro
+  *Em linguagem simples: quando o grupo suporte reencaminha uma cópia interna para os membros
+  e não há Reply-To, o sistema não consegue identificar o cliente real. Esses casos não
+  aparecem na tela — são filtrados como e-mails internos. Correto.*
 
-  *Em linguagem simples: a empresa usa um e-mail de setor em vez do e-mail pessoal.
-  O sistema reconhece o domínio mas pode não encontrar o nome da empresa.*
+---
 
-  *Exemplo: Oliveira Trust envia de `compliance@oliveiratrust.com.br`. O domínio está certo,
-  mas se o cadastro tiver só `contato@oliveiratrust.com.br`, o sistema não encontra e deixa
-  a empresa vazia.*
+## Campo 5 — Empresa
 
-- **Remetente vazio ou malformado** → empresa fica vazia, sem aviso
+> **Status do rastreamento:** ✅ Concluído em 09/07/2026 — todos os 5 passos rastreados.
+> Este campo serve de **exemplo do método** para os demais campos.
 
-  *Em linguagem simples: se o e-mail chegar com o campo "de quem" em branco ou com erro,
-  o sistema simplesmente não preenche a empresa — e não avisa ninguém.*
+**O que mostra na tela:** nome oficial da empresa do cliente — aparece no card da lista
+(ex: 📩 Unicred) e no badge "Empresa" do modal.
 
-  *Exemplo: e-mail encaminhado automaticamente por sistema externo às vezes chega sem o
-  campo `From:` correto — aparece como `<>` ou só o nome sem o endereço.*
+---
 
-**Etapa 1.3 — Resolução do nome oficial (Script 09)**
+### Passo 1 — Resolução do nome oficial (Script 09)
 
-`09_integrar_dados_painel.py` pega o domínio do e-mail do lado CLIENTE e consulta o
-`cadastro_clientes_cadoc.json`. Se encontra → grava o nome oficial. Se não encontra →
-grava string vazia `""`.
+`09_integrar_dados_painel.py` pega o domínio do e-mail do `remetente_real` (resolvido pelo
+Script 05) e consulta o `cadastro_clientes_cadoc.json`. Se encontra → grava o nome oficial.
+Se não encontra → grava string vazia `""`.
 
 *Em linguagem simples: o sistema pega o endereço de e-mail do cliente, olha só a parte
-depois do @ (exemplo: `seferinvestimentos.com.br`) e consulta a lista de cadastro.
+depois do @ (exemplo: `unicred.com.br`) e consulta a lista de cadastro.
 Se encontrar, pega o nome oficial da empresa. Se não encontrar, deixa em branco.*
 
 **O que pode dar errado:**
@@ -164,9 +245,6 @@ Se encontrar, pega o nome oficial da empresa. Se não encontrar, deixa em branco
   *Em linguagem simples: pessoa física usando Gmail não tem empresa para mostrar.
   Isso é esperado e correto.*
 
-  *Exemplo: colaborador da Finaud encaminhou algo do Gmail pessoal. Campo empresa fica
-  vazio — comportamento correto, não é bug.*
-
 - **Cadastro atualizado manualmente** → não reflete na hora
 
   *Em linguagem simples: Michel adiciona a empresa na lista, mas a tela só vai mostrar
@@ -176,7 +254,7 @@ Se encontrar, pega o nome oficial da empresa. Se não encontrar, deixa em branco
   mostrando empresa vazia até rodar o Script 09 às 14h na próxima carga.*
 
 **O que acontece na tela quando empresa está vazia:**
-- Card mostra o nome do cliente (nome bruto do `DE:`) no lugar da empresa
+- Card mostra o nome do cliente (nome bruto do `De:`) no lugar da empresa
 - Modal mostra badge "Empresa" vazio
 - Sistema não avisa Michel *(falha silenciosa)*
 
@@ -214,55 +292,29 @@ thread_formatada = {
 ```
 
 *Em linguagem simples: o Script 09 chama a função que busca o nome da empresa no cadastro
-(Etapa 1.3 do Passo 1) e grava o resultado diretamente na ficha. Se a função não encontrar,
-grava string vazia — e a ficha fica com `"empresa": ""`.*
+e grava o resultado diretamente na ficha. Se a função não encontrar, grava string vazia.*
 
 **Arquivo de saída:** `data/json/pipeline/03_integrador_dados_site.json`
 
-*Em linguagem simples: um arquivo de texto grande que contém a ficha de todas as threads.
-A tela lê esse arquivo a cada vez que alguém abre ou atualiza a tela operacional.*
-
 **Backup automático:** antes de gravar o novo JSON 03, o Script 09 cria automaticamente
 uma cópia do arquivo anterior em `03_integrador_dados_site.json.backup`.
-
-*Em linguagem simples: antes de atualizar a ficha, o sistema guarda uma cópia da ficha
-anterior — por segurança. Se algo der errado na atualização, dá para restaurar a versão
-anterior.*
 
 **O que pode dar errado:**
 
 - **Script 09 falha no meio da execução** → JSON 03 fica corrompido ou incompleto
 
-  *Em linguagem simples: se a luz cair enquanto o Script 09 está montando o arquivo, o
-  arquivo pode ficar pela metade — e a tela pode travar ou mostrar dados errados.*
-
   *Exemplo: Script 09 processou 30 das 36 threads e parou por erro de memória. O JSON 03
   ficou com só 30 threads. A tela sumiu com 6 cases sem avisar Michel.*
 
-  *O que fazer: restaurar o backup (`03_integrador_dados_site.json.backup`) e rodar o
-  Script 09 de novo.*
+  *O que fazer: restaurar o backup e rodar o Script 09 de novo.*
 
-- **`_resolver_empresa()` lança exceção** → thread inteira é pulada silenciosamente
-
-  *Em linguagem simples: se der algum erro na hora de buscar o nome da empresa de uma
-  thread específica, o Script 09 pode pular essa thread inteira e não gravá-la no arquivo.*
-
-  *Isso é raro — mas se uma thread sumir misteriosamente após rodar o Script 09, verificar
-  o log de execução.*
-
-- **Arquivo de cadastro corrompido** → `_resolver_empresa()` carrega dicionário vazio →
-  todas as threads ficam com `empresa: ""`
-
-  *Em linguagem simples: se o arquivo de lista de empresas estiver com erro de formatação,
-  o sistema não consegue abrir e deixa todas as empresas vazias — sem aviso.*
+- **Arquivo de cadastro corrompido** → todas as threads ficam com `empresa: ""`
 
   *Exemplo: alguém editou o `cadastro_clientes_cadoc.json` manualmente e introduziu uma
-  vírgula a mais. O arquivo ficou inválido. O Script 09 não abortou — simplesmente usou
-  lista vazia e gravou empresa vazia para todas as 36 threads.*
+  vírgula a mais. O arquivo ficou inválido. O Script 09 usou lista vazia e gravou empresa
+  vazia para todas as threads — sem aviso.*
 
-**O que Michel faz para verificar se o campo foi gravado:**
-- Abrir `data/json/pipeline/03_integrador_dados_site.json` e procurar por `"empresa"`
-- Verificar se o valor está preenchido para as threads que deveriam ter empresa identificada
+---
 
 ### Passo 3 — Entrega pela API
 
@@ -270,163 +322,95 @@ anterior.*
 `/api/dados` do Flask. O Flask lê o JSON 03 (ou usa a cópia em memória, se ainda válida),
 processa cada thread e devolve os dados para o navegador — incluindo o campo `empresa`.
 
-*Em linguagem simples: é como um garçom que vai até o arquivo central (JSON 03), pega as
-fichas de todas as threads e serve ao navegador. Mas antes de servir, ele aplica alguns
-retoques finais — incluindo na empresa.*
-
 **Caminho do código:**
 1. `painel_oraculo.py` → rota `/api/dados` (linha 3540)
 2. Chama `painel_operacional_snapshot.montagem_api_dados_snapshot()`
-3. Dentro desse processamento, para cada thread:
-   - Se a thread tem `empresa` vazia no JSON 03, tenta buscar novamente pelo e-mail do lado CLIENTE
-   - Depois aplica `_rotulo_empresa_gestao_para_api()` — que consulta um segundo arquivo de
-     rótulos (`rotulos_empresa_gestao.json`) para padronizar nomes
+3. Para cada thread: se `empresa` vazia no JSON 03, tenta buscar novamente pelo e-mail do
+   lado CLIENTE; depois aplica `_rotulo_empresa_gestao_para_api()` — consulta
+   `rotulos_empresa_gestao.json` para padronizar nomes
 
-*Em linguagem simples: o Sistema tem uma segunda chance de descobrir a empresa — mesmo que
-o Script 09 não tenha encontrado. E antes de enviar para a tela, padroniza o nome: por
-exemplo, troca `oliveiratrust.com.br` pelo nome legível `Oliveira Trust`.*
+**Dupla computação — ponto crítico:**
+O campo `empresa` é calculado **duas vezes** — uma no Script 09 (Passos 1+2) e outra na
+API (Passo 3). Mesmo que o Script 09 grave `empresa: ""`, a API pode preencher o campo.
+Mas se a lógica dos dois lugares divergir, os resultados podem ser diferentes.
 
-**Dupla computação — este é o ponto crítico:**
-O campo `empresa` é calculado **duas vezes** — uma no Script 09 (Passo 1+2) e outra na
-API (Passo 3). Isso significa que:
-- Mesmo que o Script 09 grave `empresa: ""`, a API pode preencher o campo na hora
-- Mas também significa que a lógica está em dois lugares diferentes — se um muda e o outro
-  não, os resultados podem divergir
+*Em linguagem simples: dois cozinheiros com receitas ligeiramente diferentes. Na maioria
+das vezes o resultado parece igual — mas quando há diferença, o prato sai diferente
+dependendo de quem cozinhou.*
 
-*Em linguagem simples: é como ter dois cozinheiros preparando o mesmo prato com receitas
-ligeiramente diferentes. Na maioria das vezes o resultado parece igual, mas quando há uma
-diferença entre as receitas, o prato sai diferente dependendo de quem cozinhou.*
-
-**Cache em memória — atenção ao fluxo:**
-O Flask mantém o JSON 03 em memória para não ler o arquivo do disco a cada requisição.
-Quando o Script 09 atualiza o JSON 03, o cache invalida automaticamente ao detectar que
-o arquivo mudou.
-
-*Em linguagem simples: o servidor guarda uma cópia do arquivo na memória para responder
-mais rápido. Quando o arquivo muda no disco, o servidor descarta a cópia e carrega a
-versão nova. Isso acontece automaticamente — sem precisar reiniciar o servidor.*
+**Cache em memória:** o Flask mantém o JSON 03 em memória. Quando o Script 09 atualiza
+o arquivo, o cache invalida automaticamente.
 
 **O que pode dar errado:**
 
-- **Rótulo não cadastrado** → nome da empresa fica como domínio cru (ex: `oliveiratrust.com.br`)
+- **Rótulo não cadastrado** → empresa fica como domínio cru (ex: `oliveiratrust.com.br`)
 
-  *Em linguagem simples: o sistema não encontrou o nome bonito no segundo arquivo de
-  rótulos. A tela exibe o endereço do site em vez do nome da empresa.*
+  *Exemplo: Oliveira Trust tinha o domínio cadastrado mas o rótulo estava escrito diferente.
+  A tela mostrava `oliveiratrust.com.br` em vez do nome correto.*
 
-  *Exemplo: Oliveira Trust tinha o domínio cadastrado mas o rótulo estava escrito como
-  `Oliveira Trust Dtvm` — nome diferente do que o sistema esperava. A tela mostrava
-  `oliveiratrust.com.br` em vez do nome correto.*
+- **Cache desatualizado** → tela mostra dados antigos mesmo após rodar Script 09
 
-- **Cache desatualizado durante testes** → tela mostra dados antigos mesmo após rodar Script 09
+  *O que fazer: aguardar alguns segundos e recarregar. Se persistir, reiniciar o servidor Flask.*
 
-  *Em linguagem simples: você rodou o Script 09, a ficha foi atualizada no disco — mas a
-  tela ainda mostra os dados antigos porque o servidor não percebeu a mudança ainda.*
-
-  *O que fazer: aguardar alguns segundos e recarregar a tela. Se persistir, reiniciar o
-  servidor Flask (`/admin/reiniciar` ou pelo terminal).*
-
-**O que Michel faz para verificar:**
-- Abrir a tela operacional e verificar se o nome da empresa aparece no card
-- Se estiver vazio mas o domínio está no cadastro: possível problema de rótulo — verificar
-  `data/json/config/rotulos_empresa_gestao.json`
+---
 
 ### Passo 4 — Exibição na tela
 
-**O que acontece:** o JavaScript da tela recebe os dados da API e monta cada card da lista
-e o modal de detalhes. O campo `empresa` aparece em dois lugares distintos na tela.
-
-*Em linguagem simples: o navegador pega os dados que o servidor enviou e os exibe na tela.
-O JavaScript decide o que mostrar em cada lugar, com regras de fallback — se a empresa
-não veio, usa o cliente; se o cliente não veio, mostra "DESCONHECIDO".*
-
-**No card da lista:**
-
-Linha no código (`email_operacional.html`, linha ~3732):
+**No card da lista** (`email_operacional.html`, linha ~3732):
 ```javascript
 <span>📩 ${escapeHtml(decodeMimeHeader((latest.empresa || latest.cliente) || '') || 'DESCONHECIDO')}</span>
 ```
 
-*Em linguagem simples: o card sempre mostra alguma coisa no campo empresa — em ordem de
-prioridade: (1) nome oficial da empresa, (2) nome do cliente (nome bruto do DE:), (3)
-"DESCONHECIDO" se ambos estiverem vazios.*
+*Prioridade: (1) nome oficial da empresa, (2) nome do cliente, (3) "DESCONHECIDO".*
 
-**No modal de detalhes (badge "Empresa"):**
-
-Linha no código (linha ~4617):
+**No modal de detalhes (badge "Empresa")** (linha ~4617):
 ```javascript
 var empresa = (thread.empresa || "").trim();
-// Fallback: usa dados do card quando a thread da API não tem empresa
 if (!empresa && currentThreadId && THREADS[currentThreadId]) {
     var ev = getThreadLatest(THREADS[currentThreadId]);
     empresa = (ev.empresa || ev.cliente || "").trim();
 }
 if (empresa) {
     empresaEl.textContent = empresa;
-    empresaChip.style.display = "inline-flex"; // mostra o badge
+    empresaChip.style.display = "inline-flex";
 } // se vazio: badge fica oculto (display: none)
 ```
 
-*Em linguagem simples: o modal tenta mostrar a empresa. Se a empresa vier vazia, tenta
-usar o nome do cliente do card. Se ambos estiverem vazios, o badge "Empresa" fica
-completamente oculto — não aparece nem vazio, simplesmente desaparece.*
+*Se empresa e cliente estiverem vazios, o badge "Empresa" desaparece completamente — não
+aparece em branco, some.*
 
-**O que pode dar errado:**
-
-- **`empresa` e `cliente` ambos vazios** → card mostra "📩 DESCONHECIDO"; modal oculta badge
-
-  *Em linguagem simples: nenhuma informação de quem é — nem empresa nem cliente. O card
-  mostra um ícone de e-mail com a palavra "DESCONHECIDO". No modal o campo empresa
-  simplesmente some — não aparece em branco, desaparece mesmo.*
-
-  *Quando acontece: e-mail chega sem campo "DE:" válido e o domínio não está no cadastro.*
-
-- **`empresa` vazia mas `cliente` preenchido** → card mostra o nome bruto do DE:
-
-  *Em linguagem simples: o sistema não encontrou o nome oficial da empresa, então mostra
-  o que o remetente colocou no campo "De:" — que pode ser só o primeiro nome da pessoa
-  (ex: "Adriana") ou o nome de um setor (ex: "compliance@oliveiratrust.com.br").*
-
-  *Isso é o comportamento de fallback — não é erro, mas indica que a empresa não foi
-  identificada.*
-
-- **Encoding no nome** → caracteres especiais aparecem errados no card
-
-  *Em linguagem simples: nomes com acentos ou caracteres especiais podem aparecer com
-  símbolos estranhos se o encoding não for tratado corretamente. A função
-  `decodeMimeHeader()` tenta corrigir isso — mas nem sempre funciona para todos os casos.*
-
-**Resumo de fallback — ordem de exibição:**
+**Resumo de fallback:**
 
 | Situação | Card mostra | Modal badge |
 |---|---|---|
 | `empresa` preenchida | nome oficial | nome oficial |
-| `empresa` vazia, `cliente` preenchido | nome bruto do DE: | nome bruto do DE: |
+| `empresa` vazia, `cliente` preenchido | nome bruto do De: | nome bruto do De: |
 | ambos vazios | 📩 DESCONHECIDO | badge oculto |
+
+---
 
 ### Passo 5 — Caminho feliz completo resumido
 
-*O que acontece quando tudo funciona corretamente:*
-
 | Etapa | Quem faz | O que acontece | Resultado |
 |---|---|---|---|
-| 1 | Script 02 | Acessa o Gmail e baixa o e-mail da Lastro Capital com `From: compliance@lastrocapital.com.br` | `01_extração...json` → `remetente: compliance@lastrocapital.com.br` |
-| 2 | Script 05 | Não há `Reply-To` → `remetente_real = remetente` → identifica lado CLIENTE pelo domínio | `02_classificação...json` → `contato_origem.email: compliance@lastrocapital.com.br` |
-| 3 | Script 09 | Extrai domínio `lastrocapital.com.br` → encontra no cadastro → `empresa = "Lastro Capital"` | `03_integrador...json` → `"empresa": "Lastro Capital"` |
-| 4 | API `/api/dados` | Lê JSON 03 → passa `empresa` por `_rotulo_empresa_gestao_para_api()` → confirma nome padronizado | Payload JSON → `"empresa": "Lastro Capital"` |
-| 5 | JavaScript | Recebe `empresa: "Lastro Capital"` → monta card e modal | Card mostra 📩 Lastro Capital; modal mostra badge "Empresa: Lastro Capital" |
+| 1 | Script 02 | Baixa o e-mail da Lastro Capital com `From: compliance@lastrocapital.com.br` | JSON 01 → `remetente: compliance@lastrocapital.com.br` |
+| 2 | Script 05 | Sem `Reply-To` → `remetente_real = remetente` | JSON 02 → `contato_origem.email: compliance@lastrocapital.com.br` |
+| 3 | Script 09 | Extrai domínio `lastrocapital.com.br` → encontra no cadastro | JSON 03 → `"empresa": "Lastro Capital"` |
+| 4 | API `/api/dados` | Passa por `_rotulo_empresa_gestao_para_api()` → confirma nome | Payload → `"empresa": "Lastro Capital"` |
+| 5 | JavaScript | Recebe `empresa: "Lastro Capital"` → monta card e modal | Card: 📩 Lastro Capital; modal: badge "Empresa: Lastro Capital" |
 
 **Condições para o caminho feliz:**
-- E-mail tem campo `From:` válido com endereço de e-mail completo
-- Não tem `Reply-To` (ou tem, mas é do mesmo domínio)
-- Domínio do remetente está em `cadastro_clientes_cadoc.json`
+- E-mail tem `From:` válido
+- Sem `Reply-To` (ou com `Reply-To` do mesmo domínio)
+- Domínio está em `cadastro_clientes_cadoc.json`
 - Script 09 rodou após o último e-mail chegar
-- Servidor Flask está em execução
+- Servidor Flask em execução
 
 **Quando o caminho feliz quebra → ver Passos 1–4 para diagnóstico por etapa.**
 
 ---
 
-> ✅ **Campo 3 — Empresa** rastreamento completo em 09/07/2026.
-> Este campo serve de **modelo e exemplo** para o rastreamento dos demais campos (4–11).
+> ✅ **Campos 3, 4 e 5** rastreamento completo em 10/07/2026.
+> Campo 5 (Empresa) serve de **modelo e exemplo** para o rastreamento dos demais campos.
 
 ---

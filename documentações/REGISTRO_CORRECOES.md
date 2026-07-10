@@ -2,6 +2,38 @@
 
 ---
 
+### 2026-07-10 — [DOCUMENTAÇÃO] Etapa 1.2 do Campo 3 — mapeamento completo de cenários de remetente
+
+**🔎 Em miúdos:** documentamos todos os cenários possíveis de quem pode enviar um e-mail para a Finaud (ou a Finaud para fora), com exemplos reais e o que aparece no card para cada caso. Validamos nos dados de produção e teste — nenhum furo encontrado.
+
+**O que foi feito:**
+- Explicação detalhada de por que o Gmail substitui o `De:` quando o e-mail passa pelo grupo suporte, com exemplo real (Leonardo Ueda / Western Union)
+- Mapeamento de 7 cenários do lado do cliente (A, B1, B2/B3, B4, BCC) com contagens reais de produção
+- Mapeamento de 2 cenários do lado da Finaud (FC — Finaud para cliente, FF — interno) com exemplos reais
+- Validação completa: 8.825 e-mails em produção + 47 em teste, todos os cenários sem furos
+- Script de consulta criado em `scripts/consultas/diagnostico_cenarios_email.py` e documentado no `MAPA_DO_PROJETO.md` seção 11
+
+**Arquivos atualizados:** `documentações/GUIA_CAMPOS_OPERACIONAL.md` (Etapa 1.2), `documentações/MAPA_DO_PROJETO.md` (seção 11)
+
+**Validação:** ✅ VALIDADO em 10/07/2026 — varredura completa dos dois ambientes, zero furos
+
+---
+
+### 2026-07-09 — [INVESTIGAÇÃO] Bug B — Reply-To como nome de cliente — não confirmado
+
+**🔎 Em miúdos:** investigamos se o sistema estava confundindo o campo "responder para" dos e-mails com o nome do cliente. Varremos 8.825 e-mails de produção e não encontramos nenhum caso com esse problema.
+
+**Investigação:** varredura completa do JSON 01 (8.825 e-mails) e JSON 02 (8.825 e-mails processados) de produção. Buscamos por: (a) Reply-To de domínio diferente do From sem ser "via Suporte"; (b) nome do contato com prefixo "cc:" ou "responder a:".
+
+**Resultado:**
+- 1.603 e-mails com padrão "via Suporte" + Reply-To externo → comportamento correto e necessário
+- 0 casos com "cc:" ou "responder a:" no nome do contato
+- ECSA, Unicred, UY3 identificados corretamente nos dados de produção
+
+**Conclusão:** Bug B foi documentado no PENDENCIAS.md como "confirmado em produção" sem verificação real nos dados. Não há problema no código. PENDENCIAS.md atualizado para refletir isso.
+
+---
+
 ### 2026-07-09 — [DOCUMENTAÇÃO] Campo Empresa rastreado campo a campo — 5 passos completos
 
 **🔎 Em miúdos:** mapeamos de ponta a ponta como o nome da empresa de um cliente vai do e-mail até a tela — passando por 3 scripts, 1 arquivo de dados e o servidor web. Descobrimos que o nome da empresa é calculado em dois lugares diferentes (dupla computação), o que pode causar resultados diferentes dependendo de onde o erro acontece.
