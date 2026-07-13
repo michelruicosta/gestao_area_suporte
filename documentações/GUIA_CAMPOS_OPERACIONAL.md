@@ -1048,6 +1048,15 @@ responsavel_pela_acao → responsavel → 'N/A'
 
 ---
 
+### Caminho feliz (como funciona quando tudo está certo)
+
+1. Cliente envia relatório DDR para a Finaud
+2. Script 09 lê a última mensagem → origem CLIENTE, destino Finaud (ex.: Rodrigo) → grava `responsavel = "Rodrigo Tibério"`
+3. Painel recalcula na hora → mesma mensagem, mesma lógica → `responsavel_pela_acao = "Rodrigo Tibério"`
+4. Tela exibe: **Rodrigo Tibério** no card
+
+---
+
 ### ⚠️ Bug identificado em 13/07/2026
 
 As duas funções (Script 09 e painel) ordenam as mensagens de formas diferentes para achar a "última":
