@@ -6,52 +6,160 @@
 > Leia junto com: [Linhagem de Dados](LINHAGEM_DADOS_OPERACIONAL.md)
 > — mostra o caminho completo de cada campo desde o e-mail até a tela (todos os JSONs intermediários).
 >
-> _Atualizado: 2026-07-10_
+> _Atualizado: 2026-07-13_
 
 ---
 
 ## Campo 1 — Assunto
 
-**A história:** Um e-mail chega para a Finaud com um assunto definido pelo remetente —
-por exemplo `Re: SSG - ENVIAR POSIÇÃO - 4111`. Esse assunto percorre o pipeline inteiro
-sem ser alterado e aparece na tela exatamente como chegou, prefixos incluídos.
+> **Status do rastreamento:** ✅ Concluído em 13/07/2026.
 
-**Regras:**
-- O assunto nunca é alterado pelo pipeline — o que o remetente escreveu é o que aparece na tela
-- Prefixos de resposta (`Re:`, `RES:`, `ENC:`, `FW:`) são mantidos
+**O que mostra na tela:** o texto do assunto do e-mail aparece no card da thread — por exemplo, `Re: DDR 2011 - Posição Janeiro`. É o título que identifica o assunto daquela conversa. Prefixos de resposta (`Re:`, `RES:`, `ENC:`, `FW:`) são mantidos exatamente como vieram.
 
-**O passo a passo técnico:**
+---
 
-| Etapa | Script | O que faz com o assunto | Arquivo gerado |
-|---|---|---|---|
-| 1 | `02_coletar_emails_gmail.py` | Captura o e-mail do Gmail e salva o assunto original | `01_extração_dados_brutos_gmail.json` → campo `assunto` |
-| 2 | `05_classificar_emails_regulatorio.py` | Classifica o e-mail (regulatório? qual cliente?) — copia o assunto sem alterar | `02_classificação_dados_brutos_gmail_editado.json` → campo `assunto` |
-| 3 | `09_integrar_dados_painel.py` | Monta os dados da tela — copia o assunto sem alterar | `03_integrador_dados_site.json` → campo `titulo` |
-| 4 | Tela (`email_operacional.html`) | Exibe o `titulo` diretamente no card | — |
+### Passo 1 — Coleta do e-mail (Script 02)
 
-**Bugs conhecidos:** nenhum. O campo sempre é preenchido (todo e-mail tem assunto).
+O Script 02 acessa o Gmail e lê o campo `Subject:` de cada e-mail. O servidor pode entregar esse campo em formato codificado (caracteres especiais ou acentos em encoding específico) — o script decodifica para texto legível e grava como `assunto` no arquivo `01_extração_dados_brutos_gmail.json`.
+
+*Em linguagem simples: é como abrir uma carta e copiar o assunto exatamente como está escrito no cabeçalho — com todos os prefixos de resposta e acentos.*
+
+**O que pode dar errado:**
+
+| Situação | O que o sistema faz |
+|---|---|
+| Assunto normal | Grava e exibe corretamente |
+| Assunto com caractere que não consegue decodificar | Substitui o caractere por `?` e grava assim — **sem erro, sem aviso** |
+| Assunto completamente ilegível | Grava `"Assunto Corrompido"` |
+| E-mail sem assunto | Grava `"Sem Assunto"` |
+
+⚠️ **Atenção:** o caso do meio é o mais perigoso. Se você ver um assunto com `?` no meio, significa que o e-mail chegou com caractere que o sistema não conseguiu decodificar. O assunto foi gravado e está sendo exibido, mas o texto está errado — e ninguém recebe aviso sobre isso.
+
+---
+
+### Passo 2 — Classificação (Script 05)
+
+O Script 05 usa o assunto para ajudar a identificar o cliente e o CADOC regulatório — por exemplo, se o assunto contém `4111` ou `DDR`, isso influencia a classificação. O assunto em si é copiado sem alteração para o arquivo `02_classificação_dados_brutos_gmail_editado.json`.
+
+*Em linguagem simples: o classificador lê o assunto para entender do que se trata o e-mail, mas não muda o texto — só o usa como pista.*
+
+**O que pode dar errado:** nenhum risco para o campo em si — o assunto só é lido, nunca reescrito nesta etapa.
+
+---
+
+### Passo 3 — Integração (Script 09)
+
+O Script 09 monta os dados que a tela vai exibir. Neste passo, o campo `assunto` é renomeado para `titulo` e gravado no arquivo `03_integrador_dados_site.json`. O conteúdo não muda.
+
+*Em linguagem simples: é como passar a informação de uma ficha para outra — o texto é o mesmo, só o nome do campo muda de `assunto` para `titulo`.*
+
+**O que pode dar errado:** nenhum risco — é uma cópia direta.
+
+---
+
+### Passo 4 — Exibição na tela
+
+A tela lê o campo `titulo` do JSON 03 e exibe no card da thread. Se `titulo` vier vazio, a tela exibe `"Sem título"` como fallback.
+
+*Em linguagem simples: a tela pega o texto e coloca no card. Se não tiver nada, escreve "Sem título" para não deixar o card em branco.*
+
+**O que pode dar errado:** se o pipeline não rodou após um novo e-mail chegar, o `titulo` pode estar desatualizado — mostra o assunto de um e-mail anterior da thread, não do mais recente.
+
+---
+
+### Passo 5 — Caminho feliz
+
+| Etapa | O que acontece |
+|---|---|
+| Cliente envia e-mail com assunto `Re: DDR 2011 - Posição Janeiro` | |
+| Script 02 | Lê o `Subject:`, decodifica, grava `assunto = "Re: DDR 2011 - Posição Janeiro"` no JSON 01 |
+| Script 05 | Copia o `assunto` sem alterar para o JSON 02; usa o texto para identificar DDR_2011 |
+| Script 09 | Renomeia para `titulo` e grava no JSON 03 |
+| Tela | Exibe `"Re: DDR 2011 - Posição Janeiro"` no card |
+
+---
+
+### O que Michel faz para corrigir
+
+O assunto vem do e-mail original e **não pode ser corrigido pelo pipeline**. Se aparecer com `?` no meio, o encoding veio errado do servidor do remetente — problema na origem, fora do controle do sistema. Se aparecer `"Sem Assunto"`, o remetente não preencheu o campo.
+
+**Precisa rodar o pipeline?** Não — não há como corrigir retroativamente.
+
+**Como consultar quando algo der errado:** abrir `data/json/pipeline/01_extração_dados_brutos_gmail.json` e buscar o e-mail pelo `id`; verificar o campo `assunto`.
+
+**Status:** ✅ limpo — nenhum problema identificado nos dados.
 
 ---
 
 ## Campo 2 — ID do caso
 
-**A história:** Quando um e-mail chega na caixa da Finaud, o servidor do Gmail atribui automaticamente um número único para ele — como um protocolo. Esse número percorre o pipeline sem ser alterado e aparece no card como identificador do caso (ex.: `78`).
+> **Status do rastreamento:** ✅ Concluído em 13/07/2026.
 
-**Regras:**
-- O ID é atribuído pelo servidor do Gmail no momento em que o e-mail é baixado — o sistema não cria um ID próprio
-- O card exibe o ID do **e-mail mais recente** da thread
-- Não é um número sequencial do pipeline — é o número que o Gmail deu para aquele e-mail na caixa de entrada
+**O que mostra na tela:** um número que aparece no card da thread — por exemplo `78`. É o identificador único do **e-mail mais recente** daquela conversa, atribuído pelo servidor IMAP do Gmail.
 
-**O passo a passo técnico:**
+---
 
-| Etapa | Script | O que faz com o ID | Arquivo gerado |
-|---|---|---|---|
-| 1 | `02_coletar_emails_gmail.py` | Baixa o e-mail e registra o número que o Gmail atribuiu | `01_extração_dados_brutos_gmail.json` → campo `id` |
-| 2 | `05_classificar_emails_regulatorio.py` | Classifica o e-mail — copia o `id` sem alterar | `02_classificação_dados_brutos_gmail_editado.json` → campo `id` |
-| 3 | `09_integrar_dados_painel.py` | Monta os dados da tela — copia o `id` sem alterar | `03_integrador_dados_site.json` → campo `id` |
-| 4 | Tela (`email_operacional.html`) | Exibe o `id` do e-mail mais recente da thread no card | — |
+### Passo 1 — Coleta do e-mail (Script 02)
 
-**Bugs conhecidos:** nenhum. O campo sempre é preenchido.
+O Script 02 acessa o Gmail via IMAP. Quando o servidor entrega cada e-mail, ele envia junto um número de sequência único — esse é o `id`. O script grava esse número no arquivo `01_extração_dados_brutos_gmail.json` como campo `id`.
+
+*Em linguagem simples: é como um número de protocolo que a agência postal coloca no envelope quando ele chega. Não é você que escolhe — é o servidor que atribui automaticamente.*
+
+Antes de gravar, o Script 02 compara os IDs dos e-mails novos com os que já estão no arquivo. Se o `id` já existe, o e-mail é ignorado — evitando duplicatas.
+
+*Em linguagem simples: é como o carteiro olhar a lista dos protocolos que já foram registrados antes de assinar o recebimento. Se o número já está na lista, ele não registra de novo.*
+
+**O que pode dar errado:** nenhum — o IMAP sempre entrega o `id` junto com o e-mail. Não existe e-mail sem `id` neste protocolo.
+
+---
+
+### Passo 2 — Classificação (Script 05)
+
+O Script 05 copia o `id` sem alterar para o arquivo `02_classificação_dados_brutos_gmail_editado.json`. Não usa o campo para nenhuma lógica.
+
+**O que pode dar errado:** nenhum risco — cópia direta.
+
+---
+
+### Passo 3 — Integração (Script 09)
+
+O Script 09 copia o `id` de cada e-mail para o arquivo `03_integrador_dados_site.json`, mantendo o mesmo nome de campo `id`.
+
+**O que pode dar errado:** nenhum risco — cópia direta.
+
+---
+
+### Passo 4 — Exibição na tela
+
+A tela agrupa os e-mails por thread e pega o **último da lista** (o mais recente). O `id` desse e-mail é exibido no card.
+
+*Em linguagem simples: a tela olha todos os e-mails da conversa, pega o mais novo e mostra o número de protocolo dele.*
+
+**O que pode dar errado:** se o pipeline não rodou após um novo e-mail chegar, a tela mostra o `id` do penúltimo e-mail — não do mais recente.
+
+---
+
+### Passo 5 — Caminho feliz
+
+| Etapa | O que acontece |
+|---|---|
+| Novo e-mail chega na caixa da Finaud | Gmail atribui o número `78` a esse e-mail |
+| Script 02 | Verifica que `78` não existe no JSON 01; baixa e grava `id = "78"` |
+| Script 05 | Copia `id = "78"` para o JSON 02 sem alterar |
+| Script 09 | Copia `id = "78"` para o JSON 03 sem alterar |
+| Tela | Pega o e-mail mais recente da thread e exibe `78` no card |
+
+---
+
+### O que Michel faz para corrigir
+
+Nenhuma ação necessária — o `id` é atribuído pelo Gmail automaticamente e nunca está incorreto.
+
+**Precisa rodar o pipeline?** Não aplicável.
+
+**Como consultar quando algo der errado:** verificar campo `id` no `data/json/pipeline/01_extração_dados_brutos_gmail.json`.
+
+**Status:** ✅ limpo — o campo sempre é preenchido corretamente.
 
 ---
 
@@ -176,36 +284,142 @@ a conversa existiria no Gmail mas seria invisível no sistema.
 
 ---
 
-## Campo 4 — Cliente
+### Passo 3 — Integração (Script 09)
 
-> **Status do rastreamento:** ✅ Concluído em 10/07/2026.
+O Script 05 grava o remetente como um objeto chamado `contato_origem`, com três informações: o lado (`CLIENTE` ou `FINAUD`), o nome da pessoa e o e-mail. O Script 09 copia esse objeto inteiro para cada mensagem dentro do JSON 03 — sem alterar nenhum dado.
 
-**O que mostra na tela:** nome da pessoa que enviou o e-mail — aparece no badge "Cliente"
-do modal (ex: "Ana Paola do Nascimento - Unicred do Brasil") e como linha de apoio no card
-da lista.
-
-**De onde vem:** diretamente do `remetente_real` resolvido pelo Script 05 (Campo 3 — Remetente,
-Passo 2). O Script 09 copia esse valor para o campo `cliente` no JSON 03 sem alteração.
-
-*Em linguagem simples: o sistema pega o nome da pessoa que enviou o e-mail — já com o
-ajuste do Reply-To quando necessário — e exibe como "Cliente" no card. Não há lógica
-adicional: é o mesmo remetente real do Campo 3, só exibido com outro rótulo na tela.*
-
-**Arquivo e campo:** `03_integrador_dados_site.json` → campo `cliente`
+*Em linguagem simples: o Script 05 monta uma ficha com três campos — quem enviou, se é cliente ou Finaud, e o e-mail. O Script 09 cola essa ficha no registro da mensagem, sem tocar em nada.*
 
 **O que pode dar errado:**
 
-- **Nome codificado** (ex: `=?UTF-8?Q?Ana_Paola?=`) → aparece com símbolos estranhos na tela
+- **`contato_origem` vazio (falha silenciosa)** — se o Script 05 não conseguiu identificar o remetente (e-mail malformado ou caso não previsto), o `contato_origem` chega vazio no JSON 03 e a linha "Remetente:" simplesmente desaparece do histórico da thread. Nenhum aviso na tela, nenhum log de alerta.
 
-  *Em linguagem simples: e-mails com nomes acentuados às vezes chegam com uma codificação
-  especial. A função `decodeMimeHeader()` na tela tenta converter — mas pode falhar em
-  alguns casos.*
+---
 
-- **E-mail do grupo suporte sem Reply-To** (cenário B4) → cliente fica como `suporte@finaud.com.br`
+### Passo 4 — Exibição na tela
 
-  *Em linguagem simples: quando o grupo suporte reencaminha uma cópia interna para os membros
-  e não há Reply-To, o sistema não consegue identificar o cliente real. Esses casos não
-  aparecem na tela — são filtrados como e-mails internos. Correto.*
+A tela lê o `contato_origem` de cada mensagem e monta a linha de remetente no formato `Nome · email`. Antes de exibir, remove automaticamente o sufixo `" via Suporte"` que o Gmail coloca no nome quando o e-mail passou pelo grupo — para que o usuário veja o nome limpo, sem jargão técnico.
+
+*Em linguagem simples: a tela pega a ficha montada pelo Script 05, limpa o nome se tiver sujeira do grupo, e exibe como "Remetente: Leonardo Ueda · leonardo.ueda@westernunion.com".*
+
+**O que pode dar errado:**
+
+- **Nome codificado** — nomes com caracteres especiais chegam às vezes no formato técnico de e-mail (ex.: `=?UTF-8?Q?Ana_Paola?=`). A tela tenta decodificar, mas se falhar, exibe os símbolos brutos em vez do nome legível. Nenhum aviso — falha silenciosa.
+
+---
+
+### Passo 5 — Caminho feliz
+
+| Etapa | O que acontece |
+|---|---|
+| Cliente envia e-mail para `suporte@finaud.com.br` | Gmail redistribui, coloca `Reply-To: leonardo.ueda@westernunion.com` |
+| Script 02 | Grava `remetente = "suporte@finaud.com.br"` e `reply_to = "leonardo.ueda@westernunion.com"` no JSON 01 |
+| Script 05 | Detecta que `Reply-To` não é da Finaud → define `remetente_real = leonardo.ueda@westernunion.com`; monta `contato_origem = {lado: CLIENTE, nome: Leonardo Ueda, email: leonardo.ueda@westernunion.com}` no JSON 02 |
+| Script 09 | Copia `contato_origem` para o JSON 03 sem alterar |
+| Tela | Exibe `Remetente: Leonardo Ueda · leonardo.ueda@westernunion.com` no histórico da thread |
+
+---
+
+### O que Michel faz para corrigir
+
+- **Remetente não aparece no histórico** (`contato_origem` vazio): verificar no `02_classificação_dados_brutos_gmail_editado.json` se o Script 05 processou o e-mail corretamente. Rodar Script 05 + Script 09 pode resolver.
+- **Nome com símbolos brutos na tela**: problema de encoding que vem na origem do e-mail — sem correção possível pelo pipeline.
+
+**Precisa rodar o pipeline?** Sim — Script 05 e Script 09 para reprocessar.
+
+**Como consultar quando algo der errado:** rodar `python scripts/consultas/diagnostico_cenarios_email.py` para verificar se o e-mail foi capturado e em qual cenário foi classificado.
+
+---
+
+## Campo 4 — Cliente
+
+> **Status do rastreamento:** ✅ Concluído em 13/07/2026.
+
+**O que mostra na tela:** nome da pessoa que representa o cliente naquela thread — aparece no badge "Cliente" do modal (ex.: `Ana Paola do Nascimento`). É a **pessoa do lado de fora da Finaud** que é o contato daquela conversa. Não é o nome da empresa (isso é o Campo 5 — Empresa).
+
+---
+
+### Passo 1 — Identificação do contato do cliente (Script 05)
+
+O Script 05 resolve quem é a pessoa do cliente com base em quem enviou e quem recebeu cada e-mail, seguindo esta lógica:
+
+- Se quem enviou é do lado **CLIENTE** → o contato é o nome/e-mail do remetente
+- Se quem enviou é da **Finaud** → o contato é o nome/e-mail de quem recebeu do lado externo
+- Se é **Finaud para Finaud** → grava `"Finaud"` (thread interna)
+- Se não consegue identificar ninguém externo → grava `"CLIENTE_DESCONHECIDO"`
+
+O resultado é gravado no campo `cliente` do JSON 02.
+
+*Em linguagem simples: o Script 05 olha quem mandou e quem recebeu e decide "quem é a pessoa do cliente nesta conversa". Quando o cliente envia para a Finaud, o contato é quem mandou. Quando a Finaud envia para o cliente, o contato é quem recebeu.*
+
+**O que pode dar errado:**
+- Nome com encoding especial (ex.: `=?UTF-8?Q?Ana_Paola?=`) → pode ser gravado com símbolos brutos se a decodificação falhar
+
+---
+
+### Passo 2 — Classificação (Script 05 — continuação)
+
+Não há etapa separada. O campo `cliente` é gravado diretamente no JSON 02 pelo mesmo script.
+
+---
+
+### Passo 3 — Integração (Script 09)
+
+O Script 09 lê a **primeira mensagem** da thread para definir o contato do cliente de toda a conversa — usando a mesma lógica do Script 05. Grava o campo `cliente` no JSON 03 a nível de thread (uma vez só, valendo para todas as mensagens).
+
+*Em linguagem simples: o Script 09 olha a primeira mensagem da conversa para decidir quem é o contato do cliente desta thread e grava esse nome uma vez, representando toda a conversa.*
+
+**Análise de risco realizada em 13/07/2026:**
+
+Levantamos a hipótese de que, se a primeira mensagem de uma thread fosse interna (Finaud → Finaud), o script poderia identificar o contato como `"Finaud"` ou `"CLIENTE_DESCONHECIDO"` — mesmo que as mensagens seguintes fossem com um cliente externo.
+
+Para confirmar ou descartar, varremos os dois ambientes:
+
+| Ambiente | Total de threads | CLIENTE_DESCONHECIDO | cliente=Finaud com CADOC externo |
+|---|---|---|---|
+| TESTE | 36 | 0 | 0 |
+| Produção | 4.786 | 0 | 1.185 (todos RISK_DRIVER — correto) |
+
+**Conclusão:** os 1.185 casos com `cliente = "Finaud"` em produção são todos relatórios automáticos do sistema de risco (`riskdriver@finaud.com.br`) enviados internamente — são genuinamente F→F, portanto `"Finaud"` é o valor correto. Zero casos de `CLIENTE_DESCONHECIDO` em 4.786 threads.
+
+O risco não se materializa na prática: threads que começam F→F permanecem F→F. Nunca ocorre de um cliente externo entrar numa conversa que começou entre colaboradoras da Finaud.
+
+---
+
+### Passo 4 — Exibição na tela
+
+- **No modal:** exibe `thread.cliente` diretamente no campo "Cliente". Se vazio, exibe `"—"`
+- **No card da lista:** usa `empresa` em primeiro lugar; se empresa estiver vazia, usa `cliente` como fallback
+
+*Em linguagem simples: no modal, mostra o nome da pessoa do cliente. No card da lista, tenta mostrar o nome da empresa — se não tiver empresa cadastrada, mostra o nome da pessoa no lugar.*
+
+**O que pode dar errado:**
+- Nome com encoding especial → pode aparecer com símbolos brutos na tela (mesma situação do Campo 3)
+
+---
+
+### Passo 5 — Caminho feliz
+
+| Etapa | O que acontece |
+|---|---|
+| Cliente envia e-mail | `contato_origem.lado = CLIENTE`, `contato_origem.nome = "Ana Paola do Nascimento"` |
+| Script 05 | Grava `cliente = "Ana Paola do Nascimento"` no JSON 02 |
+| Script 09 | Lê a primeira mensagem da thread, confirma `lado = CLIENTE`, grava `cliente = "Ana Paola do Nascimento"` no JSON 03 |
+| Tela (modal) | Exibe `Cliente: Ana Paola do Nascimento` |
+| Tela (card) | Empresa vazia? Exibe `Ana Paola do Nascimento` no lugar da empresa |
+
+---
+
+### O que Michel faz para corrigir
+
+- **`CLIENTE_DESCONHECIDO`** (não ocorre hoje, mas se ocorrer): investigar no `02_classificação_dados_brutos_gmail_editado.json` o `contato_origem` da primeira mensagem da thread para entender por que o cliente não foi identificado. Após identificar a causa, rodar Script 09.
+- **Nome com símbolos brutos na tela**: problema de encoding que vem na origem do e-mail — sem correção possível pelo pipeline.
+
+**Precisa rodar o pipeline?** Sim — Script 09.
+
+**Como consultar quando algo der errado:** abrir `data/json/pipeline/03_integrador_dados_site.json` e buscar a thread pelo `threadId`; verificar o campo `cliente`.
+
+**Status:** ✅ limpo — zero casos de `CLIENTE_DESCONHECIDO` confirmados em varredura de 4.786 threads de produção (13/07/2026).
 
 ---
 
@@ -410,7 +624,117 @@ aparece em branco, some.*
 
 ---
 
-> ✅ **Campos 3, 4 e 5** rastreamento completo em 10/07/2026.
-> Campo 5 (Empresa) serve de **modelo e exemplo** para o rastreamento dos demais campos.
+### O que Michel faz para corrigir
+
+- **Empresa vazia:** acessar `data/json/config/cadastro_clientes_cadoc.json`, adicionar o domínio da empresa e rodar o Script 09 pelo painel (`/admin/pipeline`)
+- **Script 09 falhou no meio:** restaurar o backup `03_integrador_dados_site.json.backup` e rodar o Script 09 de novo
+- **Cadastro corrompido:** abrir o `cadastro_clientes_cadoc.json` e corrigir o erro de sintaxe (vírgula, aspas faltando) antes de rodar o Script 09
+- **Cache desatualizado após rodar Script 09:** aguardar alguns segundos e recarregar a tela; se persistir, reiniciar o servidor Flask
+
+**Precisa rodar o pipeline?** Sim — Script 09 para qualquer correção no campo Empresa.
+
+**Como consultar quando algo der errado:** abrir `data/json/pipeline/03_integrador_dados_site.json` e buscar a thread pelo `threadId`; verificar o campo `empresa`. Se estiver vazio, verificar o `data/json/config/cadastro_clientes_cadoc.json` pelo domínio do e-mail do cliente.
+
+**Status:** ✅ limpo — campo funcionando corretamente. Atenção ao ponto de dupla computação (Script 09 + API): se os dois divergirem, a tela pode mostrar valor diferente do que está gravado no JSON 03.
+
+---
+
+## Campo 6 — Responsável
+
+> **Status do rastreamento:** ✅ Concluído em 13/07/2026.
+
+**O que mostra na tela:** nome da pessoa que deve agir agora na thread. Se o cliente aguarda resposta → é o analista da Finaud. Se a Finaud aguarda resposta → é o colaborador do cliente. Aparece no badge `👤` dentro do modal do card.
+
+---
+
+### Passo 1 — Coleta do e-mail (Script 02)
+
+O Script 02 **não cria** este campo. Ele coleta os campos brutos do e-mail (`remetente`, `destinatários`, `cc`, `reply_to`) que o Script 05 usará depois para identificar o responsável.
+
+---
+
+### Passo 2 — Script 05 (classificação)
+
+O Script 05 lê cada e-mail e decide quem é o responsável usando a função `identificar_cliente_e_responsavel_completo` (linhas 580–679):
+
+**Caso A — o cliente enviou o e-mail:**
+O sistema procura no campo "Para:" e no "CC:" um endereço `@finaud`. O nome encontrado vira o responsável.
+- Se o endereço estiver no cadastro `colaboradores_finaud` → usa o nome padronizado do cadastro
+- Se não estiver cadastrado → usa o nome que vier no próprio campo "Para:" do e-mail
+- Se o "Para:" não tiver nome nenhum → cai no fallback `"Suporte Finaud"`
+
+**Caso B — a Finaud enviou o e-mail:**
+O sistema procura no "Para:" a primeira pessoa externa (não-Finaud). Usa o nome dessa pessoa como responsável. Se não achar nome → usa o nome da empresa do cliente como fallback.
+
+O campo `responsavel` é gravado no arquivo `02_classificação_dados_brutos_gmail_editado.json` para cada e-mail.
+
+---
+
+### Passo 3 — Script 09 (integrador)
+
+O Script 09 monta a thread e calcula o responsável final com a função `_responsavel_pela_acao()` (adicionada em 13/07/2026), que olha a **última mensagem** da thread:
+
+| Última mensagem enviada por | Responsável calculado |
+|---|---|
+| Cliente → Finaud | pessoa da Finaud no "Para:" desta mensagem |
+| Finaud → Cliente | pessoa do cliente no "Para:" desta mensagem |
+| Finaud → Finaud (interno) | pessoa da Finaud no "Para:" desta mensagem |
+| Exceção "obrigada pelo envio" | quem enviou (Finaud) |
+| Nenhum nome identificável | fallback do Script 05 |
+
+O resultado é gravado como `responsavel` no arquivo `03_integrador_dados_site.json`.
+
+**Nota:** o Script 09 é a **fonte de verdade** — a tela apenas lê este campo, sem recalcular.
+
+---
+
+### Passo 4 — Tela operacional
+
+A tela exibe o valor `thread.responsavel` diretamente no badge `👤` do modal (elemento `mResp`, linha ~4633 de `email_operacional.html`):
+
+```javascript
+document.getElementById("mResp").textContent = decodeMimeHeader(String(thread.responsavel || "").trim()) || "—";
+```
+
+*Sem recálculo na tela — o JSON é a fonte de verdade.*
+
+---
+
+### Passo 5 — Caminho feliz
+
+1. Cliente envia e-mail para `michel@finaud.com.br`
+2. Script 05: remetente não é Finaud → responsável = "Michel Costa" (primeiro Finaud no "Para:")
+3. Script 09: última mensagem é do cliente → responsável confirmado = "Michel Costa"
+4. Michel responde → próxima carga do Script 09: última mensagem agora é Finaud→Cliente → responsável passa a ser o nome do cliente
+5. Cliente responde de volta → Script 09 calcula de novo: última mensagem é do cliente → responsável volta a ser "Michel Costa"
+
+O badge `👤` sempre reflete quem deve agir com base na **última movimentação** da thread.
+
+---
+
+### O que pode dar errado
+
+| Situação | O que aparece | Por que acontece |
+|---|---|---|
+| E-mail enviado para `suporte@finaud` sem analista específico no "Para:" e sem resposta ainda | `"Suporte Finaud"` | Nenhum `@finaud` individual no "Para:"; nenhuma resposta para extrair nome — **comportamento esperado** |
+| Nome do colaborador do cliente não está no e-mail | Nome da empresa como fallback (ex: "Acme") | `extrair_nome_pessoa` retornou vazio; sistema usa nome da empresa |
+
+**Não há falha silenciosa clássica aqui:** o sistema sempre grava algo — nunca fica em branco. O risco é gravar um valor genérico ("Suporte Finaud") em vez do nome certo, que ocorre apenas quando não há informação disponível.
+
+---
+
+### O que Michel faz para corrigir
+
+**Se mostrar "Suporte Finaud" em vez do nome do analista:**
+1. Verificar se o e-mail original tinha algum `@finaud` individual no "Para:" ou CC
+2. Se sim: checar se o analista está no arquivo `config/cadastro_clientes_cadoc.json` (seção `colaboradores_finaud`) e corrigir se necessário; rodar Script 05 + Script 09
+3. Se não (e-mail foi enviado para `suporte@finaud` apenas): aguardar o analista responder — na próxima carga do Script 09 o nome aparecerá automaticamente
+
+**Precisa rodar o pipeline?** Script 05 e Script 09, nesta ordem. Fazer backup do `03_integrador_dados_site.json` antes.
+
+**Como consultar quando algo der errado:**
+- JSON do e-mail individual: `data/json/pipeline/02_classificação_dados_brutos_gmail_editado.json` → campo `responsavel` de cada mensagem
+- JSON da thread: `data/json/pipeline/03_integrador_dados_site.json` → campo `responsavel` da thread
+- Mapeamento de colaboradores: `config/cadastro_clientes_cadoc.json` → seção `colaboradores_finaud`
 
 ---
