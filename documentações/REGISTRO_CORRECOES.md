@@ -2,6 +2,24 @@
 
 ---
 
+### 2026-07-13 13:28 — [REFATORAÇÃO] Campo Responsável: lógica movida da tela para o Script 09
+
+**🔎 Em miúdos:** a tela recalculava quem é o responsável da thread na hora de exibir, em vez de só ler o que o Script 09 já tinha gravado. Agora o Script 09 grava o valor correto e a tela só lê. Thread do Risco Externo passou de "Suporte Finaud" para "Rodrigo Tibério" após a correção.
+
+**Problema:** `email_operacional.html` continha a função `responsavelPelaAcaoFromMensagens` que recalculava o responsável a partir das mensagens da thread toda vez que o modal era aberto. Isso duplicava lógica em dois lugares (Python e JavaScript) e tornava o JSON não-confiável como fonte de verdade.
+
+**Causa raiz:** ao implementar o campo, o código da tela não confiou que o Script 09 sempre gravaria o valor correto e adicionou uma "rede de segurança" no JavaScript.
+
+**Correção:**
+- `scripts/09_integrar_dados_painel.py`: substituído o bloco PF42 pelas funções `_nome_contato_seguro()` e `_responsavel_pela_acao()`, que portam a mesma lógica para Python e gravam o resultado correto no JSON
+- `templates/email_operacional.html`: removidas as funções JS (`responsavelPelaAcaoFromMensagens`, `nomeContatoSeguroRespAcao`, `excecaoObrigadaPeloEnvioRespAcao`, `ordenarMensagensParaRespAcao`, `corpoParaRegraObrigadaRespAcao`). O badge `👤` passa a ler diretamente `thread.responsavel`
+
+**Validação:** simulação confirmou 0 divergências entre lógica antiga e nova. Thread Risco Externo / Trusteed VM: "Suporte Finaud" → "Rodrigo Tibério" após rodar Script 09. pytest: 75 falhos antes e depois — zero regressões. ✅ VALIDADO em 13/07/2026
+
+**sem teste novo:** refatoração estrutural sem mudança de contrato — a lógica portada é idêntica à que já existia na tela; os testes existentes cobrem o comportamento
+
+---
+
 ### 2026-07-10 — [DOCUMENTAÇÃO] Etapa 1.2 do Campo 3 — mapeamento completo de cenários de remetente
 
 **🔎 Em miúdos:** documentamos todos os cenários possíveis de quem pode enviar um e-mail para a Finaud (ou a Finaud para fora), com exemplos reais e o que aparece no card para cada caso. Validamos nos dados de produção e teste — nenhum furo encontrado.

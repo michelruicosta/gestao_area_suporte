@@ -67,6 +67,45 @@ _DOMINIOS_GENERICOS = frozenset({
     "bol.com.br", "uol.com.br", "terra.com.br", "ig.com.br", "protonmail.com",
 })
 
+def _nome_contato_seguro(d: dict) -> str:
+    if not d or not isinstance(d, dict):
+        return ""
+    n = (d.get("nome") or "").strip()
+    if n:
+        return n
+    em = (d.get("email") or "").strip()
+    if em and "@" in em:
+        return em.split("@")[0]
+    return ""
+
+
+def _responsavel_pela_acao(mensagens: list, fallback: str) -> str:
+    """Calcula quem deve agir agora com base na última mensagem da thread.
+    Porta a lógica de responsavelPelaAcaoFromMensagens (email_operacional.html)
+    para o Script 09, tornando o JSON a fonte de verdade."""
+    if not mensagens:
+        return fallback
+    ultima = sorted(mensagens, key=lambda m: m.get("timestamp_epoch", 0) or 0)[-1]
+    co = ultima.get("contato_origem") or {}
+    cd = ultima.get("contato_destino") or {}
+    o = (co.get("lado") or "").upper()
+    d = (cd.get("lado") or "").upper()
+    corpo = (ultima.get("corpo_limpo") or ultima.get("corpo") or "").lower()
+    excecao_obrigada = (
+        o == "FINAUD"
+        and ("obrigada pelo envio" in corpo or "obrigado pelo envio" in corpo)
+    )
+    if excecao_obrigada:
+        return _nome_contato_seguro(co) or fallback
+    if o == "CLIENTE":
+        return _nome_contato_seguro(cd) or fallback
+    if o == "FINAUD" and d == "FINAUD":
+        return _nome_contato_seguro(cd) or fallback
+    if o == "FINAUD" and d == "CLIENTE":
+        return _nome_contato_seguro(cd) or (ultima.get("responsavel") or "").strip() or fallback
+    return fallback
+
+
 def _resolver_empresa(evento: dict) -> str:
     """Resolve o nome oficial da empresa via cadastro_clientes_cadoc.json.
     Ordem: e-mail exato → domínio → nome da empresa no assunto → vazio.
@@ -1221,24 +1260,12 @@ def _processar_threads(threads_raw: List[Dict[str, Any]], _anexos_por_id: dict =
             "link": ""  # Pode ser preenchido futuramente
         }
         
-        # #PF42: quando responsável da thread é "Suporte Finaud" (genérico), buscar
-        # o primeiro analista Finaud específico que respondeu na thread.
-        # Motivo: e-mails enviados para suporte@finaud não têm analista no Para;
-        # mas na maioria dos casos um analista responde e deve ser o responsável.
-        _resp_thread = thread_formatada.get("responsavel") or ""
-        if _resp_thread.strip().lower() in ("suporte finaud", "suporte", ""):
-            for _msg in mensagens_formatadas:
-                _co = _msg.get("contato_origem") or {}
-                _nome_co = (_co.get("nome") or "").strip()
-                _lado_co = (_co.get("lado") or "").upper()
-                if (
-                    _lado_co == "FINAUD"
-                    and _nome_co
-                    and _nome_co.lower() not in ("suporte finaud", "suporte", "riskdriver")
-                ):
-                    thread_formatada["responsavel"] = _nome_co
-                    thread_formatada["_responsavel_inferido_de_reply"] = True
-                    break
+        # PF42: recalcula responsavel a partir da última mensagem (mesma lógica da tela).
+        # O JSON é a fonte de verdade — a tela apenas lê este campo.
+        thread_formatada["responsavel"] = _responsavel_pela_acao(
+            mensagens_formatadas,
+            thread_formatada.get("responsavel") or "Suporte Finaud",
+        )
 
         threads_formatadas.append(thread_formatada)
 
