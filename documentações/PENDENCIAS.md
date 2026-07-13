@@ -646,6 +646,38 @@ Script 10 foi removido em 29/06/2026. A sequência ficou com buracos: 09→11 (b
 
 ---
 
+## 🟡 Campo 9 — Prazos: limitações e casos sem prazo identificados em produção (registrado 13/07/2026)
+
+**Contexto:** durante a documentação do Campo 9 (Prazos), validamos os 6.576 registros de produção — todos com prazo correto. Mas encontramos 303 threads com CADOC regulatório e sem prazo calculado. Investigação revelou 4 situações:
+
+### Situação 1 — Bug: ano com 2 dígitos não reconhecido (20 casos)
+O Script 05 não reconhece datas no formato `MM/YY` (ex.: "04/26", "05/26"). Trata apenas anos com 4 dígitos.
+
+**Exemplos reais:**
+- "DLI 2062 04/26" → deveria extrair abril/2026
+- "DRM 2060_05/26 - ACCREDITO" → deveria extrair maio/2026
+- "DRL 2160_05/26 - TRADERS" → deveria extrair maio/2026
+- "DRM 04/26", "DRM 2060 - BASE 04/26", "DRM 2060 - BASE 01/26"
+
+**O que fazer:** no Script 05, função `extrair_todas_datas()`, adicionar padrão para `(\d{1,2})/(\d{2})(?!\d)` interpretando o ano de 2 dígitos como 20XX (ex.: 26 → 2026). Validar que não conflita com padrão DD/MM existente.
+
+**Arquivo:** `scripts/05_classificar_emails_regulatorio.py` — função `extrair_todas_datas()` (~linha 850)
+
+### Situação 2 — A verificar com Michel: MM/AAAA bloqueado por tipo de CADOC (165 casos)
+O sistema encontrou datas (ex.: "05/2026") mas rejeitou porque o CADOC esperava data de dia específico (DDR/4111 esperam DIARIO). Inclui circulares do BACEN ("ENC: BC Correio - Resolução BCB...") que podem não ser entregas de CADOC.
+
+**Pergunta pendente:** threads como "CADOC 4111 CONGLOMERADO - 05/2026" e "ENC: BC Correio - Resolução BCB..." deveriam ter prazo calculado?
+
+### Situação 3 — Correto sem prazo (50 casos)
+Assuntos genéricos ("Guru CTVM: Informações Diárias", "Conexão", "Reunião DRM") — parecem threads de dúvida ou comunicação geral, não de entrega de CADOC. Comportamento provavelmente correto.
+
+### Situação 4 — Formatos incomuns sem extração (38 casos)
+Exemplos: "Wise DDR 29" (só dia sem mês), "CADOC 4111 11-05" (DD-MM sem ano), "Cota de fundos DDR 12.06".
+
+**Arquivo:** `scripts/05_classificar_emails_regulatorio.py`
+
+---
+
 ## 🔴 INVESTIGAÇÃO — status_processo: classificação Pendente/Informativo não reflete a operação (registrado 13/07/2026)
 
 **Contexto:** durante a documentação do Campo 8 (Status), descobrimos que o campo `status_processo` existe no sistema mas Michel não sabia da sua existência. Ele usa os valores PENDENTE e INFORMATIVO, baseados em "tem prazo = PENDENTE, não tem prazo = INFORMATIVO" — uma lógica que não representa o que a operação precisa (Aguardando ou Concluído).

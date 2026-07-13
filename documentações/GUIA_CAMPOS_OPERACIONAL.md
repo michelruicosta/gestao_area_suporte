@@ -903,3 +903,104 @@ O badge `🏷` é clicável — permite alterar o status manualmente na tela. Pa
 - `data/json/pipeline/threads_concluidas_auto.json` — threads concluídas
 
 ---
+
+## Campo 9 — Prazos
+
+> **Status do rastreamento:** ✅ Concluído em 13/07/2026. Validado em produção (6.576 registros — zero erros de cálculo). Limitações registradas em `documentações/PENDENCIAS.md`.
+
+**O que mostra na tela:** a data-limite para envio de cada relatório regulatório. Cada thread pode ter mais de um prazo — um por mensagem recebida — pois o sistema recalcula a cada novo e-mail. O prazo mais recente é o que aparece em destaque no card.
+
+---
+
+### Passo 1 — Script 02
+
+Não contribui para este campo. Apenas coleta o e-mail bruto.
+
+---
+
+### Passo 2 — Script 05 (onde o prazo nasce)
+
+É aqui que o prazo é criado. O script faz dois trabalhos:
+
+**1. Busca a data de referência (`data_base`)** — seguindo esta ordem de prioridade:
+
+| Prioridade | Onde busca | Quando usa |
+|---|---|---|
+| 1ª | Assunto do e-mail | Sempre tenta primeiro |
+| 2ª | Corpo da mensagem atual | Só se o assunto não tiver data |
+| 3ª | Histórico de todas as mensagens da thread | Só se nem o corpo tiver data |
+| 4ª | Data de envio do e-mail | Último recurso — quando não há data em nenhum lugar |
+
+**Assunto ganha:** se a data estiver tanto no assunto quanto no corpo, o sistema usa a do assunto e ignora o corpo. Isso é intencional — o assunto tende a ter a data certa (ex.: "DDR de 29/06/2026"), enquanto o corpo pode ter várias datas espalhadas.
+
+**Formatos reconhecidos:**
+
+| Formato | Exemplo |
+|---|---|
+| DD/MM/AAAA | 29/06/2026 |
+| DD.MM.AAAA ou DD-MM-AAAA | 29.06.2026 |
+| AAAA-MM-DD (ISO) | 2026-06-29 |
+| AAAAMMDD (compacto) | 20260629 |
+| DD de Mês de AAAA | 29 de junho de 2026 |
+| DD de Mês. de AAAA (Gmail) | 29 de jun. de 2026 |
+| DD Mês AAAA (sem "de") | 29 junho 2026 |
+| MM/AAAA (competência mensal) | 05/2026 → usa 31/05 |
+| Mês/AAAA ou Mês de AAAA | Maio/2026 → usa 31/05 |
+| Mês sozinho | "DLI DEZEMBRO" → usa 31/12 |
+| MM AAAA (com espaço) | "COS 12 2025" → usa 31/12 |
+| Nome de arquivo com data | DRL2160_012026 → usa 31/01 |
+| Intervalos de dias | "15 a 20/06/2026" → gera prazo por dia útil |
+| Lista de dias | "16, 19 e 20/01/2026" → gera 3 prazos |
+
+⚠️ **Limitação conhecida:** ano com 2 dígitos (ex.: "04/26") **não é reconhecido**. Registrado em `documentações/PENDENCIAS.md` para correção futura.
+
+**2. Calcula o prazo-limite** aplicando a regra do CADOC:
+
+| CADOC | Regra |
+|---|---|
+| DDR_2011 / 4111 | 3 dias úteis após a data_base |
+| RETORNO_BACEN / SUPORTE / S5 / FORCAPITAL / DRSAC | 5 dias úteis após a data_base |
+| DRL_2160 | 10 dias úteis após a data_base |
+| DRM_2060 | 5 dias úteis a partir do 1º dia do mês seguinte |
+| DLO_2061 / DLI_2062 | Dia 5 do segundo mês seguinte à data_base |
+| 6209 | Último dia útil do mês que segue o trimestre |
+
+Feriados bancários nacionais são considerados automaticamente — fins de semana e datas da lista de feriados são pulados no cálculo.
+
+O resultado fica gravado no campo `lista_prazos` dentro do arquivo `02_classificação_dados_brutos_gmail_editado.json`.
+
+---
+
+### Passo 3 — Script 09
+
+Copia `lista_prazos` para o integrador (`03_integrador_dados_site.json`) sem alteração. O prazo mais recente alimenta também o campo `prazo`, usado pelo Script 11 na triagem.
+
+---
+
+### Passo 4 — Tela operacional
+
+A API `/api/dados` entrega `lista_prazos` para a tela. A função `rotuloDataPrazo()` formata e exibe o prazo mais recente no card da thread.
+
+---
+
+### ⚠️ O que pode dar errado
+
+| Situação | O que acontece |
+|---|---|
+| Assunto usa formato de ano com 2 dígitos (ex.: "04/26") | O sistema não reconhece a data — thread fica sem prazo calculado |
+| Data extraída errada do assunto | Prazo calculado errado desde o início — a origem precisa ser corrigida no Script 05 |
+| Feriado não cadastrado no sistema | Prazo pode cair num feriado sem pular — verificar em `data/json/config/mapeamento_regras_negocio.json` seção `feriados_nacionais` |
+| Thread com muitas mensagens | Acumula vários prazos em `lista_prazos` — o sistema sempre usa o mais recente |
+
+---
+
+### O que Michel faz para corrigir
+
+Se um prazo aparecer errado na tela: verificar a `data_base` em `03_integrador_dados_site.json` para aquela thread. Corrigir o assunto do e-mail de origem não resolve — é necessário ajustar a lógica de extração no Script 05 e rodar o pipeline novamente.
+
+**Precisa rodar o pipeline?** Script 05 + Script 09 para recalcular os prazos.
+
+**Como consultar:**
+- `data/json/pipeline/03_integrador_dados_site.json` → campo `lista_prazos` de cada thread
+
+---
