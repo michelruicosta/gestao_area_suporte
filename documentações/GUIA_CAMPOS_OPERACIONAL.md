@@ -1071,3 +1071,96 @@ Se o responsável aparecer errado na tela: o valor exibido vem do cálculo em te
 - O valor exibido na tela pode diferir para as 55 threads com o bug
 
 ---
+
+## Campo 11 — Quantidade de mensagens
+
+> **Status do rastreamento:** ✅ Concluído em 13/07/2026. Validado em produção (4.786 registros — zero erros).
+
+**O que mostra na tela:** o número de mensagens trocadas na thread — aparece no modal e é usado internamente para detectar se chegou uma resposta nova depois que a thread foi fechada.
+
+---
+
+### Passo 1 — Script 02
+
+Não calcula este campo, mas coleta as mensagens brutas que serão contadas depois.
+
+---
+
+### Passo 2 — Script 05
+
+Calcula `qtd_mensagens` como a contagem das mensagens classificadas naquele momento. Grava no arquivo `02_classificação_dados_brutos_gmail_editado.json`.
+
+---
+
+### Passo 3 — Script 09
+
+Recalcula `qtd_mensagens` com base nas mensagens já formatadas e grava no `03_integrador_dados_site.json`. Também usa esse número para detectar se uma thread concluída recebeu mensagem nova:
+
+- Se `qtd_mensagens` atual > `qtd_mensagens_no_fechamento` → chegou mensagem nova após o fechamento → sistema pode sinalizar para revisão
+
+---
+
+### Passo 4 — Tela operacional
+
+O painel recalcula a quantidade na hora de servir os dados, considerando o filtro de data ativo. Se o usuário está vendo a tela com filtro de um dia específico, o número mostrado pode ser menor do que o total — mostra só as mensagens dentro do período filtrado.
+
+---
+
+### O que pode dar errado
+
+Não há risco de dado incorreto: o campo é uma simples contagem. O único ponto de atenção é que o número na tela pode diferir do JSON quando há filtro de data ativo — isso é comportamento esperado, não bug.
+
+**Precisa rodar o pipeline?** Não — qualquer recarga do Script 09 recalcula automaticamente.
+
+**Como consultar:**
+- `data/json/pipeline/03_integrador_dados_site.json` → campo `qtd_mensagens` de cada thread
+
+---
+
+## Campo 12 — Data e horário
+
+> **Status do rastreamento:** ✅ Concluído em 13/07/2026. Validado em produção (4.786 registros — zero erros).
+
+**O que mostra na tela:** a data e hora da última mensagem da thread — aparece no card e no modal. É o campo que o sistema usa para ordenar as threads (mais recente no topo).
+
+---
+
+### Passo 1 — Script 02
+
+Coleta a data e hora de cada e-mail a partir do cabeçalho `Date:` do Gmail. Dois campos são gravados:
+- `timestamp`: data e hora formatada para exibição (ex.: `01/07/2026 18:01`)
+- `data_iso`: só a data no formato padrão ISO (ex.: `2026-07-01`) — usado para filtros e ordenação
+
+---
+
+### Passo 2 — Script 05
+
+Não altera os campos de data, apenas os lê para extrair a data de referência dos prazos (campo `data_base` — ver Campo 9).
+
+---
+
+### Passo 3 — Script 09
+
+Copia `timestamp` e `data_iso` para o integrador sem alteração. O Script 09 também usa `data_iso` para o filtro de carga: só processa mensagens da janela de datas da carga atual.
+
+---
+
+### Passo 4 — Tela operacional
+
+A tela usa `timestamp` para exibir e `data_iso` para filtrar. O filtro de data da tela (botão de período) compara `data_iso` com o intervalo selecionado pelo usuário.
+
+---
+
+### O que pode dar errado
+
+| Situação | O que acontece |
+|---|---|
+| E-mail com data errada no cabeçalho (clock do servidor fora do horário) | `timestamp` e `data_iso` ficam errados — thread aparece fora de ordem ou no dia errado |
+| E-mail muito antigo encaminhado como novo | A data que conta é a do envio do encaminhamento, não a data original |
+
+**Precisa rodar o pipeline?** Não — o campo vem direto do e-mail; só muda se o e-mail for recoletado.
+
+**Como consultar:**
+- `data/json/pipeline/03_integrador_dados_site.json` → campos `timestamp` e `data_iso` de cada thread
+
+---
