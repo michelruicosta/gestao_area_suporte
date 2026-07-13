@@ -738,3 +738,92 @@ O badge `👤` sempre reflete quem deve agir com base na **última movimentaçã
 - Mapeamento de colaboradores: `config/cadastro_clientes_cadoc.json` → seção `colaboradores_finaud`
 
 ---
+
+## Campo 7 — Categoria (CADOC)
+
+> **Status do rastreamento:** ✅ Concluído em 13/07/2026.
+
+**O que mostra na tela:** a categoria regulatória do e-mail — qual relatório do BACEN aquela thread está relacionada. Exemplos: `DDR`, `DLO`, `DRM`, `SUPORTE`, `RETORNO BACEN`. Aparece no badge `📋` do modal (elemento `mCadoc`) e também no card da lista.
+
+---
+
+### Passo 1 — Coleta do e-mail (Script 02)
+
+O Script 02 **não cria** este campo. Coleta apenas o assunto e o corpo bruto do e-mail, que o Script 05 usará para identificar a categoria.
+
+---
+
+### Passo 2 — Script 05 (classificação)
+
+É aqui que o CADOC é identificado. A função `identificar_cadoc()` (linha 1326) analisa o assunto e o corpo do e-mail seguindo esta ordem de prioridade:
+
+| Prioridade | Critério | Exemplo |
+|---|---|---|
+| 1 | Assunto com `S5` como palavra | → `S5` |
+| 2 | Assunto com "Balancete de Câmbio" | → `DDR_2011` |
+| 3 | Assunto com "Balancete" | → `DLO_2061` |
+| 4 | Assunto com consulta de norma BCB | → `SUPORTE` |
+| 5 | Assunto identifica exatamente 1 código numérico (ex: 2011, 2061) | → CADOC correspondente |
+| 6 | Corpo do e-mail tem código numérico | → CADOC correspondente |
+| 7 | Corpo do e-mail tem termo textual (ex: "DDR", "DLO") | → CADOC correspondente |
+| 8 | Nenhum critério atendido | → `OUTROS` |
+
+O resultado é gravado como `cadoc` no arquivo `02_classificação_dados_brutos_gmail_editado.json`.
+
+---
+
+### Passo 3 — Script 09 (integrador)
+
+Copia o `cadoc` do e-mail para a thread. Se mensagens da mesma thread tiverem CADOCs diferentes, o Script 09 usa o CADOC mais frequente entre as mensagens.
+
+O campo é gravado como `cadoc` no arquivo `03_integrador_dados_site.json`.
+
+---
+
+### Passo 4 — Tela operacional
+
+A função `rotuloCategoriaChip()` (linha 1180 de `email_operacional.html`) converte o valor interno para o rótulo curto de exibição:
+
+| Valor no JSON | Exibido na tela |
+|---|---|
+| `DDR_2011` | `DDR` |
+| `DRM_2060` | `DRM` |
+| `DLO_2061` | `DLO` |
+| `DLI_2062` | `DLI` |
+| `DRL_2160` | `DRL` |
+| `4111` | `4111` |
+| `SUPORTE` / `SUPORTE_GERAL` | `SUPORTE` |
+| `RETORNO_BACEN` | `RETORNO BACEN` |
+| `S5` | `S5` |
+| `DRSAC` | `DRSAC` |
+| `FORCAPITAL` | `FORCAPITAL` |
+
+---
+
+### Passo 5 — Caminho feliz
+
+E-mail com assunto "DDR 2011 - Posição Janeiro" → Script 05 identifica código `2011` no assunto → grava `DDR_2011` → Script 09 copia para a thread → tela exibe badge `📋 DDR`.
+
+---
+
+### O que pode dar errado
+
+| Situação | O que aparece | Por que acontece |
+|---|---|---|
+| Assunto genérico sem código ou termo conhecido | `OUTROS` | Nenhum critério da função `identificar_cadoc` foi atendido |
+| Assunto com dois CADOCs (ex: encaminhamento DDR mencionando DLO) | CADOC errado | Sistema pega o primeiro código encontrado; prioridade do assunto sobre o corpo minimiza isso |
+| Thread com mensagens de CADOCs diferentes | CADOC da maioria | Script 09 usa o mais frequente entre as mensagens |
+
+---
+
+### O que Michel faz para corrigir
+
+Se o CADOC estiver errado, é possível corrigir manualmente pelo modal da tela — o badge `📋` é clicável e sobrescreve o valor automatizado.
+
+**Precisa rodar o pipeline?** Não para correção manual via tela. Sim (Script 05 + Script 09) se quiser corrigir na origem.
+
+**Como consultar quando algo der errado:**
+- JSON do e-mail: `data/json/pipeline/02_classificação_dados_brutos_gmail_editado.json` → campo `cadoc` de cada mensagem
+- JSON da thread: `data/json/pipeline/03_integrador_dados_site.json` → campo `cadoc` da thread
+
+---
