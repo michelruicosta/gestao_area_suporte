@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Oráculo 360 Finaud
 
-**Atualizado:** 2026-07-06
+**Atualizado:** 2026-07-13
 **Regra:** este arquivo lista **só o que ainda falta** (aberto / aguardando decisão / backlog).
 Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada no
 `REGISTRO_CORRECOES.md` — nesta ordem: primeiro grava no REGISTRO, depois remove daqui (nunca o
@@ -646,6 +646,30 @@ Script 10 foi removido em 29/06/2026. A sequência ficou com buracos: 09→11 (b
 
 ---
 
+## 🔴 INVESTIGAÇÃO — status_processo: classificação Pendente/Informativo não reflete a operação (registrado 13/07/2026)
+
+**Contexto:** durante a documentação do Campo 8 (Status), descobrimos que o campo `status_processo` existe no sistema mas Michel não sabia da sua existência. Ele usa os valores PENDENTE e INFORMATIVO, baseados em "tem prazo = PENDENTE, não tem prazo = INFORMATIVO" — uma lógica que não representa o que a operação precisa (Aguardando ou Concluído).
+
+**O que foi descoberto:**
+- 30 de 36 threads de TESTE estão como PENDENTE (todas que têm prazo, inclusive as já concluídas)
+- Na aba de busca da tela, o rótulo do card vem do `status_processo` — mostrando PENDENTE para threads já encerradas
+- A cor do ponto no card (laranja = atenção) é controlada pelo `status_processo`
+- Nas abas principais (Aguardando/Concluídos) o campo é ignorado — mas na busca aparece para o usuário
+
+**O que Michel quer:** usar apenas Aguardando/Concluído em todos os lugares, eliminando a confusão de Pendente/Informativo.
+
+**Risco identificado:** a maior preocupação é que nenhuma thread fique sem classificação após a mudança.
+
+**Próximos passos (para a sessão dedicada):**
+1. Mapear todos os lugares onde `status_processo` é lido (tela + API + scripts)
+2. Simular: se substituirmos por Aguardando/Concluído, alguma thread fica sem classificação?
+3. Apresentar resultado para Michel decidir se avança
+4. Só implementar após aprovação explícita
+
+**Arquivos envolvidos:** `templates/email_operacional.html` (linhas 1192, 3566, 3585, 3588), `painel_oraculo.py` (linhas 2194, 3782, 3887–3903), `scripts/09_integrar_dados_painel.py` (linhas 935, 1252, 1445)
+
+---
+
 ## 🔗 AGUARDANDO GATILHO — itens que só iniciam quando uma condição for cumprida
 
 > **Como funciona:** o `/iniciar` verifica se alguma condição abaixo foi cumprida. Se sim, alerta Michel e move o item para ativo.
@@ -653,6 +677,7 @@ Script 10 foi removido em 29/06/2026. A sequência ficou com buracos: 09→11 (b
 | O que fazer | Gatilho | Contexto |
 |---|---|---|
 | Aplicar modelo de documentação (GUIA + PADROES + Plano antes de agir) nos outros projetos: Auditoria IA, AppSheet, normativos_ia, app_treino | Fase 6 do plano de implementação do motor concluída | Padrão definido em `D:\template_projeto_ai\PADROES.md`; referência: `PROJETOS.md` seção IF-01 |
+| Instalar Sentry (monitoramento de erros na nuvem — "caixa-preta" que captura falhas do pipeline com contexto completo e avisa na hora) e conectar ao Claude via conector oficial | Pipeline rodando automatizado sem supervisão diária, OU primeiro sistema em produção para cliente (frente Dev) | Decidido em 13/07/2026 na sessão de conectores MCP. Grátis até 5.000 erros/mês. Exige adicionar ~3 linhas nos scripts (código de produção → protocolo completo: quadro, testes, registro). Hoje o watchdog (`pipeline_watchdog.py`) + e-mails de alerta cobrem o essencial. Plano completo na memória do projeto: `conectores-mcp-plano.md` |
 
 ---
 

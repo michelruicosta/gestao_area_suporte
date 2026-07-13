@@ -827,3 +827,79 @@ Se o CADOC estiver errado, é possível corrigir manualmente pelo modal da tela 
 - JSON da thread: `data/json/pipeline/03_integrador_dados_site.json` → campo `cadoc` da thread
 
 ---
+
+## Campo 8 — Status
+
+> **Status do rastreamento:** ✅ Concluído em 13/07/2026. Problema identificado — ver nota abaixo.
+
+**O que mostra na tela:** o estado atual da thread no badge `🏷` do modal. Na operação do dia a dia, os estados que importam são dois: **Aguardando** (alguém precisa agir) ou **Concluído** (assunto encerrado).
+
+---
+
+### Passo 1 e 2 — Scripts 02 e 05
+
+Não contribuem para este campo.
+
+---
+
+### Passo 3 — Script 09 (status_processo)
+
+Cria o campo `status_processo` com base em uma regra simples:
+- Thread tem prazo → `PENDENTE`
+- Thread não tem prazo → `INFORMATIVO`
+
+⚠️ **Este campo não representa Aguardando/Concluído** — é uma classificação interna baseada em prazos regulatórios, não no estado operacional real da thread.
+
+---
+
+### Passo 3b — Script 11 (triagem — fonte de verdade do Status)
+
+É quem define o estado real da operação. Classifica cada thread como AGUARDANDO ou CONCLUÍDO com base nas regras de negócio da Finaud. O resultado fica em dois arquivos:
+- `data/json/pipeline/threads_aguardando_auto.json`
+- `data/json/pipeline/threads_concluidas_auto.json`
+
+---
+
+### Passo 4 — API `/api/dados`
+
+Cruza os dois sistemas (Script 09 + Script 11) e injeta nos eventos:
+- `status = "concluido"` → thread está em `threads_concluidas_auto.json`
+- `aguardando = true` → thread está em `threads_aguardando_auto.json`
+
+---
+
+### Passo 5 — Tela operacional
+
+A função `rotuloStatusOperacional()` (linha 1188 de `email_operacional.html`) combina tudo com esta ordem de prioridade:
+
+| Condição verificada | Exibido |
+|---|---|
+| Thread está nas concluídas (Script 11) | `Concluído` |
+| Thread está nas aguardando (Script 11) | `Aguardando` |
+| `status_processo = PENDENTE` (Script 09) | `Pendente` |
+| `status_processo = INFORMATIVO` (Script 09) | `Informativo` |
+| Nenhuma das anteriores | `Pendente` (fallback) |
+
+---
+
+### ⚠️ Problema identificado em 13/07/2026
+
+O `status_processo` aparece na **aba de busca** e controla a **cor do ponto do card** (laranja = atenção). Como a regra é "tem prazo = PENDENTE", praticamente todas as threads aparecem como PENDENTE na busca — inclusive as já concluídas. Isso não reflete a realidade operacional.
+
+**O que deveria ser:** usar apenas Aguardando/Concluído em todos os lugares da tela, eliminando Pendente/Informativo da visão do operador.
+
+**Investigação registrada em `documentações/PENDENCIAS.md`** — sessão dedicada para avaliar impacto e implementar a correção com segurança.
+
+---
+
+### O que Michel faz para corrigir
+
+O badge `🏷` é clicável — permite alterar o status manualmente na tela. Para correção na origem, rodar o Script 11.
+
+**Precisa rodar o pipeline?** Script 11 para atualizar a triagem.
+
+**Como consultar quando algo der errado:**
+- `data/json/pipeline/threads_aguardando_auto.json` — threads em aguardando
+- `data/json/pipeline/threads_concluidas_auto.json` — threads concluídas
+
+---
