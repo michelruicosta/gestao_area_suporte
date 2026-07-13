@@ -1004,3 +1004,70 @@ Se um prazo aparecer errado na tela: verificar a `data_base` em `03_integrador_d
 - `data/json/pipeline/03_integrador_dados_site.json` → campo `lista_prazos` de cada thread
 
 ---
+
+## Campo 10 — Responsável pela ação
+
+> **Status do rastreamento:** ✅ Concluído em 13/07/2026. Bug identificado — ver nota abaixo.
+
+**O que mostra na tela:** o nome de quem precisa agir agora naquela thread — aparece no card da lista como o "assignee" (ícone de pessoa). É diferente do Campo 6 (Responsável): enquanto o Campo 6 é calculado e gravado no arquivo pelo Script 09, este campo é **calculado na hora em que a tela carrega**, a partir das mensagens da thread.
+
+---
+
+### Passo 1 e 2 — Scripts 02 e 05
+
+Não contribuem para este campo.
+
+---
+
+### Passo 3 — Script 09
+
+Calcula e grava o campo `responsavel` no JSON 03, usando a função `_responsavel_pela_acao()` — a mesma lógica do Campo 6. É o valor de fallback caso o cálculo da tela falhe.
+
+---
+
+### Passo 4 — API `/api/dados` (painel em tempo real)
+
+Na hora de servir os dados para a tela, o painel recalcula o responsável usando a função `_responsavel_pela_acao_from_mensagens()` e injeta no campo `responsavel_pela_acao`. A lógica é a mesma do Script 09:
+
+| Última mensagem | Quem aparece como responsável |
+|---|---|
+| Cliente enviou para Finaud | Pessoa da Finaud que recebeu |
+| Finaud enviou para Finaud (interno) | Pessoa da Finaud que recebeu |
+| Finaud enviou para Cliente | Pessoa do cliente que recebeu |
+| Finaud enviou "obrigada/obrigado pelo envio" | Pessoa da Finaud que enviou |
+
+---
+
+### Passo 5 — Tela operacional
+
+A tela usa `responsavel_pela_acao` (calculado pelo painel) com fallback para `responsavel` (gravado pelo Script 09):
+
+```
+responsavel_pela_acao → responsavel → 'N/A'
+```
+
+---
+
+### ⚠️ Bug identificado em 13/07/2026
+
+As duas funções (Script 09 e painel) ordenam as mensagens de formas diferentes para achar a "última":
+- **Script 09:** usa `timestamp_epoch` (número inteiro)
+- **Painel:** usa `data_email`, `data_iso` ou `timestamp` (campos de texto)
+
+Quando uma mensagem tem `timestamp_epoch` zero ou ausente, cada função escolhe uma mensagem diferente como "última" — e o responsável mostrado muda. **Em produção: 55 de 4.786 threads mostram na tela um responsável diferente do que está no arquivo JSON.**
+
+**Investigação registrada em `documentações/PENDENCIAS.md`** — correção junto com a limpeza arquitetural (unificar critério de ordenação).
+
+---
+
+### O que Michel faz para corrigir
+
+Se o responsável aparecer errado na tela: o valor exibido vem do cálculo em tempo real do painel, não do JSON. Não é possível corrigir só editando o arquivo. É necessário ajustar a lógica de ordenação das mensagens no código.
+
+**Precisa rodar o pipeline?** Não — o valor é calculado na hora de carregar a tela. Após a correção do código, o valor atualiza automaticamente.
+
+**Como consultar:**
+- `data/json/pipeline/03_integrador_dados_site.json` → campo `responsavel` de cada thread (valor gravado pelo Script 09)
+- O valor exibido na tela pode diferir para as 55 threads com o bug
+
+---

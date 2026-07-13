@@ -301,6 +301,28 @@ Após o git estar funcionando:
 
 ---
 
+## 🟡 Campo 10 — Responsável pela ação: 55 threads divergem entre tela e JSON (registrado 13/07/2026)
+
+**Contexto:** durante a documentação do Campo 10, comparamos o valor mostrado na tela (`responsavel_pela_acao`, calculado na hora pelo painel) com o valor gravado no JSON 03 (`responsavel`, calculado pelo Script 09). São 55 threads com resultados diferentes.
+
+**Causa raiz:** as duas funções ordenam as mensagens de formas diferentes para achar a "última":
+- `_responsavel_pela_acao()` no Script 09 → ordena por `timestamp_epoch` (número)
+- `_responsavel_pela_acao_from_mensagens()` no painel → ordena por `data_email`/`data_iso`/`timestamp` (campos de texto)
+
+Quando uma mensagem tem `timestamp_epoch` zero ou ausente mas tem a data em texto, cada função escolhe uma mensagem diferente como "última" — e o responsável muda.
+
+**Impacto:** a tela mostra o valor do painel (runtime), que para 55 threads é diferente do que está gravado no JSON 03. Ou seja, o que aparece na tela para essas threads não bate com o arquivo.
+
+**O que fazer:** unificar o critério de ordenação nas duas funções. O mais confiável é usar `timestamp_epoch` quando disponível, com fallback para `data_iso`/`data_email` — assim as duas funções encontram sempre a mesma "última mensagem".
+
+**Arquivos:**
+- `scripts/09_integrar_dados_painel.py` — função `_responsavel_pela_acao()` (~linha 82)
+- `painel_oraculo.py` — função `_ordenar_mensagens_operacional_para_acao()` (~linha 2212)
+
+**Quando fazer:** junto com a limpeza arquitetural de mover `responsavel_pela_acao` para o JSON (item já registrado neste arquivo, seção "Arquitetura — cálculos feitos na hora de servir").
+
+---
+
 ## 🟡 Campo "Cliente" — bugs identificados na validação de campos (2026-07-08)
 
 **Contexto:** levantado durante a validação campo a campo da tela operacional (`VALIDACAO_CAMPOS_TELA.md`).
