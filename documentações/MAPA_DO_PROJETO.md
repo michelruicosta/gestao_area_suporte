@@ -124,6 +124,7 @@ A fonte completa é o `CLAUDE.md`. Resumo:
 | Pergunta | Documento |
 |---|---|
 | O que é cada campo da tela operacional? De onde vem? Quais regras? | `documentações/GUIA_CAMPOS_OPERACIONAL.md` ← **guia definitivo campo a campo** |
+| Quais tipos de e-mail aparecem na tela? Como cada um exibe? Exemplos reais? | [Demo interativa — Tipos de Mensagem (T1–T9c)](https://claude.ai/code/artifact/cc2f705c-a5bb-479f-bd0e-9ba601c8cedb) ← Campo 13 do Guia |
 | De onde vem cada dado? Qual JSON? Qual script criou? | `documentações/LINHAGEM_DADOS_OPERACIONAL.md` ← **mapa de origem dos dados** |
 | Revisão de UX das telas (olhar de usuário novo)? | `documentações/REVISAO_TELAS.md` |
 | Validação campo a campo com dados reais de produção (diário de análise)? | `documentações/VALIDACAO_CAMPOS_TELA.md` |

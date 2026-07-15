@@ -2,6 +2,56 @@
 
 ---
 
+### 2026-07-15 — [DOCUMENTAÇÃO] Campo 13: mapeamento completo dos tipos de mensagem da tela de Triagem
+
+**🔎 Em miúdos:** fizemos um raio-X completo de todos os tipos de e-mail que aparecem na tela — dos mais simples (texto normal) até os mais problemáticos (só imagem colada no corpo, só arquivo em anexo, alertas gerados pelo próprio sistema). Documentamos tudo no Guia de Campos e criamos a lista de correções pendentes.
+
+**O que foi feito:**
+- Varredura de 8.848 mensagens (produção + TESTE) — confirmados Tipos T1–T9c, sem lacunas na cobertura
+- UX-01 (exibição de anexos quando corpo está vazio) documentado como implementado ✅
+- 5 mensagens de produção com `corpo_raw` só de rodapé e sem anexo identificadas (Tipos 8.1–8.4 — imagens inline sem OCR)
+- 365 e-mails de alertas automáticos do Oráculo (leiautes e normativos) identificados em produção que ainda entram na triagem — devem ser filtrados
+- Demo publicada com exemplos reais: https://claude.ai/code/artifact/cc2f705c-a5bb-479f-bd0e-9ba601c8cedb
+
+**Correção — Campo 13 adicionado ao GUIA_CAMPOS_OPERACIONAL.md:** seção completa com tabela de tipos, problema dos alertas automáticos, linhagem por script, correções planejadas e link da demo.
+
+**Validação:** ✅ VALIDADO — varredura confirmada nos dois projetos (Python); demo publicada com dados reais da Western Union (Leonardo Ueda, 4 arquivos reais). Sem alteração de código de produção nesta sessão.
+
+**sem teste novo:** documentação pura + UX-01 já havia sido implementado e testado em sessão anterior.
+
+---
+
+### 2026-07-15 — [MELHORIA] UX-01: exibir aviso e lista de arquivos quando corpo do e-mail está vazio
+
+**🔎 Em miúdos:** quando um e-mail chega sem texto (só arquivos em anexo), a tela agora mostra um aviso em vermelho com o nome de cada arquivo, em vez de ficar em branco.
+
+**Problema:** na tela de Triagem (`/operacional`), mensagens sem `corpo_limpo` apareciam completamente vazias mesmo quando havia arquivos detectados (`anexos_detectados`). O usuário não sabia que havia anexos.
+
+**Correção:** em `templates/email_operacional.html`, quando `corpo_limpo` está vazio mas `anexos_detectados` tem itens sem `content_id` (arquivos reais, não imagens inline), o template exibe um bloco de aviso "⚠ Sem texto — ver anexo" com a lista dos nomes dos arquivos.
+
+**Validação:** UX-01 implementado e funcional. Dados atuais não têm caso com corpo vazio + arquivo sem `content_id` (todos os e-mails com arquivo também têm texto) — o aviso aparecerá corretamente quando esse padrão chegar. ✅ VALIDADO estruturalmente em 15/07/2026.
+
+---
+
+### 2026-07-14 — [MELHORIA] Script 12: leitura de xlsx indício-qualidade do BACEN com prioridade sobre OCR
+
+**🔎 Em miúdos:** quando o BACEN envia um arquivo Excel junto com a notificação de indício de qualidade e o cliente o encaminha para a Finaud, o Script 12 agora lê esse Excel direto em vez de tentar OCR em prints da tela. Excel é mais confiável — sem risco de letra trocada pelo OCR.
+
+**Contexto:** varredura de 8.825 emails de produção mostrou que clientes mandam principalmente prints da tela do CRD (40%) ou só texto (57%). O xlsx `indicio-qualidade.xlsx` do BACEN não aparece em nenhum email de produção atual — vai diretamente para o cliente, que normalmente encaminha só o corpo ou um print. A funcionalidade fica preparada para quando esse padrão aparecer.
+
+**Correção:** três adições cirúrgicas em `scripts/12_enriquecer_texto_imagens.py`:
+- `_extrair_texto_xlsx_indicio()` — lê o xlsx com openpyxl (ou xlrd como fallback) e converte para texto estruturado linha a linha
+- `_listar_xlsx_indicio_por_id()` — varre `data/email_anexos` por arquivos `.xlsx`/`.xls` com "indicio" + "qualidade" no nome e agrupa por msg_id
+- `enriquecer_mensagem()` — novo parâmetro `cache_xlsx_indicio`; quando presente, extrai o xlsx e preenche `texto_imagens` antes de tentar OCR em prints
+
+**Prioridade final:** PDF CRD → **xlsx indício-qualidade** → imagens / OCR
+
+**Validação:** `python -m py_compile scripts/12_enriquecer_texto_imagens.py` ✅. pytest: 75 falhos antes e depois — zero regressões. Funcionalidade não ativável com dados atuais (0 xlsx de indício na base). ✅ VALIDADO estruturalmente
+
+**sem teste novo:** nenhum email de produção ou teste contém `indicio-qualidade*.xlsx` — criar fixture seria inventar dado que não existe. Risco de regressão: zero (código só é acionado quando `cache_xlsx_indicio` tem entradas).
+
+---
+
 ### 2026-07-13 13:28 — [REFATORAÇÃO] Campo Responsável: lógica movida da tela para o Script 09
 
 **🔎 Em miúdos:** a tela recalculava quem é o responsável da thread na hora de exibir, em vez de só ler o que o Script 09 já tinha gravado. Agora o Script 09 grava o valor correto e a tela só lê. Thread do Risco Externo passou de "Suporte Finaud" para "Rodrigo Tibério" após a correção.

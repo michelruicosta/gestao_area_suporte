@@ -1173,3 +1173,109 @@ A tela usa `timestamp` para exibir e `data_iso` para filtrar. O filtro de data d
 - `data/json/pipeline/03_integrador_dados_site.json` → campos `timestamp` e `data_iso` de cada thread
 
 ---
+
+## Campo 13 — Mensagens da thread (corpo do modal)
+
+> **Status do rastreamento:** ✅ Concluído em 15/07/2026. Varredura de 8.848 mensagens (produção + TESTE) — todos os tipos identificados. Demo publicada em https://claude.ai/code/artifact/cc2f705c-a5bb-479f-bd0e-9ba601c8cedb
+
+**O que mostra na tela:** as mensagens trocadas na thread, exibidas no modal ao clicar num card. Cada mensagem tem: cabeçalho (número, data/hora, lado), remetente/destinatário e corpo. O corpo varia muito conforme o tipo do e-mail.
+
+---
+
+### Tipos de mensagem identificados em produção
+
+Mapeamento completo com base em varredura de 8.848 mensagens (produção + TESTE, 15/07/2026). Cada tipo tem exemplo real na demo.
+
+| Tipo | Nome | Quando ocorre | Quantidade aprox. | Status na tela |
+|---|---|---|---|---|
+| **T1** | Normal | Mensagem com texto completo e estruturado | ~2.687 msgs | ✅ Exibe normalmente |
+| **T2** | Curto | Texto muito curto (menos de 80 chars) — ex.: "Segue em anexo." | ~592 msgs | ✅ Exibe normalmente |
+| **T3** | Follow-up Finaud | Finaud cobrando resposta — ex.: "Solicitamos por gentileza encaminhar o COS4010" | na base | ✅ Exibe normalmente |
+| **T4** | Auto-reply | Resposta automática de ausência/férias — contém "fora do escritório", "estarei ausente" | ~804 msgs | ⚠️ Exibe, mas IA deve ignorar (ver IF-00) |
+| **T5** | Encaminhado | Mensagem com conteúdo de outro e-mail colado dentro | ~3.843 msgs | ✅ Exibe normalmente |
+| **T6** | Histórico citado | Resposta com blocos de mensagens anteriores abaixo ("Em dd/mm, Fulano escreveu:") | na base | ✅ Exibe normalmente |
+| **T7** | Regulatório/BACEN | XML, retorno de validação, crítica do BACEN | na base | ✅ Exibe normalmente |
+| **T8.1–8.4** | Imagem inline | Cliente enviou só um print colado no corpo — sem texto | 5 msgs confirmadas | ❌ Corpo vazio na tela (UX-02 pendente) |
+| **T8.5** | Só arquivo em anexo | E-mail sem texto, só arquivos anexados | raro | ✅ UX-01 implementado — exibe aviso com lista de arquivos |
+| **T9a** | OCR legível | Arquivo com imagem ou print — OCR extraiu texto com sucesso | ~917 msgs | ✅ Exibe texto extraído |
+| **T9b** | OCR com erros | OCR rodou mas texto saiu com erros (zeros→O, letras trocadas) | incluso no 917 | ✅ Exibe, mas com texto imperfeito |
+| **T9c** | Thread completa | Exemplo de thread com múltiplos tipos numa sequência real | — | ✅ Demo disponível |
+
+---
+
+### Problema identificado: alertas automáticos do Oráculo
+
+Os e-mails gerados pelo próprio sistema (atualizações de leiautes do BACEN, comunicados e normativos) ainda entram na triagem:
+- **Produção:** 365 mensagens identificadas na varredura de 15/07/2026
+- **TESTE:** 2 mensagens (03/07/2026)
+
+Esses e-mails têm assunto "⚠️ Atenção: Atualização na página de Leiautes do Bacen" e "⚠️ Atualização de Comunicados e Normativos". Não são de clientes — são gerados pelo Script 16/17 e não deveriam aparecer na fila de triagem. Registrado como pendência no `PENDENCIAS.md`.
+
+---
+
+### Passo 1 — Script 02
+
+Coleta cada e-mail e grava no JSON 01 os campos usados para exibição no modal:
+- `corpo`: HTML bruto do e-mail
+- `corpo_limpo`: texto limpo (sem rodapés, assinaturas, citações repetidas)
+- `formato_corpo`: `"html"` ou `"texto"`
+- `anexos_detectados`: lista de arquivos detectados (com `content_id` para imagens inline, sem para arquivos reais)
+- `encaminhados`: conteúdo separado de e-mails encaminhados colados dentro do corpo
+- `contato_origem.lado`: `"CLIENTE"` ou `"FINAUD"` — define a cor do badge na tela
+
+**O que pode dar errado:**
+- Imagens inline (`cid:`) chegam nos dados mas o Script 12 não as processa → Tipos 8.1–8.4 ficam com corpo vazio (UX-02)
+- E-mails com apenas rodapé de Google Groups → após limpeza `corpo_limpo` fica vazio, mas `anexos_detectados` também fica vazio → aparece em branco (5 casos em produção)
+
+---
+
+### Passo 2 — Script 05
+
+Não altera o corpo das mensagens. Usa `corpo_limpo` para detectar CADOC, prazos e padrões de triagem.
+
+---
+
+### Passo 3 — Script 12
+
+Processa **arquivos anexados** (PDF, XML, imagens separadas) e preenche o campo `texto_imagens` com o texto extraído por OCR — resulta nos Tipos 9a e 9b.
+
+**Limitação atual:** não processa imagens inline (`cid:`) — só arquivos baixados separadamente. Correção planejada: UX-02.
+
+---
+
+### Passo 4 — Script 09
+
+Copia os campos para o JSON 03 sem alterar. Monta a lista `mensagens[]` de cada thread na ordem cronológica.
+
+---
+
+### Passo 5 — Template `email_operacional.html`
+
+Renderiza cada mensagem da lista `mensagens[]` no modal. Lógica de exibição por tipo:
+
+| Situação | O que o template faz |
+|---|---|
+| `corpo_limpo` tem texto | Exibe o texto (T1, T2, T3, T4, T5, T6, T7) |
+| `texto_imagens` tem texto | Exibe após o corpo (T9a, T9b) |
+| `corpo_limpo` vazio + `anexos_detectados` tem arquivos reais | **UX-01:** exibe aviso "⚠ Sem texto — ver anexo" com lista de arquivos (T8.5) ✅ |
+| `corpo_limpo` vazio + sem arquivo real + sem OCR | Corpo aparece em branco na tela (T8.1–8.4, até UX-02 ser implementado) |
+
+---
+
+### Correções planejadas
+
+| # | O que falta | Onde | Impacto |
+|---|---|---|---|
+| UX-02 | Processar imagens inline (`cid:`) | Script 12 | Resolve Tipos 8.1–8.4 — corpo deixa de aparecer vazio |
+| Alertas | Filtrar e-mails automáticos do Oráculo (leiautes, normativos) | Script 05 ou 11 | Remove 365 msgs indevidas da triagem |
+| T4 etiqueta | Marcar auto-replies com etiqueta visual no modal | `email_operacional.html` | Permite que a IA (IF-00) ignore essas mensagens ao ler o contexto |
+
+---
+
+### Como consultar
+
+- **Demo com todos os tipos e exemplos reais:** https://claude.ai/code/artifact/cc2f705c-a5bb-479f-bd0e-9ba601c8cedb
+- **Dados:** `data/json/pipeline/03_integrador_dados_site.json` → `threads[].mensagens[]`
+- **Template:** `templates/email_operacional.html` — função que monta o bloco de corpo de cada mensagem no modal
+
+---

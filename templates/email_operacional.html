@@ -4699,6 +4699,20 @@
         const idxBg = isCliente ? '#3b82f6' : '#a855f7';
         const idxPill = isCliente ? 'background:#a6ce39;color:#fff' : 'background:#a855f7;color:#fff';
         var corpoBloco = '<div class="msg-body-text" style="font-size:13px;color:rgba(234,240,255,.92);line-height:1.5;white-space:pre-wrap;word-break:break-word;">' + escapeHtml(corpoTexto) + '</div>';
+        // UX-01: corpo vazio mas há arquivos em anexo — mostrar aviso com lista de arquivos
+        var anexosDetectados = Array.isArray(msg.anexos_detectados) ? msg.anexos_detectados.filter(function(a) { return !a.content_id; }) : [];
+        if (!corpoTexto.trim() && anexosDetectados.length > 0) {
+          var listaAnexos = anexosDetectados.map(function(a) {
+            return '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;">'
+              + '<span style="opacity:.6;">📎</span>'
+              + '<span style="font-size:12px;color:rgba(234,240,255,.75);">' + escapeHtml(a.nome_original || a.arquivo_disco || '') + '</span>'
+              + '</div>';
+          }).join('');
+          corpoBloco = '<div style="display:flex;gap:8px;align-items:flex-start;padding:8px 12px;border-radius:6px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);margin-bottom:4px;">'
+            + '<span style="font-size:13px;flex-shrink:0;margin-top:1px;">⚠</span>'
+            + '<div><div style="font-size:11px;font-weight:600;color:#f87171;margin-bottom:4px;">Sem texto — ver anexo</div>'
+            + listaAnexos + '</div></div>';
+        }
         var citeStackHtml = citas.length ? renderModalCiteStackHtml(citas, thread) : '';
         // #PF45: fallback — BACEN detectado por remetente_original_fwd mas encaminhamento não foi extraído
         if (!citeStackHtml && msg.remetente_original_fwd && msg.remetente_original_fwd.indexOf('bcb.gov.br') >= 0) {

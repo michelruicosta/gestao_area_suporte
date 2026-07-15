@@ -918,6 +918,71 @@ Documentação de triagem: todos os 12 CADOCs concluídos em 18/06/2026 (seçõe
 
 ## 🔵 INICIATIVAS FUTURAS — Backlog estratégico
 
+---
+
+### [IF-00] IA lendo histórico de threads — usar marcações para ignorar mensagens irrelevantes
+
+**Contexto (14/07/2026):** durante revisão de UX da tela Triagem, ficou definido que mensagens do tipo "Resposta automática" (ausente/férias) receberão uma etiqueta de identificação.
+
+**Ideia para o futuro:** quando a IA for chamada para ler o histórico de uma thread e aprender o que foi discutido (ex.: resumir, responder, sugerir ação), ela deverá usar essas marcações para ignorar mensagens que não têm conteúdo real:
+- Tipo 4 — Resposta automática → ignorar completamente ao resumir
+- Outros tipos que vierem a ser marcados podem seguir a mesma lógica
+
+**Por que importa:** sem essa marcação, a IA pode interpretar "Retornarei em 23/06" como conteúdo relevante da conversa e gerar resumos ou sugestões erradas.
+
+**Pré-requisito:** concluir a implementação das etiquetas de tipo na tela (UX Tela Triagem — ver sessão 14/07/2026).
+
+---
+
+### ~~[UX-01] Exibir anexos detectados na tela quando o corpo da mensagem está vazio~~ ✅ CONCLUÍDO (15/07/2026 — ver REGISTRO_CORRECOES.md)
+
+---
+
+### [UX-02] Script 12 — processar imagens inline (coladas no corpo), não só arquivos anexados
+
+**Contexto (14/07/2026):** durante revisão dos tipos de mensagem da tela Triagem, identificados e-mails onde o cliente enviou apenas um print de tela colado diretamente no corpo do e-mail — sem texto escrito. O Script 12 só lê arquivos anexados separadamente; imagens inline (formato `cid:` no HTML do e-mail) não são processadas, deixando o corpo vazio na tela.
+
+**Varredura de 15/07/2026 — 5 mensagens confirmadas em produção:**
+- 8.1 — Kinel Corretora · "print" · 25/06/2026 (erro DLO SQL)
+- 8.2 — Atual Câmbio · "2062 e 4010 março" · 10/06/2026 (Indício de Qualidade LIM 2062)
+- 8.3 — Atual Câmbio · "2061" · 10/06/2026 (Indício de Qualidade LIM 2061)
+- 8.4 — ARC Corretora · "DLI 2062 dez 2026 x 4016" · 19/03/2026 (Indício de Qualidade LIM 2062)
+- 8.5 (variante) — Relatório Pilar III · Finaud · data a confirmar
+
+**O que fazer:** no Script 12 (`scripts/12_enriquecer_texto_imagens.py`), adicionar lógica para detectar e baixar imagens inline (partes `Content-ID` do e-mail multipart) e submetê-las ao mesmo OCR já usado para anexos.
+
+**Como validar:** após correção, reprocessar as 4 threads acima e confirmar que `texto_imagens` passa a ter conteúdo lido do print.
+
+---
+
+### [UX-04] 🔴 Alertas automáticos do Oráculo entram na triagem indevidamente (identificado 15/07/2026)
+
+**Contexto:** varredura de 8.848 mensagens (15/07/2026) identificou e-mails gerados pelo próprio sistema que ainda passam pelo pipeline e aparecem na fila de triagem.
+
+**Quantidade:** 365 em produção + 2 em TESTE.
+
+**Quais são:** e-mails com assuntos:
+- "⚠️ Atenção: Atualização na página de Leiautes do Bacen"
+- "⚠️ Atualização de Comunicados e Normativos"
+
+Esses e-mails são gerados pelos Scripts 16/17 (alertas de leiautes e normativos) e chegam na caixa do grupo suporte via e-mail automático. Não são de clientes — não deveriam entrar na triagem.
+
+**O que fazer:** filtrar esses e-mails no Script 05 ou Script 11, identificando por assunto ou remetente interno. Pode reutilizar o mecanismo de `FILTROS_DE_IGNORAR` já existente no mapeamento de regras.
+
+**Arquivos:** `scripts/05_classificar_emails_regulatorio.py` ou `scripts/11_triar_threads_por_cadoc.py` + `data/json/config/mapeamento_regras_negocio.json`
+
+**Como validar:** rodar pipeline e confirmar que threads com esses assuntos não aparecem na tela de triagem.
+
+---
+
+### [UX-03] ✅ Script 12 — ler xlsx indício-qualidade do BACEN quando presente (implementado 14/07/2026)
+
+**Contexto:** varredura de 8.825 emails de produção mostrou 3 padrões para threads de indício de qualidade: 57% só texto, 40% print da tela do CRD (imagem inline), ~2% xlsx de evidência (COSIF/LEC, não o xlsx do BACEN). O arquivo `indicio-qualidade.xlsx` (6K, enviado pelo BACEN) vai para o cliente via BCCorreio — quando o cliente encaminha para a Finaud, normalmente não inclui o xlsx. Zero ocorrências na base atual.
+
+**Implementado:** Script 12 agora detecta arquivos `.xlsx`/`.xls` com "indicio" + "qualidade" no nome, extrai o conteúdo estruturado e preenche `texto_imagens` com prioridade sobre OCR. Funções adicionadas: `_extrair_texto_xlsx_indicio()`, `_listar_xlsx_indicio_por_id()`. Ver REGISTRO_CORRECOES.md 14/07/2026.
+
+---
+
 > Itens identificados durante o planejamento de 18/06/2026. Não são urgentes — entram após a
 > conclusão da implementação das regras de triagem (seção 13 de DOCUMENTACAO_TRIAGEM.md).
 
