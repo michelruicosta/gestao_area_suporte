@@ -4313,29 +4313,37 @@
       if (!msg) return "";
       var o = msg.contato_origem || {};
       var d = msg.contato_destino || {};
-      function part(cont) {
+      function partNome(cont) {
         if (!cont || typeof cont !== "object") return "";
-        var n = decodeMimeHeader(String(cont.nome || "").trim());
-        var e = String(cont.email || "").trim();
-        if (n && e) return n + " · " + e;
-        if (n || e) return n || e;
-        return "";
+        return decodeMimeHeader(String(cont.nome || "").trim());
       }
-      var rem = part(o);
-      var dst = part(d);
-      if (!rem && !dst) return "";
-      var out = "";
-      if (rem) {
-        out += '<span style="margin-right:12px;display:inline-block;"><strong>Remetente:</strong> ' + escapeHtml(rem) + "</span>";
+      function partEmail(cont) {
+        if (!cont || typeof cont !== "object") return "";
+        return String(cont.email || "").trim();
       }
-      if (dst) {
-        out += '<span style="display:inline-block;"><strong>Destinatário:</strong> ' + escapeHtml(dst) + "</span>";
+      var remNome = partNome(o); var remEmail = partEmail(o);
+      var dstNome = partNome(d); var dstEmail = partEmail(d);
+      if (!remNome && !remEmail && !dstNome && !dstEmail) return "";
+      function linha(label, nome, email) {
+        if (!nome && !email) return "";
+        var nomeHtml = nome ? '<span style="font-weight:600;color:rgba(234,240,255,.88);">' + escapeHtml(nome) + '</span>' : '';
+        var emailHtml = email ? '<span style="color:rgba(234,240,255,.38);font-family:var(--mono);font-size:11px;"> &lt;' + escapeHtml(email) + '&gt;</span>' : '';
+        return '<div style="display:flex;align-items:baseline;gap:4px;">'
+          + '<span style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(234,240,255,.28);width:30px;flex-shrink:0;">' + label + '</span>'
+          + nomeHtml + emailHtml + '</div>';
       }
-      return (
-        '<div class="msg-de-para-line" style="font-size:12px;color:rgba(234,240,255,.76);margin:0 0 8px 0;line-height:1.45;">' +
-        out +
-        "</div>"
-      );
+      var linhas = linha('De', remNome, remEmail) + linha('Para', dstNome, dstEmail);
+      if (!linhas) return "";
+      return '<div class="msg-de-para-line" style="font-size:12px;line-height:1.6;margin:0 0 8px 0;display:flex;flex-direction:column;gap:1px;">' + linhas + '</div>';
+    }
+
+    function stripBoilerplate(texto) {
+      if (!texto) return texto;
+      var t = texto.replace(/\r\n/g, '\n');
+      // avisos de confidencialidade no final (linha que começa com padrão comum)
+      var rxConf = /\n{0,2}[-_]{3,}[\s\S]*$|\n{0,2}(AVISO DE CONFIDENCIALIDADE|AVISO LEGAL|CONFIDENTIALITY NOTICE|This e-?mail (is |and its|was )|Este e-?mail (é |e seus|foi )|Sent from (my |iPhone|Android|Outlook|Samsung)|Enviado do (meu |iPhone|Android))[^\0]*/i;
+      t = t.replace(rxConf, '').trimEnd();
+      return t;
     }
 
     /** Mais de um fio Gmail no mesmo histórico (par fundido ou vários agrupamentos). */
@@ -4694,11 +4702,40 @@
         const isCliente = String(lado).toUpperCase() === 'CLIENTE';
         var msgsAnterioresCronologicas = [];
         for (var jAnt = idx + 1; jAnt < gruposRev.length; jAnt++) msgsAnterioresCronologicas.push(gruposRev[jAnt].msg);
-        const corpoTexto = corpoTextoParaModalOcultandoCaudaCitacaoRedundante(msg, msgsAnterioresCronologicas);
+        const corpoTexto = stripBoilerplate(corpoTextoParaModalOcultandoCaudaCitacaoRedundante(msg, msgsAnterioresCronologicas));
         const borderLeft = `border-left:4px solid ${isCliente ? 'rgba(59,130,246,.3)' : 'rgba(168,85,247,.3)'}`;
         const idxBg = isCliente ? '#3b82f6' : '#a855f7';
         const idxPill = isCliente ? 'background:#a6ce39;color:#fff' : 'background:#a855f7;color:#fff';
-        var corpoBloco = '<div class="msg-body-text" style="font-size:13px;color:rgba(234,240,255,.92);line-height:1.5;white-space:pre-wrap;word-break:break-word;">' + escapeHtml(corpoTexto) + '</div>';
+        // T4: detectar resposta automática pelo corpo
+        var autoReplyPatterns = ['fora do escritório','estarei ausente','estou ausente','retornarei em','voltarei em','out of office','férias até','em férias','resposta automática:','automatic reply:','auto reply:','estou de férias','estarei de férias'];
+        var corpoLower = corpoTexto.toLowerCase();
+        var isAutoReply = autoReplyPatterns.some(function(p){ return corpoLower.indexOf(p) >= 0; });
+        // T5: encaminhamento sem comentário — citas tem conteúdo mas o corpo próprio está vazio
+        var isEncSemComentario = citas.length > 0 && !corpoTexto.trim();
+        // T6: resposta com histórico citado inline — detectar separador de citação no corpoTexto
+        var isT6 = false;
+        var t6TopoHtml = '';
+        var t6CaudaHtml = '';
+        if (!isEncSemComentario && !isAutoReply && corpoTexto.trim()) {
+          var t6Raw = corpoTexto.replace(/\r\n/g, '\n');
+          var t6Re = /\nDe:\s|\nFrom:\s|^De:\s|^From:\s|\nEm\s[\s\S]+?escreveu:\s|\n\*De:\*/i;
+          var t6Match = t6Re.exec(t6Raw);
+          if (t6Match && t6Match.index > 0) {
+            var t6Topo = t6Raw.slice(0, t6Match.index).trim();
+            var t6Cauda = t6Raw.slice(t6Match.index).trim();
+            if (t6Topo.length >= 5 && t6Cauda.length >= 20) {
+              isT6 = true;
+              t6TopoHtml = '<div class="msg-body-text" style="font-size:13px;color:rgba(234,240,255,.92);line-height:1.5;white-space:pre-wrap;word-break:break-word;">' + escapeHtml(t6Topo) + '</div>';
+              t6CaudaHtml = '<details style="margin-top:6px;"><summary style="cursor:pointer;font-size:11px;color:rgba(234,240,255,.3);user-select:none;list-style:none;display:flex;align-items:center;gap:4px;padding:2px 0;"><span style="font-size:9px;">▶</span> Histórico citado</summary><div style="margin-top:6px;padding:8px 10px;border-left:2px solid rgba(234,240,255,.1);font-size:12px;color:rgba(234,240,255,.3);white-space:pre-wrap;word-break:break-word;">' + escapeHtml(t6Cauda) + '</div></details>';
+            }
+          }
+        }
+        var corpoBloco = isT6
+          ? (t6TopoHtml + t6CaudaHtml)
+          : '<div class="msg-body-text" style="font-size:13px;' + (isAutoReply ? 'color:rgba(234,240,255,.45);font-style:italic;' : 'color:rgba(234,240,255,.92);') + 'line-height:1.5;white-space:pre-wrap;word-break:break-word;">' + escapeHtml(corpoTexto) + '</div>';
+        if (isEncSemComentario) {
+          corpoBloco = '<div style="font-size:11px;color:rgba(234,240,255,.35);font-style:italic;padding:2px 0;">Encaminhou mensagem sem adicionar texto. Conteúdo abaixo.</div>';
+        }
         // UX-01: corpo vazio mas há arquivos em anexo — mostrar aviso com lista de arquivos
         var anexosDetectados = Array.isArray(msg.anexos_detectados) ? msg.anexos_detectados.filter(function(a) { return !a.content_id; }) : [];
         if (!corpoTexto.trim() && anexosDetectados.length > 0) {
@@ -4747,6 +4784,9 @@
                 <div style="width:24px;height:24px;flex-shrink:0;background:${idxBg};border-radius:999px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;">${idx + 1}</div>
                 <span class="when" style="flex-shrink:0;">${escapeHtml(msg.data_email || msg.timestamp || '')}</span>
                 <span style="flex-shrink:0;font-size:11px;padding:2px 8px;border-radius:999px;${idxPill};" title="Quem enviou esta mensagem (lado técnico)">${escapeHtml(String(lado))}</span>
+                ${isAutoReply ? '<span style="flex-shrink:0;font-size:10px;font-weight:600;padding:2px 8px;border-radius:999px;background:rgba(99,102,241,.12);color:#818cf8;border:1px solid rgba(99,102,241,.25);">Resposta automática</span>' : ''}
+                ${isEncSemComentario ? '<span style="flex-shrink:0;font-size:10px;font-weight:600;padding:2px 8px;border-radius:999px;background:rgba(20,184,166,.1);color:#2dd4bf;border:1px solid rgba(20,184,166,.25);">Encaminhamento</span>' : ''}
+                ${isT6 ? '<span style="flex-shrink:0;font-size:10px;font-weight:600;padding:2px 8px;border-radius:999px;background:rgba(251,191,36,.08);color:#fbbf24;border:1px solid rgba(251,191,36,.2);">Com histórico</span>' : ''}
               </div>
               ${slaHtml}
             </div>
