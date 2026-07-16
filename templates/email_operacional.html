@@ -1193,9 +1193,8 @@
       var u = sp.toUpperCase().replace('Í', 'I');
       if (u === 'AGUARDANDO') return 'Aguardando';
       if (u === 'CONCLUIDO' || u === 'CONCLUÍDO') return 'Concluído';
-      if (u === 'PENDENTE') return 'Pendente';
-      if (u === 'INFORMATIVO') return 'Informativo';
-      return sp || 'Pendente';
+      if (u === 'INFORMATIVO') return 'Concluído';
+      return 'Aguardando';
     }
 
     /**
@@ -3563,7 +3562,7 @@
       const latest = getLatestParaStatusCard(thread, options.section);
       const isConcluido = eventoConcluidoOperacional(latest);
       const critical = isConcluido ? false : isCritical(latest);
-      var pendOuAtencao = (String(latest.status_processo || '').toUpperCase().replace('Í', 'I') === 'PENDENTE');
+      var pendOuAtencao = !isConcluido;
       const dotClass = critical ? 'bad' : (isConcluido ? 'good' : (pendOuAtencao ? 'warn' : 'good'));
       const cardTid = thread._cardThreadId || latest.threadId || latest.id;
       const idsParaBadges = tidsGmailDoCartaon(thread, cardTid);
@@ -3582,10 +3581,10 @@
           var emAg = idsParaBadges.some(function(t){ return AGUARDANDO_IDS.has(t); });
           if (emNaoRes) statusLabel = 'NÃO RESOLVIDO';
           else if (emAg) statusLabel = 'AGUARDANDO';
-          else statusLabel = (latest.status_processo || 'PENDENTE');
+          else statusLabel = 'AGUARDANDO';
         }
       } else if (isConcluido) statusLabel = 'CONCLUÍDO';
-      else statusLabel = latest.status_processo || 'N/A';
+      else statusLabel = 'AGUARDANDO';
       const threadCount = thread.length;
       var cardClass = options.criticoClass !== false && critical ? 'card critico' : 'card';
       if (unificadoVariosFios) cardClass += ' card-par-merge';

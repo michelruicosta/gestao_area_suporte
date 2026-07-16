@@ -933,10 +933,8 @@ def _filtrar_prazos_regra_negocio(
 
 
 def _calcular_status(item: Dict[str, Any]) -> str:
-    """Status simples para UI (pode evoluir depois)."""
-    # Se tem prazos, consideramos "PENDENTE" até alguém marcar como resolvido
-    prazos = item.get("lista_prazos", [])
-    return "PENDENTE" if prazos else "INFORMATIVO"
+    """Marcador pré-motor: thread ainda não passou pela triagem automática."""
+    return "SEM_TRIAGEM"
 
 
 def _responsabilidade_por_lado(email_proc: Dict[str, Any]) -> str:
@@ -1209,18 +1207,15 @@ def _processar_threads(threads_raw: List[Dict[str, Any]], _anexos_por_id: dict =
                 "fogbugz" in _em or ("do-not-reply" in _em and "finaud" in _em)
                 for _em in _emails_orig_th
             ):
-                _cadoc_raw = "FOGBUGZ"
+                _cadoc_raw = "INTERNO"  # e-mails gerados pelo sistema FogBugz
             elif any("riskdriver@" in _em for _em in _emails_orig_th):
-                if "relat" in _assunto_th and "servi" in _assunto_th:
-                    _cadoc_raw = "RISK_DRIVER_RELATORIO"
-                else:
-                    _cadoc_raw = "RISK_DRIVER_ALERTA"
+                _cadoc_raw = "INTERNO"  # alertas e relatórios automáticos do Risk Driver
             elif "contato@finaud.com.br" in _emails_orig_th and (
                 "leiaute" in _assunto_th or "layout" in _assunto_th or "atualiza" in _assunto_th
             ):
-                _cadoc_raw = "LEIAUTES_BACEN"
+                _cadoc_raw = "INTERNO"  # notificações de leiautes BACEN geradas internamente
             elif "resposta autom" in _assunto_th and "risk driver" in _assunto_th:
-                _cadoc_raw = "RISK_DRIVER_RESP_AUTO"
+                _cadoc_raw = "INTERNO"  # respostas automáticas do Risk Driver
             elif "risk driver" in _assunto_th or "risco driver" in _assunto_th:
                 _cadoc_raw = "SUPORTE"
             # Grupo 6 (externos sem cadoc) e demais: preservar vazio — revisão pendente
@@ -1249,7 +1244,7 @@ def _processar_threads(threads_raw: List[Dict[str, Any]], _anexos_por_id: dict =
             "data_ultima_msg": timestamp_display,
             "timestamp": timestamp_display,
             "timestamp_epoch": ts_epoch,
-            "status_processo": "PENDENTE" if thread.get("prazos") else "INFORMATIVO",
+            "status_processo": "SEM_TRIAGEM",
             "lista_prazos": _filtrar_prazos_regra_negocio(
                 thread.get("prazos", []), thread.get("cadoc", ""), thread.get("assunto", "")
             ),
@@ -1459,10 +1454,9 @@ def main() -> None:
     # Ordena por data (mais recente primeiro)
     eventos.sort(key=lambda x: x.get("timestamp_epoch", 0), reverse=True)
     
-    pendentes   = sum(1 for e in eventos if e.get("status_processo") == "PENDENTE")
-    informativos = sum(1 for e in eventos if e.get("status_processo") == "INFORMATIVO")
+    sem_triagem = sum(1 for e in eventos if e.get("status_processo") == "SEM_TRIAGEM")
     filtrados   = sum(1 for e in eventos if e.get("cadoc") in ("FILTRADO_POR_DATA", "IGNORADO"))
-    print(f"[OK] {len(eventos)} eventos processados: {pendentes} pendentes | {informativos} informativos | {filtrados} filtrados")
+    print(f"[OK] {len(eventos)} eventos processados: {sem_triagem} aguardando triagem | {filtrados} filtrados")
     
     # ========================================================================
     # NOVO: PROCESSAMENTO DE THREADS
