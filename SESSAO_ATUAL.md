@@ -8,6 +8,32 @@
 
 ---
 
+## 📓 Diário da sessão (2026-07-16)
+
+### T6 — Histórico citado inline como bloco recolhível ✅
+
+E-mails com resposta nova + histórico da conversa colado no corpo agora exibem o texto novo normalmente e escondem o histórico num bloco clicável "▶ Histórico citado" com badge âmbar "Com histórico". Padrão `*De:*` (Outlook mobile) adicionado à regex.
+- Arquivo: `templates/email_operacional.html`
+- Commits: `16c106a`
+
+### T7 — Reformatar bloco De/Para e remover assinaturas automáticas ✅
+
+Cabeçalho De/Para agora exibe em duas linhas separadas (antes: mesma linha). Rodapés de "confidencial", "Enviado do iPhone", linhas `---`/`___` removidos do corpo de todos os tipos de mensagem.
+- Funções novas/alteradas: `linhaDeParaModal` (reescrita), `stripBoilerplate` (nova)
+- Arquivo: `templates/email_operacional.html`
+- Commits: `16c106a`
+
+### UX-02 (Parte 1) — Script 02 salvar imagens inline quando corpo está vazio ✅
+
+Script 02 corrigido: quando o corpo do e-mail tem menos de 50 caracteres (e-mail só com imagem) e o assunto contém keyword CADOC (DLO/DLI/2061/2062), libera salvamento da imagem inline. Fix prospectivo — casos históricos em produção não reprocessados (produção é somente leitura).
+- Arquivo: `scripts/02_coletar_emails_gmail.py`
+- Commits: `ecb4f5a`
+- Limitação permanente T8.1: assunto "print" sem keyword CADOC — requer intervenção manual
+
+**Arquivos alterados nesta sessão:** `templates/email_operacional.html`, `scripts/02_coletar_emails_gmail.py`, `documentações/REGISTRO_CORRECOES.md`, `documentações/PENDENCIAS.md`
+
+---
+
 ## 📓 Diário da sessão (2026-07-10)
 
 ---
@@ -205,9 +231,17 @@ Rastrear cada campo visível na tela operacional de trás para frente — da tel
 | Passo 8 (Parte 2) | Herança RETORNO_BACEN no Script 09 | ✅ 0 threads afetadas — resolvido na raiz pelo Passo 8 Parte 1 |
 | Leitura de conteúdo dos anexos | Sistema abre xlsx/xml/pdf? | ✅ Confirmado: não lê conteúdo — limitação documentada |
 
-Último /fechar: 2026-07-10 (sessão de documentação — Campos 3/4/5 reorganizados; diagnóstico completo de cenários de e-mail; zero furos) — memórias revisadas ✅
+Último /fechar: 2026-07-16 (T6 histórico citado + T7 De/Para reformatado + UX-02 imagem inline) — memórias revisadas ✅
 
-### 🔥 Próximo passo — revisão completa do Campo 5 (Empresa)
+### 🔥 Próximo passo — continuação da tela de Triagem (UX)
+
+**Opções abertas (Michel decide):**
+1. **Revisão visual completa com Fable** — a tela `/operacional` está "muito poluída"; revisar ao vivo → condensar diagnóstico → Fable ajusta. Ver `PENDENCIAS.md` item "Tela de Triagem — revisão UX com o Fable".
+2. **UX-04** — filtrar 365 alertas automáticos do Oráculo que entram na triagem indevidamente.
+3. **Pacote 1 da Análise Fable** — 6 correções pequenas de baixo risco (falhas silenciosas).
+4. **Continuar rastreamento campo a campo** — Campo 4 em diante no `GUIA_CAMPOS_OPERACIONAL.md`.
+
+### 🔥 Próximo passo — revisão completa do Campo 5 (Empresa) [anterior]
 
 **Por que:** Michel quer revisar o Campo 5 (Empresa) de ponta a ponta usando o mesmo método de rastreamento campo a campo que fizemos nos campos anteriores.
 

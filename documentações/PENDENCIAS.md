@@ -938,20 +938,22 @@ Documentação de triagem: todos os 12 CADOCs concluídos em 18/06/2026 (seçõe
 
 ---
 
-### [UX-02] Script 12 — processar imagens inline (coladas no corpo), não só arquivos anexados
+### [UX-02] ⚠️ PARCIALMENTE RESOLVIDO — Script 02 salvar + Script 12 processar imagens inline
 
-**Contexto (14/07/2026):** durante revisão dos tipos de mensagem da tela Triagem, identificados e-mails onde o cliente enviou apenas um print de tela colado diretamente no corpo do e-mail — sem texto escrito. O Script 12 só lê arquivos anexados separadamente; imagens inline (formato `cid:` no HTML do e-mail) não são processadas, deixando o corpo vazio na tela.
+**Contexto (14/07/2026):** e-mails onde o cliente enviou apenas um print de tela colado no corpo do e-mail — sem texto escrito. O Script 02 não salvava essas imagens; o Script 12 não as processava.
 
-**Varredura de 15/07/2026 — 5 mensagens confirmadas em produção:**
-- 8.1 — Kinel Corretora · "print" · 25/06/2026 (erro DLO SQL)
-- 8.2 — Atual Câmbio · "2062 e 4010 março" · 10/06/2026 (Indício de Qualidade LIM 2062)
-- 8.3 — Atual Câmbio · "2061" · 10/06/2026 (Indício de Qualidade LIM 2061)
-- 8.4 — ARC Corretora · "DLI 2062 dez 2026 x 4016" · 19/03/2026 (Indício de Qualidade LIM 2062)
+**Varredura de 15/07/2026 — 5 mensagens em produção:**
+- 8.1 — Kinel Corretora · "print" · 25/06/2026 — assunto sem CADOC — **não corrigível automaticamente**
+- 8.2 — Atual Câmbio · "2062 e 4010 março" · 10/06/2026 (msg_id 98411)
+- 8.3 — Atual Câmbio · "2061" · 10/06/2026 (msg_id 98412)
+- 8.4 — ARC Corretora · "DLI 2062 dez 2026 x 4016" · 19/03/2026 (msg_id 93720)
 - 8.5 (variante) — Relatório Pilar III · Finaud · data a confirmar
 
-**O que fazer:** no Script 12 (`scripts/12_enriquecer_texto_imagens.py`), adicionar lógica para detectar e baixar imagens inline (partes `Content-ID` do e-mail multipart) e submetê-las ao mesmo OCR já usado para anexos.
+**✅ Parte 1 resolvida (16/07/2026):** Script 02 corrigido para detectar `corpo_texto_vazio` e liberar salvamento de imagem inline quando assunto tem keyword CADOC (DLO/DLI/2061/2062). Fix prospectivo — novos e-mails com esse padrão serão capturados. Casos históricos (8.2/8.3/8.4) não reprocessados: produção é somente leitura; TESTE tem poucos dados.
 
-**Como validar:** após correção, reprocessar as 4 threads acima e confirmar que `texto_imagens` passa a ter conteúdo lido do print.
+**Pendente — Parte 2:** Script 12 ainda processa só arquivos em `email_anexos/`, não imagens salvas pelo Script 02 via `cid:`. Para os casos históricos 8.2/8.3/8.4 serem processados, seria necessário: (a) reimportar via `--reimport-ids` em produção (não fazemos) ou (b) aguardar nova carga com o fix ativo.
+
+**T8.1 limitação permanente:** assunto "print" sem keyword CADOC — Script 02 não pode salvar automaticamente. Requer download manual da imagem do Gmail e gravação em `email_anexos/99031_print.png`.
 
 ---
 

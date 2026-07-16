@@ -2,6 +2,60 @@
 
 ---
 
+### 2026-07-16 — [MELHORIA] UX-02: salvar imagens inline quando corpo do e-mail está vazio em thread CADOC
+
+**🔎 Em miúdos:** quando um cliente manda um e-mail só com um print colado no corpo (sem texto), o sistema agora consegue salvar esse print para análise posterior. Antes, o sistema exigia texto no corpo para saber que era um e-mail importante de CADOC — e ignorava os e-mails só com imagem.
+
+**Problema:** Script 02 (`02_coletar_emails_gmail.py`) tem a função `corpus_indica_critica_em_relatorio_dlo` que decide se deve salvar imagens embutidas no corpo do e-mail. Ela exigia que o corpo contivesse palavras-chave como "crítica", "inconsistência", "indício" para liberar o salvamento. Quando o corpo estava vazio (e-mail só com imagem), a função retornava `False` e a imagem era descartada.
+
+**Impacto identificado:** 4 e-mails em produção com padrão "só imagem + assunto CADOC" sem imagem salva:
+- msg_id 99031 — Kinel (assunto "print", T8.1 — assunto sem palavra CADOC, não corrigível automaticamente)
+- msg_id 98411 — Atual Câmbio DLO 2062 (T8.2)
+- msg_id 98412 — Atual Câmbio DLO 2061 (T8.3)
+- msg_id 93720 — ARC Corretora (T8.4)
+
+**Correção:** em `scripts/02_coletar_emails_gmail.py`:
+1. `corpus_indica_critica_em_relatorio_dlo`: novo parâmetro `corpo_texto_vazio=False` — quando True, pula o requisito de palavras-chave no corpo e retorna True se o assunto tiver CADOC
+2. Call site (~linha 479): detecta `_corpo_texto_vazio = len(corpo_texto.strip()) < 50` e passa para a função
+3. `_imagem_inline_dimensoes_sugerem_conteudo`: adicionado fallback `area >= 40_000 and mx >= 300` para capturar prints pequenos de tela do CRD
+
+**Escopo do fix:** prospectivo — novos e-mails com esse padrão serão capturados corretamente. Os 4 casos históricos em produção não foram reprocessados (produção é somente leitura; TESTE tem poucos dados).
+
+**T8.1 limitação permanente:** assunto "print" não tem keyword CADOC — não é corrigível via automação. Exige download manual da imagem do Gmail.
+
+**Validação:** `python -m py_compile scripts/02_coletar_emails_gmail.py` ✅. pytest: zero regressões. sem teste novo: mudança de condição em Script 02 — fluxo não tem fixture de e-mail Gmail para testar a lógica de salvamento de imagem inline. ✅ VALIDADO em lógica; comportamento prospectivo.
+
+---
+
+### 2026-07-16 — [MELHORIA] T6: exibir histórico citado inline como bloco recolhível
+
+**🔎 Em miúdos:** quando um e-mail tem uma resposta nova + o histórico da conversa anterior copiado no corpo, a tela agora mostra o texto novo normalmente e esconde o histórico num bloco clicável "▶ Histórico citado". Antes, tudo aparecia junto, misturado.
+
+**Problema:** na tela de Triagem, e-mails com histórico citado inline (padrão `De:`, `From:`, `Em ... escreveu:`, `*De:*`) exibiam todo o conteúdo de uma vez — difícil separar o que é novo do que é histórico.
+
+**Correção:** em `templates/email_operacional.html`:
+- Detecta separadores de citação com regex, divide corpo em topo (novo) + cauda (histórico)
+- Topo exibido normalmente; cauda em `<details>` recolhível com label "▶ Histórico citado"
+- Badge âmbar "Com histórico" no cabeçalho da mensagem
+- Padrão `*De:*` (Outlook mobile) adicionado à regex existente
+
+**Validação:** commit `16c106a`. Demo atualizada: https://claude.ai/code/artifact/cc2f705c-a5bb-479f-bd0e-9ba601c8cedb ✅ VALIDADO visualmente via demo.
+
+---
+
+### 2026-07-16 — [MELHORIA] T7: reformatar bloco De/Para e remover assinaturas automáticas
+
+**🔎 Em miúdos:** o cabeçalho de cada e-mail na tela agora mostra remetente e destinatário em linhas separadas (antes ficavam na mesma linha). E rodapés chatos de "Este e-mail é confidencial..." ou "Enviado do iPhone" sumiram — não aparecem mais no corpo das mensagens.
+
+**Correção:** em `templates/email_operacional.html`:
+- `linhaDeParaModal`: reescrita para exibir De e Para em duas linhas com labels "De" / "Para"
+- `stripBoilerplate`: nova função que remove avisos de confidencialidade, "Sent from...", linhas separadoras com `---`/`___` do final do corpo
+- `stripBoilerplate` aplicado ao `corpoTexto` de todos os tipos de mensagem
+
+**Validação:** commit `16c106a`. Demo atualizada. ✅ VALIDADO visualmente.
+
+---
+
 ### 2026-07-15 — [DOCUMENTAÇÃO] Campo 13: mapeamento completo dos tipos de mensagem da tela de Triagem
 
 **🔎 Em miúdos:** fizemos um raio-X completo de todos os tipos de e-mail que aparecem na tela — dos mais simples (texto normal) até os mais problemáticos (só imagem colada no corpo, só arquivo em anexo, alertas gerados pelo próprio sistema). Documentamos tudo no Guia de Campos e criamos a lista de correções pendentes.
