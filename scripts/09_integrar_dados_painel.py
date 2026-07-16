@@ -67,13 +67,52 @@ _DOMINIOS_GENERICOS = frozenset({
     "bol.com.br", "uol.com.br", "terra.com.br", "ig.com.br", "protonmail.com",
 })
 
+_MAPA_NOMES_EMAILS: dict = {}
+
+
+def _score_nome(nome: str) -> int:
+    return len(nome.strip().split()) * 100 + len(nome) if nome else 0
+
+
+def _nome_suspeito(nome: str, email: str) -> bool:
+    """True se o nome for apenas a parte local do e-mail (ex: 'financeiro' de financeiro@...)."""
+    if not nome or not email or "@" not in email:
+        return False
+    lp = email.split("@")[0].replace(".", "").replace("_", "").replace("-", "").lower()
+    return nome.strip().replace(" ", "").lower() == lp
+
+
+def _construir_mapa_nomes_emails(emails: list) -> None:
+    """Varre todos os emails do JSON 02 e popula _MAPA_NOMES_EMAILS com o melhor nome
+    encontrado para cada endereço de e-mail do lado CLIENTE."""
+    global _MAPA_NOMES_EMAILS
+    mapa: dict = {}
+    for em in emails:
+        for campo in ("contato_origem", "contato_destino"):
+            co = em.get(campo) or {}
+            if (co.get("lado") or "").upper() != "CLIENTE":
+                continue
+            email = (co.get("email") or "").strip().lower()
+            nome = (co.get("nome") or "").strip()
+            if not email or "@" not in email:
+                continue
+            if _score_nome(nome) > _score_nome(mapa.get(email, "")):
+                mapa[email] = nome
+    _MAPA_NOMES_EMAILS = mapa
+    print(f"[OK] Mapa de nomes enriquecidos: {len(mapa)} emails mapeados")
+
+
 def _nome_contato_seguro(d: dict) -> str:
     if not d or not isinstance(d, dict):
         return ""
-    n = (d.get("nome") or "").strip()
-    if n:
-        return n
-    em = (d.get("email") or "").strip()
+    em = (d.get("email") or "").strip().lower()
+    n_local = (d.get("nome") or "").strip()
+    n_mapa = _MAPA_NOMES_EMAILS.get(em, "") if em else ""
+    melhor = n_mapa if _score_nome(n_mapa) > _score_nome(n_local) else n_local
+    if melhor:
+        if _nome_suspeito(melhor, em):
+            return em  # exibe e-mail completo em vez do nome inútil
+        return melhor
     if em and "@" in em:
         return em.split("@")[0]
     return ""
@@ -1379,6 +1418,7 @@ def main() -> None:
     # ========================================================================
     
     emails = _normalizar_lista_emails(payload)
+    _construir_mapa_nomes_emails(emails)
     eventos: List[Dict[str, Any]] = []
 
     _t0_09 = time.time()

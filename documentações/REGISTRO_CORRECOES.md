@@ -2,6 +2,25 @@
 
 ---
 
+### 2026-07-16 — [MELHORIA] Campo 3 (Cliente): enriquecimento automático de nomes + e-mail como fallback para nomes suspeitos
+
+**🔎 Em miúdos:** o sistema agora acha o melhor nome disponível para cada contato varrendo todos os e-mails antes de montar o painel. Quando o nome no e-mail é só a parte técnica do endereço (ex.: "financeiro", "compliance"), exibe o e-mail completo em vez de um nome sem sentido.
+
+**Problema:** Script 09 usava só o nome do contato na mensagem individual sendo processada. Se aquele e-mail específico tinha "financeiro" como nome, o painel exibia "financeiro" mesmo que em outros e-mails da mesma caixa o contato aparecesse com nome completo. Adicionalmente, emails genéricos de setor (compliance@, financeiro@, risco@) mostravam apenas a parte local do endereço como se fosse um nome.
+
+**Correção:** em `scripts/09_integrar_dados_painel.py`:
+- Nova variável global `_MAPA_NOMES_EMAILS: dict` — preenchida uma vez por execução
+- Nova função `_construir_mapa_nomes_emails(emails)` — varre todos os emails do JSON 02, guarda o melhor nome por endereço (score: palavras × 100 + tamanho)
+- Nova função `_nome_suspeito(nome, email)` — detecta quando nome = parte local do e-mail (ex.: "financeiro" de financeiro@...)
+- `_nome_contato_seguro()` reformulada: usa o mapa para enriquecer; se nome suspeito → exibe e-mail completo
+- Chamada `_construir_mapa_nomes_emails(emails)` adicionada em `main()` logo após carregar o JSON 02
+
+**Regra resultante:** nome suspeito (ex.: "Compliance", "financeiro", "Jmf") → tela exibe o e-mail completo. Nome com 2+ palavras ("Noe Santana") → exibe o melhor nome encontrado em qualquer e-mail do mesmo endereço.
+
+**Validação:** teste manual com 3 casos simulados: financeiro@ → email completo ✅; Noe (enriquecido para "Noe Santana") ✅; Compliance → email completo ✅. pytest 602 passaram, zero regressões. ✅ VALIDADO
+
+---
+
 ### 2026-07-16 — [MELHORIA] Campo 9 (prazo): reconhecer formato MM/AA com ano de 2 dígitos
 
 **🔎 Em miúdos:** o sistema agora entende datas como "04/26" como "abril de 2026". Antes ignorava esse formato e o prazo ficava em branco.
