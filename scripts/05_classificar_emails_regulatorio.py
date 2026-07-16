@@ -1031,6 +1031,8 @@ class NormalizadorDatas:
             try:
                 dia, mes = int(match.group(1)), int(match.group(2))
                 if mes > 12:
+                    if dia <= 12:
+                        continue  # MM/YY inequívoco — já tratado pelo PADRÃO 8b2
                     dia, mes = mes, dia
                 dt = datetime(self.ano_padrao, mes, dia)
                 ctx_pre, ctx_pos = self._ctx_pre_pos(texto_limpo, match)
@@ -1119,6 +1121,29 @@ class NormalizadorDatas:
             except ValueError:
                 continue
         
+        # =====================================================================
+        # PADRÃO 8b2: MM/YY — ano com 2 dígitos onde YY > 12 (inequivocamente ano, não dia)
+        # Ex: "DLI 2062 04/26" → abril/2026 → 30/04/2026 (último dia do mês de competência)
+        # Deve vir ANTES do PADRÃO 4 (DD/MM) para interceptar antes da troca dia↔mês.
+        # Só captura quando o 2º número > 12 — evita ambiguidade com DD/MM normais.
+        # =====================================================================
+        padrao_mm_aa = r'(?<![/\d])(\d{1,2})/(\d{2})(?![/\d])'
+        for match in re.finditer(padrao_mm_aa, texto_limpo):
+            try:
+                parte1, parte2 = int(match.group(1)), int(match.group(2))
+                if parte2 <= 12:
+                    continue  # ambíguo — deixa PADRÃO 4 (DD/MM) resolver
+                if parte1 > 12:
+                    continue  # nem mes nem dia válido
+                mes = parte1
+                ano = self.normalizar_ano(match.group(2))
+                ultimo_dia = calendar.monthrange(ano, mes)[1]
+                dt = datetime(ano, mes, ultimo_dia)
+                ctx_pre, ctx_pos = self._ctx_pre_pos(texto_limpo, match)
+                datas_encontradas.append((dt, match.group(0), ctx_pre, False, ctx_pos))
+            except (ValueError, TypeError):
+                continue
+
         # =====================================================================
         # PADRÃO 8c: #PF26 — Data embutida em código de arquivo (ex: DRL2160_012026, DRM2060_022026)
         # Cliente usa nome do arquivo como assunto: "DRL2160_012026" → mês=01, ano=2026 → 31/01/2026
