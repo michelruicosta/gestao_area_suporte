@@ -2,6 +2,23 @@
 
 ---
 
+### 2026-07-16 — [MELHORIA] Campo 10: regra Responsável pela Ação simplificada — responsável = Para
+
+**🔎 Em miúdos:** o campo "Responsável pela Ação" na tela agora mostra sempre quem *recebeu* a última mensagem, sem exceções. Antes tinha casos especiais que podiam confundir (ex.: "obrigado pelo envio" mostrava o remetente).
+
+**Problema:** a função de responsável tinha 4 ramificações + 1 exceção ("obrigada pelo envio"), tornando a regra difícil de entender. Os casos onde cliente enviava para cliente (C→C) ou Finaud enviava para Finaud (F→F) não tinham tratamento claro.
+
+**Correção:** regra unificada em duas funções:
+- `scripts/09_integrar_dados_painel.py` — `_responsavel_pela_acao()` simplificada: retorna `contato_destino.nome` (Para)
+- `painel_oraculo.py` — `_responsavel_pela_acao_from_mensagens()` simplificada: retorna `contato_destino.nome` (Para)
+- `tests/qa_registro_correcoes.py` — 2 assertivas atualizadas para refletir a nova regra
+
+**Regra resultante:** C→F=Finaud, F→C=Cliente, C→C=Cliente, F→F=Finaud.
+
+**Validação:** pytest 602 passaram, 75 falhas pré-existentes — zero regressões. ✅ VALIDADO
+
+---
+
 ### 2026-07-16 — [MELHORIA] UX-02: salvar imagens inline quando corpo do e-mail está vazio em thread CADOC
 
 **🔎 Em miúdos:** quando um cliente manda um e-mail só com um print colado no corpo (sem texto), o sistema agora consegue salvar esse print para análise posterior. Antes, o sistema exigia texto no corpo para saber que era um e-mail importante de CADOC — e ignorava os e-mails só com imagem.

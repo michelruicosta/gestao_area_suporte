@@ -80,30 +80,13 @@ def _nome_contato_seguro(d: dict) -> str:
 
 
 def _responsavel_pela_acao(mensagens: list, fallback: str) -> str:
-    """Calcula quem deve agir agora com base na última mensagem da thread.
-    Porta a lógica de responsavelPelaAcaoFromMensagens (email_operacional.html)
-    para o Script 09, tornando o JSON a fonte de verdade."""
+    """Responsável = quem recebeu a última mensagem (Para).
+    C→F=Finaud, F→C=Cliente, C→C=Cliente, F→F=Finaud."""
     if not mensagens:
         return fallback
     ultima = sorted(mensagens, key=lambda m: m.get("timestamp_epoch", 0) or 0)[-1]
-    co = ultima.get("contato_origem") or {}
     cd = ultima.get("contato_destino") or {}
-    o = (co.get("lado") or "").upper()
-    d = (cd.get("lado") or "").upper()
-    corpo = (ultima.get("corpo_limpo") or ultima.get("corpo") or "").lower()
-    excecao_obrigada = (
-        o == "FINAUD"
-        and ("obrigada pelo envio" in corpo or "obrigado pelo envio" in corpo)
-    )
-    if excecao_obrigada:
-        return _nome_contato_seguro(co) or fallback
-    if o == "CLIENTE":
-        return _nome_contato_seguro(cd) or fallback
-    if o == "FINAUD" and d == "FINAUD":
-        return _nome_contato_seguro(cd) or fallback
-    if o == "FINAUD" and d == "CLIENTE":
-        return _nome_contato_seguro(cd) or (ultima.get("responsavel") or "").strip() or fallback
-    return fallback
+    return _nome_contato_seguro(cd) or fallback
 
 
 def _resolver_empresa(evento: dict) -> str:

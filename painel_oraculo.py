@@ -2268,10 +2268,8 @@ def _excecao_obrigada_pelo_envio_ultima(ultima):
 
 def _responsavel_pela_acao_from_mensagens(mensagens, fallback_responsavel=""):
     """
-    Quem deve agir agora, a partir do último fio (lados origem→destino).
-    C→F → destinatário Finaud; F→F → destinatário Finaud; F→C → contato cliente.
-    Exceção: «obrigada/obrigado pelo envio» com origem Finaud → remetente Finaud.
-    O campo legado ``responsavel`` (contraparte / 02) permanece; este valor alimenta o card.
+    Responsável = quem recebeu a última mensagem (Para).
+    C→F=Finaud, F→C=Cliente, C→C=Cliente, F→F=Finaud.
     """
     fb = _str_strip_seguro(fallback_responsavel)
     if not mensagens or not isinstance(mensagens, list):
@@ -2282,34 +2280,9 @@ def _responsavel_pela_acao_from_mensagens(mensagens, fallback_responsavel=""):
     if not ordenados:
         return fb
     ultima = ordenados[-1]
-    co = ultima.get("contato_origem") or {}
     cd = ultima.get("contato_destino") or {}
-    o_lado = _str_strip_seguro(co.get("lado")).upper()
-    d_lado = _str_strip_seguro(cd.get("lado")).upper()
-
-    if _excecao_obrigada_pelo_envio_ultima(ultima):
-        nome = _nome_contato_dict_seguro(co)
-        return nome or fb
-
-    if o_lado == "CLIENTE":
-        nome = _nome_contato_dict_seguro(cd)
-        return nome or fb
-
-    if o_lado == "FINAUD" and d_lado == "FINAUD":
-        nome = _nome_contato_dict_seguro(cd)
-        return nome or fb
-
-    if o_lado == "FINAUD" and d_lado == "CLIENTE":
-        nome = _nome_contato_dict_seguro(cd)
-        if nome:
-            return nome
-        raw_rv = ultima.get("responsavel")
-        if raw_rv in (None, ""):
-            raw_rv = ultima.get("responsavel_nome")
-        msg_fb = _str_strip_seguro(raw_rv)
-        return msg_fb or fb
-
-    return fb
+    nome = _nome_contato_dict_seguro(cd)
+    return nome or fb
 
 
 def _filtrar_evento_por_data(evento, dt_limite):

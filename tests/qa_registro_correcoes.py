@@ -108,7 +108,7 @@ def test_responsavel_pela_acao_registro_template_e_painel():
 
 
 def test_responsavel_pela_acao_regra_ultimo_fio():
-    """2026-04-02: F→F → destinatário Finaud; obrigada pelo envio → remetente Finaud."""
+    """2026-07-16: responsável = Para (quem recebeu). C→F=Finaud, F→C=Cliente, F→F=Finaud."""
     from painel_oraculo import _responsavel_pela_acao_from_mensagens
 
     msgs_ff = [
@@ -120,7 +120,7 @@ def test_responsavel_pela_acao_regra_ultimo_fio():
     ]
     assert _responsavel_pela_acao_from_mensagens(msgs_ff, "Moneycorp") == "Rodrigo"
 
-    msgs_obrigada = [
+    msgs_fc = [
         {
             "data_email": "23/02/2026 11:00",
             "contato_origem": {"lado": "FINAUD", "nome": "Andrea", "email": "a@finaud.com.br"},
@@ -128,7 +128,7 @@ def test_responsavel_pela_acao_regra_ultimo_fio():
             "corpo_limpo": "Obrigado pelo envio dos arquivos.",
         },
     ]
-    assert _responsavel_pela_acao_from_mensagens(msgs_obrigada, "") == "Andrea"
+    assert _responsavel_pela_acao_from_mensagens(msgs_fc, "") == "Hebert"
 
 
 def test_modal_operacional_sem_botoes_header_aguardar_aprender():
@@ -3041,7 +3041,7 @@ def test_gestao_direcao_contatos_responsavel_tipos_flexiveis():
         }
     ]
     out = _responsavel_pela_acao_from_mensagens(msgs, "")
-    assert out == "7711"
+    assert out == ""
 
 
 def test_equipe_gestao_direcao_sem_usuarios_json_so_operacional():
