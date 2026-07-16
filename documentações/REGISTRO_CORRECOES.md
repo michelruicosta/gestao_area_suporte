@@ -2,6 +2,22 @@
 
 ---
 
+### 2026-07-16 — [MELHORIA] Campo 7 (CADOC): snippet não mostrava o CADOC correto — "SUPORTE" aparecia indevidamente
+
+**🔎 Em miúdos:** embaixo do assunto de 9 threads aparecia "Categorias: SUPORTE" quando o CADOC real era DLO ou DDR. Corrigido — agora aparece o CADOC correto.
+
+**Problema:** a tela usava o CADOC dos prazos internos (`lista_prazos[].cadoc`) para montar o snippet. Em 9 threads regulatórias (DLO, DDR, RETORNO_BACEN), esse campo ficou com "SUPORTE" como valor padrão quando o Script 05 não conseguiu determinar o CADOC do prazo — causando snippet errado.
+
+**Correção:** em `scripts/09_integrar_dados_painel.py`, função `_injetar_cadoc_em_prazos()`:
+- Antes: só injetava o CADOC quando o prazo estava completamente sem CADOC (`setdefault`)
+- Depois: também substitui "SUPORTE" pelo CADOC real do thread quando o thread tem CADOC regulatório
+
+**Escopo:** 9 threads corrigidas (de 23 com divergência total). Os 14 restantes são casos legítimos (thread SUPORTE com prazo de outro CADOC, ou multi-CADOC) — não alterados.
+
+**Validação:** simulação em produção: 23 erros → 9 corrigidos, 14 intactos (casos legítimos). pytest 602 passaram, zero regressões. ✅ VALIDADO
+
+---
+
 ### 2026-07-16 — [MELHORIA] Campo 3 (Cliente): enriquecimento automático de nomes + e-mail como fallback para nomes suspeitos
 
 **🔎 Em miúdos:** o sistema agora acha o melhor nome disponível para cada contato varrendo todos os e-mails antes de montar o painel. Quando o nome no e-mail é só a parte técnica do endereço (ex.: "financeiro", "compliance"), exibe o e-mail completo em vez de um nome sem sentido.

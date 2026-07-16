@@ -931,7 +931,11 @@ def _injetar_cadoc_em_prazos(prazos: Any, cadoc: str) -> List[Dict[str, Any]]:
         if not isinstance(p, dict):
             continue
         p2 = dict(p)
-        p2.setdefault("cadoc", cadoc)
+        prazo_cadoc = (p2.get("cadoc") or "").strip()
+        # Injeta o cadoc do thread quando ausente ou quando ficou "SUPORTE" por padrão
+        # mas o thread tem um CADOC regulatório real (evita exibir "SUPORTE" no snippet)
+        if not prazo_cadoc or (prazo_cadoc == "SUPORTE" and cadoc and cadoc != "SUPORTE"):
+            p2["cadoc"] = cadoc
         out.append(p2)
     return out
 
