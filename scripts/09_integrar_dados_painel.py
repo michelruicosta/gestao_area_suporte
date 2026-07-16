@@ -861,6 +861,7 @@ def _parse_data_br(data_email: str) -> Tuple[str, str, int]:
     except Exception:
         pass
 
+    print(f"[AVISO] timestamp_epoch=0 — data não reconhecida: {data_email!r}")
     return "", data_email, 0
 
 

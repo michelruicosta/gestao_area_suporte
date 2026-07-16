@@ -418,7 +418,7 @@ def coletar_emails():
                     _eta_str = f"~{_eta_02//60}m{_eta_02%60:02d}s" if _eta_02 is not None else "..."
                     print(f"[02] progresso: {_idx_02}/{_total_02} emails | {_eta_str}", flush=True)
                     try:
-                        fetch_attrs = "(RFC822 X-GM-THRID)"  # Sempre solicitar para seguir Gmail
+                        fetch_attrs = "(INTERNALDATE RFC822 X-GM-THRID)"  # INTERNALDATE = fallback quando Date: header vazio
                         res, msg_data = mail.fetch(e_id, fetch_attrs)
                         total_requisicoes += 1
                         
@@ -427,15 +427,20 @@ def coletar_emails():
                             continue
                         
                         x_gm_thrid = None
+                        internaldate_raw = None
                         for response_part in msg_data:
                             if isinstance(response_part, tuple):
-                                # Extrai X-GM-THRID da resposta (ex.: b'1 (X-GM-THRID 1278455344230334865 RFC822 ...')
+                                # Extrai X-GM-THRID e INTERNALDATE da resposta
+                                # Ex.: b'1 (INTERNALDATE "13-Feb-2026 14:48:31 +0000" X-GM-THRID 1278... RFC822 ...'
                                 part0 = response_part[0]
                                 if isinstance(part0, bytes):
                                     part0 = part0.decode(errors='replace')
                                 m_thrid = re.search(r'X-GM-THRID\s+(\d+)', part0)
                                 if m_thrid:
                                     x_gm_thrid = f"GMTHRID_{m_thrid.group(1)}"
+                                m_idate = re.search(r'INTERNALDATE\s+"([^"]+)"', part0)
+                                if m_idate:
+                                    internaldate_raw = m_idate.group(1)
                                 if not response_part[1]:
                                     continue
                                     
@@ -456,7 +461,7 @@ def coletar_emails():
                                 reply_to = msg.get("Reply-To")
                                 destinatarios = msg.get("To")
                                 copia_cc = msg.get("Cc")
-                                date_raw = msg.get("Date")
+                                date_raw = msg.get("Date") or internaldate_raw
 
                                 message_id = msg.get("Message-ID")          # (não chame isso de thread)
                                 in_reply_to = msg.get("In-Reply-To")
