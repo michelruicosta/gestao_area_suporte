@@ -98,18 +98,25 @@ def corpus_tem_indicador_rd_ddr(texto: str) -> bool:
     return bool(re.search(r"\bRD_[A-Z0-9]{2,}\b", texto.upper()))
 
 
-def corpus_indica_critica_em_relatorio_dlo(subject: str, corpus: str) -> bool:
+def corpus_indica_critica_em_relatorio_dlo(subject: str, corpus: str, corpo_texto_vazio: bool = False) -> bool:
     """
     Cliente menciona crítica em fio DLO/DLI (ex.: print da tela do BC no corpo) sem assunto tipo Retorno Bacen.
     Permite gravar imagens inline para teste/operação — ainda exige anexo_imagem_eh_essencial (sem logo).
 
     Inclui «inconsistência/inconsistencias» (ex.: «Informe 2061 voltou… com inconsistências») e
     «indício de qualidade» — mesmo sem a palavra «crítica», são telas/indicadores do portal BC.
+
+    corpo_texto_vazio=True: cliente enviou só a imagem, sem texto escrito — assunto CADOC basta para
+    autorizar a gravação (a imagem inline é o próprio conteúdo da mensagem).
     """
-    if not subject or not corpus:
+    if not subject:
         return False
     sl = subject.lower()
     if not any(x in sl for x in ("dlo", "dli", "2061", "2062")):
+        return False
+    if corpo_texto_vazio:
+        return True
+    if not corpus:
         return False
     cl = corpus.lower()
     tem_sinal_bc = (
@@ -217,6 +224,10 @@ def _imagem_inline_dimensoes_sugerem_conteudo(payload_bytes):
         if mx >= 420:
             return True
         if mn >= 280:
+            return True
+        # Capturas de indício/crítica CRD frequentemente ~300–400 px de largura e baixa altura
+        # (ex. 342×137); antes eram descartadas e só restava OCR de logo no .ocr.txt.
+        if area >= 40_000 and mx >= 300:
             return True
         return False
     except Exception:
@@ -477,9 +488,10 @@ def coletar_emails():
 
                                     corpus_para_rb = f"{subject or ''}\n{corpo_texto}\n{corpo_html}"
                                     sem_rd = not corpus_tem_indicador_rd_ddr(corpus_para_rb)
+                                    _corpo_texto_vazio = len(corpo_texto.strip()) < 50
                                     permitir_imagem_inline_corpo = sem_rd and (
                                         assunto_indica_retorno_bacen(subject)
-                                        or corpus_indica_critica_em_relatorio_dlo(subject, corpus_para_rb)
+                                        or corpus_indica_critica_em_relatorio_dlo(subject, corpus_para_rb, corpo_texto_vazio=_corpo_texto_vazio)
                                     )
 
                                     for part, dentro_citacao in parts_list:
