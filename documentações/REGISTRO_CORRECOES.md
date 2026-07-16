@@ -2,6 +2,54 @@
 
 ---
 
+### 2026-07-16 — [MELHORIA] Campo 9 (prazo): reconhecer formato MM/AA com ano de 2 dígitos
+
+**🔎 Em miúdos:** o sistema agora entende datas como "04/26" como "abril de 2026". Antes ignorava esse formato e o prazo ficava em branco.
+
+**Problema:** Script 05 não reconhecia o padrão `MM/AA` quando o segundo número é maior que 12 (ex.: "04/26"). O sistema interpretava "04/26" como dia/mês ambíguo e descartava. Resultado: prazo em branco para e-mails que usam esse formato de data.
+
+**Correção:** em `scripts/05_classificar_emails_regulatorio.py`:
+- Novo PADRÃO 8b2 adicionado antes do PADRÃO 8c: captura `MM/AA` quando `AA > 12` (inequivocamente ano)
+- PADRÃO 4 ajustado: quando `mes > 12` e `dia <= 12`, pula (`MM/AA` — já tratado pelo 8b2)
+- Duplicata eliminada: os dois padrões não geram mais datas conflitantes para o mesmo token
+
+**Validação:** teste manual com "04/26" → `30/04/2026` ✅. Pytest 602 passaram, zero regressões. ✅ VALIDADO
+
+---
+
+### 2026-07-16 — [MELHORIA] Script 02: fallback INTERNALDATE quando cabeçalho Date: está vazio
+
+**🔎 Em miúdos:** quando um e-mail chega sem data no cabeçalho (raro, mas acontece), o sistema agora usa a data de entrega do servidor do Gmail como fallback. Antes, a data ficava em branco e o campo de ordenação `timestamp_epoch` ficava em zero.
+
+**Problema:** Script 02 lia só o campo `Date:` do e-mail. Quando vazio, `timestamp_epoch = 0` causava divergência de ordenação: o painel mostrava uma mensagem como "mais antiga" quando não era.
+
+**Correção:** em `scripts/02_coletar_emails_gmail.py`:
+- Fetch IMAP ampliado: `"(INTERNALDATE RFC822 X-GM-THRID)"` — busca agora inclui `INTERNALDATE` (data de entrega no servidor, sempre presente)
+- Fallback: `date_raw = msg.get("Date") or internaldate_raw` — usa `INTERNALDATE` quando `Date:` está ausente
+- Aviso adicionado em `_parse_data_br()`: loga quando `timestamp_epoch = 0` para facilitar diagnóstico
+
+**Validação:** ambiente TESTE não tem casos afetados (0 mensagens com `Date:` vazio). Fix prospectivo — previne o problema em produção. ✅ VALIDADO em lógica; comportamento prospectivo.
+
+---
+
+### 2026-07-16 — [MELHORIA] Campo 4: eliminar PENDENTE/INFORMATIVO — novo estado SEM_TRIAGEM
+
+**🔎 Em miúdos:** antes de passar pelo motor de triagem automática, as threads ficavam marcadas como "PENDENTE" ou "INFORMATIVO" na tela. Isso confundia — parecia que o sistema havia decidido algo, mas na verdade era só um marcador provisório. Agora essas threads ficam invisíveis na tela até passarem pela triagem; só aparecem com "AGUARDANDO" ou "CONCLUÍDO".
+
+**Problema:** sistema tinha 3 estados visíveis (PENDENTE, AGUARDANDO, CONCLUÍDO) mas só 2 fazem sentido operacional. PENDENTE e INFORMATIVO eram marcadores pré-motor que vazavam para a tela.
+
+**Correção:**
+- `scripts/09_integrar_dados_painel.py`: `_calcular_status()` agora retorna `"SEM_TRIAGEM"` (antes: PENDENTE se tem prazo, INFORMATIVO se não tem)
+- `scripts/painel_operacional_snapshot.py`: novo filtro exclui threads com `status_processo == "SEM_TRIAGEM"` antes de montar o painel; referências a PENDENTE substituídas por AGUARDANDO (2 ocorrências de reabertura/fechamento manual)
+- `scripts/11_triar_threads_por_cadoc.py`: 5 CADOCs internos (FOGBUGZ, LEIAUTES_BACEN, RISK_DRIVER_ALERTA, RISK_DRIVER_RELATORIO, RISK_DRIVER_RESP_AUTO) removidos do motor — eles agora recebem `cadoc="INTERNO"` no Script 09 e nunca chegam ao motor
+- `templates/email_operacional.html`: função `rotuloStatusOperacional()` retorna só 'Aguardando' ou 'Concluído'; fallback status do card usa `'AGUARDANDO'`
+
+**Regra resultante:** SEM_TRIAGEM = invisível na tela. Só AGUARDANDO e CONCLUÍDO aparecem.
+
+**Validação:** pytest 602 passaram, zero regressões. ✅ VALIDADO
+
+---
+
 ### 2026-07-16 — [MELHORIA] Campo 10: regra Responsável pela Ação simplificada — responsável = Para
 
 **🔎 Em miúdos:** o campo "Responsável pela Ação" na tela agora mostra sempre quem *recebeu* a última mensagem, sem exceções. Antes tinha casos especiais que podiam confundir (ex.: "obrigado pelo envio" mostrava o remetente).

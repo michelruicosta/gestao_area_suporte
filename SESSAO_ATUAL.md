@@ -8,6 +8,37 @@
 
 ---
 
+## 📓 Diário da sessão (2026-07-16) — continuação (rastreamento campo a campo)
+
+### Campo 4 — SEM_TRIAGEM: eliminar PENDENTE/INFORMATIVO ✅
+
+Threads que ainda não passaram pelo motor agora ficam invisíveis na tela (estado `SEM_TRIAGEM`). Só aparecem com AGUARDANDO ou CONCLUÍDO após o motor rodar.
+- Scripts alterados: `09_integrar_dados_painel.py`, `painel_operacional_snapshot.py`, `11_triar_threads_por_cadoc.py`, `templates/email_operacional.html`
+- 5 CADOCs internos (FOGBUGZ, LEIAUTES_BACEN, RISK_DRIVER_*) passaram a receber `cadoc="INTERNO"` no Script 09 e foram removidos do Script 11
+- Commits: `04583dd` (status), `d7815ad` (docs)
+
+### Campo 9 (prazo) — reconhecer MM/AA com ano de 2 dígitos ✅
+
+Script 05 agora reconhece "04/26" como abril/2026. Antes descartava o formato por ambiguidade.
+- Arquivo: `scripts/05_classificar_emails_regulatorio.py`
+- Commit: `9fbad3a`
+
+### Script 02 — INTERNALDATE como fallback de data ✅
+
+Quando o cabeçalho `Date:` do e-mail está vazio, o sistema usa a data de entrega do servidor Gmail (`INTERNALDATE`) como fallback. Previne `timestamp_epoch = 0` e divergência de ordenação.
+- Arquivo: `scripts/02_coletar_emails_gmail.py`
+- Commit: `02a6f1d`
+
+### Campo 10 (responsável) — regra De/Para simplificada ✅
+
+Responsável = quem recebeu a última mensagem (Para). Regra unificada sem exceções: C→F=Finaud, F→C=Cliente, C→C=Cliente, F→F=Finaud.
+- Arquivos: `scripts/09_integrar_dados_painel.py`, `painel_oraculo.py`, `tests/qa_registro_correcoes.py`
+- Commit: `d6e4ce8`
+
+**Arquivos alterados nesta continuação:** `scripts/09_integrar_dados_painel.py`, `scripts/11_triar_threads_por_cadoc.py`, `scripts/02_coletar_emails_gmail.py`, `scripts/05_classificar_emails_regulatorio.py`, `scripts/painel_operacional_snapshot.py`, `painel_oraculo.py`, `templates/email_operacional.html`, `tests/qa_registro_correcoes.py`, `documentações/REGISTRO_CORRECOES.md`
+
+---
+
 ## 📓 Diário da sessão (2026-07-16)
 
 ### T6 — Histórico citado inline como bloco recolhível ✅
