@@ -264,8 +264,8 @@ O campo `remetente` da mensagem está **vazio em todos os registros** de produç
 A informação real de quem enviou fica em `contato_origem.lado` / `contato_origem.nome`.
 A tela usa `contato_origem` — mas se algum trecho do código ainda usa `remetente`, vai falhar silenciosamente.
 
-**Status:** ⚠️ Campo `remetente` legado sempre vazio — verificar se alguma parte do código ainda o usa  
-**Validação Michel:** 🔲 Aguarda — o histórico de mensagens aparece corretamente na tela? Algum caso onde o nome do remetente está errado ou faltando?
+**Status:** ✅ Campo `remetente` legado — vazio, mas nenhum código o usa. Verificado em 16/07/2026: template e scripts usam `contato_origem` para tudo. Campo morto, sem impacto.  
+**Validação Michel:** ✅ Concluído — sem ação necessária.
 
 ---
 

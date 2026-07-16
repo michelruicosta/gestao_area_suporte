@@ -2073,6 +2073,11 @@
       if (mDis >= 0) idxs.push(mDis);
       var mAten = norm.search(/\bAtenciosamente\s*,\s*[A-ZÁÉÍÓÚÂÊÔÃÕÇ0-9]/);
       if (mAten >= 0) idxs.push(mAten);
+      // Fechamentos seguidos de nome próprio (dois segmentos com maiúscula) — para textos sem quebra de linha
+      // Exige "Nome Sobrenome" para não cortar "Att.: por favor verifique" ou "Cordialmente solicitamos"
+      var rxFechoNome = /\b(Att\.?|Cordialmente|Grat[ao]|Obrigad[ao])[,.]?\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-záéíóúâêôãõç]+\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ])/;
+      var mFechoNome = norm.search(rxFechoNome);
+      if (mFechoNome >= 0) idxs.push(mFechoNome);
       if (!idxs.length) return text;
       var idx = Math.min.apply(null, idxs);
       if (idx <= 0) return '';

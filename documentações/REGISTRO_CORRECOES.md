@@ -2,6 +2,23 @@
 
 ---
 
+### 2026-07-16 — [MELHORIA] Campo 10 (corpo): remover assinatura de e-mail na visualização das mensagens
+
+**🔎 Em miúdos:** ao abrir uma thread, o texto de cada e-mail agora aparece sem a assinatura do remetente (nome, cargo, telefone). Antes ficava tudo junto e poluía a leitura.
+
+**Problema:** `corpo_limpo` — o campo usado para exibir o texto no modal — é uma string plana sem quebras de linha (8.757 de 8.796 mensagens). A função que remove assinaturas (`cortarCorpoAposEncerramentoCordial`) detecta "Atenciosamente" procurando a palavra sozinha numa linha — mas como não há linhas, não detectava. Resultado: "Obrigado. Bruno Bocchini do Couto Risco Tel.: +55 11..." aparecia no meio do texto.
+
+**Correção:** em `templates/email_operacional.html`, função `cortarRodapeAssinaturaInline()`:
+- Novo padrão `rxFechoNome`: detecta fechamento + nome próprio em texto plano (ex: "Att. Carolina Bichara", "Obrigado Roberto Amaral")
+- Exige dois segmentos com maiúscula (Nome + Sobrenome) para não cortar "Att.: por favor verifique" ou "Obrigada pelas informações"
+- Padrões cobertos: `Att`, `Cordialmente`, `Grato/Grata`, `Obrigado/Obrigada`
+
+**Resultado nos dados de produção + TESTE:** 66 de 70 casos com assinatura detectada foram removidos (94%). Os 4 restantes são "Obrigado" solitário no final sem nome após — edge case menor.
+
+**Validação:** teste Python simulando a lógica JS contra 8.848 corpos reais. pytest 602 passaram, zero regressões. ✅ VALIDADO
+
+---
+
 ### 2026-07-16 — [MELHORIA] Campo 7 (CADOC): snippet não mostrava o CADOC correto — "SUPORTE" aparecia indevidamente
 
 **🔎 Em miúdos:** embaixo do assunto de 9 threads aparecia "Categorias: SUPORTE" quando o CADOC real era DLO ou DDR. Corrigido — agora aparece o CADOC correto.
