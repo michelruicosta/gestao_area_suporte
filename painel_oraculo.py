@@ -1469,6 +1469,21 @@ def api_alertas_enviar(alerta_id):
         except Exception as _ex:
             return jsonify({'erro': str(_ex)[:200]}), 500
 
+    if alerta_id == 'sem_triagem_pos_carga':
+        try:
+            from scripts.alertar_sem_triagem import buscar_sem_triagem, montar_html_sem_triagem, enviar_alerta_sem_triagem
+            _pendentes = buscar_sem_triagem()
+            if not _pendentes:
+                return jsonify({'ok': True, 'mensagem': 'Nenhuma thread sem triagem encontrada.', 'enviados': []})
+            _html_st = montar_html_sem_triagem(_pendentes)
+            _ok, _err = enviar_alerta_sem_triagem(_html_st, destinatarios, len(_pendentes))
+            if _ok:
+                return jsonify({'ok': True, 'enviados': destinatarios,
+                                'mensagem': f'{len(_pendentes)} thread(s) sem triagem — enviado para: {", ".join(destinatarios)}'})
+            return jsonify({'erro': _err}), 500
+        except Exception as _ex:
+            return jsonify({'erro': str(_ex)[:200]}), 500
+
     if alerta_id == 'prazo_bacen':
         try:
             from datetime import date as _date, timedelta as _td

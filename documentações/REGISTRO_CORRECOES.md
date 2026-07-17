@@ -2,6 +2,35 @@
 
 ---
 
+### 2026-07-17 — [BUG] Tela "Triagem do Dia" zerada + [FEAT] Alerta de e-mail para threads sem triagem
+
+**🔎 Em miúdos (fix):** após rodar a carga, a tela "Triagem do Dia" mostrava zero dados. O filtro do sistema estava bloqueando todas as threads porque todas têm um campo chamado `SEM_TRIAGEM` — que agora é o valor padrão de um campo específico, não o status real de triagem. Corrigido para ignorar esse campo e buscar o status real nos arquivos de classificação.
+
+**🔎 Em miúdos (alerta):** agora, ao finalizar a carga, o sistema verifica se alguma thread ficou de fora da classificação (nem Aguardando nem Concluída) e envia um e-mail automático para `michel@finaud.com.br` avisando. O alerta também aparece na tela de alertas do painel para envio manual.
+
+**Problema (fix):** `scripts/painel_operacional_snapshot.py` linha 133 tinha o filtro:
+```python
+if (e.get("status_processo") or "").upper() == "SEM_TRIAGEM":
+    continue
+```
+O campo `status_processo` foi redefinido para sempre vir como `SEM_TRIAGEM` no JSON 03 (Script 09). O status real de triagem vive em `threads_aguardando_auto.json` e `threads_concluidas_auto.json`. O filtro passava a bloquear TODOS os 36 eventos da carga de 03/07/2026.
+
+**Correção (fix):** `scripts/painel_operacional_snapshot.py` linha 133 — filtro agora só pula se a thread NÃO está em nenhum dos dois conjuntos AG/CO:
+```python
+tid_early = e.get("threadId")
+if (e.get("status_processo") or "").upper() == "SEM_TRIAGEM" and tid_early not in aguardando_set and tid_early not in concluidos_set:
+    continue
+```
+
+**Correção (alerta):** criado `scripts/alertar_sem_triagem.py` — detecta threads sem triagem, monta e-mail no padrão visual da Finaud, envia via SMTP para destinatários do `alertas.json`. Adicionada entrada `sem_triagem_pos_carga` no `data/json/config/alertas.json`. Bloco de despacho adicionado em `painel_oraculo.py` função `api_alertas_enviar`.
+
+**Validação:** ✅ VALIDADO em 2026-07-17
+- `buscar_sem_triagem()` retornou 4 threads (correto: 36 total − 20 AG − 11 CO − 1 IGNORADO = 4 sem triagem)
+- Suíte: 75 failed / 602 passed (idêntico ao baseline — zero regressões)
+- sem teste unitário específico: fix de filtro de dados — comportamento depende de arquivos JSON de produção que não existem em fixtures
+
+---
+
 ### 2026-07-17 — [BUG] Campo 5 (Responsável): Script 09 e painel escolhiam mensagens diferentes como "última" quando epoch=0
 
 **🔎 Em miúdos:** o nome de quem precisava agir numa thread aparecia diferente na tela e no arquivo. Em 55 threads, a tela mostrava uma pessoa e o sistema interno tinha gravado outra. Corrigido: os dois agora usam o mesmo critério para achar a última mensagem.

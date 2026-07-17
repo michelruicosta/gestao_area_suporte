@@ -130,7 +130,8 @@ def montagem_api_dados_snapshot(
         e = dict(_e_orig)
         if e.get("cadoc") in excluir_cadoc:
             continue
-        if (e.get("status_processo") or "").upper() == "SEM_TRIAGEM":
+        tid_early = e.get("threadId")
+        if (e.get("status_processo") or "").upper() == "SEM_TRIAGEM" and tid_early not in aguardando_set and tid_early not in concluidos_set:
             continue
         assunto = (e.get("titulo") or e.get("assunto") or "").lower()
 
