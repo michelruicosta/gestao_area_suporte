@@ -33,6 +33,7 @@ from paths import F_INTEGRADOR, load_concluidas, load_aguardando  # noqa: E402
 # CADOCs que não passam por triagem — não geram alerta
 CADOCS_SEM_TRIAGEM = frozenset({
     "IGNORADO",
+    "INTERNO",
     "FILTRADO_POR_DATA",
     "RISK_DRIVER_ALERTA",
     "RISK_DRIVER_RELATORIO",
@@ -46,8 +47,32 @@ CADOCS_SEM_TRIAGEM = frozenset({
 # Busca
 # ---------------------------------------------------------------------------
 
+def _diagnosticar(thread: dict, eventos: list[dict]) -> str:
+    """Retorna string curta indicando a causa provável de a thread não ter sido triada."""
+    tid = thread.get("threadId", "")
+    cadoc_thread = (thread.get("cadoc") or "").strip()
+
+    evs = [e for e in eventos if e.get("threadId") == tid]
+    if not evs:
+        return "Sem eventos no JSON 03"
+
+    cadocs_ev = {(e.get("cadoc") or "").strip() for e in evs}
+    if "" in cadocs_ev:
+        return "Evento(s) com cadoc vazio — não visível ao motor"
+    if any((e.get("cadoc") or "") == "INTERNO" for e in evs):
+        return "E-mail interno — motor não classifica"
+    if not cadoc_thread:
+        return "Thread sem cadoc — não entrou em nenhuma triagem"
+
+    cadocs_excluidos = cadocs_ev & CADOCS_SEM_TRIAGEM
+    if cadocs_excluidos == cadocs_ev:
+        return f"Todos os eventos são {cadocs_excluidos} — thread não deveria aparecer aqui"
+
+    return f"Sem regra de triagem cobrindo cadoc='{cadoc_thread}'"
+
+
 def buscar_sem_triagem() -> list[dict]:
-    """Retorna lista de threads do JSON 03 sem triagem (nem AG nem CO)."""
+    """Retorna lista de threads do JSON 03 sem triagem (nem AG nem CO), com diagnóstico."""
     if not os.path.isfile(F_INTEGRADOR):
         return []
 
@@ -55,6 +80,7 @@ def buscar_sem_triagem() -> list[dict]:
         dados = json.load(f)
 
     threads = dados.get("threads") or []
+    eventos = dados.get("eventos") or []
     co = load_concluidas()
     ag = load_aguardando()
     classificados = {r["threadId"] for r in co} | {r["threadId"] for r in ag}
@@ -66,6 +92,7 @@ def buscar_sem_triagem() -> list[dict]:
             continue
         if t.get("threadId", "") in classificados:
             continue
+        t["_causa"] = _diagnosticar(t, eventos)
         pendentes.append(t)
 
     return pendentes
@@ -86,12 +113,13 @@ def montar_html_sem_triagem(pendentes: list[dict]) -> str:
         [
             t.get("cliente") or t.get("empresa") or "—",
             t.get("cadoc") or "(sem categoria)",
-            t.get("threadId", "—"),
+            (t.get("titulo") or t.get("assunto") or "—")[:70],
+            t.get("_causa") or "—",
         ]
         for t in pendentes[:50]
     ]
 
-    tabela = tabela_threads(["Empresa", "Categoria", "Thread ID"], linhas)
+    tabela = tabela_threads(["Empresa", "Categoria", "Assunto", "Motivo provável"], linhas)
 
     rodape_extra = ""
     if total > 50:
