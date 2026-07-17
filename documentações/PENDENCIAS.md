@@ -8,6 +8,49 @@ contrário, para não perder histórico). Ver regra completa no `CLAUDE.md`.
 
 ---
 
+## 🔴🔴 MEGA URGENTE — Reformular a exibição do histórico de mensagens no modal (registrado 17/07/2026)
+
+**Para a IA:** Michel identificou que a exibição do histórico de mensagens no modal está ruim e precisa ser reformulada. Este é o PRIMEIRO assunto a tratar ao abrir o próximo chat — antes de qualquer outra coisa.
+
+### Contexto completo (leia tudo antes de propor qualquer coisa)
+
+O modal de uma thread exibe as mensagens em dois tipos de estrutura:
+- **Corpo principal** (`msg-body-text`): o texto da mensagem mais recente — OK
+- **Encaminhados/citas** (`.modal-cite-body`): histórico de respostas anteriores citadas inline — PROBLEMÁTICO
+
+O arquivo que trata isso: `templates/email_operacional.html`
+- Função que renderiza os encaminhados: `renderModalCiteStackHtml` (~linha 4223)
+- Função que renderiza o corpo principal: `corpoTextoParaModal` (~linha 2246)
+
+### Problemas identificados por Michel (com exemplos reais)
+
+**Problema 1 — Assinaturas aparecem em cada mensagem do histórico**
+No histórico citado (`.modal-cite-body`), cada mensagem exibe a assinatura completa do remetente (nome, cargo, telefone, endereço). Exemplo real: thread "RES: **UNVERIFIED SENDER** Re: Indice de basileia" — a assinatura do Rodrigo Tiberio aparece em cada resposta dele no histórico. Antes funcionava correto (assinatura era removida). A função `filterSignatureFromAttachment` e `cortarRodapeAssinaturaTipico` existem mas NÃO são chamadas ao renderizar os encaminhados em `renderModalCiteStackHtml` (linha 4228 usa `enc.corpo` direto sem processar assinatura).
+
+**Problema 2 — Imagem aparece na tela que não existe no e-mail original**
+Michel anexou o PDF do e-mail original (`E-mail de Finaud - RES_ __UNVERIFIED SENDER__ Re_ Indice de basileia.pdf`) e identificou que aparece uma imagem no modal que não existe no e-mail original. Provavelmente é uma imagem inline do Outlook (via `cid:` ou `texto_imagens`) sendo exibida indevidamente. Campo relevante: `msg.texto_imagens` e `msg.anexos_detectados`.
+
+**Problema 3 — Fluxo do histórico desorganizado**
+As mensagens no histórico aparecem sem estrutura clara — difícil distinguir quem respondeu o quê e em que ordem. Michel quer uma forma mais organizada de apresentar o fluxo da conversa.
+
+### O que NÃO fazer
+- Não usar `ORACULO_PRESERVAR_CLASSIFICACAO_FORA_PERIODO=0` para qualquer correção (ver regra no CLAUDE.md — causou corrupção de dados em 17/07/2026)
+- Não alterar os JSONs do pipeline — a correção é no template `email_operacional.html`
+- Não commitar sem testar visualmente no painel com a thread "RES: **UNVERIFIED SENDER** Re: Indice de basileia"
+
+### Onde ver o problema ao vivo
+1. Abrir painel em http://localhost:5000/operacional
+2. Filtrar por "Não resolvidos"
+3. Abrir thread "RES: **UNVERIFIED SENDER** Re: Indice de basileia"
+4. Rolar o modal para ver o histórico de encaminhados abaixo do corpo principal
+
+### Arquivos a consultar antes de mexer
+- `templates/email_operacional.html` — função `renderModalCiteStackHtml` (~linha 4223)
+- `templates/email_operacional.html` — funções de limpeza: `filterSignatureFromAttachment` (~linha 1586), `cortarRodapeAssinaturaTipico`, `stripEmailBoilerplate`
+- `documentações/REGISTRO_CORRECOES.md` — verificar correções anteriores relacionadas ao modal antes de qualquer mudança
+
+---
+
 ## 🟡 Validação pós-rebuild — executar quando a base de teste for reconstruída (registrado 16/07/2026)
 
 **Para a IA:** quando Michel disser "acabei de rodar a carga nova" (após apagar e recarregar a base de teste), executar o checklist abaixo antes de declarar que tudo está funcionando. Michel não precisa fazer nada além de avisar — a IA faz todas as verificações e entrega um relatório com ✅ ou ❌ por item.

@@ -8,6 +8,37 @@
 
 ---
 
+## 📓 Diário da sessão (2026-07-17) — correções corpo Outlook + responsável suporte
+
+### Resumo do que foi feito
+
+**1. Regra suporte@finaud.com.br — dois passos no Script 05 ✅**
+Quando cliente envia para `suporte@finaud.com.br` mas coloca nome de colaborador no campo "Para:", o sistema agora identifica o colaborador real. Dois passos: 1º procura colaborador individual (não é suporte@); 2º se só encontrar suporte@, usa o display name do destinatário se reconhecível. Fallback final: "Suporte Finaud".
+- Arquivo: `scripts/05_classificar_emails_regulatorio.py` — funções `encontrar_responsavel_finaud_nome` (~linha 559) e `montar_contatos_origem_destino_para_item` (~linha 2167)
+- Commit: incluído no commit desta sessão
+
+**2. Corpo com CSS VML do Outlook visível no modal — patch cirúrgico nos dados + defesa no frontend ✅**
+23 threads tiveram o campo `corpo` corrompido (CSS VML do Outlook como texto puro sem `<`) quando a flag `ORACULO_PRESERVAR_CLASSIFICACAO_FORA_PERIODO=0` foi usada para reprocessar. Patch Python restaurou o `corpo` das 23 threads a partir do backup `20260717_1600_correcao_responsavel_suporte`. Frontend ganhou detecção de CSS VML no início da função `emailBodyToReadableTextModal` como camada de defesa.
+- Arquivo JS: `templates/email_operacional.html` — início de `emailBodyToReadableTextModal`
+- Dados: patch nos 23 registros do `data/json/pipeline/03_integrador_dados_site.json` (não versionado)
+
+**3. Histórico citado (encaminhados) com `&nbsp;` literal — patch nos dados ✅**
+12 threads tiveram o array `encaminhados` reduzido (de até 10 para 4 itens) e os corpos com `&nbsp;` literal após o reprocessamento. Patch Python restaurou os `encaminhados` das 12 threads a partir do mesmo backup.
+- Dados: patch nos 12 registros do `data/json/pipeline/03_integrador_dados_site.json`
+
+**4. T6 fallback — HTML bruto do Outlook visível no modal ✅**
+Quando a mensagem é do tipo T6 (novo texto + histórico inline), o fallback de corpo usava o HTML bruto sem chamar `stripHtml()`. Corrigido.
+- Arquivo: `templates/email_operacional.html` — bloco T6 fallback (~linha 4737)
+
+**5. Regra nova no CLAUDE.md — nunca usar flag de reextração para corrigir responsável ✅**
+Regra permanente documentada: `ORACULO_PRESERVAR_CLASSIFICACAO_FORA_PERIODO=0` só deve ser usada para reextrair texto das mensagens do Gmail — nunca para corrigir responsável, CADOC ou campos de classificação.
+- Arquivo: `CLAUDE.md` — nova seção
+
+**6. Pendência MEGA URGENTE registrada — reformular histórico de mensagens no modal ✅**
+Problema identificado mas não corrigido nesta sessão: assinaturas visíveis no histórico citado, imagem fantasma, fluxo desorganizado. Registrado em `documentações/PENDENCIAS.md` com contexto completo para o próximo chat.
+
+---
+
 ## 📓 Diário da sessão (2026-07-16) — continuação (rastreamento campo a campo)
 
 ### Campo 4 — SEM_TRIAGEM: eliminar PENDENTE/INFORMATIVO ✅
@@ -286,18 +317,26 @@ Rastrear cada campo visível na tela operacional de trás para frente — da tel
 | Passo 8 (Parte 2) | Herança RETORNO_BACEN no Script 09 | ✅ 0 threads afetadas — resolvido na raiz pelo Passo 8 Parte 1 |
 | Leitura de conteúdo dos anexos | Sistema abre xlsx/xml/pdf? | ✅ Confirmado: não lê conteúdo — limitação documentada |
 
-Último /fechar: 2026-07-16 (Campos 3, 7, 10, 11 corrigidos + checklist pós-rebuild criado) — memórias revisadas ✅
+Último /fechar: 2026-07-17 (responsável suporte@, CSS VML, encaminhados, T6 fallback, regra CLAUDE.md) — memórias revisadas ✅
 
-### 🔥 Próximo passo — Michel decide entre as opções abaixo
+### 🔥 Próximo passo — MEGA URGENTE primeiro
 
-**Michel: quando a base de teste for reconstruída, execute o checklist antes de qualquer outra coisa:**
-→ `documentações/CHECKLIST_VALIDACAO_POS_REBUILD.md`
+**🔴🔴 PRIORIDADE MÁXIMA — Reformular a exibição do histórico de mensagens no modal**
 
-**Opções para próxima sessão (Michel decide a ordem):**
-1. 🔴 **Revisão visual completa com Fable** — a tela `/operacional` está "muito poluída"; revisar ao vivo → condensar diagnóstico → Fable ajusta. Ver `PENDENCIAS.md` item "Tela de Triagem — revisão UX com o Fable".
-2. 🔴 **Pacote 1 da Análise Fable** — 6 correções pequenas de baixo risco (falhas silenciosas no motor, normativo perdido, coletas fingindo sucesso). Ver `PENDENCIAS.md` e `documentações/ANALISE_FABLE_PIPELINE.md` seção 4.
-3. 🔴 **UX-04** — filtrar 365 alertas automáticos do Oráculo que entram na triagem indevidamente.
-4. 🟡 **Campo 9 remetente morto + Bug Tipo B (produção)** — `mensagens[].remetente` sempre vazio (sem impacto confirmado) + prefixo "cc: Adriana Martins" visível só em produção (não investigado ainda).
+O problema foi identificado em 17/07/2026 mas NÃO foi corrigido. Ver `documentações/PENDENCIAS.md` seção "MEGA URGENTE 17/07/2026" para o contexto completo — **não peça ao Michel para explicar de novo, está tudo lá**.
+
+Resumo do que está errado:
+1. Assinaturas aparecem em cada mensagem do histórico citado (função `renderModalCiteStackHtml` ~linha 4223 usa `enc.corpo` direto sem chamar `filterSignatureFromAttachment`)
+2. Uma imagem aparece no modal que não existe no e-mail original (possivelmente `texto_imagens` sendo exibido indevidamente)
+3. O fluxo do histórico é desorganizado — difícil distinguir quem respondeu o quê e em que ordem
+
+Thread para testar: filtrar por "Não resolvidos" → abrir "RES: **UNVERIFIED SENDER** Re: Indice de basileia"
+Arquivo a corrigir: somente `templates/email_operacional.html` (não tocar em pipeline nem usar flags de reprocessamento)
+
+**Depois do MEGA URGENTE, Michel decide entre:**
+1. 🔴 **Revisão visual completa com Fable** — tela `/operacional` "muito poluída"
+2. 🔴 **Pacote 1 da Análise Fable** — falhas silenciosas no motor e coletas fingindo sucesso
+3. 🔴 **UX-04** — filtrar 365 alertas automáticos que entram na triagem indevidamente
 
 ### 🔥 Próximo passo — revisão completa do Campo 5 (Empresa) [anterior]
 
