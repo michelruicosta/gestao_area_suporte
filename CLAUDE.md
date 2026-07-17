@@ -193,6 +193,16 @@ cd D:\oraculo_360_finaud; python executar_tudo.py --status
 Se aparecer aviso de dependência desatualizada, rodar o script indicado primeiro.
 Nunca usar `ORACULO_IGNORAR_DEPS=1` sem aprovação explícita do usuário.
 
+## Regra obrigatória: nunca usar ORACULO_PRESERVAR_CLASSIFICACAO_FORA_PERIODO=0 para corrigir responsável ou campos de classificação
+
+A flag `ORACULO_PRESERVAR_CLASSIFICACAO_FORA_PERIODO=0` força o Script 05 a reextrair o texto bruto das mensagens do Gmail — incluindo o campo `corpo`. Para e-mails do Outlook com HTML complexo (VML, CSS inline), isso pode sobrescrever um `corpo` limpo por um HTML bruto com CSS visível.
+
+**Regra:** esta flag só deve ser usada quando o próprio texto das mensagens precisar ser recoletado do Gmail (ex.: nova coleta, mudança no extrator de texto). **Nunca** usá-la para corrigir responsável, De/Para, CADOC ou qualquer campo de classificação.
+
+**Para corrigir apenas responsável ou campos de classificação:** usar o patch cirúrgico no JSON — restaurar só os campos afetados a partir do backup, sem reextrair o `corpo`.
+
+> **Por que esta regra existe:** em 17/07/2026, ao corrigir o responsável suporte@finaud.com.br, a flag foi usada para forçar o reprocessamento. O Script 05 reextaiu o `corpo` de 3 threads (TVM, Monte Bravo Cadastro Ações, Indício Problema Bacen) do HTML bruto do Outlook, substituindo textos limpos por CSS VML visível no painel.
+
 ## Regra: nunca rodar dois scripts do pipeline em paralelo
 
 Scripts do pipeline gravam nos mesmos arquivos JSON. Rodar em paralelo causa corrupção. Sempre rodar em sequência e aguardar a conclusão de cada um.
