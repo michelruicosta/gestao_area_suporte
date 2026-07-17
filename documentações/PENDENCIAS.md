@@ -1,10 +1,30 @@
 # PENDÊNCIAS — Oráculo 360 Finaud
 
-**Atualizado:** 2026-07-13
+**Atualizado:** 2026-07-16
 **Regra:** este arquivo lista **só o que ainda falta** (aberto / aguardando decisão / backlog).
 Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada no
 `REGISTRO_CORRECOES.md` — nesta ordem: primeiro grava no REGISTRO, depois remove daqui (nunca o
 contrário, para não perder histórico). Ver regra completa no `CLAUDE.md`.
+
+---
+
+## 🟡 Validação pós-rebuild — executar quando a base de teste for reconstruída (registrado 16/07/2026)
+
+**Contexto:** Michel vai apagar toda a base de teste e recarregar os dados. Quando isso acontecer, a IA deve executar o checklist abaixo antes de declarar que tudo está funcionando corretamente.
+
+**O que fazer:**
+1. Rodar `pytest tests/ -q -m "not agent and not pdf and not integration"` — zero falhas é pré-requisito
+2. Executar o pipeline completo (Scripts 01→16) com os dados novos
+3. Seguir o checklist em `documentações/CHECKLIST_VALIDACAO_POS_REBUILD.md` item por item
+4. Registrar qualquer problema encontrado em PENDENCIAS.md e avisar Michel antes de corrigir
+
+**O checklist cobre:**
+- Bloco A: campos do card (título, SEM_TRIAGEM, empresa/cliente, snippet CADOC)
+- Bloco B: campos do modal (assinatura removida, histórico recolhido, De/Para, chips de anexos, prazo MM/AA)
+- Bloco C: regras do pipeline (INTERNALDATE, triagem, responsável pela ação)
+- Bloco D: verificações rápidas de saúde (contagem, regressão, campos críticos)
+
+**Arquivo:** `documentações/CHECKLIST_VALIDACAO_POS_REBUILD.md`
 
 ---
 

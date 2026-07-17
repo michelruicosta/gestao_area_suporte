@@ -35,7 +35,31 @@ Responsável = quem recebeu a última mensagem (Para). Regra unificada sem exce�
 - Arquivos: `scripts/09_integrar_dados_painel.py`, `painel_oraculo.py`, `tests/qa_registro_correcoes.py`
 - Commit: `d6e4ce8`
 
-**Arquivos alterados nesta continuação:** `scripts/09_integrar_dados_painel.py`, `scripts/11_triar_threads_por_cadoc.py`, `scripts/02_coletar_emails_gmail.py`, `scripts/05_classificar_emails_regulatorio.py`, `scripts/painel_operacional_snapshot.py`, `painel_oraculo.py`, `templates/email_operacional.html`, `tests/qa_registro_correcoes.py`, `documentações/REGISTRO_CORRECOES.md`
+### Campo 3 (Cliente) — enriquecimento automático de nomes + e-mail como fallback ✅
+
+O sistema agora varre todos os e-mails para achar o melhor nome disponível para cada contato. Quando o nome é só a parte técnica do endereço (ex.: "financeiro", "compliance"), exibe o e-mail completo em vez de nome sem sentido.
+- Arquivo: `scripts/09_integrar_dados_painel.py` — funções `_MAPA_NOMES_EMAILS`, `_score_nome`, `_nome_suspeito`, `_construir_mapa_nomes_emails`, `_nome_contato_seguro`
+- Commits: `6a3da8e`
+
+### Campo 7 (CADOC no snippet) — substituir "SUPORTE" pelo CADOC real ✅
+
+9 threads que tinham "SUPORTE" como CADOC no snippet de categorias agora mostram o CADOC correto (DLO, DDR, RETORNO_BACEN).
+- Arquivo: `scripts/09_integrar_dados_painel.py` — função `_injetar_cadoc_em_prazos()`
+- Commits: `8445c7c`
+
+### Campo 10 (corpo da mensagem) — remover assinatura inline ✅
+
+Assinaturas tipo "Att. Carolina Bichara", "Obrigado Roberto Amaral" removidas do final das mensagens. Resultado: 66/70 casos detectados corretamente (94%). 4 restantes são "Obrigado" solitário sem nome após — edge case menor.
+- Arquivo: `templates/email_operacional.html` — função `cortarRodapeAssinaturaInline()`, padrão `rxFechoNome`
+- Commits: `c7896e8`
+
+### Campo 11 (anexos) — mostrar nomes dos arquivos mesmo quando há texto ✅
+
+Chips com nomes dos arquivos (📎 nome_arquivo.pdf) aparecem abaixo do corpo da mensagem em 1.908 mensagens que têm texto E anexos. Antes só apareciam quando o corpo estava vazio.
+- Arquivo: `templates/email_operacional.html` — bloco UX-01, novo `else if`
+- Verificação visual pendente (login necessário)
+
+**Arquivos alterados nesta continuação:** `scripts/09_integrar_dados_painel.py`, `scripts/11_triar_threads_por_cadoc.py`, `scripts/02_coletar_emails_gmail.py`, `scripts/05_classificar_emails_regulatorio.py`, `scripts/painel_operacional_snapshot.py`, `painel_oraculo.py`, `templates/email_operacional.html`, `tests/qa_registro_correcoes.py`, `documentações/REGISTRO_CORRECOES.md`, `documentações/VALIDACAO_CAMPOS_TELA.md`
 
 ---
 
@@ -262,15 +286,18 @@ Rastrear cada campo visível na tela operacional de trás para frente — da tel
 | Passo 8 (Parte 2) | Herança RETORNO_BACEN no Script 09 | ✅ 0 threads afetadas — resolvido na raiz pelo Passo 8 Parte 1 |
 | Leitura de conteúdo dos anexos | Sistema abre xlsx/xml/pdf? | ✅ Confirmado: não lê conteúdo — limitação documentada |
 
-Último /fechar: 2026-07-16 (T6 histórico citado + T7 De/Para reformatado + UX-02 imagem inline) — memórias revisadas ✅
+Último /fechar: 2026-07-16 (Campos 3, 7, 10, 11 corrigidos + checklist pós-rebuild criado) — memórias revisadas ✅
 
-### 🔥 Próximo passo — continuação da tela de Triagem (UX)
+### 🔥 Próximo passo — Michel decide entre as opções abaixo
 
-**Opções abertas (Michel decide):**
-1. **Revisão visual completa com Fable** — a tela `/operacional` está "muito poluída"; revisar ao vivo → condensar diagnóstico → Fable ajusta. Ver `PENDENCIAS.md` item "Tela de Triagem — revisão UX com o Fable".
-2. **UX-04** — filtrar 365 alertas automáticos do Oráculo que entram na triagem indevidamente.
-3. **Pacote 1 da Análise Fable** — 6 correções pequenas de baixo risco (falhas silenciosas).
-4. **Continuar rastreamento campo a campo** — Campo 4 em diante no `GUIA_CAMPOS_OPERACIONAL.md`.
+**Michel: quando a base de teste for reconstruída, execute o checklist antes de qualquer outra coisa:**
+→ `documentações/CHECKLIST_VALIDACAO_POS_REBUILD.md`
+
+**Opções para próxima sessão (Michel decide a ordem):**
+1. 🔴 **Revisão visual completa com Fable** — a tela `/operacional` está "muito poluída"; revisar ao vivo → condensar diagnóstico → Fable ajusta. Ver `PENDENCIAS.md` item "Tela de Triagem — revisão UX com o Fable".
+2. 🔴 **Pacote 1 da Análise Fable** — 6 correções pequenas de baixo risco (falhas silenciosas no motor, normativo perdido, coletas fingindo sucesso). Ver `PENDENCIAS.md` e `documentações/ANALISE_FABLE_PIPELINE.md` seção 4.
+3. 🔴 **UX-04** — filtrar 365 alertas automáticos do Oráculo que entram na triagem indevidamente.
+4. 🟡 **Campo 9 remetente morto + Bug Tipo B (produção)** — `mensagens[].remetente` sempre vazio (sem impacto confirmado) + prefixo "cc: Adriana Martins" visível só em produção (não investigado ainda).
 
 ### 🔥 Próximo passo — revisão completa do Campo 5 (Empresa) [anterior]
 

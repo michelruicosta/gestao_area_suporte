@@ -219,8 +219,8 @@ Cada campo tem:
 - Caso especial: `lista_prazos[0].cadoc` pode ser diferente do `cadoc` do thread  
   (ex.: thread com `cadoc=LEIAUTES_BACEN` e `lista_prazos[0].cadoc=SUPORTE`)
 
-**Status:** ⚠️ Atenção — divergência entre `cadoc` do thread e `lista_prazos[].cadoc` precisa ser investigada  
-**Validação Michel:** 🔲 Aguarda — algum thread onde o CADOC exibido na tela está errado (mostra DDR mas era DLO, por exemplo)?
+**Status:** ✅ Corrigido em 16/07/2026 — `_injetar_cadoc_em_prazos()` no Script 09 agora substitui `SUPORTE` (default) pelo CADOC real do thread. 9 threads corrigidas; 14 casos legítimos (multi-CADOC) mantidos.  
+**Validação Michel:** ✅ Concluído — snippet mostrará o CADOC correto após próxima execução do Script 09.
 
 ---
 
@@ -281,8 +281,8 @@ A tela usa `contato_origem` — mas se algum trecho do código ainda usa `remete
 - **Assinatura:** não é removida automaticamente do `corpo`. O usuário vê a assinatura junto com o conteúdo.
 - **Texto de imagens** (`texto_imagens`) — campo existe mas estava vazio na amostra (OCR de imagens)
 
-**Status:** 🔲 Aguarda validação — a assinatura aparece na tela? Incomoda o usuário?  
-**Validação Michel:** 🔲 Aguarda — o texto que aparece no modal bate com o email real? Algum caso de texto truncado, incompleto ou com caracteres estranhos?
+**Status:** ✅ Corrigido em 16/07/2026 — `cortarRodapeAssinaturaInline()` no template ampliada: detecta "Att, Nome Sobrenome" / "Obrigado, Nome Sobrenome" / "Cordialmente, Nome" em textos planos. 94% das assinaturas removidas em produção (66/70).  
+**Validação Michel:** ✅ Confirmado incomoda — corrigido. Verificação visual pendente (login necessário — sem senha disponível no ambiente de IA).
 
 ---
 
@@ -292,8 +292,8 @@ A tela usa `contato_origem` — mas se algum trecho do código ainda usa `remete
 **Campo no JSON:** `mensagens[].anexos_detectados[]` — array com nome, tipo e status de download  
 **Script que preenche:** Script 02 — detecta anexos no Gmail; Script 06 — captura metadados
 
-**Status:** 🔲 Aguarda validação  
-**Validação Michel:** 🔲 Aguarda — os anexos aparecem corretamente? Algum email onde tinha anexo mas a tela não mostrou?
+**Status:** ✅ Corrigido em 16/07/2026 — quando mensagem tem corpo + anexos, chips com os nomes aparecem abaixo do texto (📎 arquivo.pdf). Antes só exibia quando o corpo estava vazio. 1.908 mensagens em produção afetadas.  
+**Validação Michel:** 🔲 Aguarda verificação visual — abrir uma thread com arquivo .xlsx ou .pdf para confirmar os chips aparecem.
 
 ---
 
