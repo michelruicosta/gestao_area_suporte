@@ -2,6 +2,25 @@
 
 ---
 
+### 2026-07-17 — [BUG] Campo 5 (Responsável): Script 09 e painel escolhiam mensagens diferentes como "última" quando epoch=0
+
+**🔎 Em miúdos:** o nome de quem precisava agir numa thread aparecia diferente na tela e no arquivo. Em 55 threads, a tela mostrava uma pessoa e o sistema interno tinha gravado outra. Corrigido: os dois agora usam o mesmo critério para achar a última mensagem.
+
+**Problema:** duas funções calculavam o "responsável" olhando para a mesma lista de mensagens, mas ordenando de forma diferente:
+- `_responsavel_pela_acao` no Script 09 (linha 126): ordenava por `timestamp_epoch` (número). Quando o campo vale 0 (data inválida no e-mail de origem), aquela mensagem ia para o início da fila como se fosse a mais antiga.
+- `_responsavel_pela_acao_from_mensagens` no painel (linha 2277): ordenava por campos de texto (`data_email`, `data_iso`, `timestamp`). Quando havia data de texto válida, a encontrava corretamente — ignorando que o epoch estava zerado.
+- Resultado: para e-mails com `timestamp_epoch = 0`, cada função escolhia uma mensagem diferente como "última" → responsável divergente. 55 threads afetadas em produção.
+
+**Correção:** em `scripts/09_integrar_dados_painel.py`, função `_responsavel_pela_acao` (linhas 121–147):
+- Substituída a chave de ordenação `lambda m: m.get("timestamp_epoch", 0) or 0` por uma função `_sort_key` que espelha o painel: tenta `data_email` → `data_iso` → `timestamp` (texto); usa `timestamp_epoch` só quando nenhum campo de texto tem data válida; epoch=0 fica em `datetime.min` (mais antigo).
+- Nenhuma outra função alterada.
+
+**Validação:** ✅ VALIDADO em 2026-07-17
+- Novo teste `test_responsavel_script09_alinha_com_painel_quando_epoch_zero` em `tests/qa_registro_correcoes.py`: thread com epoch=0 + data_email válida → responsável correto
+- Suíte completa: 75 failed / 602 passed (idêntico ao baseline — zero regressões introduzidas)
+
+---
+
 ### 2026-07-16 — [MELHORIA] Campo 11 (anexos): mostrar nomes dos arquivos abaixo do corpo da mensagem
 
 **🔎 Em miúdos:** ao abrir uma thread, os nomes dos arquivos anexados agora aparecem abaixo do texto de cada e-mail (ex: 📎 rd_prefixada_29_06_2026.xlsx). Antes, quando havia texto + anexo, os arquivos ficavam invisíveis.

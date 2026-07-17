@@ -120,10 +120,28 @@ def _nome_contato_seguro(d: dict) -> str:
 
 def _responsavel_pela_acao(mensagens: list, fallback: str) -> str:
     """Responsável = quem recebeu a última mensagem (Para).
-    C→F=Finaud, F→C=Cliente, C→C=Cliente, F→F=Finaud."""
+    C→F=Finaud, F→C=Cliente, C→C=Cliente, F→F=Finaud.
+    Ordenação idêntica ao painel: data_email → data_iso → timestamp → epoch."""
     if not mensagens:
         return fallback
-    ultima = sorted(mensagens, key=lambda m: m.get("timestamp_epoch", 0) or 0)[-1]
+
+    def _sort_key(m):
+        for campo in ("data_email", "data_iso", "timestamp"):
+            val = (m.get(campo) or "").strip()[:16]
+            if not val:
+                continue
+            for fmt in ("%d/%m/%Y %H:%M", "%d/%m/%Y", "%Y-%m-%d"):
+                try:
+                    return datetime.strptime(val, fmt)
+                except ValueError:
+                    continue
+        ep = m.get("timestamp_epoch", 0) or 0
+        try:
+            return datetime.fromtimestamp(ep) if ep > 0 else datetime.min
+        except Exception:
+            return datetime.min
+
+    ultima = sorted(mensagens, key=_sort_key)[-1]
     cd = ultima.get("contato_destino") or {}
     return _nome_contato_seguro(cd) or fallback
 

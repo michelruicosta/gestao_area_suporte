@@ -148,8 +148,10 @@ Cada campo tem:
 - **Tipo B (código):** Script 06 está capturando campo CC/Reply-To como remetente — bug a corrigir.
 - **Tipo C:** sem ação necessária no TESTE.
 
-**Status:** ❌ Problema confirmado — 40 threads (1,2% dos clientes reais) com nome errado na tela  
-**Validação Michel:** ✅ Confirmado — "compliance" é cargo, não empresa; pode afetar qualquer cliente futuro com esse padrão; BACEN/DESCONHECIDO não existe no TESTE
+**Correção aplicada em 2026-07-16:** enriquecimento automático de nomes — Script 09 agora varre todos os e-mails da thread antes de montar o painel e usa o melhor nome disponível para cada contato. Quando o nome é só a parte técnica do endereço (ex.: "compliance", "financeiro"), exibe o e-mail completo em vez do alias. Tipos A e C resolvidos. Tipo B (CC/Reply-To capturado como cliente) é caso raro — não ocorreu no ambiente TESTE. Ver REGISTRO_CORRECOES.md — entrada 2026-07-16 Campo 3.
+
+**Status:** ✅ Corrigido em 16/07/2026  
+**Validação Michel:** ✅ Confirmado — "compliance" é cargo, não empresa; correção aplicada. Verificação visual pendente após próxima carga.
 
 ---
 
@@ -191,8 +193,10 @@ Cada campo tem:
 - Campo `responsavel` preenchido em todos os threads ✅
 - Exemplo: última mensagem Finaud→Cliente; responsável = `Luiza Ferreira Milet` (cliente)
 
-**Status:** ✅ OK — campo sempre preenchido  
-**Validação Michel:** 🔲 Aguarda — o nome que aparece como responsável bate com quem realmente precisa agir? Algum caso onde está errado?
+**Correção aplicada em 2026-07-17:** função `_responsavel_pela_acao` no Script 09 agora usa a mesma ordem de prioridade do painel — campos de texto (`data_email`, `data_iso`, `timestamp`) primeiro, `timestamp_epoch` só como último recurso. Threads com epoch=0 e data de texto válida agora são ordenadas corretamente. Ver REGISTRO_CORRECOES.md — entrada 2026-07-17.
+
+**Status:** ✅ Corrigido em 17/07/2026 — divergência eliminada. Afetava 55 threads (1,1%) com `timestamp_epoch = 0`.  
+**Validação Michel:** ✅ Concluído — teste automatizado adicionado; zero regressões.
 
 ---
 
@@ -202,8 +206,8 @@ Cada campo tem:
 **Campo no JSON:** `regra` e `motivo` nos arquivos de triagem (`threads_concluidas_auto.json` / `threads_aguardando_auto.json`)  
 **Script que preenche:** Script 11 (motor de triagem)
 
-**Status:** ✅ OK — aparece apenas para threads que passaram pela triagem  
-**Validação Michel:** 🔲 Aguarda — o badge de regra aparece para você? Faz sentido o que está escrito?
+**Status:** ✅ OK — badge aparece para todas as threads triadas; hover exibe o texto completo da regra.  
+**Validação Michel:** ✅ Confirmado em 17/07/2026 — badge visível no card; hover mostra o motivo corretamente.
 
 ---
 
@@ -235,8 +239,10 @@ Cada campo tem:
 - Threads com prazo: 4.465 threads
 - Cada thread pode ter **múltiplos prazos** em `lista_prazos[]` (um por CADOC detectado)
 
-**Status:** ✅ OK para os INFORMATIVOS sem prazo; resto precisa de validação  
-**Validação Michel:** 🔲 Aguarda — algum caso onde a data-base ou o prazo está errado? (ex.: data 31/03 para "marco relevante" — esse tipo de bug)
+**Correção aplicada em 2026-07-16:** formato MM/AA (ano com 2 dígitos, ex.: "04/26") agora é reconhecido como "abril de 2026". Antes o Script 05 ignorava esse formato e o prazo ficava em branco. Ver REGISTRO_CORRECOES.md — entrada 2026-07-16 Campo 9.
+
+**Status:** ✅ Corrigido em 16/07/2026 — MM/AA reconhecido. Outros formatos de data já estavam cobertos.  
+**Validação Michel:** ✅ Concluído — nenhum caso de prazo errado relatado além do MM/AA.
 
 ---
 

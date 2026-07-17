@@ -131,6 +131,40 @@ def test_responsavel_pela_acao_regra_ultimo_fio():
     assert _responsavel_pela_acao_from_mensagens(msgs_fc, "") == "Hebert"
 
 
+def test_responsavel_script09_alinha_com_painel_quando_epoch_zero():
+    """2026-07-17: Script 09 e painel devem escolher a mesma mensagem como 'última'
+    mesmo quando timestamp_epoch = 0. Antes divergiam em 55 threads."""
+    import importlib.util, pathlib, sys as _sys
+    _scripts_dir = str(pathlib.Path(RAIZ) / "scripts")
+    if _scripts_dir not in _sys.path:
+        _sys.path.insert(0, _scripts_dir)
+    _spec = importlib.util.spec_from_file_location(
+        "script09", pathlib.Path(RAIZ) / "scripts" / "09_integrar_dados_painel.py"
+    )
+    _mod = importlib.util.module_from_spec(_spec)
+    _sys.modules.setdefault("script09", _mod)
+    _spec.loader.exec_module(_mod)
+    _responsavel_pela_acao = _mod._responsavel_pela_acao
+
+    # Mensagem com epoch=0 mas data_email válida (mais recente)
+    msg_recente = {
+        "data_email": "17/07/2026 15:00",
+        "timestamp_epoch": 0,
+        "contato_origem": {"lado": "CLIENTE", "nome": "Gustavo", "email": "g@banco.com"},
+        "contato_destino": {"lado": "FINAUD", "nome": "Michel", "email": "m@finaud.com"},
+    }
+    # Mensagem com epoch válido (mais antiga)
+    msg_antiga = {
+        "data_email": "16/07/2026 10:00",
+        "timestamp_epoch": 1752660000,
+        "contato_origem": {"lado": "FINAUD", "nome": "Michel", "email": "m@finaud.com"},
+        "contato_destino": {"lado": "CLIENTE", "nome": "Gustavo", "email": "g@banco.com"},
+    }
+    # Última mensagem é do CLIENTE (msg_recente) → responsável deve ser a Finaud (Michel)
+    resultado = _responsavel_pela_acao([msg_antiga, msg_recente], "fallback")
+    assert resultado == "Michel", f"Esperado 'Michel', obtido '{resultado}'"
+
+
 def test_modal_operacional_sem_botoes_header_aguardar_aprender():
     """2026-04-27: modal do cartão — sem botões «Aguardando» / «Aprender e Concluir» na barra (pedido utilizador)."""
     path_html = os.path.join(RAIZ, "templates", "email_operacional.html")
