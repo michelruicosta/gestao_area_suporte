@@ -401,7 +401,7 @@ sistema sem filtro.
 
 | AG (aguardando) | CO (concluídas) | Total | pytest (pre-commit) | Última carga triagem (02→11) | Último enriquecimento (12→17) |
 |-----------------|-----------------|-------|--------|------------------------------|-------------------------------|
-| 996 | 3.741 | 4.737 | **220 passed, 1.5s** | **07/07/2026** ✅ | **07/07/2026** ✅ |
+| 996 | 3.741 | 4.737 | **220 passed, 1.5s** | **17/07/2026** ✅ | **17/07/2026** ✅ |
 
 - Branch ativa: **`desenvolvimento-front_end`** (sincronizada com GitHub ✅ — push 02/07/2026)
 - Branch estável: **`main`** (PR #2 mergeado em 23/06)

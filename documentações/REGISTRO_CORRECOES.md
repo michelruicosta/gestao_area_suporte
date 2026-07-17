@@ -2,6 +2,63 @@
 
 ---
 
+### 2026-07-17 — [BUG] Corpo de e-mail Outlook exibindo CSS do VML no modal (thread TVM e similares)
+
+**🔎 Em miúdos:** algumas threads mostravam no modal texto como `v:* {behavior:url(#default#VML);}` e `&nbsp;` visíveis no lugar do texto da mensagem. Eram resíduos do CSS do Outlook que escaparam do extrator do pipeline e acabaram sendo exibidos no painel.
+
+**Problema:** o Script 05 extrai o corpo da mensagem de e-mails do Outlook. Para alguns e-mails, o CSS que estava dentro das tags `<style>` do HTML do Outlook ficou como texto puro no campo `corpo` do JSON (sem tags `<`). No painel, a função `emailBodyToReadableTextModal` detecta "texto plano" verificando se há `<` nos primeiros 160 caracteres — como o CSS começa sem `<` (ex.: `v\:* {behavior:url(#default#VML);}`), o texto era tratado como plano e exibido literalmente com todo o CSS e entidades HTML (`&nbsp;`).
+
+**Correção:** adicionado bloco especial no início de `emailBodyToReadableTextModal` (template `email_operacional.html`, ~linha 1558): quando o texto contém o padrão característico do VML do Outlook (`behavior:url(#default#VML)`), o bloco remove as regras CSS com regex `[\w\\.#:*\s,]+\{[^}]+\}` e converte entidades HTML antes de prosseguir com o processamento normal.
+
+Arquivo: `templates/email_operacional.html`
+
+**Validação:** ✅ VALIDADO em 2026-07-17 — confirmado via JavaScript no modal:
+- Thread "Relatórios de TVM e Dep a Vista - 01/07/2026": antes mostrava CSS VML + `&nbsp;`, agora mostra "Prezados, bom dia! Seguem as posições de TVM´s..." ✅
+- `VML presente: false` confirmado ✅
+- Não afeta outras threads (detecção específica pelo padrão `behavior:url(#default#VML)`)
+
+---
+
+### 2026-07-17 — [BUG] HTML do Outlook visível no modal para e-mails com histórico citado (T6 fallback)
+
+**🔎 Em miúdos:** e-mails do Outlook com histórico de resposta citado inline (tipo "De: Fulano...") mostravam o HTML bruto com CSS e tags no campo de corpo do modal. Era um e-mail do Outlook em formato HTML sendo passado direto para o fallback T6 sem converter para texto.
+
+**Problema:** o código T6 fallback no modal (linha ~4737) usava `msg.corpo` diretamente como texto, sem verificar se era HTML do Outlook.
+
+**Correção:** adicionado verificação antes de usar o corpo no fallback T6: se o conteúdo começa com `<`, converter via `stripHtml()` antes de processar os separadores de citação.
+
+Arquivo: `templates/email_operacional.html` (linha ~4737)
+
+**Validação:** ✅ VALIDADO em 2026-07-17 — correção aplicada e confirmada no fluxo de processamento.
+
+---
+
+### 2026-07-17 — [BUG] Responsável "Suporte Finaud" mesmo quando cliente identificou colaborador no campo Para:
+
+**🔎 Em miúdos:** quando um cliente endereçava o e-mail para `suporte@finaud.com.br` colocando o nome do colaborador (ex.: "Rodrigo Tiberio <suporte@finaud.com.br>"), o sistema ignorava esse nome e atribuía "Suporte Finaud" como responsável. Com a correção, o nome do colaborador no campo Para: é preservado. O "Suporte Finaud" só aparece quando o cliente não identificou nenhum colaborador.
+
+**Problema:** o Script 05 percorre a lista de destinatários para encontrar o colaborador responsável. Quando o e-mail chegou via grupo (`suporte@finaud.com.br`), o remetente bruto e o destinatário têm o mesmo endereço. O sistema interpretava isso como "auto-cópia do remetente" e pulava o destinatário — descartando o display name do colaborador ("Rodrigo Tiberio"). Resultado: nenhum destinatário válido → fallback → "Suporte Finaud". Causa raiz identificada em duas funções: `montar_contatos_origem_destino_para_item` (~linha 2173) e `encontrar_responsavel_finaud_nome` (~linha 563).
+
+**Correção:** substituição do loop simples por duas passagens em ambas as funções:
+1. Primeira passagem: busca email real de colaborador individual (ex.: `andrea.inacio@finaud.com.br`) — prioridade máxima
+2. Segunda passagem: busca `suporte@finaud.com.br` com display name identificável (não vazio, não "suporte", não o próprio email)
+3. Fallback: "Suporte Finaud" quando nenhuma das passagens encontra colaborador identificável
+
+Arquivo: `scripts/05_classificar_emails_regulatorio.py` — funções `montar_contatos_origem_destino_para_item` e `encontrar_responsavel_finaud_nome`
+
+**Casos confirmados corrigidos:** thread da Global Exchange/Rodrigo Tiberio (GMTHRID_1869712614480934201) e thread da Coluna DTVM/Flavio Camargo (GMTHRID_1869721273599999534).
+**Caso protegido:** Monte Bravo/Andrea Inacio — continua usando `andrea.inacio@finaud.com.br` como referência (primeira passagem), não é afetado.
+
+**Validação:** ✅ VALIDADO em 2026-07-17 — JSON 03 confirmado:
+- Thread Basileia (GMTHRID_1869712614480934201): `contato_destino.nome = "Rodrigo Tiberio"` ✅
+- Thread Ivan Cândido/Coluna DTVM (GMTHRID_1869721273599999534): `contato_destino.nome = "Flavio Camargo"` ✅
+- Monte Bravo (Augusto Branco): `contato_destino.nome = "Andrea Inacio"` — caso protegido, sem regressão ✅
+- Casos com display name genérico (Brazabank, Thiago Galápagos, etc.): mantêm "Suporte Finaud" ✅
+- Suíte: 75 failed / 602 passed (idêntico ao baseline — zero regressões)
+- Michel ainda precisa confirmar na tela visual.
+
+---
+
 ### 2026-07-17 — [BUG] Tela "Triagem do Dia" zerada + [FEAT] Alerta de e-mail para threads sem triagem
 
 **🔎 Em miúdos (fix):** após rodar a carga, a tela "Triagem do Dia" mostrava zero dados. O filtro do sistema estava bloqueando todas as threads porque todas têm um campo chamado `SEM_TRIAGEM` — que agora é o valor padrão de um campo específico, não o status real de triagem. Corrigido para ignorar esse campo e buscar o status real nos arquivos de classificação.

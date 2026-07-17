@@ -557,24 +557,32 @@ def encontrar_responsavel_finaud_nome(destinatarios, cc, colaboradores_finaud, r
                 todos_dest.append((email, nome))
     
     email_remetente = extrair_email_simples(remetente_original or "")
-    
+
+    # Passagem 1: email individual de colaborador (não suporte@)
     for email_dest, nome_dest in todos_dest:
-        # Ignora se for o próprio remetente
         if email_dest == email_remetente:
             continue
-            
-        if '@finaud' in email_dest:
-            usuario = email_dest.split('@')[0]
-            
-            # Testa variações no mapeamento
-            for chave in [usuario, usuario.replace('.', '_'), usuario.replace('.', '')]:
-                if chave in colaboradores_finaud:
-                    return colaboradores_finaud[chave]
-            
-            # Se não achou, usa nome extraído
-            if nome_dest and nome_dest != email_dest:
-                return nome_dest
-    
+        if '@finaud' not in email_dest:
+            continue
+        usuario = email_dest.split('@')[0]
+        if usuario == 'suporte':
+            continue  # reservado para passagem 2
+        for chave in [usuario, usuario.replace('.', '_'), usuario.replace('.', '')]:
+            if chave in colaboradores_finaud:
+                return colaboradores_finaud[chave]
+        if nome_dest and nome_dest != email_dest:
+            return nome_dest
+
+    # Passagem 2: suporte@ com display name identificável (ex.: "Rodrigo Tiberio <suporte@finaud.com.br>")
+    for email_dest, nome_dest in todos_dest:
+        if '@finaud' not in email_dest:
+            continue
+        if email_dest.split('@')[0] != 'suporte':
+            continue
+        nm = (nome_dest or '').strip()
+        if nm and nm.lower() not in ('suporte',) and nm != email_dest:
+            return nm
+
     return "Suporte Finaud"
 
 def identificar_cliente_e_responsavel_completo(email_data, mapeamento_clientes):
@@ -2169,19 +2177,36 @@ def montar_contatos_origem_destino_para_item(item, map_clientes):
         destino_email = None
         destino_nome = None
 
+        # Passagem 1: email individual de colaborador (não suporte@)
         for em, nm in contatos_dest:
             if em == email_remetente_original:
                 continue
-            if eh_email_finaud_check(em, dominios_finaud):
-                destino_email = em
-                usuario = em.split("@")[0]
-                for chave in [usuario, usuario.replace(".", "_"), usuario.replace(".", "")]:
-                    if chave in colaboradores_finaud:
-                        destino_nome = colaboradores_finaud[chave]
-                        break
-                if not destino_nome:
-                    destino_nome = nm or em
-                break
+            if not eh_email_finaud_check(em, dominios_finaud):
+                continue
+            usuario = em.split("@")[0]
+            if usuario == "suporte":
+                continue  # reservado para passagem 2
+            for chave in [usuario, usuario.replace(".", "_"), usuario.replace(".", "")]:
+                if chave in colaboradores_finaud:
+                    destino_nome = colaboradores_finaud[chave]
+                    break
+            if not destino_nome:
+                destino_nome = nm or em
+            destino_email = em
+            break
+
+        # Passagem 2: suporte@ com display name identificável
+        if not destino_email:
+            for em, nm in contatos_dest:
+                if not eh_email_finaud_check(em, dominios_finaud):
+                    continue
+                if em.split("@")[0] != "suporte":
+                    continue
+                nm_limpo = (nm or "").strip()
+                if nm_limpo and nm_limpo.lower() not in ("suporte",) and nm_limpo != em:
+                    destino_email = em
+                    destino_nome = nm_limpo
+                    break
 
         if not destino_email:
             destino_email = "suporte@finaud.com.br"

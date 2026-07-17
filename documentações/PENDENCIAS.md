@@ -10,19 +10,22 @@ contrário, para não perder histórico). Ver regra completa no `CLAUDE.md`.
 
 ## 🟡 Validação pós-rebuild — executar quando a base de teste for reconstruída (registrado 16/07/2026)
 
-**Contexto:** Michel vai apagar toda a base de teste e recarregar os dados. Quando isso acontecer, a IA deve executar o checklist abaixo antes de declarar que tudo está funcionando corretamente.
+**Para a IA:** quando Michel disser "acabei de rodar a carga nova" (após apagar e recarregar a base de teste), executar o checklist abaixo antes de declarar que tudo está funcionando. Michel não precisa fazer nada além de avisar — a IA faz todas as verificações e entrega um relatório com ✅ ou ❌ por item.
 
-**O que fazer:**
-1. Rodar `pytest tests/ -q -m "not agent and not pdf and not integration"` — zero falhas é pré-requisito
-2. Executar o pipeline completo (Scripts 01→16) com os dados novos
-3. Seguir o checklist em `documentações/CHECKLIST_VALIDACAO_POS_REBUILD.md` item por item
-4. Registrar qualquer problema encontrado em PENDENCIAS.md e avisar Michel antes de corrigir
+**Como executar:**
+1. Rodar `pytest tests/ -q -m "not agent and not pdf and not integration"` — zero regressões é pré-requisito. Se falhar, parar aqui e investigar antes de abrir a tela.
+2. Ler os arquivos JSON (`03_integrador_dados_site.json`, `threads_aguardando_auto.json`, `threads_concluidas_auto.json`) e verificar os campos internos
+3. Seguir o checklist em `documentações/CHECKLIST_VALIDACAO_POS_REBUILD.md` item por item (Blocos A, B, C, D)
+4. Para cada ❌ encontrado: registrar em PENDENCIAS.md e avisar Michel antes de tentar corrigir
 
 **O checklist cobre:**
 - Bloco A: campos do card (título, SEM_TRIAGEM, empresa/cliente, snippet CADOC)
 - Bloco B: campos do modal (assinatura removida, histórico recolhido, De/Para, chips de anexos, prazo MM/AA)
 - Bloco C: regras do pipeline (INTERNALDATE, triagem, responsável pela ação)
 - Bloco D: verificações rápidas de saúde (contagem, regressão, campos críticos)
+
+**Resultado esperado no ambiente TESTE:**
+- 1 thread sem prazo com CADOC regulatório é esperada: "Guru CTVM: Informações Diárias" (DDR_2011) — é uma thread de informações gerais, não uma entrega de CADOC. Comportamento correto, não é bug.
 
 **Arquivo:** `documentações/CHECKLIST_VALIDACAO_POS_REBUILD.md`
 
@@ -274,29 +277,25 @@ Após o git estar funcionando:
 
 ## 🟡 Auto-cadastro de empresas e colaboradores (2026-07-08)
 
-**Contexto:** levantado durante a validação campo a campo da tela operacional — campos `empresa` e `colaborador` nunca preenchidos no JSON.
+**Para Michel:** quando um cliente novo enviar o primeiro e-mail, o nome da empresa aparecerá em branco na tela. O sistema já gera um alerta chamado `cliente_desconhecido` — você verá uma notificação na tela. Quando aparecer, faça:
+1. Identifique qual empresa é (pelo e-mail do remetente)
+2. Adicione o domínio em `data/json/config/cadastro_clientes_cadoc.json`
+3. Rode o Script 09 — o nome da empresa aparece na próxima carga
+
+Não tem como automatizar completamente porque só você sabe o nome oficial da empresa. O alerta garante que nenhum cliente novo passa despercebido.
+
+**Contexto técnico:** levantado durante a validação campo a campo — campos `empresa` e `colaborador` não preenchidos automaticamente para clientes novos.
 
 **Regra definida com Michel:**
-- Quando chega um e-mail de domínio desconhecido → sistema cadastra automaticamente a empresa (nome derivado do domínio) + adiciona o colaborador (nome + e-mail)
-- Dispara **notificação na tela** para Michel confirmar ou corrigir o nome da empresa
-- Quando o domínio já existe no cadastro → adiciona o colaborador silenciosamente (sem notificação)
+- Quando chega e-mail de domínio desconhecido → sistema gera alerta `cliente_desconhecido`
+- Michel adiciona manualmente ao cadastro → Script 09 preenche `empresa` na próxima carga
 - O cadastro (`cadastro_clientes_cadoc.json`) é a **fonte oficial** do nome da empresa
 
-**Regra de exibição na tela:**
-- Finaud envia → mostra colaborador da Finaud + empresa "Finaud"
-- Cliente envia → mostra colaborador da empresa cliente + nome da empresa cliente
-
-**Novos colaboradores Finaud a cadastrar (imediato):**
+**Novos colaboradores Finaud a cadastrar (pendente):**
 - `miguel.santos@finaud.com.br`
 - `sarah.sa@finaud.com.br`
 
-**O que implementar:**
-1. Script 09 (ou Script 06): detectar domínio do remetente, consultar cadastro, cadastrar empresa/colaborador automaticamente
-2. Painel: tela de notificações para confirmação/correção de empresas novas
-3. Campo `empresa` passar a ser preenchido sempre (via cadastro)
-4. Campo `colaborador` passar a ser preenchido com nome + e-mail do remetente
-
-**Arquivos:** `scripts/09_integrar_dados_painel.py`, `data/json/config/cadastro_clientes_cadoc.json`, `painel_oraculo.py` (notificações)
+**Arquivos:** `data/json/config/cadastro_clientes_cadoc.json` (editar manualmente), `scripts/09_integrar_dados_painel.py` (rodar após editar)
 
 ---
 
@@ -321,25 +320,9 @@ Após o git estar funcionando:
 
 ---
 
-## 🟡 Campo 10 — Responsável pela ação: 55 threads divergem entre tela e JSON (registrado 13/07/2026)
+## ~~🟡 Campo 10 — Responsável pela ação: 55 threads divergem entre tela e JSON~~ ✅ CONCLUÍDO (2026-07-17)
 
-**Contexto:** durante a documentação do Campo 10, comparamos o valor mostrado na tela (`responsavel_pela_acao`, calculado na hora pelo painel) com o valor gravado no JSON 03 (`responsavel`, calculado pelo Script 09). São 55 threads com resultados diferentes.
-
-**Causa raiz:** as duas funções ordenam as mensagens de formas diferentes para achar a "última":
-- `_responsavel_pela_acao()` no Script 09 → ordena por `timestamp_epoch` (número)
-- `_responsavel_pela_acao_from_mensagens()` no painel → ordena por `data_email`/`data_iso`/`timestamp` (campos de texto)
-
-Quando uma mensagem tem `timestamp_epoch` zero ou ausente mas tem a data em texto, cada função escolhe uma mensagem diferente como "última" — e o responsável muda.
-
-**Impacto:** a tela mostra o valor do painel (runtime), que para 55 threads é diferente do que está gravado no JSON 03. Ou seja, o que aparece na tela para essas threads não bate com o arquivo.
-
-**O que fazer:** unificar o critério de ordenação nas duas funções. O mais confiável é usar `timestamp_epoch` quando disponível, com fallback para `data_iso`/`data_email` — assim as duas funções encontram sempre a mesma "última mensagem".
-
-**Arquivos:**
-- `scripts/09_integrar_dados_painel.py` — função `_responsavel_pela_acao()` (~linha 82)
-- `painel_oraculo.py` — função `_ordenar_mensagens_operacional_para_acao()` (~linha 2212)
-
-**Quando fazer:** junto com a limpeza arquitetural de mover `responsavel_pela_acao` para o JSON (item já registrado neste arquivo, seção "Arquitetura — cálculos feitos na hora de servir").
+Corrigido em 17/07/2026 — `_responsavel_pela_acao` no Script 09 agora usa a mesma ordem de prioridade do painel (texto primeiro, epoch como fallback). Ver REGISTRO_CORRECOES.md — entrada 2026-07-17.
 
 ---
 
@@ -364,6 +347,28 @@ Quando uma mensagem tem `timestamp_epoch` zero ou ausente mas tem a data em text
 
 ### Bug C — Cliente DESCONHECIDO sem alerta
 ✅ **Resolvido em 2026-07-08** — alerta `cliente_desconhecido` adicionado ao sistema de notificações (`alertas.json` + `painel_oraculo.py`). Ver REGISTRO_CORRECOES.md entrada 2026-07-08 17:00.
+
+---
+
+## 🟡 Campo 10 — Responsável errado quando cliente envia para suporte@finaud.com.br com nome de colaborador (registrado 2026-07-17)
+
+**Contexto:** identificado durante análise da thread "RES: Índice de Basileia" (GMTHRID_1869712614480934201) em 17/07/2026.
+
+**Problema:** quando um cliente endereça um e-mail para `suporte@finaud.com.br` mas coloca o nome de um colaborador no campo "Para:" (ex.: `'Flavio Camargo' <suporte@finaud.com.br>`), o sistema ignora o nome do colaborador e sempre registra "Suporte Finaud" como responsável da thread.
+
+**Causa raiz:** o Script 05 (`montar_contatos_origem_destino_para_item`, linhas ~2172–2188) extrai o username do e-mail de destino (`suporte`) e busca em `colaboradores_finaud`. Como `suporte` não existe nesse dicionário, cai no fallback hardcoded `"Suporte Finaud"`. O nome do colaborador exibido pelo cliente (display name do campo Para:) é ignorado.
+
+**Impacto real:** threads ficam atribuídas a "Suporte Finaud" em vez do colaborador real (ex.: Flavio Camargo, Rodrigo Tiberio). O responsável errado aparece no card e no modal da tela operacional.
+
+**Casos conhecidos:** e-mails da Atual Câmbio endereçados ao Rodrigo Tiberio via `suporte@`. Podem existir outros.
+
+**O que fazer:**
+1. Verificar o display name do destinatário (`nm` na linha ~2177 do Script 05) — quando o endereço é `suporte@finaud.com.br`, o nome real do colaborador pode estar lá
+2. Cruzar o `nm` (display name) com os nomes em `data/json/config/usuarios.json` para identificar o colaborador
+3. Se encontrar correspondência → usar o nome do colaborador em vez de "Suporte Finaud"
+4. **Antes de aplicar:** simular o impacto em todas as threads para verificar quais seriam afetadas e em qual direção
+
+**Arquivos:** `scripts/05_classificar_emails_regulatorio.py` (~linha 2172), `data/json/config/usuarios.json`
 
 ---
 
@@ -720,27 +725,9 @@ Exemplos: "Wise DDR 29" (só dia sem mês), "CADOC 4111 11-05" (DD-MM sem ano), 
 
 ---
 
-## 🔴 INVESTIGAÇÃO — status_processo: classificação Pendente/Informativo não reflete a operação (registrado 13/07/2026)
+## ~~🔴 INVESTIGAÇÃO — status_processo: classificação Pendente/Informativo não reflete a operação~~ ✅ CONCLUÍDO (2026-07-16)
 
-**Contexto:** durante a documentação do Campo 8 (Status), descobrimos que o campo `status_processo` existe no sistema mas Michel não sabia da sua existência. Ele usa os valores PENDENTE e INFORMATIVO, baseados em "tem prazo = PENDENTE, não tem prazo = INFORMATIVO" — uma lógica que não representa o que a operação precisa (Aguardando ou Concluído).
-
-**O que foi descoberto:**
-- 30 de 36 threads de TESTE estão como PENDENTE (todas que têm prazo, inclusive as já concluídas)
-- Na aba de busca da tela, o rótulo do card vem do `status_processo` — mostrando PENDENTE para threads já encerradas
-- A cor do ponto no card (laranja = atenção) é controlada pelo `status_processo`
-- Nas abas principais (Aguardando/Concluídos) o campo é ignorado — mas na busca aparece para o usuário
-
-**O que Michel quer:** usar apenas Aguardando/Concluído em todos os lugares, eliminando a confusão de Pendente/Informativo.
-
-**Risco identificado:** a maior preocupação é que nenhuma thread fique sem classificação após a mudança.
-
-**Próximos passos (para a sessão dedicada):**
-1. Mapear todos os lugares onde `status_processo` é lido (tela + API + scripts)
-2. Simular: se substituirmos por Aguardando/Concluído, alguma thread fica sem classificação?
-3. Apresentar resultado para Michel decidir se avança
-4. Só implementar após aprovação explícita
-
-**Arquivos envolvidos:** `templates/email_operacional.html` (linhas 1192, 3566, 3585, 3588), `painel_oraculo.py` (linhas 2194, 3782, 3887–3903), `scripts/09_integrar_dados_painel.py` (linhas 935, 1252, 1445)
+Corrigido em 16/07/2026 — `status_processo` passou a retornar `SEM_TRIAGEM`; threads sem triagem ficam invisíveis na tela; só AGUARDANDO e CONCLUÍDO aparecem. Ver REGISTRO_CORRECOES.md — entrada 2026-07-16 Campo 4.
 
 ---
 

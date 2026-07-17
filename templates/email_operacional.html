@@ -1556,6 +1556,13 @@
      */
     function emailBodyToReadableTextModal(html) {
       if (!html || typeof html !== 'string') return '';
+      // Caso especial: corpo gerado de HTML Outlook que ficou com CSS VML sem tags <
+      // (extrator server-side não removeu <style>; CSS virou texto puro com entidades HTML)
+      if (html.indexOf('behavior:url(#default#VML)') !== -1) {
+        html = html.replace(/[\w\\.#:*\s,]+\{[^}]+\}/g, ' ');
+        html = html.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
+        html = html.replace(/\s{2,}/g, ' ').trim();
+      }
       var plain = html.trim().substring(0, 160).indexOf('<') === -1;
       if (!plain && corpoTextoParecePlanoComXmlCitado(html)) plain = true;
       var text;
@@ -2078,6 +2085,10 @@
       var rxFechoNome = /\b(Att\.?|Cordialmente|Grat[ao]|Obrigad[ao])[,.]?\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-záéíóúâêôãõç]+\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ])/;
       var mFechoNome = norm.search(rxFechoNome);
       if (mFechoNome >= 0) idxs.push(mFechoNome);
+      // Fechamento multi-linha: "Att," sozinho numa linha + nome próprio na linha seguinte (ex: "Att,\n\nLuiza Milet.")
+      var rxFechoMultilinha = /\n(Att\.?|Cordialmente|Grat[ao]|Obrigad[ao])[,.]?\s*\n+([A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-záéíóúâêôãõç]+\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ])/;
+      var mFechoML = rxFechoMultilinha.exec(norm);
+      if (mFechoML && mFechoML.index >= 0) idxs.push(mFechoML.index);
       if (!idxs.length) return text;
       var idx = Math.min.apply(null, idxs);
       if (idx <= 0) return '';
@@ -2220,6 +2231,7 @@
 
       t = t.replace(/[ \t]+$/gm, '').replace(/\n\s*\n\s*\n+/g, '\n\n').trim();
       t = cortarRodapeAssinaturaTipico(t);
+      t = cortarRodapeAssinaturaInline(t);
       return t;
     }
 
@@ -4716,15 +4728,33 @@
         var isAutoReply = autoReplyPatterns.some(function(p){ return corpoLower.indexOf(p) >= 0; });
         // T5: encaminhamento sem comentário — citas tem conteúdo mas o corpo próprio está vazio
         var isEncSemComentario = citas.length > 0 && !corpoTexto.trim();
-        // T6: resposta com histórico citado inline — detectar separador de citação no corpoTexto
+        // T6: resposta com histórico citado inline — detectar separador de citação
+        // stripBoilerplate já remove linhas "De: nome <email>" antes de chegar aqui,
+        // então tentamos primeiro no corpoTexto (limpo) e, se não achar, usamos msg.corpo (raw)
         var isT6 = false;
         var t6TopoHtml = '';
         var t6CaudaHtml = '';
         if (!isEncSemComentario && !isAutoReply && corpoTexto.trim()) {
-          var t6Raw = corpoTexto.replace(/\r\n/g, '\n');
           var t6Re = /\nDe:\s|\nFrom:\s|^De:\s|^From:\s|\nEm\s[\s\S]+?escreveu:\s|\n\*De:\*/i;
+          var t6Raw = corpoTexto.replace(/\r\n/g, '\n');
           var t6Match = t6Re.exec(t6Raw);
-          if (t6Match && t6Match.index > 0) {
+          if (!t6Match || t6Match.index <= 0) {
+            // Fallback: separador foi removido pelo strip — usar corpo completo da mensagem
+            // msg.corpo pode ser HTML (Outlook) — converter para texto antes de usar
+            var _corpoFallback = msg.corpo || '';
+            if (_corpoFallback.trimStart().startsWith('<')) _corpoFallback = stripHtml(_corpoFallback);
+            var t6TextoSemStrip = _corpoFallback.replace(/\r\n/g, '\n');
+            var t6MatchRaw = t6Re.exec(t6TextoSemStrip);
+            if (t6MatchRaw && t6MatchRaw.index > 0) {
+              var t6TopoRaw = cortarRodapeAssinaturaInline(stripBoilerplate(t6TextoSemStrip.slice(0, t6MatchRaw.index).trim()));
+              var t6CaudaRaw = t6TextoSemStrip.slice(t6MatchRaw.index).trim();
+              if (t6TopoRaw.length >= 5 && t6CaudaRaw.length >= 20) {
+                isT6 = true;
+                t6TopoHtml = '<div class="msg-body-text" style="font-size:13px;color:rgba(234,240,255,.92);line-height:1.5;white-space:pre-wrap;word-break:break-word;">' + escapeHtml(t6TopoRaw) + '</div>';
+                t6CaudaHtml = '<details style="margin-top:6px;"><summary style="cursor:pointer;font-size:11px;color:rgba(234,240,255,.3);user-select:none;list-style:none;display:flex;align-items:center;gap:4px;padding:2px 0;"><span style="font-size:9px;">▶</span> Histórico citado</summary><div style="margin-top:6px;padding:8px 10px;border-left:2px solid rgba(234,240,255,.1);font-size:12px;color:rgba(234,240,255,.3);white-space:pre-wrap;word-break:break-word;">' + escapeHtml(t6CaudaRaw) + '</div></details>';
+              }
+            }
+          } else if (t6Match.index > 0) {
             var t6Topo = t6Raw.slice(0, t6Match.index).trim();
             var t6Cauda = t6Raw.slice(t6Match.index).trim();
             if (t6Topo.length >= 5 && t6Cauda.length >= 20) {
