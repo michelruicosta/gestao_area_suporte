@@ -4740,7 +4740,7 @@
         if (isEncSemComentario) {
           corpoBloco = '<div style="font-size:11px;color:rgba(234,240,255,.35);font-style:italic;padding:2px 0;">Encaminhou mensagem sem adicionar texto. Conteúdo abaixo.</div>';
         }
-        // UX-01: corpo vazio mas há arquivos em anexo — mostrar aviso com lista de arquivos
+        // UX-01: corpo vazio ou com corpo — mostrar lista de anexos reais (sem content_id = não são imagens inline)
         var anexosDetectados = Array.isArray(msg.anexos_detectados) ? msg.anexos_detectados.filter(function(a) { return !a.content_id; }) : [];
         if (!corpoTexto.trim() && anexosDetectados.length > 0) {
           var listaAnexos = anexosDetectados.map(function(a) {
@@ -4753,6 +4753,13 @@
             + '<span style="font-size:13px;flex-shrink:0;margin-top:1px;">⚠</span>'
             + '<div><div style="font-size:11px;font-weight:600;color:#f87171;margin-bottom:4px;">Sem texto — ver anexo</div>'
             + listaAnexos + '</div></div>';
+        } else if (corpoTexto.trim() && anexosDetectados.length > 0) {
+          var listaAnexosHtml = anexosDetectados.map(function(a) {
+            var nome = a.nome_original || a.nome || a.arquivo_disco || '';
+            return '<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.07);font-size:11px;color:rgba(234,240,255,.65);">'
+              + '📎 ' + escapeHtml(nome) + '</span>';
+          }).join(' ');
+          corpoBloco += '<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;">' + listaAnexosHtml + '</div>';
         }
         var citeStackHtml = citas.length ? renderModalCiteStackHtml(citas, thread) : '';
         // #PF45: fallback — BACEN detectado por remetente_original_fwd mas encaminhamento não foi extraído

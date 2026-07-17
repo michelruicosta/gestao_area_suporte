@@ -2,6 +2,21 @@
 
 ---
 
+### 2026-07-16 — [MELHORIA] Campo 11 (anexos): mostrar nomes dos arquivos abaixo do corpo da mensagem
+
+**🔎 Em miúdos:** ao abrir uma thread, os nomes dos arquivos anexados agora aparecem abaixo do texto de cada e-mail (ex: 📎 rd_prefixada_29_06_2026.xlsx). Antes, quando havia texto + anexo, os arquivos ficavam invisíveis.
+
+**Problema:** a tela só mostrava a lista de anexos quando o corpo da mensagem estava vazio (aviso vermelho "⚠ Sem texto — ver anexo"). Em 1.908 mensagens com corpo + anexos, os arquivos eram ignorados.
+
+**Correção:** em `templates/email_operacional.html`, bloco UX-01:
+- Novo `else if`: quando há corpo E anexos, adiciona chips discretos abaixo do texto (📎 nome_arquivo.pdf)
+- Filtra `content_id` (imagens inline) — só mostra arquivos reais
+- Estilo: chips cinza translúcidos, não interferem na leitura do texto
+
+**Validação:** pytest 602 passaram, zero regressões. Verificação visual pendente (login necessário). ✅ VALIDADO em lógica.
+
+---
+
 ### 2026-07-16 — [MELHORIA] Campo 10 (corpo): remover assinatura de e-mail na visualização das mensagens
 
 **🔎 Em miúdos:** ao abrir uma thread, o texto de cada e-mail agora aparece sem a assinatura do remetente (nome, cargo, telefone). Antes ficava tudo junto e poluía a leitura.
