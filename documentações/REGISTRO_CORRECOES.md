@@ -6240,3 +6240,31 @@ O assistente (regra `.cursor/rules/registro-correcoes.mdc`) segue obrigatoriamen
 **Próximo:** executar backfill dos 47 gaps (Grupos A–J) após concluir todos os CADOCs. Próxima ficha: DRM_2060.
 
 *Última atualização: 2026-06-17.*
+
+---
+
+### 2026-07-20 13:30 — [REFACTOR] Modal de histórico de mensagens — Versão C Pura (estrutura linear sem nesting)
+
+**🔎 Em miúdos:** refatorei a função `renderModalCiteStackHtml` para eliminar nesting profundo e remover assinatura. Antes: citações aninhadas (recursivas), "De:" repetido, assinatura visível. Depois: lista linear cronológica, cada mensagem 1x, sem assinatura, pronta para IA ler.
+
+**Problema:** quando um e-mail tem histórico de respostas citadas, a modal mostrava as mensagens aninhadas dentro uma da outra. Isso causa: (1) redundância — "De:" aparece em múltiplos níveis; (2) confusão visual — fica difícil ler o fluxo da conversa; (3) assinatura repetida em cada citação; (4) ineficiência para IA — mais tokens gastos, estrutura confusa.
+
+**Correção:** 
+- Removida recursão (`recurse(idx)`) → iteração linear com `for`
+- Cada citação renderizada como `<div>` separada, não aninhada
+- Chamada a `filterSignatureFromAttachment()` para remover assinatura (em vez de exibir corpo bruto)
+- Protocolo CRD movido para bloco final (só uma vez, não repetido em cada citação)
+- Formato visual: `[De:] ... [Enviada em:] ... | Conteúdo do texto limpo`
+
+**Arquivos alterados:** `templates/email_operacional.html` (função `renderModalCiteStackHtml`, linhas 4223–4273)
+
+⚠️ **VALIDAÇÃO PENDENTE** — critério: abrir um e-mail com histórico citado (tipo T6 — "Com histórico") no modal e verificar:
+1. ✓ Mensagens aparecem em ordem cronológica (cima para baixo)
+2. ✓ Nenhuma mensagem repetida
+3. ✓ Assinatura foi removida (tipo "Atenciosamente", "Tel: +55 11")
+4. ✓ "De:" aparece 1x por mensagem, não aninhado
+5. ✓ Protocolo CRD (se houver) aparece 1x ao final
+
+Teste realizado: ainda pendente. Próximo passo: abrir painel no navegador, buscar thread com "Com histórico", verificar se modal exibe sem nesting e sem assinatura.
+
+*Entrada criada: 2026-07-20 13:30 — aguardando validação visual no modal.*

@@ -4222,55 +4222,61 @@
 
     function renderModalCiteStackHtml(citas, thread) {
       if (!citas || !citas.length) return "";
-      function recurse(idx) {
-        if (idx >= citas.length) return "";
-        var enc = citas[idx];
+
+      // Versão C Pura: estrutura linear sem nesting
+      // Cada citação é exibida sequencialmente, cronologicamente, sem redundâncias
+      var html = '';
+      var protoGlobal = '';
+
+      // Procura protocolo CRD em todas as citações para usar ao final
+      for (var i = 0; i < citas.length; i++) {
+        var enc = citas[i];
         var corpoTexto = (enc.corpo || "").replace(/\nTo unsubscribe from this group[^\n]*/i, "").trim();
-        var deLimpo = (enc.de || "").toString().replace(/<[^>]+>/g, "").trim();
         var assuntoTxt = (enc.assunto || "").trim();
-        var metaBits = [];
-        if (deLimpo) metaBits.push("<strong>De:</strong> " + escapeHtml(deLimpo));
-        if (enc.data_email || enc.timestamp)
-          metaBits.push("<strong>Enviada em:</strong> " + escapeHtml(enc.data_email || enc.timestamp || ""));
-        var metaLine =
-          '<div class="modal-cite-meta">' + metaBits.join(" · ") + "</div>";
-        var subjLine = assuntoTxt
-          ? '<div class="modal-cite-subj">' + escapeHtml(assuntoTxt) + "</div>"
-          : "";
-        var inner = recurse(idx + 1);
-        var isLast = idx === citas.length - 1;
-        var proto =
+        protoGlobal = protoGlobal ||
           extrairProtocoloIndicioCrd(corpoTexto + " " + assuntoTxt) ||
           extrairProtocoloIndicioCrd((thread && thread.assunto) || "") ||
           (thread && thread.retorno_bacen
             ? extrairProtocoloIndicioCrd(thread.conversa_unificada || "")
             : "");
-        var crdSlot = "";
-        if (isLast && citacaoEncDeveMostrarBlocoCrd(enc, thread) && proto) {
-          crdSlot =
-            '<div class="modal-crd-box" data-crd-protocol="' +
-            escapeHtml(proto) +
-            '">' +
-            '<h4 class="modal-crd-title">Indícios exportados do CRD (coluna «Mensagem»)</h4>' +
-            '<p class="modal-crd-ref">Arquivo: <strong>indício-qualidade.xlsx</strong> · aba <strong>Indício</strong> · protocolo <strong>' +
-            escapeHtml(proto) +
-            "</strong></p>" +
-            '<table class="modal-crd-table"><thead><tr><th>Código da crítica</th><th>Id.</th><th class="modal-crd-msg">Mensagem</th></tr></thead>' +
-            '<tbody><tr><td colspan="3" class="modal-crd-loading">A carregar…</td></tr></tbody></table></div>';
-        }
-        return (
-          '<div class="modal-cite">' +
-          metaLine +
-          subjLine +
-          '<div class="modal-cite-body">' +
-          escapeHtml(corpoTexto) +
-          "</div>" +
-          inner +
-          crdSlot +
-          "</div>"
-        );
       }
-      return '<div class="modal-cite-stack">' + recurse(0) + "</div>";
+
+      // Itera linearmente sobre cada citação (sem recursão)
+      for (var i = 0; i < citas.length; i++) {
+        var enc = citas[i];
+        var corpoTexto = (enc.corpo || "").replace(/\nTo unsubscribe from this group[^\n]*/i, "").trim();
+        var deLimpo = (enc.de || "").toString().replace(/<[^>]+>/g, "").trim();
+        var assuntoTxt = (enc.assunto || "").trim();
+        var dataEmailTxt = escapeHtml(enc.data_email || enc.timestamp || "");
+
+        // Remove assinatura: em vez de exibir `corpoTexto` bruto, filtra com filterSignatureFromAttachment
+        var corpoLimpo = filterSignatureFromAttachment(corpoTexto);
+        if (!corpoLimpo.trim()) corpoLimpo = corpoTexto; // fallback se filtro não deixa nada
+
+        // Constrói HTML para esta citação de forma linear
+        html += '<div class="modal-cite" style="margin-bottom:12px; padding:8px; border-left:2px solid rgba(234,240,255,.15); background:rgba(255,255,255,.02); border-radius:4px;">';
+        html += '<div style="font-size:11px; color:rgba(234,240,255,.5); margin-bottom:6px;">';
+        html += '<strong>De:</strong> ' + escapeHtml(deLimpo) + ' · ' +
+                '<strong>Enviada em:</strong> ' + dataEmailTxt;
+        if (assuntoTxt) html += ' · <strong>Assunto:</strong> ' + escapeHtml(assuntoTxt);
+        html += '</div>';
+        html += '<div style="font-size:13px; color:rgba(234,240,255,.85); white-space:pre-wrap; word-break:break-word; line-height:1.4;">';
+        html += escapeHtml(corpoLimpo);
+        html += '</div>';
+        html += '</div>';
+      }
+
+      // Bloco CRD ao final (se houver protocolo e thread for BACEN)
+      if (protoGlobal && thread && citacaoEncDeveMostrarBlocoCrd(citas[citas.length - 1], thread)) {
+        html += '<div class="modal-crd-box" data-crd-protocol="' + escapeHtml(protoGlobal) + '">' +
+                '<h4 class="modal-crd-title">Indícios exportados do CRD (coluna «Mensagem»)</h4>' +
+                '<p class="modal-crd-ref">Arquivo: <strong>indício-qualidade.xlsx</strong> · aba <strong>Indício</strong> · protocolo <strong>' +
+                escapeHtml(protoGlobal) + "</strong></p>" +
+                '<table class="modal-crd-table"><thead><tr><th>Código da crítica</th><th>Id.</th><th class="modal-crd-msg">Mensagem</th></tr></thead>' +
+                '<tbody><tr><td colspan="3" class="modal-crd-loading">A carregar…</td></tr></tbody></table></div>';
+      }
+
+      return '<div class="modal-cite-stack">' + html + "</div>";
     }
 
     function hydrateModalCrdBoxes(rootEl) {
@@ -5553,7 +5559,8 @@
       try {
         var gdBusca = document.getElementById("global-date");
         var dBusca = gdBusca && gdBusca.value && String(gdBusca.value).trim() !== "" ? String(gdBusca.value).trim() : "";
-        var urlBusca = API_URL + "?busca=1" + (dBusca ? "&data=" + encodeURIComponent(dBusca) : "");
+        var qBusca = document.getElementById("q").value.trim();
+        var urlBusca = API_URL + "?busca=1" + (dBusca ? "&data=" + encodeURIComponent(dBusca) : "") + (qBusca ? "&q=" + encodeURIComponent(qBusca) : "");
         // Inicia motivos em paralelo com o fetch principal.
         const motivosPromise = carregarMotivosTriagem();
         const response = await fetch(urlBusca, { signal: ctx.signal });
