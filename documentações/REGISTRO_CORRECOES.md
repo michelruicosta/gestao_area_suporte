@@ -2,6 +2,33 @@
 
 ---
 
+### 2026-07-22 — [MELHORIA] Correção de erros de OCR em `texto_imagens` (Parte A) e prevenção futura (Parte B)
+
+**🔎 Em miúdos:** os textos extraídos das imagens do e-mail (capturas de tela do indício Bacen e assinaturas) tinham erros de OCR visíveis no painel — palavras trocadas, `&` no lugar de `@`, lixo de menu de sistema. Corrigimos os 9 e-mails afetados manualmente (69 correções) e adicionamos uma função no Script 12 para que coletas futuras já saiam com esses erros corrigidos automaticamente.
+
+**Problema:** o OCR lê pixels, não contexto — letras visualmente parecidas se confundem. Na tela do Banco Central: `stuação` no lugar de `situação`, `Trodeidico` no lugar de `Tipo de indício`, `Crtca` no lugar de `Crítica`. Em assinaturas: `&` no lugar de `@` nos e-mails, `WIWW.` no lugar de `www.`. No arquivo XML do CRD: tags corrompidas (`< tacRD`, `situaçao`). Na barra de menu de prints: lixo como `Hy =vy B 7 S o Bm YY gode` após "Exibir".
+
+**Correção:**
+
+*Parte A — Patch manual no JSON:*
+- Arquivo: `data/json/pipeline/03_integrador_dados_site.json`
+- 69 correções aplicadas no campo `texto_imagens` de 9 mensagens (IDs: 3, 5, 6, 21, 23, 28, 65, 68, 73)
+- Backup em: `data/json/pipeline/backups/20260721_1255_correcao_ocr_texto_imagens/`
+
+*Parte B — Pós-processamento automático no Script 12:*
+- Arquivo: `scripts/12_enriquecer_texto_imagens.py`
+- Função nova: `_ocr_corrigir_erros_comuns()` — chamada dentro de `_normalizar_ocr_interface_crd()` (linha 294), que já é executada em todos os pontos de finalização de OCR
+- Padrões cobertos (12 grupos): `stuação/stusão` → `situação`; `Trodeidico/Twode nácia` → `Tipo de indício` (+ colons do cabeçalho Bacen); `Crtca` → `Crítica`; `erítica` → `crítica`; `identficad` → `identificad`; `ransações` → `transações`; `luidadas` → `liquidadas`; `Mistórico` → `Histórico`; `word&dominio.com.br` → `word@dominio.com.br`; `WIWW.` → `www.`; tags XML CRD corrompidas; lixo de menu após "Exibir ... gode"
+- Padrões NÃO automatizados (risco de falso positivo): erros de data (`o2026`), códigos corrompidos (`VCRDego7`), erros em nomes de pessoas, linhas de lixo aleatório específicas de determinadas capturas
+
+**Validação:** ✅ VALIDADO em 2026-07-22
+- Parte A: script de validação comparou 9 mensagens com backup — todos OK após correções
+- Parte B: função cobre 29 de 55 correções manuais (52%) sem falso positivo; 26 restantes são específicas/ambíguas por design
+- `pytest tests/test_06_script_09.py tests/test_atualiza_bordo_pos_carga.py` → 9 passed (testes que usam Script 12) ✅
+- 29 falhas do pytest geral são pré-existentes no motor de triagem — não relacionadas a esta alteração
+
+---
+
 ### 2026-07-17 — [BUG] Corpo de e-mail Outlook exibindo CSS do VML no modal (thread TVM e similares)
 
 **🔎 Em miúdos:** algumas threads mostravam no modal texto como `v:* {behavior:url(#default#VML);}` e `&nbsp;` visíveis no lugar do texto da mensagem. Eram resíduos do CSS do Outlook que escaparam do extrator do pipeline e acabaram sendo exibidos no painel.
