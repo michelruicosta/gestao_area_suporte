@@ -10,3 +10,20 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-07-28
+
+### 28/07 — GitHub conectado e repositório publicado
+
+**🔎 Em miúdos:** o projeto agora tem backup na nuvem (GitHub). Antes estava só no PC — se o PC quebrasse, perdia tudo.
+
+**Problema:** repositório local sem remote configurado; arquivos novos (testes, templates, nova arquitetura) nunca haviam sido commitados; planilha com dados sensíveis de clientes em risco de ser exposta acidentalmente.
+
+**Correção:**
+- `documentações/indício-qualidade.xlsx` adicionado ao `.gitignore` (dados sensíveis de clientes)
+- Branch local renomeada de `master` para `main` (padrão GitHub)
+- Remote `origin` apontado para `github.com/michelruicosta/gestao_area_suporte`
+- 57 commits do histórico enviados ao GitHub
+- 98 arquivos novos commitados e enviados (sistema atual + nova arquitetura + testes + CI)
+
+**Validação:** ✅ Push confirmado no GitHub — `github.com/michelruicosta/gestao_area_suporte`; `.xlsx` não aparece no repositório remoto.
+

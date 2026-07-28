@@ -12,6 +12,16 @@
 
 ### Resumo do que foi feito
 
+**6. GitHub configurado e primeiro push realizado ✅** *(28/07 — segunda parte da sessão)*
+- Repositório criado por Michel: `github.com/michelruicosta/gestao_area_suporte` (privado)
+- Remote `origin` conectado ao repo local
+- `documentações/indício-qualidade.xlsx` blindado no `.gitignore` (dados sensíveis de clientes)
+- Branch renomeada de `master` para `main` (padrão GitHub)
+- 57 commits do histórico local enviados ao GitHub
+- 98 arquivos novos commitados e enviados (sistema atual + nova arquitetura + testes + infraestrutura CI)
+
+---
+
 **1. Histórico antigo do SESSAO_ATUAL.md arquivado ✅**
 1.251 linhas de sessões anteriores (sistema antigo, até 17/07) movidas para
 `_archive/sessao_atual_historico/SESSAO_ATUAL_historico_sistema_antigo.md` com CONTEXTO.md.
@@ -46,6 +56,7 @@ Arquivo de memória: `.claude/projects/.../memory/feedback_limite_output_tokens.
 **Especificação:** completa em §1–§12 e §14–§16 + Apêndice A.
 **Aberto:** §10 Campos 6, 7, 8 — dependem de 3 simulações de threads reais ainda pendentes.
 **Padrão de nomes aprovado:** `ação_domínio.py` (ex.: `coletor_gmail.py`, `classificador_ia.py`)
+**GitHub:** `github.com/michelruicosta/gestao_area_suporte` — conectado em 28/07/2026; branch `main`; 57 commits + 98 arquivos enviados.
 
 ### Próximos passos
 
@@ -53,5 +64,7 @@ Arquivo de memória: `.claude/projects/.../memory/feedback_limite_output_tokens.
 2. 🟡 Confirmar T04 (Western Union) com Michel: o papel da Finaud neste fluxo
 3. 🟡 Criar novo MAPA_DO_PROJETO.md para a nova arquitetura
 4. 🟡 Fase 1 da nova arquitetura: protótipo do coletor Gmail + classificador IA
+
+Último /fechar: 2026-07-28 — memórias revisadas ✅
 
 ---
