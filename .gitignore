@@ -1,6 +1,7 @@
 # --- Segurança (CRÍTICO - NUNCA REMOVA) ---
 .env
 *.env
+documentações/indício-qualidade.xlsx
 data/tokens/*
 credentials.json
 token.json
