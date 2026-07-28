@@ -1,0 +1,716 @@
+<title>Especificação Nova Arquitetura — Oráculo 360 Finaud</title>
+<style>
+  :root {
+    --bg: #F6F7F9;
+    --surface: #FFFFFF;
+    --surface2: #F0F2F5;
+    --text: #1A1D23;
+    --text-muted: #6B7280;
+    --accent: #1D4ED8;
+    --accent-soft: #EFF6FF;
+    --border: #DDE1E7;
+    --warning-bg: #FFFBEB;
+    --warning-border: #FCD34D;
+    --warning-text: #92400E;
+    --danger-bg: #FFF1F0;
+    --danger-border: #FCA5A5;
+    --danger-text: #991B1B;
+    --ok-bg: #F0FDF4;
+    --ok-border: #86EFAC;
+    --ok-text: #14532D;
+    --pending-bg: #FFF7ED;
+    --pending-border: #FDBA74;
+    --pending-text: #7C2D12;
+    --sidebar-w: 240px;
+    --header-h: 54px;
+    font-size: 15px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0F1117;
+      --surface: #181C25;
+      --surface2: #1E2230;
+      --text: #E4E8F0;
+      --text-muted: #8B93A7;
+      --accent: #4F83F0;
+      --accent-soft: #1A2A4A;
+      --border: #2A2F3E;
+      --warning-bg: #2D2008;
+      --warning-border: #D97706;
+      --warning-text: #FDE68A;
+      --danger-bg: #2D0A0A;
+      --danger-border: #DC2626;
+      --danger-text: #FCA5A5;
+      --ok-bg: #0A2D14;
+      --ok-border: #16A34A;
+      --ok-text: #86EFAC;
+      --pending-bg: #2D1A08;
+      --pending-border: #EA580C;
+      --pending-text: #FED7AA;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1117; --surface: #181C25; --surface2: #1E2230;
+    --text: #E4E8F0; --text-muted: #8B93A7; --accent: #4F83F0; --accent-soft: #1A2A4A;
+    --border: #2A2F3E; --warning-bg: #2D2008; --warning-border: #D97706; --warning-text: #FDE68A;
+    --danger-bg: #2D0A0A; --danger-border: #DC2626; --danger-text: #FCA5A5;
+    --ok-bg: #0A2D14; --ok-border: #16A34A; --ok-text: #86EFAC;
+    --pending-bg: #2D1A08; --pending-border: #EA580C; --pending-text: #FED7AA;
+  }
+  :root[data-theme="light"] {
+    --bg: #F6F7F9; --surface: #FFFFFF; --surface2: #F0F2F5;
+    --text: #1A1D23; --text-muted: #6B7280; --accent: #1D4ED8; --accent-soft: #EFF6FF;
+    --border: #DDE1E7; --warning-bg: #FFFBEB; --warning-border: #FCD34D; --warning-text: #92400E;
+    --danger-bg: #FFF1F0; --danger-border: #FCA5A5; --danger-text: #991B1B;
+    --ok-bg: #F0FDF4; --ok-border: #86EFAC; --ok-text: #14532D;
+    --pending-bg: #FFF7ED; --pending-border: #FDBA74; --pending-text: #7C2D12;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; display: flex; flex-direction: column; min-height: 100vh; }
+
+  /* Header */
+  .top-bar { position: fixed; top: 0; left: 0; right: 0; height: var(--header-h); background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 16px; z-index: 100; }
+  .top-bar .logo { font-weight: 700; font-size: 14px; color: var(--accent); letter-spacing: 0.02em; white-space: nowrap; }
+  .top-bar .title { font-size: 13px; color: var(--text-muted); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+  .badge-v { background: var(--accent-soft); color: var(--accent); }
+  .badge-warn { background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning-text); }
+  .badge-ok { background: var(--ok-bg); border: 1px solid var(--ok-border); color: var(--ok-text); }
+  .badge-pend { background: var(--pending-bg); border: 1px solid var(--pending-border); color: var(--pending-text); }
+  .badge-danger { background: var(--danger-bg); border: 1px solid var(--danger-border); color: var(--danger-text); }
+
+  /* Layout */
+  .layout { display: flex; margin-top: var(--header-h); min-height: calc(100vh - var(--header-h)); }
+
+  /* Sidebar */
+  .sidebar { width: var(--sidebar-w); flex-shrink: 0; position: fixed; top: var(--header-h); bottom: 0; left: 0; overflow-y: auto; background: var(--surface); border-right: 1px solid var(--border); padding: 16px 0; }
+  .sidebar-group { font-size: 10px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; padding: 12px 16px 4px; }
+  .sidebar a { display: block; font-size: 12.5px; padding: 5px 16px; color: var(--text-muted); text-decoration: none; border-left: 2px solid transparent; transition: all 0.15s; }
+  .sidebar a:hover { color: var(--text); background: var(--surface2); }
+  .sidebar a.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+
+  /* Main */
+  .main { margin-left: var(--sidebar-w); flex: 1; padding: 40px 48px 80px; max-width: 900px; }
+  .main > section { margin-bottom: 60px; scroll-margin-top: calc(var(--header-h) + 20px); }
+
+  /* Typography */
+  h1 { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+  .meta { font-size: 12px; color: var(--text-muted); margin-bottom: 24px; display: flex; gap: 12px; flex-wrap: wrap; }
+  h2 { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  h2 .sec-num { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+  h3 { font-size: 14px; font-weight: 700; color: var(--text); margin: 20px 0 8px; }
+  p { margin-bottom: 10px; color: var(--text); }
+  code { font-family: "SF Mono", Consolas, monospace; font-size: 12px; background: var(--surface2); border: 1px solid var(--border); padding: 1px 5px; border-radius: 4px; }
+
+  /* Tables */
+  .tbl-wrap { overflow-x: auto; margin: 12px 0 16px; border-radius: 8px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: var(--surface2); font-weight: 600; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-muted); padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+
+  /* Callouts */
+  .callout { border-left: 3px solid; padding: 10px 14px; border-radius: 0 6px 6px 0; margin: 12px 0; font-size: 13px; }
+  .callout-warn { background: var(--warning-bg); border-color: var(--warning-border); color: var(--warning-text); }
+  .callout-danger { background: var(--danger-bg); border-color: var(--danger-border); color: var(--danger-text); }
+  .callout-ok { background: var(--ok-bg); border-color: var(--ok-border); color: var(--ok-text); }
+  .callout-info { background: var(--accent-soft); border-color: var(--accent); color: var(--text); }
+
+  /* Category pills */
+  .cat { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px; font-family: "SF Mono", Consolas, monospace; }
+  .cat-ddr { background: #DBEAFE; color: #1E40AF; }
+  .cat-4111 { background: #EDE9FE; color: #5B21B6; }
+  .cat-drm { background: #FCE7F3; color: #9D174D; }
+  .cat-dlo { background: #D1FAE5; color: #065F46; }
+  .cat-dli { background: #CCFBF1; color: #134E4A; }
+  .cat-drl { background: #FEF3C7; color: #78350F; }
+  .cat-s5 { background: #F3F4F6; color: #374151; }
+  .cat-suporte { background: #F5F3FF; color: #4C1D95; }
+  .cat-bacen { background: #FEE2E2; color: #7F1D1D; }
+  .cat-force { background: #FFF7ED; color: #7C2D12; }
+
+  @media (prefers-color-scheme: dark) {
+    .cat-ddr { background: #1E3A5F; color: #93C5FD; }
+    .cat-4111 { background: #2E1A5C; color: #C4B5FD; }
+    .cat-drm { background: #3D0A24; color: #FBCFE8; }
+    .cat-dlo { background: #0A2D1C; color: #6EE7B7; }
+    .cat-dli { background: #0A2424; color: #5EEAD4; }
+    .cat-drl { background: #2D1C08; color: #FDE68A; }
+    .cat-s5 { background: #1F2937; color: #9CA3AF; }
+    .cat-suporte { background: #1E1040; color: #DDD6FE; }
+    .cat-bacen { background: #3D0A0A; color: #FCA5A5; }
+    .cat-force { background: #2D1408; color: #FED7AA; }
+  }
+
+  /* Chips */
+  .chip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; }
+  .chip-confidence { font-size: 11px; color: var(--text-muted); }
+  .conf-high { color: #16A34A; font-weight: 700; }
+  .conf-med { color: #D97706; font-weight: 700; }
+  .conf-low { color: #9CA3AF; }
+
+  /* Field cards */
+  .field-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; }
+  .field-card .field-name { font-size: 12px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; }
+  .field-card .field-desc { font-size: 13px; color: var(--text); }
+
+  /* Progress bar */
+  .progress { height: 4px; background: var(--border); border-radius: 2px; margin: 6px 0; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 2px; background: var(--accent); }
+
+  /* TOC in header */
+  .toc-jump { font-size: 12px; color: var(--text-muted); cursor: pointer; }
+  .toc-jump:hover { color: var(--accent); }
+</style>
+
+<div class="top-bar">
+  <div class="logo">ORÁCULO 360</div>
+  <div class="title">Especificação da Nova Arquitetura</div>
+  <span class="badge badge-v">v2.0 · 28/07/2026</span>
+  <span class="badge badge-warn">⚠ Campos 6-8 PENDENTES</span>
+</div>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-group">Visão Geral</div>
+    <a href="#s1" data-sec="s1">§1 O que é este documento</a>
+    <a href="#s2" data-sec="s2">§2 Funcionalidades</a>
+    <a href="#s3" data-sec="s3">§3 As 10 categorias</a>
+    <a href="#s4" data-sec="s4">§4 O que não entra</a>
+    <div class="sidebar-group">Técnico</div>
+    <a href="#s5" data-sec="s5">§5 Conta BCC</a>
+    <a href="#s6" data-sec="s6">§6 Onde roda</a>
+    <a href="#s7" data-sec="s7">§7 Segurança</a>
+    <a href="#s8" data-sec="s8">§8 Plano de implantação</a>
+    <a href="#s9" data-sec="s9">§9 Decisões de design</a>
+    <div class="sidebar-group">Campos e Regras</div>
+    <a href="#s10" data-sec="s10">§10 Campos de cada e-mail</a>
+    <a href="#s11" data-sec="s11">§11 Regras de classificação</a>
+    <a href="#s12" data-sec="s12">§12 Modelo de rastreamento</a>
+    <div class="sidebar-group">Referência</div>
+    <a href="#s13" data-sec="s13">§13 Telas do sistema</a>
+    <a href="#s14" data-sec="s14">§14 Catálogo de categorias</a>
+    <a href="#s15" data-sec="s15">§15 Exemplos reais T01–T19</a>
+    <a href="#s16" data-sec="s16">§16 Padrões observados</a>
+    <a href="#sa" data-sec="sa">Apêndice A · Colaboradores</a>
+  </nav>
+
+  <main class="main">
+    <h1>Especificação da Nova Arquitetura</h1>
+    <div class="meta">
+      <span>Versão 2.0</span>
+      <span>28/07/2026</span>
+      <span>Gmail API + IA Classificadora</span>
+    </div>
+
+    <section id="s1">
+      <h2><span class="sec-num">§1</span> O que é este documento</h2>
+      <p>Este documento é a especificação da <strong>nova arquitetura do Oráculo 360</strong> — a que substituirá os 16 scripts do pipeline atual por um sistema mais direto: leitura do Gmail via API + IA classificadora.</p>
+      <p>Ele é a <strong>fonte da verdade</strong> do novo projeto. Toda regra, decisão, campo, categoria e exemplo documentado aqui foi validado com Michel ou anotado como pendente de validação.</p>
+      <div class="callout callout-warn">
+        ⚠️ <strong>Campos 6, 7 e 8</strong> (em §10) estão marcados como PENDENTE — aguardam simulações de threads reais antes de serem definidos.
+      </div>
+    </section>
+
+    <section id="s2">
+      <h2><span class="sec-num">§2</span> Funcionalidades do sistema</h2>
+      <p>O sistema tem <strong>três peças</strong>:</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Peça</th><th>O que faz</th></tr></thead>
+          <tbody>
+            <tr><td><strong>F1</strong></td><td>Leitor do Gmail</td><td>Lê a caixa <code>oraculo@finaud.com.br</code> via Gmail API. Coleta threads novas e atualiza as existentes.</td></tr>
+            <tr><td><strong>F2</strong></td><td>Classificador IA</td><td>Para cada thread, identifica a categoria regulatória, o cliente, o lado responsável (Finaud ou cliente) e o prazo.</td></tr>
+            <tr><td><strong>F3</strong></td><td>Painel operacional</td><td>Exibe threads ativas organizadas por prazo, com destaque visual de urgência. Permite filtrar por responsável e categoria.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="s3">
+      <h2><span class="sec-num">§3</span> As 10 categorias de e-mail e seus fluxos</h2>
+      <p>Cada e-mail pertence a uma das 10 categorias abaixo. Cada categoria tem seu próprio fluxo, prazo e critério de conclusão.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Categoria</th><th>O que é</th><th>Prazo</th><th>Quem entrega ao BACEN</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="cat cat-ddr">DDR_2011</span></td>
+              <td>Posições financeiras diárias (TVM, câmbio, compromissadas…)</td>
+              <td>D+3 úteis</td>
+              <td>Cliente (após Finaud gerar)</td>
+            </tr>
+            <tr>
+              <td><span class="cat cat-4111">CADOC_4111</span></td>
+              <td>Saldos contábeis diários (COSIF)</td>
+              <td>D+3 úteis</td>
+              <td>Cliente (após Finaud gerar)</td>
+            </tr>
+            <tr>
+              <td><span class="cat cat-drm">DRM_2060</span></td>
+              <td>Risco de mercado — mensal</td>
+              <td>D+5 úteis do mês seguinte</td>
+              <td>Cliente (após Finaud gerar)</td>
+            </tr>
+            <tr>
+              <td><span class="cat cat-dlo">DLO_2061</span></td>
+              <td>Limites operacionais — mensal (conglomerado)</td>
+              <td>Dia 5 do 2º mês seguinte</td>
+              <td>Cliente (após Finaud gerar)</td>
+            </tr>
+            <tr>
+              <td><span class="cat cat-dli">DLI_2062</span></td>
+              <td>Limites operacionais individuais — mensal</td>
+              <td>Dia 5 do 2º mês seguinte</td>
+              <td>Cliente ou Finaud diretamente</td>
+            </tr>
+            <tr>
+              <td><span class="cat cat-drl">DRL_2160</span></td>
+              <td>Risco de liquidez / colchão de liquidez — mensal</td>
+              <td>D+10 úteis do mês seguinte</td>
+              <td>Cliente (após Finaud gerar)</td>
+            </tr>
+            <tr>
+              <td><span class="cat cat-s5">S5</span></td>
+              <td>Resultado Quantitativo de Risco (Segmento 5)</td>
+              <td>D+5 úteis</td>
+              <td><strong>Não vai ao BACEN</strong> — fica entre Finaud e cliente</td>
+            </tr>
+            <tr>
+              <td><span class="cat cat-suporte">SUPORTE</span></td>
+              <td>Apoio geral, dúvidas, acessos, cobranças, onboarding</td>
+              <td>Conforme urgência</td>
+              <td>Não se aplica</td>
+            </tr>
+            <tr>
+              <td><span class="cat cat-bacen">RETORNO_BACEN</span></td>
+              <td>Rejeição ou crítica do BACEN a uma entrega anterior</td>
+              <td>Urgente — prazo do BACEN</td>
+              <td>Não se aplica (é resposta ao BACEN)</td>
+            </tr>
+            <tr>
+              <td><span class="cat cat-force">FORCAPITAL</span></td>
+              <td>Projeção de capital — ferramenta Finaud</td>
+              <td>D+5 úteis</td>
+              <td>Não vai ao BACEN</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-info">
+        <strong>CADOC_6209</strong> — aparece nas regras de classificação (§11.3) mas ainda não tem exemplos documentados. Em mapeamento.
+      </div>
+    </section>
+
+    <section id="s4">
+      <h2><span class="sec-num">§4</span> O que não entra</h2>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>O que é</th><th>Por que não entra</th></tr></thead>
+          <tbody>
+            <tr><td>E-mails internos da Finaud (entre colaboradores)</td><td>Remetente e destinatário são ambos <code>@finaud.com.br</code> — thread interna, sem cliente</td></tr>
+            <tr><td>Alertas automáticos do sistema Finaud</td><td>Remetente <code>contato@finaud.com.br</code> com assunto "📢" — notificação, não cliente</td></tr>
+            <tr><td>Notificações FogBugz</td><td>Assunto contém "FogBugz" ou "Caso NNNN" — bug interno de desenvolvimento</td></tr>
+            <tr><td>E-mails sem BCC para oraculo@finaud.com.br</td><td>Fora da caixa de captura — a conta BCC só recebe o que foi copiado</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="s5">
+      <h2><span class="sec-num">§5</span> Conta BCC — <code>oraculo@finaud.com.br</code></h2>
+      <p>Criada em <strong>03/07/2026</strong>. Todos os colaboradores da Finaud foram instruídos a colocar esta conta em BCC (cópia oculta) em toda comunicação com clientes relacionada a regulatórios.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Atributo</th><th>Valor</th></tr></thead>
+          <tbody>
+            <tr><td>E-mail</td><td><code>oraculo@finaud.com.br</code></td></tr>
+            <tr><td>Tipo</td><td>Conta Google Workspace — caixa compartilhada de captura</td></tr>
+            <tr><td>Quem usa</td><td>Todos os colaboradores da Finaud colocam em BCC automaticamente</td></tr>
+            <tr><td>Dados disponíveis em 28/07/2026</td><td>8.825 e-mails · 4.786 threads (conta de produção)</td></tr>
+            <tr><td>O sistema lê esta conta</td><td>Via Gmail API — não via MCP (MCP é só para análise/desenvolvimento)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="s6">
+      <h2><span class="sec-num">§6</span> Onde o sistema roda</h2>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Componente</th><th>Onde roda</th></tr></thead>
+          <tbody>
+            <tr><td>Leitor do Gmail (F1)</td><td>PC da Finaud — Python local com Gmail API</td></tr>
+            <tr><td>Classificador IA (F2)</td><td>PC da Finaud — chamada à API Claude (Anthropic) via internet</td></tr>
+            <tr><td>Painel operacional (F3)</td><td>PC da Finaud — Flask local, porta 5000</td></tr>
+            <tr><td>Dados</td><td>Arquivos JSON locais (mesma estrutura do pipeline atual)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="s7">
+      <h2><span class="sec-num">§7</span> Dado sensível e segurança</h2>
+      <p>Os e-mails contêm dados regulatórios de instituições financeiras — posições, saldos, relatórios de risco. Regras:</p>
+      <ul style="font-size:13px; padding-left:20px; margin:8px 0;">
+        <li style="margin-bottom:6px;">Nada vai para nuvem de terceiros (exceto o texto enviado à API Claude para classificação — sem dados numéricos brutos)</li>
+        <li style="margin-bottom:6px;">Credenciais Gmail ficam no <code>.env</code> local — nunca no git</li>
+        <li style="margin-bottom:6px;">Backups seguem o padrão <code>data/json/pipeline/backups/AAAAMMDD_HHMM_motivo/</code></li>
+      </ul>
+    </section>
+
+    <section id="s8">
+      <h2><span class="sec-num">§8</span> Plano de implantação</h2>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Fase</th><th>O que faz</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Fase 0</strong></td>
+              <td>Catálogo de tipos de e-mail — entender o que existe antes de construir</td>
+              <td><span class="badge badge-ok">Em validação</span> 19 tipos documentados em §15; T04 aguarda confirmação</td>
+            </tr>
+            <tr>
+              <td><strong>Fase 1</strong></td>
+              <td>Protótipo das 3 peças: leitor Gmail + classificador IA + painel mínimo</td>
+              <td><span class="badge badge-warn">Próxima</span></td>
+            </tr>
+            <tr>
+              <td><strong>Fase 2</strong></td>
+              <td>Integração com o painel operacional atual (substituir pipeline)</td>
+              <td>Futura</td>
+            </tr>
+            <tr>
+              <td><strong>Fase 3</strong></td>
+              <td>IA Assistente — aprende dos e-mails e responde como cada caso foi resolvido</td>
+              <td>Futura</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Metodologia da Fase 0</h3>
+      <p style="font-size:13px;">Leitura de 25+ threads reais da caixa <code>oraculo@finaud.com.br</code> via Gmail MCP (ferramenta de análise). Para cada thread: identificar o tipo, o fluxo completo (quem fez o quê e quando) e o critério de conclusão. Resultado: §14 + §15 desta especificação.</p>
+    </section>
+
+    <section id="s9">
+      <h2><span class="sec-num">§9</span> Decisões de design</h2>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Decisão</th><th>O que foi decidido</th><th>Por quê</th></tr></thead>
+          <tbody>
+            <tr><td>Gmail API vs MCP</td><td>Produção usa Gmail API direta; MCP é só para desenvolvimento/análise</td><td>MCP não devolve campo Reply-To</td></tr>
+            <tr><td>Thread como unidade</td><td>O sistema rastreia threads (conversas completas), não mensagens individuais</td><td>Um CADOC = uma thread, não um e-mail</td></tr>
+            <tr><td>Modelo de 2 camadas</td><td>Camada 1 = e-mail (comunicação); Camada 2 = entregas regulatórias (cada categoria rastreada separado)</td><td>Um e-mail pode ter DDR + DRM + DLI — todos precisam de prazo próprio</td></tr>
+            <tr><td>Processamento contínuo</td><td>O leitor roda a cada hora (ou sob demanda), não em lote diário</td><td>Threads de RETORNO_BACEN têm prazo D+3 — precisam aparecer logo</td></tr>
+            <tr><td>CC não utilizado</td><td>O campo CC não é usado para identificar participantes — apenas BCC</td><td>CC é ruído; oraculo@ sempre vem como BCC</td></tr>
+            <tr><td>Filtros de remetente</td><td>Endereços filtrados são configurados na Tela 2 — sem código novo</td><td>Michel (ou a equipe) pode ajustar sem TI (decisão 23/07/2026)</td></tr>
+            <tr><td>Padrão de nomes</td><td><code>ação_domínio.py</code> — ex.: <code>coletor_gmail.py</code>, <code>classificador_ia.py</code></td><td>Aprovado por Michel em 28/07/2026</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="s10">
+      <h2><span class="sec-num">§10</span> Campos que cada e-mail precisa ter</h2>
+      <p>Para classificar e rastrear corretamente, o sistema precisa extrair estes campos de cada mensagem:</p>
+
+      <div class="field-card">
+        <div class="field-name">Campo 1 — De (remetente real)</div>
+        <div class="field-desc">O endereço de quem enviou o e-mail. A Gmail API devolve o endereço real (ex.: <code>noe.santana@amarilfranklin.com.br</code>). Se for <code>@finaud.com.br</code> = colaborador Finaud. Qualquer outro = cliente ou externo.</div>
+      </div>
+      <div class="field-card">
+        <div class="field-name">Campo 2 — Para (destinatário)</div>
+        <div class="field-desc">Para quem o e-mail foi enviado. Em geral <code>suporte@finaud.com.br</code> ou o e-mail pessoal de um colaborador Finaud.</div>
+      </div>
+      <div class="field-card">
+        <div class="field-name">Campo 3 — CC (cópias)</div>
+        <div class="field-desc">Lista de endereços copiados. Usado para identificar outros participantes da thread. O <code>oraculo@finaud.com.br</code> aparece aqui quando a conversa foi copiada para captura.</div>
+      </div>
+      <div class="field-card">
+        <div class="field-name">Campo 4 — Reply-To</div>
+        <div class="field-desc">Para onde as respostas devem ir — campo presente na Gmail API, ausente no MCP. Importante para identificar caixas compartilhadas como remetente real.</div>
+      </div>
+      <div class="field-card">
+        <div class="field-name">Campo 5 — Assunto</div>
+        <div class="field-desc">O título do e-mail. Principal sinal de categoria para a IA. Padrões: código CADOC direto (<code>DDR 2011</code>, <code>DRM (2060)</code>), nome do documento (<code>Balancete de Câmbio</code>), tipo de situação (<code>REJEITADO</code>, <code>INDÍCIO DE PROBLEMA</code>).</div>
+      </div>
+      <div class="field-card" style="border-color: var(--warning-border);">
+        <div class="field-name" style="color: var(--warning-text);">Campo 6 — Corpo ⚠️ PENDENTE</div>
+        <div class="field-desc">O texto da mensagem que a IA vai ler. Aguarda definição: como pré-processar, o que a IA recebe de cada tipo, como tratar histórico acumulado e mensagens curtas demais.</div>
+        <div class="callout callout-warn" style="margin-top:8px; font-size:12px;">Bloqueado por: simulações de threads reais (RETORNO_BACEN, DLO/DLI, SUPORTE)</div>
+      </div>
+      <div class="field-card" style="border-color: var(--warning-border);">
+        <div class="field-name" style="color: var(--warning-text);">Campo 7 — Anexos ⚠️ PENDENTE</div>
+        <div class="field-desc">Lista de arquivos em anexo. Aguarda definição: tipos relevantes por categoria, padrões de nome, o que a IA extrai de cada um.</div>
+      </div>
+      <div class="field-card" style="border-color: var(--warning-border);">
+        <div class="field-name" style="color: var(--warning-text);">Campo 8 — Thread ID e Data ⚠️ PENDENTE</div>
+        <div class="field-desc">ID único da thread (para rastrear toda a conversa) e data de cada mensagem. Aguarda definição: como a IA usa o thread_id; como extrair a data de referência do CADOC.</div>
+      </div>
+    </section>
+
+    <section id="s11">
+      <h2><span class="sec-num">§11</span> Regras de classificação</h2>
+
+      <h3>11.1 — Prioridade dos sinais</h3>
+      <p style="font-size:13px;">A IA usa os sinais em ordem de confiança: (1) Código CADOC no assunto; (2) Padrão de nome de anexo; (3) Conteúdo do corpo; (4) Histórico da thread. Sinais de alta confiança (ex.: ZIP <code>CNPJ_2011_DATA.zip</code>) sobrepõem sinais ambíguos.</p>
+
+      <h3>11.2 — Identificar o lado responsável</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Situação</th><th>Lado responsável</th></tr></thead>
+          <tbody>
+            <tr><td>Finaud entregou remessa — aguarda cliente transmitir</td><td>Cliente</td></tr>
+            <tr><td>Cliente enviou dados — aguarda Finaud processar</td><td>Finaud</td></tr>
+            <tr><td>Finaud orientou — aguarda confirmação do cliente</td><td>Cliente</td></tr>
+            <tr><td>BACEN comunicou — aguarda ação de qualquer parte</td><td>Depende de quem respondeu por último</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>11.3 — Regras por tipo de assunto</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Padrão no assunto</th><th>Categoria</th><th>Notas</th></tr></thead>
+          <tbody>
+            <tr><td><code>DDR</code>, <code>2011</code>, <code>TVM</code>, <code>RD_*</code></td><td><span class="cat cat-ddr">DDR_2011</span></td><td>Prefixo <code>RD_</code> no anexo é sinal de alta confiança</td></tr>
+            <tr><td><code>4111</code>, <code>CADOC 4111</code>, <code>saldos diários</code></td><td><span class="cat cat-4111">CADOC_4111</span></td><td>ZIP <code>CNPJ_4111_DATA.zip</code> = muito alta confiança</td></tr>
+            <tr><td><code>DRM</code>, <code>2060</code></td><td><span class="cat cat-drm">DRM_2060</span></td><td>"COMUNICACAO DE INCONSISTENCIA no DRM" → RETORNO_BACEN</td></tr>
+            <tr><td><code>DLO</code>, <code>2061</code>, <code>COS4010</code> + contexto</td><td><span class="cat cat-dlo">DLO_2061</span></td><td>LEC junto com COSIFs confirma DLO (sem LEC = DLI)</td></tr>
+            <tr><td><code>DLI</code>, <code>2062</code></td><td><span class="cat cat-dli">DLI_2062</span></td><td>Mesmos COSIFs que DLO, sem a planilha LEC</td></tr>
+            <tr><td><code>DRL</code>, <code>2160</code>, <code>Colchão de Liquidez</code></td><td><span class="cat cat-drl">DRL_2160</span></td><td>Frequentemente entregue junto com DDR</td></tr>
+            <tr><td><code>S5</code>, <code>Resultado Quantitativo</code></td><td><span class="cat cat-s5">S5</span></td><td>"S5 para S4" = SUPORTE (mudança prudencial, não entrega)</td></tr>
+            <tr><td><code>REJEITADO</code>, <code>INDÍCIO DE PROBLEMA</code>, <code>VCRD</code></td><td><span class="cat cat-bacen">RETORNO_BACEN</span></td><td>Classificação urgente — D+3 para responder ao BACEN</td></tr>
+            <tr><td><code>FORCAPITAL</code>, <code>projeção de capital</code></td><td><span class="cat cat-force">FORCAPITAL</span></td><td>"projeção" sem contexto ForCapital = verificar</td></tr>
+            <tr><td><code>CADOC_6209</code></td><td>CADOC_6209</td><td>Em mapeamento — poucos exemplos disponíveis</td></tr>
+            <tr><td>Nenhum código + sem CADOC detectável</td><td><span class="cat cat-suporte">SUPORTE</span></td><td>Por eliminação: dúvida, acesso, boleto, reunião…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>11.4 — ZIP do CADOC gerado (sinal universal)</h3>
+      <p style="font-size:13px;">O padrão <code>CNPJ_CADOC_DATA.zip</code> identifica a categoria com muito alta confiança:</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>ZIP</th><th>Categoria</th></tr></thead>
+          <tbody>
+            <tr><td><code>CNPJ_2011_YYYYMMDD.zip</code></td><td><span class="cat cat-ddr">DDR_2011</span></td></tr>
+            <tr><td><code>CNPJ_4111_DATA_I_1.zip</code></td><td><span class="cat cat-4111">CADOC_4111</span></td></tr>
+            <tr><td><code>CNPJ_2060_YYYYMMDD.zip</code></td><td><span class="cat cat-drm">DRM_2060</span></td></tr>
+            <tr><td><code>CNPJ_2061_YYYYMMDD.zip</code></td><td><span class="cat cat-dlo">DLO_2061</span></td></tr>
+            <tr><td><code>CNPJ_2062_YYYYMM_I_1_4010.zip</code></td><td><span class="cat cat-dli">DLI_2062</span></td></tr>
+            <tr><td><code>CNPJ_2160_YYYYMMDD.zip</code></td><td><span class="cat cat-drl">DRL_2160</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="s12">
+      <h2><span class="sec-num">§12</span> Modelo de rastreamento (duas camadas)</h2>
+      <p>Um e-mail pode tratar de mais de um CADOC ao mesmo tempo. O sistema registra cada entrega separadamente:</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Camada</th><th>O que rastreia</th><th>Exemplo</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Camada 1 — E-mail</strong></td><td>A comunicação: quem enviou, quando, o que disse</td><td>Thread "Segue DDR, DRM e DLI — Mirae março/2026"</td></tr>
+            <tr><td><strong>Camada 2 — Entregas</strong></td><td>Uma linha por CADOC mencionado, com prazo próprio</td><td>DDR_2011 + DRM_2060 + DLI_2062, cada um com seu prazo e status</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-info">
+        <strong>Por que duas camadas?</strong> Sem isso, um e-mail com DDR + DRM + DLI geraria apenas uma entrada no painel. Os prazos são diferentes — misturar resulta em entregas perdidas.
+      </div>
+    </section>
+
+    <section id="s13">
+      <h2><span class="sec-num">§13</span> Telas do sistema</h2>
+      <h3>Tela 1 — Painel Operacional</h3>
+      <p style="font-size:13px;">Lista de threads ativas, organizada por prazo:</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Cor</th><th>Urgência</th><th>Critério</th></tr></thead>
+          <tbody>
+            <tr><td>🔴 Vermelho</td><td>Urgente</td><td>Vence em até 3 dias</td></tr>
+            <tr><td>🟡 Amarelo</td><td>Atenção</td><td>Vence em até 7 dias</td></tr>
+            <tr><td>🟢 Verde</td><td>Normal</td><td>Mais de 7 dias</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:13px;">Cada linha mostra: <strong>cliente · categoria · lado (Finaud/cliente) · prazo · última mensagem</strong></p>
+      <h3>Tela 2 — Gestão de Filtros (Remetente)</h3>
+      <p style="font-size:13px;">Configuração onde Michel (ou a equipe) pode adicionar, editar ou remover endereços e assuntos filtrados <strong>sem precisar de intervenção técnica</strong>. Decisão confirmada por Michel em 23/07/2026.</p>
+    </section>
+
+    <section id="s14">
+      <h2><span class="sec-num">§14</span> Catálogo de categorias — o que a IA precisa saber</h2>
+      <p style="font-size:13px; margin-bottom:16px;">Resumo dos sinais de detecção por categoria. O spec completo (com fluxo passo a passo, o que não é, e exemplos de assuntos reais) está em <code>documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md §14</code>.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Categoria</th><th>Sinais de alta confiança</th><th>Cuidado — pode confundir</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="cat cat-ddr">DDR_2011</span></td>
+              <td>Assunto com "DDR" ou "2011"; anexo prefixo <code>RD_</code>; ZIP <code>CNPJ_2011_*.zip</code></td>
+              <td>Não confundir com 4111 (contábil) ou DLO/DLI (mensais)</td>
+            </tr>
+            <tr>
+              <td><span class="cat cat-4111">CADOC_4111</span></td>
+              <td>Assunto "4111", "CADOC 4111"; anexo <code>CADOC 4111.xlsx</code>; ZIP <code>CNPJ_4111_*.zip</code></td>
+              <td>"Conglomerado" no assunto sozinho não identifica — verificar contexto</td>
+            </tr>
+            <tr>
+              <td><span class="cat cat-drm">DRM_2060</span></td>
+              <td>Assunto "DRM 2060", "DRM2060_MMAAAA"; anexo <code>Saldos DRM.xlsx</code></td>
+              <td>"COMUNICACAO DE INCONSISTENCIA no DRM" → é RETORNO_BACEN</td>
+            </tr>
+            <tr>
+              <td><span class="cat cat-dlo">DLO_2061</span></td>
+              <td>COS4010+COS4016 + planilha LEC juntos; "DLO 2061"; ZIP Cos4010.zip</td>
+              <td>Sem LEC = DLI; "ECSA (S5) - COS4010" = S5 (S5 prevalece)</td>
+            </tr>
+            <tr>
+              <td><span class="cat cat-dli">DLI_2062</span></td>
+              <td>"DLI 2062"; COS4010+COS4016 sem LEC; ZIP <code>CNPJ_2062_*.zip</code></td>
+              <td>"Aviso Bacen - DLI" pode ser RETORNO_BACEN — verificar contexto</td>
+            </tr>
+            <tr>
+              <td><span class="cat cat-drl">DRL_2160</span></td>
+              <td>"DRL 2160", "Colchão de Liquidez"; planilha DRL.xlsx; ZIP <code>CNPJ_2160_*.zip</code></td>
+              <td>DRL + DDR no mesmo e-mail → registrar ambos (modelo 2 camadas)</td>
+            </tr>
+            <tr>
+              <td><span class="cat cat-s5">S5</span></td>
+              <td>"S5", "Resultado Quantitativo S5"; COS4010 + contexto S5</td>
+              <td>"S5 para S4" = SUPORTE (mudança de segmento prudencial)</td>
+            </tr>
+            <tr>
+              <td><span class="cat cat-suporte">SUPORTE</span></td>
+              <td>Por eliminação — nenhum código CADOC + dúvida/acesso/reunião/boleto</td>
+              <td>"- Situação -" + nome CADOC = SUPORTE (não entrega)</td>
+            </tr>
+            <tr>
+              <td><span class="cat cat-bacen">RETORNO_BACEN</span></td>
+              <td>"REJEITADO", "INDÍCIO DE PROBLEMA", código VCRD* ou DLO000* no corpo</td>
+              <td>Urgente — D+3 para responder ao BACEN</td>
+            </tr>
+            <tr>
+              <td><span class="cat cat-force">FORCAPITAL</span></td>
+              <td>"FORCAPITAL", "ForCapital", "projeção de capital"; destinatário suporteforcapital@</td>
+              <td>"projeção" de Basileia ou prazo = DLO/DLI, não ForCapital</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="s15">
+      <h2><span class="sec-num">§15</span> Exemplos reais de threads (T01–T19)</h2>
+      <p style="font-size:13px; margin-bottom:12px;">Coletados em 22/07/2026 lendo 25+ threads reais da caixa <code>oraculo@finaud.com.br</code>. Cada tipo documenta o fluxo completo com mensagens reais.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Tipo</th><th>Categoria</th><th>O que acontece</th><th>Como sabemos que acabou</th></tr></thead>
+          <tbody>
+            <tr><td>T01</td><td><span class="cat cat-ddr">DDR_2011</span></td><td>Cliente envia arquivo diário → Finaud processa internamente</td><td>Thread sem resposta = Finaud processou</td></tr>
+            <tr><td>T02</td><td><span class="cat cat-ddr">DDR_2011</span> + <span class="cat cat-drm">DRM</span></td><td>Finaud envia remessas de substituição corrigidas ao cliente</td><td>Finaud entregou os ZIPs</td></tr>
+            <tr><td>T03</td><td><span class="cat cat-ddr">DDR_2011</span></td><td>BACEN comunica variação relevante → cliente encaminha à Finaud</td><td>Cliente diz "darei a tratativa"</td></tr>
+            <tr><td>T04</td><td><span class="cat cat-ddr">DDR_2011</span> (câmbio)</td><td>Western Union envia CAM0050 diário à Finaud</td><td>⚠️ Aguarda confirmação com Michel</td></tr>
+            <tr><td>T05</td><td><span class="cat cat-drm">DRM_2060</span></td><td>BACEN critica inconsistência → Finaud orienta → cliente confirma aceite</td><td>Cliente confirma novo arquivo aceito no STA</td></tr>
+            <tr><td>T06</td><td><span class="cat cat-dlo">DLO_2061</span></td><td>Cliente reporta erro de cálculo → Finaud analisa</td><td>Resolução ocorreu em canal separado</td></tr>
+            <tr><td>T07</td><td><span class="cat cat-dlo">DLO_2061</span></td><td>Reunião ou demanda BACEN → Finaud solicita documentos</td><td>Cliente envia os documentos</td></tr>
+            <tr><td>T08</td><td><span class="cat cat-dlo">DLO_2061</span></td><td>DLO rejeitado pelo BACEN → cliente cobra Finaud</td><td>Finaud confirma ajuste + protocolo STA</td></tr>
+            <tr><td>T09</td><td><span class="cat cat-dlo">DLO_2061</span></td><td>BACEN solicita prestação de esclarecimento sobre indícios</td><td>Esclarecimento prestado dentro do prazo</td></tr>
+            <tr><td>T10</td><td><span class="cat cat-dli">DLI_2062</span></td><td>Cliente (+ contabilidade) envia COSIFs → Finaud calcula e entrega</td><td>Finaud entrega ZIPs; cliente transmite ao BACEN</td></tr>
+            <tr><td>T11</td><td><span class="cat cat-dli">DLI_2062</span></td><td>DLI recebeu indício → Finaud faz substituição</td><td>Cliente confirma recebimento</td></tr>
+            <tr><td>T12</td><td><span class="cat cat-dli">DLI_2062</span> + <span class="cat cat-dlo">DLO</span></td><td>Planilha LEC é responsabilidade da Finaud (não do cliente)</td><td>Finaud conclui LEC + entrega DLO/DLI</td></tr>
+            <tr><td>T13</td><td><span class="cat cat-s5">S5</span></td><td>Cliente envia COS4010 → Finaud calcula e entrega Índice de Basileia</td><td>Finaud entrega relatório (S5 não vai ao BACEN)</td></tr>
+            <tr><td>T14</td><td><span class="cat cat-suporte">SUPORTE</span></td><td>Erro de transmissão ao BACEN → Finaud orienta canal correto</td><td>Finaud orienta; cliente resolve diretamente com BACEN</td></tr>
+            <tr><td>T15</td><td><span class="cat cat-suporte">SUPORTE</span></td><td>Ex-cliente solicita arquivos históricos</td><td>Finaud envia os arquivos</td></tr>
+            <tr><td>T16</td><td>Multi-CADOC</td><td>BACEN detecta problema no 4016/4010 → multi-partes investigam</td><td>4016 já foi substituído</td></tr>
+            <tr><td>T17</td><td><span class="cat cat-4111">CADOC_4111</span></td><td>BACEN detecta indício no 4111 → Finaud instrui regeneração</td><td>Finaud regenera + protocolo STA</td></tr>
+            <tr><td>T18</td><td>FILTRAR</td><td>Alertas automáticos do sistema Finaud (<code>contato@finaud.com.br</code>)</td><td>Não entra na triagem — filtrar automaticamente</td></tr>
+            <tr><td>T19</td><td>FILTRAR</td><td>Notificações FogBugz (desenvolvimento interno)</td><td>Não entra na triagem — filtrar automaticamente</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="s16">
+      <h2><span class="sec-num">§16</span> Padrões observados para guiar a IA</h2>
+      <h3>Colaboradores mais solicitados</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Colaborador</th><th>Tipos frequentes</th></tr></thead>
+          <tbody>
+            <tr><td>Andrea Inacio</td><td>DRM crítica (T05), DLO reunião (T07), DLI substituição (T11), DDR substituição (T02)</td></tr>
+            <tr><td>Monica Macedo</td><td>DDR variação (T03), DLI entrega (T10), DLO rejeitado (T08)</td></tr>
+            <tr><td>Pedro Silva</td><td>DDR diário (T01), DLI substituição (T11)</td></tr>
+            <tr><td>Rodrigo Tiberio</td><td>DLO dúvida técnica (T06), Indícios (T09)</td></tr>
+            <tr><td>Flavio Camargo</td><td>DLI geração (T10), Indícios (T09)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Clientes mais ativos (últimos 30 dias — Fase 0)</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Cliente</th><th>Tipos mais frequentes</th></tr></thead>
+          <tbody>
+            <tr><td>TC / Ignis / CorpServices</td><td>T09, T16, T17, T08 — múltiplos CADOCs</td></tr>
+            <tr><td>Mirae Asset</td><td>T01, T02 — DDR diário + substituição</td></tr>
+            <tr><td>Amaril Franklin</td><td>T01 — DDR diário</td></tr>
+            <tr><td>Accredito SCD</td><td>T01, T10 — DDR + DLI</td></tr>
+            <tr><td>Planner</td><td>T07, T11 — DLO demanda + DLI substituição</td></tr>
+            <tr><td>Western Union</td><td>T04 — câmbio diário (aguarda confirmação)</td></tr>
+            <tr><td>Oliveira Trust</td><td>T05 — DRM inconsistência</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="sa">
+      <h2><span class="sec-num">A</span> Apêndice A — Colaboradores Finaud identificados</h2>
+      <p style="font-size:13px; margin-bottom:12px;">Lista pode estar incompleta. O sistema não depende dela para identificar colaboradores Finaud — qualquer <code>@finaud.com.br</code> ou <code>@finaudtec.com.br</code> é tratado como Finaud automaticamente.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Nome</th><th>E-mail</th><th>Papel</th></tr></thead>
+          <tbody>
+            <tr><td>Andrea Inacio</td><td><code>andrea.inacio@finaud.com.br</code></td><td>Coordenadora de Suporte</td></tr>
+            <tr><td>Monica Macedo</td><td><code>monica.macedo@finaud.com.br</code></td><td>Analista de Suporte Jr.</td></tr>
+            <tr><td>Pedro Silva</td><td><code>pedro.silva@finaud.com.br</code></td><td>Analista de Suporte</td></tr>
+            <tr><td>Rodrigo Tiberio</td><td><code>rodrigo.tiberio@finaud.com.br</code></td><td>Analista de Suporte</td></tr>
+            <tr><td>Flavio Camargo</td><td><code>flavio.camargo@finaud.com.br</code></td><td>Analista de Suporte</td></tr>
+            <tr><td>Lucas Vellani</td><td><code>lucas.vellani@finaud.com.br</code></td><td>Analista de Suporte</td></tr>
+            <tr><td>Sarah Sá</td><td><code>sarah.sa@finaud.com.br</code></td><td>Analista (regeneração de arquivos — T16/T17)</td></tr>
+            <tr><td>Luiz Antonio</td><td><code>luiz.antonio@finaudtec.com.br</code></td><td>Colaborador Finaud (empresa FinaudTec)</td></tr>
+            <tr><td>suporte@finaud.com.br</td><td>—</td><td>Caixa compartilhada (grupo)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+  const links = document.querySelectorAll('.sidebar a');
+  const sections = document.querySelectorAll('section[id]');
+
+  function setActive(id) {
+    links.forEach(a => {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + id);
+    });
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) setActive(e.target.id); });
+  }, { rootMargin: '-60px 0px -60% 0px', threshold: 0 });
+
+  sections.forEach(s => observer.observe(s));
+
+  links.forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+</script>

@@ -15,8 +15,8 @@ Michel conhece bem o negócio mas **não é da área de TI**: não conhece nomes
 estruturas de dados nem convenções do sistema. Regras obrigatórias:
 
 - **Traduzir sempre:** ao usar qualquer nome técnico, explicar em seguida o que ele faz em
-  linguagem simples. Exemplo: não dizer apenas `alvo_triagem_auto` — dizer "o campo no arquivo
-  de dados que guarda a categoria do CADOC desta thread (`alvo_triagem_auto`)".
+  linguagem simples. Exemplo: não dizer apenas `thread_id` — dizer "o código único que identifica
+  esta conversa de e-mail no Gmail (`thread_id`)".
 - **Confirmar o entendimento:** após explicar algo que pode gerar dúvida, perguntar "entendeu
   dessa forma?" — não aceitar "ok" como confirmação se houver risco de dupla interpretação.
 - **Não assumir conhecimento:** não presumir que Michel sabe o que um nome de função, campo ou
@@ -46,15 +46,17 @@ Antes de criar qualquer nome — função, arquivo, variável, campo, classe, co
 
 | Nome proposto | O que significa em linguagem simples |
 |---|---|
-| `_par_conclusivo` | "verifica se o cliente concordou logo após a Finaud instruir" |
+| `coletor_gmail.py` | "lê os e-mails da caixa oraculo@finaud.com.br" |
 | ... | ... |
 
 O Michel escolhe ou sugere um nome alternativo antes de qualquer linha de código ser escrita.
 
-**Aplica para:** funções em `helpers.py`/`motor.py`/supervisores, arquivos novos, campos novos em JSON, variáveis que aparecem em logs ou na tela.
+**Aplica para:** funções em qualquer arquivo do projeto, arquivos novos, campos novos em JSON, variáveis que aparecem em logs ou na tela.
 **Não aplica para:** nomes internos temporários usados só dentro de um bloco (ex.: variável `i` num loop).
 
 > **Por que esta regra existe:** em 24/06/2026 o nome `_par_conclusivo` foi criado sem aprovação. Michel identificou que não é intuitivo — "par" é jargão interno sem significado claro para quem lê de fora. Nomes ruins acumulam e tornam o sistema difícil de entender e manter.
+>
+> **Padrão aprovado (28/07/2026):** `ação_domínio.py` — ex.: `coletor_gmail.py`, `classificador_ia.py`.
 
 ### Protocolo "parquear e continuar" — dúvidas que surgem no meio do trabalho
 
@@ -126,26 +128,26 @@ Se houver dúvida sobre um item específico, verificar também no `REGISTRO_CORR
 
 ---
 
-### Regra: consultar antes de explorar — e documentar só o que confirmou
+### Regra: consultar a especificação antes de explorar — e documentar só o que confirmou
 
 Antes de trabalhar com qualquer parte do sistema (dados, código, regras):
-1. **Consultar primeiro** o `MAPA_DO_PROJETO.md` e os arquivos que ele referencia
+1. **Consultar primeiro** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` e os arquivos que ela referencia
 2. **Encontrou** o que precisa → usar direto, sem tentativa e erro
 3. **Não encontrou** → ir ao código/arquivo e descobrir o caminho
 4. **Só após confirmar que o que encontrou está correto** → atualizar o documento certo imediatamente
 5. **Nunca documentar suspeita** — só fato confirmado
 
-Isso vale para estrutura de dados, regras de negócio, fluxos do pipeline — qualquer coisa. O ciclo garante que o conhecimento acumula na documentação e não fica preso numa sessão.
+Isso vale para estrutura de dados, regras de negócio, fluxos do sistema — qualquer coisa. O ciclo garante que o conhecimento acumula na documentação e não fica preso numa sessão.
 
-## Regra obrigatória: backup antes de qualquer script do pipeline
+## Regra obrigatória: backup antes de qualquer operação que modifique dados
 
-Antes de executar qualquer script que grave arquivos JSON do pipeline — ou qualquer outra
-rotina que modifique dados — fazer backup organizado em pasta própria com contexto.
+Antes de executar qualquer rotina que grave ou altere arquivos de dados, fazer backup organizado
+em pasta própria com contexto.
 
 **Estrutura obrigatória de backup (padrão do projeto):**
 
 ```
-data/json/pipeline/backups/
+data/backups/
 └── AAAAMMDD_HHMM_motivo/          ← pasta com data + motivo curto
     ├── arquivo1.json               ← cópia dos arquivos que serão modificados
     ├── arquivo2.json
@@ -156,56 +158,22 @@ data/json/pipeline/backups/
 ```
 Data: DD/MM/AAAA HH:MM
 Motivo: [por que este backup foi feito]
-O que vai mudar: [o que o script/rotina vai alterar]
+O que vai mudar: [o que a rotina vai alterar]
 Quem autorizou: Michel
-Como restaurar: copiar os arquivos desta pasta para data/json/pipeline/
+Como restaurar: copiar os arquivos desta pasta para o local original
 ```
 
 **Nunca** fazer backup com arquivo solto na mesma pasta de produção (`arquivo.json.backup_$ts`).
-Todo backup vai para `data/json/pipeline/backups/AAAAMMDD_HHMM_motivo/`.
-
-Esta regra vale para **qualquer rotina do sistema** — scripts do pipeline, migrações,
-limpezas, backfills, ou qualquer operação que modifique arquivos de dados.
+Todo backup vai para `data/backups/AAAAMMDD_HHMM_motivo/`.
 
 **Powershell para criar a estrutura:**
 ```powershell
 $ts = Get-Date -Format "yyyyMMdd_HHmm"
-$pasta = "data/json/pipeline/backups/${ts}_motivo_aqui"
+$pasta = "data/backups/${ts}_motivo_aqui"
 New-Item -ItemType Directory -Path $pasta
 Copy-Item "arquivo.json" "$pasta/arquivo.json"
 # Criar CONTEXTO.md com as informações obrigatórias
 ```
-
-Arquivos que exigem backup antes de modificar:
-- `data/json/pipeline/02_classificação_dados_brutos_gmail_editado.json` (script 05)
-- `data/json/pipeline/03_integrador_dados_site.json` (script 09)
-- `data/json/pipeline/threads_aguardando_auto.json` (script 11)
-- `data/json/pipeline/threads_concluidas_auto.json` (script 11)
-
-## Regra obrigatória: checar dependências antes de qualquer script do pipeline
-
-Antes de rodar qualquer script do pipeline, verificar o estado das dependências:
-
-```powershell
-cd D:\oraculo_360_finaud; python executar_tudo.py --status
-```
-
-Se aparecer aviso de dependência desatualizada, rodar o script indicado primeiro.
-Nunca usar `ORACULO_IGNORAR_DEPS=1` sem aprovação explícita do usuário.
-
-## Regra obrigatória: nunca usar ORACULO_PRESERVAR_CLASSIFICACAO_FORA_PERIODO=0 para corrigir responsável ou campos de classificação
-
-A flag `ORACULO_PRESERVAR_CLASSIFICACAO_FORA_PERIODO=0` força o Script 05 a reextrair o texto bruto das mensagens do Gmail — incluindo o campo `corpo`. Para e-mails do Outlook com HTML complexo (VML, CSS inline), isso pode sobrescrever um `corpo` limpo por um HTML bruto com CSS visível.
-
-**Regra:** esta flag só deve ser usada quando o próprio texto das mensagens precisar ser recoletado do Gmail (ex.: nova coleta, mudança no extrator de texto). **Nunca** usá-la para corrigir responsável, De/Para, CADOC ou qualquer campo de classificação.
-
-**Para corrigir apenas responsável ou campos de classificação:** usar o patch cirúrgico no JSON — restaurar só os campos afetados a partir do backup, sem reextrair o `corpo`.
-
-> **Por que esta regra existe:** em 17/07/2026, ao corrigir o responsável suporte@finaud.com.br, a flag foi usada para forçar o reprocessamento. O Script 05 reextaiu o `corpo` de 3 threads (TVM, Monte Bravo Cadastro Ações, Indício Problema Bacen) do HTML bruto do Outlook, substituindo textos limpos por CSS VML visível no painel.
-
-## Regra: nunca rodar dois scripts do pipeline em paralelo
-
-Scripts do pipeline gravam nos mesmos arquivos JSON. Rodar em paralelo causa corrupção. Sempre rodar em sequência e aguardar a conclusão de cada um.
 
 ## Regra: toda implementação de recurso externo precisa estar documentada
 
@@ -230,52 +198,14 @@ Recursos EXTERNOS (tarefas agendadas, webhooks, integrações cloud, APIs, etc.)
 
 ---
 
-## Auditoria de documentação — diária e mensal (automática)
-
-Sistema de validação de buracos em documentação interna que roda automaticamente:
-
-### 1. Auditoria Diária (no `/fechar`)
-- **O que faz:** valida SESSAO_ATUAL.md, PENDENCIAS.md, REGISTRO_CORRECOES.md
-- **Quando:** ao encerrar cada sessão (parte do `/fechar`)
-- **Impacto:** +2-3 segundos no `/fechar`; avisa se encontrar problemas (mas não bloqueia commit)
-- **Checklist:** cardinality (AG+CO=Total) · recency (última carga ≤ 7 dias) · status consistency · linkage · workflow coherence
-- **Script:** `python scripts/auditar_documentacao.py`
-- **Resultado:** arquivo `documentações/AUDITORIA_ULTIMACARGA_VALIDACAO.md` (auto-gerado)
-
-### 2. Auditoria Mensal (agendada, 1º do mês às 09:00)
-- **O que faz:** auditoria completa + análise cruzada + cria pendência se encontrar buraco
-- **Quando:** 1º do mês às 09:00 (cloud-based, não precisa seu PC ligado)
-- **Impacto:** zero impacto no seu workflow
-- **Script:** `python scripts/auditar_documentacao_completa.py --gera-pendencia`
-- **Resultado:** arquivo `documentações/AUDITORIA_MENSAL_YYYYMM.md` + entrada em PENDENCIAS.md (se houver problema)
-- **Notificação:** no próximo `/iniciar`, aviso "⚠️ Auditoria Mensal encontrou X problema(s) — ver PENDENCIAS.md"
-
-### Como configurar a rotina mensal (FAZER UMA VEZ)
-No início de uma sessão, execute:
-```powershell
-/schedule create "Auditoria Mensal Oráculo 360" --cron "0 9 1 * *" --prompt "..."
-```
-Ou peça ao Claude: *"configura a auditoria mensal agendada"* — ele rodará `/schedule` automaticamente.
-
-A tarefa é **durável** — roda todo mês, 1º dia às 09:00 (São Paulo), sem você fazer nada.
-
-## Regra: toda mudança vem acompanhada do seu teste (rede de segurança)
+## Regra: toda mudança de código vem acompanhada do seu teste
 
 A suíte em `tests/` é a rede que evita quebrar produção. Para **não deixá-la desatualizada** conforme o sistema cresce:
 
-- **Toda mudança de código de produção → teste no mesmo commit.** Vale para QUALQUER alteração, não só
-  regra/motor: **bug, performance, mudança de contrato/refactor** também. O estilo segue
-  `tests/test_triagem_categorias.py` (detectores) e `tests/test_motor_triagem.py` (funções do motor).
-  - ⚠️ **A armadilha (já aconteceu — fix do script 13, 2026-06-16):** "os testes existentes passaram"
-    NÃO dispensa o teste novo. Testes passando provam que você **não quebrou** o que existia; não provam
-    que o **novo comportamento/contrato** está coberto. Se mudou o que uma função faz ou devolve
-    (ex.: `set`→`frozenset`), **trave isso com um teste**.
-  - **Única exceção:** mudança que comprovadamente não tem o que testar (docs, comentário, rename puro).
-    Nesse caso, **registrar no REGISTRO_CORRECOES.md a frase "sem teste: <motivo>"** — a decisão fica
-    explícita, nunca implícita.
-- **Antes de mover um item para "CÓDIGO CORRIGIDO" / antes de commitar → rodar** `pytest tests/ -q -m "not agent and not pdf and not integration"`; zero regressões é pré-requisito.
-- Há **3 camadas** rodando os MESMOS testes: manual (durante o trabalho), **pre-commit** local (ativar uma vez: `git config core.hooksPath .githooks`) e **CI no GitHub** (`.github/workflows/tests.yml`, usa `requirements-test.txt`). Não existe "cópia separada" de testes — eles vivem só em `tests/`.
-- Ao mexer no motor/regras, conferir buracos com `scripts/verificar_cobertura_motor.py` e priorizar o que decide status (AGUARDANDO/CONCLUÍDO).
+- **Toda mudança de código de produção → teste no mesmo commit.** Vale para QUALQUER alteração: bug, performance, mudança de contrato, refactor.
+  - ⚠️ **A armadilha (já aconteceu):** "os testes existentes passaram" NÃO dispensa o teste novo. Testes passando provam que você **não quebrou** o que existia; não provam que o **novo comportamento** está coberto. Se mudou o que uma função faz ou devolve, **trave isso com um teste**.
+  - **Única exceção:** mudança que comprovadamente não tem o que testar (docs, comentário, rename puro). Nesse caso, **registrar no REGISTRO_CORRECOES.md a frase "sem teste: <motivo>"** — a decisão fica explícita, nunca implícita.
+- **Antes de commitar → rodar** `pytest tests/ -q`; zero regressões é pré-requisito.
 
 ## Regra: toda decisão importante vai para o lugar certo — na hora, não só no /fechar
 
@@ -289,11 +219,10 @@ trás; não é onde a atualização acontece.
 |---|---|
 | Regra nova de como trabalhar (ex.: "nunca fazer X") | `CLAUDE.md` |
 | Preferência do Michel sobre processo ou comunicação | Memória automática |
-| Correção técnica no sistema (bug, regra de triagem) | `REGISTRO_CORRECOES.md` (entrada datada) |
-| Análise sobre o negócio ou regras do BACEN | `documentações/` (arquivo relevante) |
+| Correção técnica no sistema (bug, regra de classificação) | `REGISTRO_CORRECOES.md` (entrada datada) |
+| Análise sobre o negócio ou regras do BACEN | `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` (seção correspondente) |
 | Pendência nova identificada no chat | `PENDENCIAS.md` |
 | Pendência resolvida | Sai do `PENDENCIAS.md` → entra no `REGISTRO_CORRECOES.md` |
-| Documento em `documentações/` criado (novo) ou obsoleto (movido para `_archive/`) | `documentações/MAPA_DO_PROJETO.md` seção 5 — no mesmo commit |
 
 **Regra de ouro:** se a decisão mudaria como trabalhamos daqui pra frente, ela não pode ficar só no chat.
 
@@ -306,17 +235,14 @@ Toda correção — de **regra, bug ou performance** — é registrada **no mesm
 (não só ao fechar a sessão), com **entrada datada (HH:MM)** descrevendo, no mínimo:
 
 - **🔎 Em miúdos** — uma linha muito curta em linguagem **não-técnica**, pra você (o dono) conseguir ler
-  de boa (ex.: "o script cacheou 3 funções que rodavam 770 mil vezes" em vez de nomes de função);
+  de boa (ex.: "o classificador estava ignorando e-mails sem assunto" em vez de nomes de função);
 - **Problema** — o que estava errado e por quê (micro + macro + impacto);
 - **Correção** — o que foi mudado, em quais arquivos;
-- **Validação** — simulação/prova + `pytest` (✅ VALIDADO ou ⚠️ VALIDAÇÃO PENDENTE com critério).
+- **Validação** — prova + `pytest` (✅ VALIDADO ou ⚠️ VALIDAÇÃO PENDENTE com critério).
 
 **Por que é obrigatório:** é o que permite a qualquer agente (a) **antes de corrigir**, ver se o
 problema **já foi resolvido** e não refazer trabalho; e (b) checar se a correção nova **não desfaz nem
-quebra** uma anterior. Por isso o INTAKE manda **ler o REGISTRO antes** (passo 1) e o PROTOCOLO manda
-**registrar ao terminar** (passo 7). Sem o registro, o histórico perde o rastro e os erros voltam.
-A linha "Em miúdos" garante que **você** (não o robô) consiga entender o que foi feito sem precisar
-decodificar jargão técnico.
+quebra** uma anterior. Sem o registro, o histórico perde o rastro e os erros voltam.
 
 ## Regra: pendência resolvida SAI do PENDENCIAS.md e vira histórico no REGISTRO_CORRECOES.md
 
@@ -329,130 +255,45 @@ com entrada datada (Problema → Correção → Validação); (2) **só então r
 Não deixar o item em dois lugares, nem marcá-lo "✅ concluído" e mantê-lo na lista de pendências.
 
 > ⚠️ **Ordem é de segurança, nunca o contrário:** primeiro grava no REGISTRO, depois apaga do
-> PENDENCIAS. Remover sem ter registrado = perder histórico. Itens só "verificados, sem ação"
-> (nada a corrigir) também saem do PENDENCIAS, com uma linha no REGISTRO dizendo o que foi verificado.
-
-> 📌 **Backlog histórico:** as seções "✅ CONCLUÍDO" antigas que ainda existem no PENDENCIAS.md são
-> dívida desta regra — podem ser migradas para o REGISTRO aos poucos, sob OK do usuário (é edição
-> grande; nunca apagar em massa sem confirmar que o histórico está preservado).
-
-## Protocolo obrigatório: 7 passos para qualquer alteração no motor/triagem
-
-Toda mudança em `scripts/triagem/motor.py`, `scripts/triagem/helpers.py` ou qualquer regra de
-triagem (AGUARDANDO/CONCLUÍDO) segue estes 7 passos **nesta ordem**, sem pular nenhum:
-
-**Passo 0 — Escopo da regra (OBRIGATÓRIO antes de qualquer coisa):** responder explicitamente:
-> *"Esta regra é específica de um CADOC/supervisor, ou se aplica a todos?"*
-> - **Universal** (ex.: "cliente concordou após instrução da Finaud") → implementar em **todos** os
->   supervisores no **mesmo commit**. Verificar a lista completa: `ddr4111`, `dli`, `dlo`, `drm`,
->   `drsac`, `forcapital`, `retorno_bacen`, `s5`, `suporte`, `cadoc6209`.
-> - **Específica** (ex.: regra exclusiva de DDR_2011) → implementar só no supervisor relevante e
->   **justificar** por que os outros não precisam.
->
-> Referência real: G3 (2026-06-24) — regra universal implementada só em `ddr4111.py`; os outros 9
-> supervisores ficaram sem a regra. Identificado e registrado como pendência urgente no mesmo dia.
-
-**Passo 1 — Simular:** antes de alterar qualquer código, rodar um script de simulação que mostra
-exatamente quais threads seriam afetadas e em qual direção (AG→CO, CO→AG). Mostrar a lista ao usuário
-e confirmar que o resultado é o esperado. *Nunca* alterar sem antes saber o impacto real nos dados.
-Se a regra for universal (Passo 0), simular em cada supervisor antes de implementar.
-
-**Passo 2 — Corrigir o código:** editar `helpers.py` e/ou `motor.py` com a mudança mínima necessária.
-Não aproveitar para limpar código adjacente — foco na correção cirúrgica.
-
-**Passo 3 — Backfill (varredura retroativa):** rodar o motor sobre as threads já triadas para
-aplicar a nova regra ao histórico. O script de backfill deve:
-- Mostrar a lista de threads que serão movidas e o novo status proposto;
-- Aguardar confirmação explícita do usuário antes de gravar;
-- Usar a data real da última mensagem da thread (não `date.today()`);
-- Fazer backup dos arquivos JSON antes de gravar (`$ts = Get-Date -Format "yyyyMMdd_HHmm"`);
-- Rodar com `ORACULO_CARGA_EM_CURSO=1` — sem isso o guard de imutabilidade bloqueia a reclassificação de threads fora de uma carga oficial.
-
-**Passo 4 — Validação dupla:** confirmar que (a) os casos-alvo foram corrigidos e (b) os outros
-casos que estavam certos **não foram alterados**. Sem esta verificação não avançar.
-
-**Passo 5 — Testes:** rodar `pytest tests/ -q -m "not agent and not pdf and not integration"` e
-confirmar **zero regressões**. Adicionar testes novos que cobrem o caso corrigido (detector novo,
-regra alterada, motor com o novo comportamento). Sem novos testes, justificar explicitamente no
-REGISTRO_CORRECOES.md com "sem teste: <motivo>".
-
-**Passo 6 — Registrar:** antes de commitar, escrever entrada datada (HH:MM) no
-`documentações/REGISTRO_CORRECOES.md` com: (a) linha "Em miúdos" em linguagem simples; (b) Problema;
-(c) Correção; (d) Validação. Marcar ✅ VALIDADO ou ⚠️ VALIDAÇÃO PENDENTE com critério.
-
-**Passo 7 — Commit:** fazer a auto-declaração obrigatória ("Mudei código de produção? SIM. Teste
-incluído? SIM.") e commitar com mensagem no padrão `fix(motor):` ou `fix(triagem):` + descrição
-em português. O pre-commit hook roda os testes automaticamente — se falhar, corrigir antes.
-
-> ⚠️ **Por que cada passo existe:** o Passo 0 evita que regras universais fiquem presas num único
-> supervisor; o Passo 1 evita "consertar" threads que estavam certas; o Passo 3 impede que o histórico
-> fique inconsistente com a nova regra; o Passo 4 é a proteção contra falsos positivos silenciosos.
-> Pular qualquer um deles é o caminho mais curto para corrupção de dados.
-> Referências reais: fix G1 (2026-06-16) — Monte Bravo movida para CONCLUÍDO com data real 2026-02-03.
-> G3 (2026-06-24) — regra universal implementada só em ddr4111.py; outros 9 supervisores sem cobertura.
+> PENDENCIAS. Remover sem ter registrado = perder histórico.
 
 ---
 
 ## Regra obrigatória: verificar a fonte primária, mesmo em perguntas que parecem simples
 
-Toda afirmação sobre o estado do sistema — status de uma thread (AGUARDANDO/CONCLUÍDO/PENDENTE),
-regra aplicada, valor de um campo específico — exige checar a **fonte primária daquele dado**,
-não um campo adjacente ou parecido.
+Toda afirmação sobre o estado do sistema — status de uma thread, regra aplicada, valor de um campo
+específico — exige checar a **fonte primária daquele dado**, não um campo adjacente ou parecido.
 
-**Fontes primárias por tipo de pergunta:**
-
-| Pergunta | Fonte primária | Não usar como atalho |
-|---|---|---|
-| Status de triagem de uma thread (AG/CO) | `threads_aguardando_auto.json` / `threads_concluidas_auto.json` | `status_processo` do integrador (é o status do processo BACEN, campo diferente) |
-| Regra aplicada pelo motor | campo `regra` + `motivo` no JSON de CO/AG | suposição sobre como o motor "deveria" funcionar |
-| Comportamento do código | ler o arquivo `.py` | lembrança de sessões anteriores ou nome de função |
-
-**Não existe "pergunta pequena demais" para pular a verificação.** Uma resposta errada sobre o
-status de uma thread é tão perigosa quanto uma correção errada no código — pode levar a uma decisão
-tomada em cima de diagnóstico falso.
+**Princípio:** antes de responder sobre o estado de qualquer dado, identificar qual arquivo ou
+campo é a **fonte definitiva** daquela informação e ler diretamente de lá.
 
 **Sinal de alerta (parar e verificar de novo):** se o primeiro dado encontrado já "confirma" uma
 teoria que você mesmo levantou na resposta anterior, isso é suspeito — é o momento de cruzar com
 a fonte primária antes de responder, não de aceitar porque "bateu".
 
-> **Por que esta regra existe:** em 30/06/2026, ao investigar a thread da Atual Câmbio (P-AUD-03),
-> a IA leu o campo `status_processo` do integrador (`PENDENTE`) e afirmou que a thread estava
-> pendente de triagem — sem checar o arquivo que realmente define status de triagem. A thread
-> estava, na verdade, em CONCLUÍDO (`threads_concluidas_auto.json`), classificada pela regra R1
-> com um motivo de texto contraditório ("aguarda tratamento"). A IA só descobriu o erro porque o
-> usuário insistiu em perguntar o status real. Em seguida, a IA propôs corrigir a thread sem antes
-> investigar a causa raiz da contradição — outro atalho perigoso, coberto pela regra "três
-> verificações antes de qualquer correção" (já existente neste documento).
+> **Por que esta regra existe:** em 30/06/2026, ao investigar uma thread, a IA leu um campo
+> auxiliar e afirmou um status incorreto — sem checar o arquivo que realmente define aquele dado.
+> A IA só descobriu o erro porque o usuário insistiu em perguntar o status real.
 
 ## Regra: verificar o sistema inteiro antes de afirmar que algo não existe
 
 Nunca declarar "não existe", "não é usado" ou "não tem impacto" sem ter verificado:
-- Todos os `.py` relevantes (scripts/, triagem/, painel, executar_tudo, pipeline_jobs)
+- Todos os `.py` relevantes do projeto
 - Todos os templates `.html`
 - Todos os `tests/`
-- Arquivos de configuração e JSON de config
+- Arquivos de configuração e dados
 
-**Padrão obrigatório:** grep pelo termo em `**/*.py`, depois em `**/*.html`, depois em config se relevante — só então responder. Uma busca incompleta pode deixar passar dependência oculta, declarar algo não usado quando é, ou ignorar impacto cascata em scripts downstream.
+**Padrão obrigatório:** grep pelo termo nos arquivos `.py`, depois em `.html`, depois em config se relevante — só então responder. Uma busca incompleta pode deixar passar dependência oculta ou ignorar impacto em outros módulos.
 
 ## Regra: três verificações antes de qualquer correção
 
 Antes de propor ou aplicar qualquer correção, executar:
 
 1. **Já foi feito?** — grep em `documentações/REGISTRO_CORRECOES.md` pelo sintoma, função e arquivo. Se encontrar, mostrar o que foi feito e quando — não refazer.
-2. **Já está pendente?** — ler `documentações/PENDENCIAS.md`. Se o item existe, atualizar em vez de duplicar. Verificar se entra no Pacote A (05→09→11) ou B (09→11) já aberto.
+2. **Já está pendente?** — ler `documentações/PENDENCIAS.md`. Se o item existe, atualizar em vez de duplicar.
 3. **Quebra algo já corrigido?** — para cada arquivo que será modificado, listar correções anteriores no REGISTRO e verificar conflito com a nova lógica.
 
 Só após as três verificações: propor a correção com o que muda, por quê, o que afeta, o que não afeta.
-
-## Regra: varrer VALIDAÇÃO PENDENTE ao fechar qualquer ciclo de pipeline
-
-Após rodar 09+11 ou 05+09+11, antes de declarar o ciclo concluído:
-
-```powershell
-Select-String -Path "documentações/REGISTRO_CORRECOES.md" -Pattern "VALIDAÇÃO PENDENTE"
-```
-
-Se retornar qualquer resultado, o ciclo **não está fechado**. Para cada entrada: verificar o critério mensurável, confirmar no painel ou JSON, e substituir `⚠️ VALIDAÇÃO PENDENTE` por `✅ VALIDADO em [data]: [o que foi confirmado]`. Só fechar quando o grep retornar zero resultados.
 
 ## Regra: propor texto antes de gravar conhecimento em documento
 
@@ -469,9 +310,9 @@ Ao detectar que falta informação num documento — seja criar seção nova ou 
 
 Ao encerrar qualquer sessão (Bloco 1.8 do `/fechar`), verificar se o que foi feito hoje tornou
 alguma memória desatualizada:
-- Memória técnica (`tecnico/`) → algo mudou no código ou no sistema que ela descreve?
-- Memória de projeto (`projeto/`) → algum fato registrado já não é mais verdadeiro?
-- Memória de comportamento (`comportamento/`) → alguma preferência foi confirmada ou contrariada?
+- Memória técnica → algo mudou no código ou no sistema que ela descreve?
+- Memória de projeto → algum fato registrado já não é mais verdadeiro?
+- Memória de comportamento → alguma preferência foi confirmada ou contrariada?
 
 Após revisar, registrar no `SESSAO_ATUAL.md`:
 ```
@@ -479,5 +320,24 @@ Após revisar, registrar no `SESSAO_ATUAL.md`:
 ```
 Essa linha é o sinal que o `/iniciar` usa para saber se a sessão anterior foi fechada corretamente.
 
+## Regra: abrir o artifact da especificação ao iniciar toda sessão
+
+Ao executar o `/iniciar`, **sempre** abrir o artifact da especificação da nova arquitetura
+usando a ferramenta Artifact com os parâmetros abaixo — antes de apresentar o resumo da situação:
+
+```
+file_path: documentações/spec_nova_arquitetura.html
+url: https://claude.ai/code/artifact/4eb2c74e-27d9-41a2-ad7c-6bc5b1d6ab01
+favicon: 🔭
+description: Especificação completa da nova arquitetura — Gmail API + IA Classificadora
+```
+
+O arquivo HTML está em `documentações/spec_nova_arquitetura.html`. Se precisar atualizar o
+conteúdo (ex.: após escrever os Campos 6, 7, 8), editar o HTML e republicar com o mesmo `url`
+para manter o mesmo link.
+
+---
+
 ## Contexto do projeto
-Sistema de triagem regulatória de e-mails da Finaud. Pipeline numerado (01–16). Tela web em Flask (localhost:5000).
+Nova arquitetura: Gmail API + IA Classificadora (substitui pipeline de 16 scripts).
+Tela web em Flask (localhost:5000). Especificação completa: `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md`.
