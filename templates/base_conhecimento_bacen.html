@@ -1,0 +1,433 @@
+{% extends "layout.html" %}
+
+{% block title %}Aprendizado IA{% endblock %}
+{% block header_title %}Aprendizado IA{% endblock %}
+{% block header_subtitle %}Críticas recebidas do Banco Central e orientações aplicadas pela Finaud{% endblock %}
+
+{% block date_selector %}{% endblock %}
+
+{% block head %}
+<style>
+  /* ── Toolbar ── */
+  .bc-toolbar {
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    background:var(--bg-card); border:1px solid var(--border);
+    border-radius:12px; padding:12px 16px; margin-bottom:20px;
+  }
+  .bc-toolbar-label {
+    font-size:12px; font-weight:600; color:var(--text-muted); white-space:nowrap;
+  }
+  .bc-select {
+    background:var(--input-bg,#1e2130); border:1px solid var(--input-border,rgba(255,255,255,.1));
+    color:var(--text-main); border-radius:8px; padding:7px 12px;
+    font-size:13px; outline:none; min-width:180px; cursor:pointer;
+  }
+  .bc-busca {
+    background:var(--input-bg,#1e2130); border:1px solid var(--input-border,rgba(255,255,255,.1));
+    color:var(--text-main); border-radius:8px; padding:7px 12px;
+    font-size:13px; outline:none; min-width:300px; flex:1;
+  }
+  .bc-busca::placeholder { color:var(--text-muted); }
+  .bc-count {
+    margin-left:auto; font-size:12.5px; color:var(--text-muted);
+    font-weight:600; white-space:nowrap;
+  }
+  .bc-count b { color:var(--text-main); }
+
+  /* ── Card ── */
+  .bc-card {
+    background:var(--bg-card); border:1px solid var(--border);
+    border-radius:14px; margin-bottom:20px; overflow:hidden;
+  }
+  .bc-card-header {
+    display:flex; align-items:center; gap:12px;
+    padding:14px 18px 13px; border-bottom:1px solid var(--border);
+    background:rgba(255,255,255,.02);
+  }
+  .bc-doc-badge {
+    padding:4px 12px; border-radius:8px;
+    font-size:12px; font-weight:800;
+    background:rgba(59,130,246,.2); color:#93c5fd; white-space:nowrap;
+  }
+  .bc-codigo {
+    font-size:16px; font-weight:800; color:var(--text-main);
+  }
+  .bc-sem-codigo {
+    font-size:13px; font-style:italic; color:var(--text-muted);
+  }
+  .bc-n-clientes {
+    margin-left:auto; font-size:12px; font-weight:700;
+    color:var(--text-muted); background:rgba(255,255,255,.05);
+    padding:3px 10px; border-radius:999px; white-space:nowrap;
+  }
+  .bc-n-clientes b { color:#c4b5fd; }
+
+  /* ── Corpo: duas colunas ── */
+  .bc-body { display:grid; grid-template-columns:1fr 1fr; }
+  @media (max-width:860px) { .bc-body { grid-template-columns:1fr; } }
+
+  .bc-col-crit, .bc-col-sol { padding:16px 18px; }
+  .bc-col-crit { border-right:1px solid var(--border); }
+
+  .bc-col-label {
+    font-size:10.5px; font-weight:800; text-transform:uppercase;
+    letter-spacing:.6px; margin-bottom:10px;
+    display:flex; align-items:center; gap:6px;
+  }
+  .bc-col-crit .bc-col-label { color:#fca5a5; }
+  .bc-col-sol  .bc-col-label { color:#86efac; }
+
+  .bc-col-texto {
+    font-size:13px; line-height:1.65; color:var(--text-main);
+    white-space:pre-wrap; word-break:break-word;
+  }
+  .bc-col-sol .bc-col-texto { font-weight:500; }
+
+  /* Collapse */
+  .bc-wrap {
+    max-height:160px; overflow:hidden; position:relative;
+    transition:max-height .3s ease;
+  }
+  .bc-wrap.expanded { max-height:2000px; }
+  .bc-wrap:not(.expanded)::after {
+    content:''; position:absolute; bottom:0; left:0; right:0; height:48px;
+    background:linear-gradient(transparent, var(--bg-card,#1a1d27));
+    pointer-events:none;
+  }
+  .bc-ver-mais {
+    font-size:11.5px; font-weight:600; color:var(--accent,#7c3aed);
+    cursor:pointer; margin-top:7px; display:inline-block; user-select:none;
+  }
+  .bc-ver-mais:hover { text-decoration:underline; }
+
+  /* ── Clientes ── */
+  .bc-clientes {
+    border-top:1px solid var(--border); padding:12px 18px;
+    background:rgba(255,255,255,.015);
+  }
+  .bc-clientes-label {
+    font-size:10.5px; font-weight:800; text-transform:uppercase;
+    letter-spacing:.6px; color:var(--text-muted); margin-bottom:10px;
+    display:flex; align-items:center; gap:6px;
+  }
+  .bc-clientes-lista { display:flex; flex-wrap:wrap; gap:8px; }
+  .bc-chip {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:5px 12px; border-radius:8px;
+    background:rgba(255,255,255,.06); border:1px solid var(--border);
+    font-size:12.5px; color:var(--text-main); font-weight:500;
+  }
+  .bc-descricao {
+    font-size:12px; color:var(--text-muted); font-style:italic;
+    min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    flex:1;
+  }
+  .bc-chip-db {
+    font-size:10.5px; color:var(--text-muted);
+    padding:0 2px;
+  }
+  .bc-chip-cosif {
+    font-size:10px; font-weight:600; font-family:monospace;
+    padding:1px 6px; border-radius:5px;
+    background:rgba(59,130,246,.15); color:#93c5fd;
+  }
+  .bc-chip-rec {
+    font-size:10.5px; font-weight:800;
+    padding:1px 7px; border-radius:6px;
+    background:rgba(239,68,68,.2); color:#fca5a5;
+  }
+
+  /* ── Crítica vaga ── */
+  .bc-critica-vaga-aviso {
+    display:flex; align-items:flex-start; gap:8px;
+    background:#f0f0ff; border:1px solid #c8c8e8;
+    border-left:3px solid #8DC63F;
+    border-radius:8px; padding:10px 14px; margin-bottom:12px;
+    font-size:12px; color:#3333A8; line-height:1.55;
+  }
+  .bc-critica-vaga-aviso svg { flex-shrink:0; margin-top:1px; }
+
+  /* ── Estados ── */
+  .bc-loading, .bc-empty {
+    padding:60px 20px; text-align:center; color:var(--text-muted); font-size:13.5px;
+  }
+
+  /* ── Chip clicável ── */
+  .bc-chip[data-cli] { cursor:pointer; transition:background .15s, border-color .15s; }
+  .bc-chip[data-cli]:hover {
+    background:rgba(124,58,237,.25); border-color:rgba(124,58,237,.5);
+  }
+
+  /* ── Modal detalhe ── */
+  .bc-modal-backdrop {
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,.6);
+    z-index:1000; align-items:center; justify-content:center;
+  }
+  .bc-modal-backdrop.open { display:flex; }
+  .bc-modal {
+    background:var(--bg-card); border:1px solid var(--border);
+    border-radius:16px; width:100%; max-width:480px; padding:24px 26px;
+    box-shadow:0 20px 60px rgba(0,0,0,.5); position:relative;
+  }
+  .bc-modal-close {
+    position:absolute; top:14px; right:16px; font-size:18px;
+    color:var(--text-muted); cursor:pointer; line-height:1;
+    background:none; border:none; padding:0;
+  }
+  .bc-modal-close:hover { color:var(--text-main); }
+  .bc-modal-empresa {
+    font-size:16px; font-weight:800; color:var(--text-main); margin-bottom:18px;
+    padding-right:24px;
+  }
+  .bc-modal-grid {
+    display:grid; grid-template-columns:auto 1fr; gap:8px 14px;
+    align-items:start;
+  }
+  .bc-modal-label {
+    font-size:10.5px; font-weight:800; text-transform:uppercase;
+    letter-spacing:.5px; color:var(--text-muted); padding-top:2px;
+    white-space:nowrap;
+  }
+  .bc-modal-val {
+    font-size:13px; color:var(--text-main); font-weight:500;
+    word-break:break-word;
+  }
+  .bc-modal-val.muted { color:var(--text-muted); font-style:italic; }
+  .bc-modal-cosif-wrap { display:flex; flex-wrap:wrap; gap:5px; }
+  .bc-prazo-badge {
+    display:inline-block; padding:2px 9px; border-radius:6px;
+    background:rgba(251,191,36,.15); color:#fcd34d;
+    font-size:12px; font-weight:700; font-family:monospace;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-[1500px] mx-auto pb-12">
+
+  <!-- TOOLBAR -->
+  <div class="bc-toolbar">
+    <span class="bc-toolbar-label">Documento</span>
+    <select class="bc-select" id="bcFiltroDoc" onchange="bcFiltrar()">
+      <option value="">Todos</option>
+    </select>
+    <input class="bc-busca" type="text" id="bcBusca"
+           placeholder="🔍  Buscar código, empresa, conta cosif..."
+           oninput="bcFiltrar()">
+    <span class="bc-count" id="bcCount"><b>—</b> tipos de crítica</span>
+  </div>
+
+  <!-- LISTA -->
+  <div id="bcLista">
+    <div class="bc-loading">Carregando…</div>
+  </div>
+
+</div>
+
+<!-- MODAL DETALHE CLIENTE -->
+<div class="bc-modal-backdrop" id="bcModal" onclick="bcModalFechar(event)">
+  <div class="bc-modal">
+    <button class="bc-modal-close" onclick="bcModalFechar(null)">✕</button>
+    <div class="bc-modal-empresa" id="bcModalEmpresa"></div>
+    <div class="bc-modal-grid" id="bcModalGrid"></div>
+  </div>
+</div>
+
+<script>
+let _bcDados = [];
+let _bcClientes = {};
+
+function bcModalAbrir(idx) {
+  const c = _bcClientes[idx];
+  if (!c) return;
+  document.getElementById('bcModalEmpresa').textContent = c.nome;
+  const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const row = (label, val, cls='') =>
+    val ? `<span class="bc-modal-label">${label}</span><span class="bc-modal-val ${cls}">${val}</span>` : '';
+
+  const vagaHtml = c.critica_vaga
+    ? `<span class="bc-modal-label" style="grid-column:1/-1"></span>
+       <div style="grid-column:1/-1;background:#f0f0ff;border:1px solid #c8c8e8;
+                   border-left:3px solid #8DC63F;border-radius:7px;
+                   padding:9px 12px;font-size:12px;color:#3333A8;line-height:1.55;">
+         ℹ️ Este cliente relatou a crítica sem encaminhar o documento original do BACEN.
+         O texto da crítica no card é a descrição do cliente — consulte a solução para a orientação técnica.
+       </div>`
+    : '';
+
+  const cosifHtml = (c.cosifs||[]).length
+    ? `<span class="bc-modal-label">COSIF</span>
+       <span class="bc-modal-val">
+         <span class="bc-modal-cosif-wrap">${(c.cosifs).map(cf=>`<span class="bc-chip-cosif">${esc(cf)}</span>`).join('')}</span>
+       </span>`
+    : row('COSIF', '—', 'muted');
+
+  const prazoHtml = c.prazo
+    ? `<span class="bc-modal-label">Prazo</span>
+       <span class="bc-modal-val"><span class="bc-prazo-badge">⏱ ${esc(c.prazo)}</span></span>`
+    : row('Prazo', '—', 'muted');
+
+  document.getElementById('bcModalGrid').innerHTML = [
+    vagaHtml,
+    row('Data-base',  c.data_base  ? esc(c.data_base)  : null) || row('Data-base',  '—', 'muted'),
+    row('Protocolo',  c.protocolo  ? esc(c.protocolo)  : null) || row('Protocolo',  '—', 'muted'),
+    prazoHtml,
+    cosifHtml,
+    c.vezes > 1 ? row('Recorrência', `${c.vezes}× neste grupo`) : '',
+  ].join('');
+
+  document.getElementById('bcModal').classList.add('open');
+}
+
+function bcModalFechar(e) {
+  if (e && e.target !== document.getElementById('bcModal')) return;
+  document.getElementById('bcModal').classList.remove('open');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('bcModal').classList.remove('open');
+});
+
+function bcRenderCard(g, i) {
+  const idC = `bcc${i}`, idS = `bcs${i}`;
+  const nCli = g.clientes.length;
+
+  const chips = g.clientes.map((c, ci) => {
+    const idx  = `${i}_${ci}`;
+    const rec  = c.vezes > 1 ? `<span class="bc-chip-rec">${c.vezes}×</span>` : '';
+    const db   = c.data_base ? `<span class="bc-chip-db">${c.data_base}</span>` : '';
+    const cosifTags = (c.cosifs || []).map(cf =>
+      `<span class="bc-chip-cosif">${cf}</span>`
+    ).join('');
+    const prazoTag = c.prazo ? `<span class="bc-prazo-badge">⏱ ${c.prazo}</span>` : '';
+    _bcClientes[idx] = c;
+    return `<span class="bc-chip" data-cli="${idx}">${c.nome}${db}${cosifTags}${prazoTag}${rec}</span>`;
+  }).join('');
+
+  const codigoHtml = g.codigo
+    ? `<span class="bc-codigo">${g.codigo}</span>
+       ${g.descricao ? `<span class="bc-descricao">— ${g.descricao}</span>` : ''}`
+    : `<span class="bc-sem-codigo">Sem código identificado</span>`;
+
+  const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const critica = esc(g.critica);
+  const solucao = esc(g.solucao);
+  const txtBusca = esc([g.documento, g.codigo||'', g.critica, g.solucao,
+                         g.clientes.map(c=>c.nome).join(' ')].join(' ').toLowerCase());
+
+  return `
+  <div class="bc-card"
+       data-doc="${esc(g.documento.toLowerCase())}"
+       data-texto="${txtBusca}">
+    <div class="bc-card-header">
+      <span class="bc-doc-badge">${g.documento}</span>
+      ${codigoHtml}
+      <span class="bc-n-clientes">
+        <b>${nCli}</b> cliente${nCli!==1?'s':''} afetado${nCli!==1?'s':''}
+      </span>
+    </div>
+
+    <div class="bc-body">
+      <div class="bc-col-crit">
+        <div class="bc-col-label">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+               stroke="#fca5a5" stroke-width="2.5">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          Crítica do BACEN
+        </div>
+        <div class="bc-wrap" id="${idC}">
+          <div class="bc-col-texto">${critica || '<i style="color:var(--text-muted)">—</i>'}</div>
+        </div>
+        <span class="bc-ver-mais" onclick="bcToggle('${idC}',this)">▾ ver mais</span>
+      </div>
+      <div class="bc-col-sol">
+        <div class="bc-col-label">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+               stroke="#86efac" stroke-width="2.5">
+            <path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/>
+          </svg>
+          O que a Finaud fez
+        </div>
+        <div class="bc-wrap" id="${idS}">
+          <div class="bc-col-texto">${solucao || '<i style="color:var(--text-muted)">—</i>'}</div>
+        </div>
+        <span class="bc-ver-mais" onclick="bcToggle('${idS}',this)">▾ ver mais</span>
+      </div>
+    </div>
+
+    <div class="bc-clientes">
+      <div class="bc-clientes-label">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.5">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        Clientes afetados (${nCli})
+      </div>
+      <div class="bc-clientes-lista">${chips}</div>
+    </div>
+  </div>`;
+}
+
+function bcToggle(id, btn) {
+  const el = document.getElementById(id);
+  el.classList.toggle('expanded');
+  btn.textContent = el.classList.contains('expanded') ? '▴ ver menos' : '▾ ver mais';
+}
+
+function bcFiltrar() {
+  const doc   = document.getElementById('bcFiltroDoc').value;
+  const busca = document.getElementById('bcBusca').value.toLowerCase();
+  const lista = _bcDados.filter(g => {
+    const okDoc = !doc || g.documento === doc;
+    const txt   = [g.documento, g.codigo||'', g.critica, g.solucao,
+                   g.clientes.map(c=>c.nome).join(' ')].join(' ').toLowerCase();
+    const okBusca = !busca || txt.includes(busca);
+    return okDoc && okBusca;
+  });
+  const n = lista.length;
+  document.getElementById('bcCount').innerHTML =
+    `<b>${n}</b> tipo${n!==1?'s':''} de crítica`;
+  const container = document.getElementById('bcLista');
+  if (!lista.length) {
+    container.innerHTML = '<div class="bc-empty">Nenhum resultado encontrado.</div>';
+    return;
+  }
+  container.innerHTML = lista.map((g, i) => bcRenderCard(g, i)).join('');
+  container.querySelectorAll('.bc-chip[data-cli]').forEach(el => {
+    el.addEventListener('click', () => bcModalAbrir(el.dataset.cli));
+  });
+}
+
+async function bcCarregar() {
+  try {
+    const r = await fetch('/api/base_conhecimento_bacen');
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
+    if (d.erro) throw new Error(d.erro);
+    _bcDados = d.grupos || [];
+
+    // Popula dropdown com documentos únicos presentes nos dados
+    const sel = document.getElementById('bcFiltroDoc');
+    const docs = [...new Set(_bcDados.map(g => g.documento))].sort();
+    docs.forEach(doc => {
+      const opt = document.createElement('option');
+      opt.value = doc;
+      opt.textContent = doc;
+      sel.appendChild(opt);
+    });
+
+    bcFiltrar();
+  } catch (e) {
+    document.getElementById('bcLista').innerHTML =
+      `<div class="bc-empty">Erro ao carregar: ${e.message}</div>`;
+  }
+}
+
+bcCarregar();
+</script>
+{% endblock %}

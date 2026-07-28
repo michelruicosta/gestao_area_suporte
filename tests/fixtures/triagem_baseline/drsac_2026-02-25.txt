@@ -1,0 +1,5 @@
+[triagem_auto_drsac] PASTA_JSON=D:\oraculo_360_finaud\data\json\pipeline
+[triagem_auto_drsac] data_ref=2026-02-25 candidatos pós-filtro manual
+  threadIds excluídos (fecho automático alvo='DRSAC' com data < data_ref): 123
+  Removidos auto anteriores: concluidas=0, aguardando=0
+  Novos Concluído: 0, Novos Aguardando: 0

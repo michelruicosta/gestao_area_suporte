@@ -1,0 +1,325 @@
+{% extends "layout.html" %}
+
+{% block title %}FOG · Casos{% endblock %}
+
+{% block header_title %}Casos FOG{% endblock %}
+{% block header_subtitle %}Listagem de casos abertos e gestão de prazos{% endblock %}
+
+{# --- REMOVE O CALENDÁRIO DESTA PÁGINA --- #}
+{% block date_selector %}{% endblock %}
+
+{% block head %}
+<style>
+    /* Estilos Dinâmicos para os Cards */
+    .card-tarefa {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border);
+        transition: all 0.2s;
+        color: var(--text-main);
+    }
+    .card-tarefa:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        border-color: var(--accent);
+    }
+    
+    /* Inputs e Selects Dinâmicos */
+    .input-theme {
+        background-color: var(--input-bg);
+        border: 1px solid var(--border);
+        color: var(--text-main);
+    }
+    .input-theme:focus { border-color: var(--accent); outline: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+    <div class="max-w-6xl mx-auto pb-12">
+
+        <div class="bg-[var(--bg-card)] p-4 rounded-xl shadow-sm mb-6 border border-[var(--border)]">
+            <div class="flex flex-wrap gap-4 items-center">
+                
+                <div class="flex-1 min-w-[200px] relative">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-xs z-10"></i>
+                    <input type="text" id="inputBusca" onkeyup="filtrar()" 
+                           placeholder="Pesquisar Caso, título ou responsável..." 
+                           style="padding-left: 35px !important;"
+                           class="w-full input-theme text-xs rounded-lg py-2.5 relative z-0">
+                </div>
+
+                <span class="text-[var(--text-muted)] text-sm font-bold border-l border-[var(--border)] pl-4"><i class="fas fa-filter mr-1"></i> Filtros:</span>
+                
+                <select id="filtroProjeto" onchange="filtrar()" class="input-theme text-xs rounded-lg p-2.5">
+                    <option value="todos">Todos os Projetos</option>
+                    {% set projetos_detectados = [] %}
+                    {% for t in tarefas %}
+                        {% if t.projeto and t.projeto not in projetos_detectados %}
+                            {% set _ = projetos_detectados.append(t.projeto) %}
+                        {% endif %}
+                    {% endfor %}
+                    {% for p in projetos_detectados|sort %}
+                        <option value="{{ p }}">{{ p }}</option>
+                    {% endfor %}
+                </select>
+
+                <select id="filtroResponsavel" onchange="filtrar()" class="input-theme text-xs rounded-lg p-2.5">
+                    <option value="todos">Todos os Responsáveis</option>
+                    
+                    {% if ativos_fog %}
+                        {# MODO 1: Lista Oficial da API (Apenas Ativos) #}
+                        {% for r in ativos_fog|sort %}
+                            <option value="{{ r }}">{{ r }}</option>
+                        {% endfor %}
+                    {% else %}
+                        {# MODO 2 (Fallback): Se a API falhar, mostra quem tem tarefa na lista #}
+                        {% set responsaveis = [] %}
+                        {% for t in tarefas %}
+                            {% if t.responsavel_exibicao not in responsaveis %}
+                                {% set _ = responsaveis.append(t.responsavel_exibicao) %}
+                            {% endif %}
+                        {% endfor %}
+                        {% for r in responsaveis|sort %}<option value="{{ r }}">{{ r }}</option>{% endfor %}
+                    {% endif %}
+                </select>
+
+                <select id="filtroStatus" onchange="filtrar()" class="input-theme text-xs rounded-lg p-2.5">
+                    <option value="todos">Todos os Status</option>
+                    <option value="Ativo">Apenas Ativos</option>
+                    <option value="Fechado">Apenas Fechados</option>
+                </select>
+
+                <div class="flex items-center gap-2 ml-auto border-l border-[var(--border)] pl-4">
+                    <span class="text-[var(--text-muted)] text-sm font-bold"><i class="fas fa-sort mr-1"></i> Ordem:</span>
+                    <select id="ordemData" onchange="ordenar()" class="bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs rounded-lg p-2.5 font-bold">
+                        <option value="desc">Mais Recentes</option>
+                        <option value="asc">Mais Antigos</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div id="containerTarefas" class="flex flex-col gap-3">
+            {% for tarefa in tarefas %}
+            
+            {% set is_fechado = 'Fechado' in tarefa.status %}
+            {% set idade = tarefa.idade_dias|default(0)|int %}
+            
+            {% set border_class = 'border-l-4 border-l-emerald-500' %}
+            {% set opacity_class = '' %}
+            
+            {% if not is_fechado %}
+                {% if idade >= 15 %}
+                    {% set border_class = 'border-l-4 border-l-red-500' %}
+                    {% set alerta_tag = 'critico' %}
+                {% elif idade >= 8 %}
+                    {% set border_class = 'border-l-4 border-l-yellow-500' %}
+                    {% set alerta_tag = 'atencao' %}
+                {% else %}
+                    {% set alerta_tag = 'normal' %}
+                {% endif %}
+            {% else %}
+                {% set border_class = 'border-l-4 border-l-slate-600' %}
+                {% set opacity_class = 'opacity-60 grayscale' %}
+                {% set alerta_tag = 'fechado' %}
+            {% endif %}
+
+            <div class="card-tarefa relative group rounded-xl p-5 {{ border_class }} {{ opacity_class }}"
+                 data-projeto="{{ tarefa.projeto or '' }}"
+                 data-responsavel="{{ tarefa.responsavel_exibicao or '' }}"
+                 data-status="{{ tarefa.status or '' }}"
+                 data-alerta="{{ alerta_tag }}"
+                 data-dataiso="{{ tarefa.data }}">
+                
+                {% if not is_fechado and idade >= 15 %}
+                <div class="absolute top-0 right-0 bg-red-500/10 text-red-400 text-[9px] font-bold px-3 py-1 rounded-bl-xl border-b border-l border-red-500/20 z-10">
+                    <i class="fas fa-exclamation-triangle mr-1"></i> PARALISADO (+15 DIAS)
+                </div>
+                {% endif %}
+
+                <div class="flex flex-col lg:flex-row gap-6 items-start">
+                    
+                    <div class="flex-1 min-w-0 flex flex-col justify-center">
+                        
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                                #{{ tarefa.id if tarefa.id else '---' }}
+                            </span>
+                            <span class="w-1 h-1 bg-[var(--text-muted)] rounded-full"></span>
+                            <span class="text-[10px] font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20 uppercase tracking-wide truncate max-w-[250px]">
+                                {{ tarefa.projeto or 'Geral' }}
+                            </span>
+                        </div>
+
+                        <h3 class="font-bold text-base text-[var(--text-main)] leading-snug mb-2 group-hover:text-blue-400 transition-colors">
+                            {{ tarefa.assunto }}
+                        </h3>
+
+                        <div class="flex items-center gap-3 text-xs text-[var(--text-muted)]">
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full {{ 'bg-slate-500' if is_fechado else 'bg-emerald-500' }}"></span>
+                                <span class="font-medium">{{ tarefa.status }}</span>
+                            </div>
+                            <span class="text-[var(--border)]">|</span>
+                            <span class="font-medium text-[var(--text-muted)]">{{ tarefa.origem }}</span>
+                        </div>
+                    </div>
+
+                    <div class="flex lg:flex-col gap-2 shrink-0 w-full lg:w-auto min-w-[140px]">
+                        <div class="flex items-center justify-between px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-dark)]">
+                            <span class="text-[9px] font-bold uppercase text-[var(--text-muted)] mr-2">Idade</span>
+                            <span class="text-xs font-bold {{ 'text-red-400' if idade >= 15 else 'text-[var(--text-main)]' }}">
+                                <i class="far fa-calendar-alt mr-1 opacity-50"></i>{{ idade }}d
+                            </span>
+                        </div>
+                        
+                        <div class="flex items-center justify-between px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-dark)]">
+                            <span class="text-[9px] font-bold uppercase text-[var(--text-muted)] mr-2">Custódia</span>
+                            <span class="text-xs font-bold text-[var(--text-main)]">
+                                <i class="far fa-clock mr-1 opacity-50"></i>{{ tarefa.tempo_custodia }}d
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="flex lg:flex-col items-center lg:items-end gap-3 shrink-0 w-full lg:w-auto border-t lg:border-t-0 lg:border-l border-[var(--border)] pt-3 lg:pt-0 lg:pl-6 justify-between lg:justify-center">
+                        
+                        <div class="text-right">
+                            <div class="text-[10px] text-[var(--text-muted)] font-bold uppercase mb-0.5">Responsável</div>
+                            <div class="text-xs font-bold text-[var(--text-main)] truncate max-w-[120px]">{{ tarefa.responsavel_exibicao or '---' }}</div>
+                        </div>
+
+                        <div class="text-right hidden lg:block">
+                            <div class="text-[10px] text-[var(--text-muted)] font-bold uppercase mb-0.5">Abertura</div>
+                            <div class="text-xs font-mono text-[var(--text-muted)]">
+                                {% if tarefa.data %}
+                                    {% if 'T' in tarefa.data %}
+                                        {{ tarefa.data[8:10] }}/{{ tarefa.data[5:7] }}/{{ tarefa.data[0:4] }}
+                                    {% else %}
+                                        {{ tarefa.data[:10] }}
+                                    {% endif %}
+                                {% else %}
+                                    --/--
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% if tarefa.origem == 'FogBugz' %}
+                        <a href="https://finaud.fogbugz.com/f/cases/{{ tarefa.id }}" target="_blank"
+                           class="flex items-center gap-2 px-4 py-1.5 bg-blue-600/10 text-blue-400 rounded-lg border border-blue-500/20 hover:bg-blue-600 hover:text-white transition-all text-[10px] font-bold uppercase tracking-wider">
+                            <span>Abrir</span> <i class="fas fa-external-link-alt"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% set fog_id = tarefa.id | string %}
+                {% if chat_por_fog and fog_id in chat_por_fog %}
+                {% set msgs_chat = chat_por_fog[fog_id] %}
+                <div class="mt-4 pt-3 border-t border-[var(--border)]">
+                    <button onclick="toggleChat('chat-{{ fog_id }}')"
+                            class="flex items-center gap-2 text-xs text-blue-400 hover:text-blue-300 transition-colors font-semibold">
+                        <i class="fab fa-google text-[10px]"></i>
+                        <span>DISCUSSÕES PELO GOOGLE CHAT</span>
+                        <span class="bg-blue-500/20 text-blue-400 text-[9px] font-bold px-1.5 py-0.5 rounded border border-blue-500/20">
+                            {{ msgs_chat | length }}
+                        </span>
+                        <i class="fas fa-chevron-down text-[9px] transition-transform" id="icon-{{ fog_id }}"></i>
+                    </button>
+                    <div id="chat-{{ fog_id }}" class="hidden mt-3 flex flex-col gap-2">
+                        {% for msg in msgs_chat %}
+                        <div class="bg-[var(--bg-dark)] rounded-lg px-3 py-2 border border-[var(--border)]">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-[10px] font-bold text-blue-400">{{ msg.autor }}</span>
+                                <span class="text-[9px] text-[var(--text-muted)]">{{ msg.data }}</span>
+                            </div>
+                            <p class="text-xs text-[var(--text-main)] leading-relaxed">{{ msg.texto }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        let filtroAlertaURL = '';
+
+        window.onload = function() {
+            document.getElementById('ordemData').value = 'desc';
+            
+            const params = new URLSearchParams(window.location.search);
+            const pStatus = params.get('status');
+            const pAlerta = params.get('alerta');
+
+            if(pStatus) {
+                const sel = document.getElementById('filtroStatus');
+                if(sel) sel.value = pStatus;
+            }
+            
+            if(pAlerta) {
+                filtroAlertaURL = pAlerta;
+            }
+
+            ordenar();
+            filtrar();
+        };
+
+        function filtrar() {
+            const termoBusca = document.getElementById('inputBusca').value.toUpperCase();
+            const projeto = document.getElementById('filtroProjeto').value.toUpperCase();
+            const responsavel = document.getElementById('filtroResponsavel').value;
+            const status = document.getElementById('filtroStatus').value;
+            const cards = document.getElementsByClassName('card-tarefa');
+
+            for (let card of cards) {
+                const textoDoCard = card.innerText.toUpperCase();
+                const cardProj = card.getAttribute('data-projeto').toUpperCase();
+                const cardResp = card.getAttribute('data-responsavel');
+                const cardStat = card.getAttribute('data-status');
+                const cardAlerta = card.getAttribute('data-alerta');
+
+                let show = true;
+                
+                if (termoBusca && !textoDoCard.includes(termoBusca)) show = false;
+                if (projeto !== 'TODOS' && !cardProj.includes(projeto)) show = false;
+                if (responsavel !== 'todos' && cardResp !== responsavel) show = false;
+                
+                if (status !== 'todos') {
+                    if (status === 'Ativo' && cardStat.includes('Fechado')) show = false;
+                    if (status === 'Fechado' && !cardStat.includes('Fechado')) show = false;
+                }
+
+                if (filtroAlertaURL && cardAlerta !== filtroAlertaURL) {
+                    show = false; 
+                }
+
+                card.style.display = show ? "block" : "none";
+            }
+        }
+
+        function toggleChat(id) {
+            const el = document.getElementById(id);
+            const fogId = id.replace('chat-', '');
+            const icon = document.getElementById('icon-' + fogId);
+            el.classList.toggle('hidden');
+            if (icon) icon.classList.toggle('rotate-180');
+        }
+
+        function ordenar() {
+            const container = document.getElementById('containerTarefas');
+            const ordem = document.getElementById('ordemData').value;
+            const cards = Array.from(document.getElementsByClassName('card-tarefa'));
+
+            cards.sort((a, b) => {
+                const dataA = new Date(a.getAttribute('data-dataiso'));
+                const dataB = new Date(b.getAttribute('data-dataiso'));
+                return ordem === 'asc' ? dataA - dataB : dataB - dataA;
+            });
+
+            cards.forEach(card => container.appendChild(card));
+        }
+    </script>
+{% endblock %}

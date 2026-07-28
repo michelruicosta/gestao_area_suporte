@@ -1,0 +1,25 @@
+#!/bin/sh
+# Robô local: roda os testes ANTES de cada commit. Se quebrar, bloqueia o commit.
+# Ativar (uma vez por máquina):  git config core.hooksPath .githooks
+# Emergência (pular, use com parcimônia):  git commit --no-verify
+
+# Detecta o python do venv (Windows e Unix)
+if [ -f "./venv/Scripts/python.exe" ]; then
+  PYTHON="./venv/Scripts/python.exe"
+elif [ -f "./venv/bin/python" ]; then
+  PYTHON="./venv/bin/python"
+else
+  PYTHON="python"
+fi
+
+echo "[pre-commit] rodando testes (pytest, recorte offline)..."
+"$PYTHON" -m pytest tests/test_triagem_categorias.py tests/test_motor_triagem.py tests/test_triagem_helpers.py tests/test_consistencia_co_motivo.py -q
+rc=$?
+if [ "$rc" -ne 0 ]; then
+  echo ""
+  echo "[pre-commit] >>> TESTES FALHARAM — commit BLOQUEADO. <<<"
+  echo "[pre-commit] Corrija os testes, ou (só em emergência) use: git commit --no-verify"
+  exit 1
+fi
+echo "[pre-commit] testes OK — seguindo com o commit."
+exit 0

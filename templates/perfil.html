@@ -1,0 +1,77 @@
+{% extends "layout.html" %}
+
+{% block title %}Meu Perfil{% endblock %}
+{% block header_title %}Meu Perfil{% endblock %}
+{% block header_subtitle %}Gerenciamento de Conta{% endblock %}
+
+{# --- REMOVE O CALENDÁRIO DESTA PÁGINA --- #}
+{% block date_selector %}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto mt-4 pb-12">
+
+    <div class="bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] overflow-hidden shadow-lg transition-colors duration-300">
+        
+        <div class="h-32 bg-gradient-to-r from-blue-600 to-purple-600"></div>
+
+        <div class="px-8 pb-8">
+            <div class="relative -mt-12 mb-6 flex justify-between items-end">
+                <div class="w-24 h-24 rounded-full bg-[var(--bg-dark)] border-4 border-[var(--bg-card)] flex items-center justify-center text-3xl font-bold text-blue-500 shadow-md transition-colors duration-300">
+                    {{ current_user.name[:2].upper() if current_user.is_authenticated else 'VI' }}
+                </div>
+                
+                <div class="mb-2 px-3 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase">
+                    {{ current_user.role if current_user.is_authenticated else 'Visitante' }}
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-[var(--text-main)] transition-colors duration-300">
+                    {{ current_user.name if current_user.is_authenticated else 'Visitante' }}
+                </h2>
+                <p class="text-[var(--text-muted)] transition-colors duration-300">
+                    {{ current_user.id if current_user.is_authenticated else 'guest' }}@finaud.com
+                </p>
+            </div>
+
+            <hr class="border-[var(--border)] my-6 transition-colors duration-300">
+
+            <div class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">ID Usuário</label>
+                        <div class="w-full p-3 rounded-lg bg-[var(--bg-dark)] border border-[var(--border)] text-[var(--text-muted)] font-mono text-sm transition-colors duration-300 flex items-center gap-2">
+                            <i class="fas fa-id-badge opacity-50"></i>
+                            {{ current_user.id if current_user.is_authenticated else '---' }}
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">Departamento</label>
+                        <div class="w-full p-3 rounded-lg bg-[var(--bg-dark)] border border-[var(--border)] text-[var(--text-muted)] text-sm transition-colors duration-300 flex items-center gap-2">
+                            <i class="fas fa-building opacity-50"></i>
+                            {{ current_user.depto if current_user.depto else 'Tecnologia & Risco' }}
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">Status do Acesso</label>
+                    <div class="w-full p-3 rounded-lg bg-[var(--bg-dark)] border border-[var(--border)] text-emerald-500 font-bold text-sm transition-colors duration-300 flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                        Online Agora
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-10 flex gap-4">
+                <a href="{{ url_for('alterar_senha') }}" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition text-sm shadow-lg shadow-blue-500/20 flex items-center">
+                    <i class="fas fa-key mr-2"></i> Alterar Senha
+                </a>
+                <a href="{{ url_for('editar_dados') }}" class="px-5 py-2.5 border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--bg-dark)] hover:text-[var(--text-main)] rounded-lg font-medium transition text-sm flex items-center">
+                    <i class="fas fa-pen mr-2"></i> Editar Dados
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

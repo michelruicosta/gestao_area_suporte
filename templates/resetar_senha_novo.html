@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redefinir Senha | Finaudtec</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #020617;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.1) 0px, transparent 50%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .logo-clean { mix-blend-mode: screen; filter: brightness(1.2); }
+    </style>
+</head>
+<body>
+
+    <div class="w-full max-w-md px-6 animate-fade">
+        <div class="text-center mb-8">
+            <img src="{{ url_for('static', filename='img/logo_finaud.png') }}" class="h-16 w-auto mx-auto logo-clean mb-4">
+            <h2 class="text-xl font-bold text-white">Nova Senha</h2>
+            <p class="text-slate-400 text-xs mt-1">Defina sua nova credencial de acesso.</p>
+        </div>
+
+        <div class="glass-card rounded-3xl p-8">
+            <form action="{{ url_for('atualizar_senha_esquecida') }}" method="POST" class="space-y-5">
+                
+                <div>
+                    <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Nova Senha</label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                        <input type="password" id="nova_senha" name="nova_senha" required onkeyup="validarSenha()"
+                               style="padding-left: 45px !important;"
+                               class="w-full bg-slate-900/50 border border-slate-700 text-white text-sm rounded-xl py-3 pr-12 outline-none focus:border-blue-500 transition-all"
+                               placeholder="Digite a nova senha">
+                        <button type="button" onclick="toggleSenha('nova_senha', this)" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
+                            <i class="far fa-eye"></i>
+                        </button>
+                    </div>
+                    <div class="w-full h-1 bg-slate-800 mt-3 rounded-full overflow-hidden">
+                        <div id="barra-forca" class="h-full bg-red-500 transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Confirmar Senha</label>
+                    <div class="relative">
+                        <i class="fas fa-check-double absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                        <input type="password" id="confirma_senha" name="confirma_senha" required onkeyup="validarMatch()"
+                               style="padding-left: 45px !important;"
+                               class="w-full bg-slate-900/50 border border-slate-700 text-white text-sm rounded-xl py-3 pr-12 outline-none focus:border-blue-500 transition-all"
+                               placeholder="Repita a senha">
+                        <button type="button" onclick="toggleSenha('confirma_senha', this)" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
+                            <i class="far fa-eye"></i>
+                        </button>
+                    </div>
+                    <p id="msg-match" class="text-[10px] text-red-400 mt-2 hidden">As senhas não coincidem.</p>
+                </div>
+
+                <div class="bg-slate-900/50 rounded-xl p-4 border border-slate-700/50">
+                    <ul class="space-y-2 text-[10px] text-slate-500 uppercase font-bold tracking-tight">
+                        <li id="req-length" class="flex items-center gap-2"><i class="far fa-circle"></i> 8+ Caracteres</li>
+                        <li id="req-upper" class="flex items-center gap-2"><i class="far fa-circle"></i> Letra Maiúscula</li>
+                        <li id="req-number" class="flex items-center gap-2"><i class="far fa-circle"></i> Um número</li>
+                        <li id="req-special" class="flex items-center gap-2"><i class="far fa-circle"></i> Símbolo (!@#...)</li>
+                    </ul>
+                </div>
+
+                <button type="submit" id="btn-salvar" disabled
+                        class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-blue-500/20 disabled:opacity-30 disabled:cursor-not-allowed">
+                    ATUALIZAR SENHA
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function toggleSenha(id, btn) {
+            const input = document.getElementById(id);
+            const icon = btn.querySelector('i');
+            input.type = input.type === "password" ? "text" : "password";
+            icon.classList.toggle('fa-eye');
+            icon.classList.toggle('fa-eye-slash');
+        }
+
+        function validarSenha() {
+            const senha = document.getElementById('nova_senha').value;
+            const reqs = {
+                length: senha.length >= 8,
+                upper: /[A-Z]/.test(senha),
+                number: /[0-9]/.test(senha),
+                special: /[!@#$%^&*(),.?":{}|<>]/.test(senha)
+            };
+
+            let score = 0;
+            for (const [key, valid] of Object.entries(reqs)) {
+                const el = document.getElementById(`req-${key}`);
+                const icon = el.querySelector('i');
+                if (el) {
+                    if (valid) {
+                        el.classList.add('text-emerald-500');
+                        el.classList.remove('text-slate-500');
+                        icon.className = 'fas fa-check-circle';
+                        score++;
+                    } else {
+                        el.classList.remove('text-emerald-500');
+                        el.classList.add('text-slate-500');
+                        icon.className = 'far fa-circle';
+                    }
+                }
+            }
+
+            const bar = document.getElementById('barra-forca');
+            bar.style.width = `${(score / 4) * 100}%`;
+            if (score <= 1) bar.style.backgroundColor = '#ef4444';
+            else if (score < 4) bar.style.backgroundColor = '#f59e0b';
+            else bar.style.backgroundColor = '#10b981';
+
+            validarMatch();
+        }
+
+        function validarMatch() {
+            const senha = document.getElementById('nova_senha').value;
+            const confirm = document.getElementById('confirma_senha').value;
+            const btn = document.getElementById('btn-salvar');
+            const msg = document.getElementById('msg-match');
+
+            const isStrong = (senha.length >= 8 && /[A-Z]/.test(senha) && /[0-9]/.test(senha) && /[!@#$%^&*(),.?":{}|<>]/.test(senha));
+            const isMatch = (senha === confirm && senha !== '');
+
+            if (confirm.length > 0 && !isMatch) msg.classList.remove('hidden');
+            else msg.classList.add('hidden');
+
+            btn.disabled = !(isStrong && isMatch);
+        }
+    </script>
+</body>
+</html>

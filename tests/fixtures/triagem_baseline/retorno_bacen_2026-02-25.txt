@@ -1,0 +1,15 @@
+[triagem_auto_retorno_bacen] PASTA_JSON=D:\oraculo_360_finaud\data\json\pipeline
+[triagem_auto_retorno_bacen] data_ref=2026-02-25 candidatos pós-filtro manual
+  threadIds excluídos (fecho automático alvo='RETORNO_BACEN' com data < data_ref): 119
+  Removidos auto anteriores: concluidas=1, aguardando=4
+  Novos Concluído: 1, Novos Aguardando: 4
+   GMTHRID_1857938111478876957 → Aguardando cliente (§3-inv pedido Finaud)
+   GMTHRID_1857921556962647120 → Aguardando cliente (§3-inv pedido Finaud)
+   GMTHRID_1858099648909713201 → Aguardando Finaud (§3 última mensagem CLIENTE)
+   GMTHRID_1857925003889388904 → Aguardando cliente (§3-inv pedido Finaud)
+   GMTHRID_1858101022554809949 → Aguardando Finaud (§3 última mensagem CLIENTE)
+   GMTHRID_1858108051846508152 → Aguardando cliente (§3-inv pedido Finaud)
+   GMTHRID_1857947824734775097 → Concluído (§4f-rb cliente confirma protocolo aceito pelo BACEN)
+   GMTHRID_1855418940130374677 → Aguardando cliente (§3-inv pedido Finaud)
+   GMTHRID_1858102015364395247 → Aguardando Finaud (RETORNO_BACEN — última F→C em análise, fora §5/§3-inv/§3.5)
+   GMTHRID_1858099398582615886 → Aguardando Finaud (§3 última mensagem CLIENTE)

@@ -1,0 +1,30 @@
+name: CI
+
+# Roda os testes automaticamente a cada push/PR — a "rede de reserva" no GitHub.
+# Usa requirements-test.txt (leve: SEM torch/easyocr/opencv/selenium) e o mesmo
+# recorte offline da suíte local: "not agent and not pdf and not integration".
+
+on:
+  push:
+    branches: [main, desenvolvimento-front_end]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Instalar dependências de teste
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-test.txt
+
+      - name: Testes offline (pytest)
+        run: python -m pytest tests/ -q -m "not agent and not pdf and not integration"

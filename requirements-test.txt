@@ -1,0 +1,49 @@
+# Dependências MÍNIMAS para rodar a suíte de testes "offline" no CI.
+# (NÃO inclui torch/easyocr/opencv/selenium/google-* — pesados e desnecessários
+#  para os testes marcados "not agent and not pdf and not integration".)
+# Versões alinhadas ao requirements.txt do projeto.
+
+# --- Test runner ---
+pytest==8.3.5
+pytest-cov==7.0.0
+
+# --- Web/app (painel_oraculo, pipeline_jobs) ---
+Flask==3.1.2
+Flask-Login==0.6.3
+Werkzeug==3.1.5
+Jinja2==3.1.6
+MarkupSafe==3.0.3
+itsdangerous==2.2.0
+click==8.3.1
+blinker==1.9.0
+
+# --- Parsing / dados ---
+beautifulsoup4==4.14.3
+soupsieve==2.8.3
+python-dateutil==2.9.0.post0
+six==1.17.0
+PyYAML==6.0.3
+openpyxl==3.1.5
+et_xmlfile==2.0.0
+pytz==2025.2
+tzdata==2025.3
+pillow==12.1.0
+
+# --- HTTP ---
+requests==2.32.5
+certifi==2026.1.4
+charset-normalizer==3.4.4
+idna==3.11
+urllib3==2.6.3
+
+# --- config / ambiente ---
+python-dotenv==1.2.1
+
+# --- openai (importado a nível de módulo em scripts de LLM) ---
+openai==2.15.0
+
+# --- pydantic (dependência transitiva de validações) ---
+pydantic==2.12.5
+pydantic_core==2.41.5
+annotated-types==0.7.0
+typing_extensions==4.15.0

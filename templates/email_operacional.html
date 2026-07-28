@@ -2078,15 +2078,19 @@
       if (mAt >= 0) idxs.push(mAt);
       var mDis = norm.search(/\bEsta mensagem pode conter\s+(?:conte[uú]do|informa[cç][aã]o)\b/i);
       if (mDis >= 0) idxs.push(mDis);
-      var mAten = norm.search(/\bAtenciosamente\s*,\s*[A-ZÁÉÍÓÚÂÊÔÃÕÇ0-9]/);
+      var mAten = norm.search(/\bAtenciosamente\s*[,.]\s*[A-ZÁÉÍÓÚÂÊÔÃÕÇ0-9]/);
       if (mAten >= 0) idxs.push(mAten);
+      var mAtenFim = norm.search(/\bAtenciosamente\s*[,.]\s*($|--|\n)/);
+      if (mAtenFim >= 0) idxs.push(mAtenFim);
+      var mAttFim = norm.search(/\bA[Tt][Tt]?\s*[,.]\s*$/);
+      if (mAttFim >= 0) idxs.push(mAttFim);
       // Fechamentos seguidos de nome próprio (dois segmentos com maiúscula) — para textos sem quebra de linha
       // Exige "Nome Sobrenome" para não cortar "Att.: por favor verifique" ou "Cordialmente solicitamos"
-      var rxFechoNome = /\b(Att\.?|Cordialmente|Grat[ao]|Obrigad[ao])[,.]?\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-záéíóúâêôãõç]+\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ])/;
+      var rxFechoNome = /\b(A[Tt][Tt]?\.?|Cordialmente|Grat[ao]|Obrigad[ao])[,.]?\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-záéíóúâêôãõç]+\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ])/;
       var mFechoNome = norm.search(rxFechoNome);
       if (mFechoNome >= 0) idxs.push(mFechoNome);
       // Fechamento multi-linha: "Att," sozinho numa linha + nome próprio na linha seguinte (ex: "Att,\n\nLuiza Milet.")
-      var rxFechoMultilinha = /\n(Att\.?|Cordialmente|Grat[ao]|Obrigad[ao])[,.]?\s*\n+([A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-záéíóúâêôãõç]+\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ])/;
+      var rxFechoMultilinha = /\n(A[Tt][Tt]?\.?|Cordialmente|Grat[ao]|Obrigad[ao])[,.]?\s*\n+([A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-záéíóúâêôãõç]+\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ])/;
       var mFechoML = rxFechoMultilinha.exec(norm);
       if (mFechoML && mFechoML.index >= 0) idxs.push(mFechoML.index);
       if (!idxs.length) return text;
@@ -2236,6 +2240,11 @@
     }
 
     /** Mesma limpeza de exibição para texto plano ou HTML (corpo_limpo ou fallback). */
+    function decodificarEntidadesHtml(s) {
+      if (!s) return s;
+      s = s.replace(/[A-Za-z][A-Za-z0-9_-]*\s*\{[^}]*;[^}]*\}\s*/g, '');
+      return s.replace(/&nbsp;/g, ' ').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+    }
     function sanitizarTextoCorpoParaExibicao(s) {
       if (!s || typeof s !== 'string') return '';
       var t = s.trim();
@@ -2263,9 +2272,9 @@
           return corpoTextoParaModal(msgSoloTopo);
         }
       }
-      var limpo = String(msg.corpo_limpo || '').trim();
+      var limpo = decodificarEntidadesHtml(String(msg.corpo_limpo || '').trim());
       var raw = msg.corpo || '';
-      var modalText = emailBodyToReadableTextModal(raw);
+      var modalText = decodificarEntidadesHtml(emailBodyToReadableTextModal(raw));
       var limpoSan = limpo ? sanitizarTextoCorpoParaExibicao(limpo) : '';
       function limpoSanPerdeuDemais() {
         if (!limpoSan.trim()) return true;
@@ -2294,11 +2303,14 @@
     function corpoTextoParaModalOcultandoCaudaCitacaoRedundante(msg, msgsAnterioresCronologicas) {
       if (!msg || msg._encaminhado) return corpoTextoParaModal(msg);
       msgsAnterioresCronologicas = msgsAnterioresCronologicas || [];
-      var sp = splitCorpoTopoECauda(msg.corpo || '');
-      if (!sp || sp.topo.length < 16 || sp.cauda.length < 48) return corpoTextoParaModal(msg);
-      if (!citacaoEhRedundante(sp.cauda, msgsAnterioresCronologicas, [], null)) return corpoTextoParaModal(msg);
-      var msgTopo = Object.assign({}, msg, { corpo: sp.topo, corpo_limpo: '' });
-      return corpoTextoParaModal(msgTopo);
+      // Converte primeiro para texto legível, depois tenta separar topo/cauda
+      var textoCompleto = corpoTextoParaModal(msg);
+      var sp = splitCorpoTopoECauda(textoCompleto);
+      if (!sp || sp.topo.length < 16 || sp.cauda.length < 48) return textoCompleto;
+      if (!citacaoEhRedundante(sp.cauda, msgsAnterioresCronologicas, [], null)) return textoCompleto;
+      // Remove assinatura do topo (nome, telefone, cargo ficam fora)
+      var topo = cortarRodapeAssinaturaInline(sp.topo);
+      return filterSignatureFromAttachment(topo || sp.topo);
     }
 
     
@@ -2943,7 +2955,9 @@
     function splitCorpoTopoECauda(corpoRaw) {
       if (corpoRaw == null || typeof corpoRaw !== 'string') return null;
       var t = corpoRaw.replace(/\r\n/g, '\n');
-      var reEnc = /\nDe:\s|\nFrom:\s|^De:\s|^From:\s|\nEm\s[\s\S]+?escreveu:\s/i;
+      // Separadores de citação: "De:", "*De:*", "From:", "Em ... escreveu:"
+      // Aceita \n ou pontuação+espaço antes (HTML convertido pode não ter \n)
+      var reEnc = /\nDe:\s|\nFrom:\s|^De:\s|^From:\s|\nEm\s[\s\S]+?escreveu:\s|\s+Em\s[\s\S]+?escreveu:\s|\n\*De:\*\s|\s\*De:\*\s|[.!?]\s+De:\s|[.!?]\s+From:\s/i;
       var found = reEnc.exec(t);
       if (!found || found.index <= 0) return null;
       return { topo: t.slice(0, found.index).trim(), cauda: t.slice(found.index).trim() };
@@ -4249,9 +4263,10 @@
         var assuntoTxt = (enc.assunto || "").trim();
         var dataEmailTxt = escapeHtml(enc.data_email || enc.timestamp || "");
 
-        // Remove assinatura: em vez de exibir `corpoTexto` bruto, filtra com filterSignatureFromAttachment
-        var corpoLimpo = filterSignatureFromAttachment(corpoTexto);
-        if (!corpoLimpo.trim()) corpoLimpo = corpoTexto; // fallback se filtro não deixa nada
+        // Remove assinatura e decodifica entidades HTML
+        var corpoDecodificado = decodificarEntidadesHtml(corpoTexto);
+        var corpoLimpo = filterSignatureFromAttachment(cortarRodapeAssinaturaInline(corpoDecodificado));
+        if (!corpoLimpo.trim()) corpoLimpo = corpoDecodificado;
 
         // Constrói HTML para esta citação de forma linear
         html += '<div class="modal-cite" style="margin-bottom:12px; padding:8px; border-left:2px solid rgba(234,240,255,.15); background:rgba(255,255,255,.02); border-radius:4px;">';
@@ -4724,7 +4739,7 @@
         const isCliente = String(lado).toUpperCase() === 'CLIENTE';
         var msgsAnterioresCronologicas = [];
         for (var jAnt = idx + 1; jAnt < gruposRev.length; jAnt++) msgsAnterioresCronologicas.push(gruposRev[jAnt].msg);
-        const corpoTexto = stripBoilerplate(corpoTextoParaModalOcultandoCaudaCitacaoRedundante(msg, msgsAnterioresCronologicas));
+        const corpoTexto = filterSignatureFromAttachment(cortarRodapeAssinaturaInline(decodificarEntidadesHtml(stripBoilerplate(corpoTextoParaModalOcultandoCaudaCitacaoRedundante(msg, msgsAnterioresCronologicas)))));
         const borderLeft = `border-left:4px solid ${isCliente ? 'rgba(59,130,246,.3)' : 'rgba(168,85,247,.3)'}`;
         const idxBg = isCliente ? '#3b82f6' : '#a855f7';
         const idxPill = isCliente ? 'background:#a6ce39;color:#fff' : 'background:#a855f7;color:#fff';
@@ -4741,7 +4756,7 @@
         var t6TopoHtml = '';
         var t6CaudaHtml = '';
         if (!isEncSemComentario && !isAutoReply && corpoTexto.trim()) {
-          var t6Re = /\nDe:\s|\nFrom:\s|^De:\s|^From:\s|\nEm\s[\s\S]+?escreveu:\s|\n\*De:\*/i;
+          var t6Re = /\nDe:\s|\nFrom:\s|^De:\s|^From:\s|\nEm\s[\s\S]+?escreveu:\s|\s+Em\s[\s\S]+?escreveu:\s|\n\*De:\*\s|\s\*De:\*\s|[.!?]\s+De:\s|[.!?]\s+From:\s/i;
           var t6Raw = corpoTexto.replace(/\r\n/g, '\n');
           var t6Match = t6Re.exec(t6Raw);
           if (!t6Match || t6Match.index <= 0) {
@@ -4749,6 +4764,7 @@
             // msg.corpo pode ser HTML (Outlook) — converter para texto antes de usar
             var _corpoFallback = msg.corpo || '';
             if (_corpoFallback.trimStart().startsWith('<')) _corpoFallback = stripHtml(_corpoFallback);
+            _corpoFallback = decodificarEntidadesHtml(_corpoFallback);
             var t6TextoSemStrip = _corpoFallback.replace(/\r\n/g, '\n');
             var t6MatchRaw = t6Re.exec(t6TextoSemStrip);
             if (t6MatchRaw && t6MatchRaw.index > 0) {

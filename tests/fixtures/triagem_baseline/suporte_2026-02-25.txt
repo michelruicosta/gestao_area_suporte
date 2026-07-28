@@ -1,0 +1,9 @@
+[triagem_auto_suporte] PASTA_JSON=D:\oraculo_360_finaud\data\json\pipeline
+[triagem_auto_suporte] data_ref=2026-02-25 candidatos pós-filtro manual
+  threadIds excluídos (fecho automático alvo='SUPORTE' com data < data_ref): 122
+  Removidos auto anteriores: concluidas=0, aguardando=3
+  Novos Concluído: 0, Novos Aguardando: 3
+   GMTHRID_1858118857485915446 → Aguardando Finaud (§3 última mensagem CLIENTE)
+   GMTHRID_1858129957780671648 → Aguardando Finaud (§3 última mensagem CLIENTE)
+   GMTHRID_1858118282200999596 → Aguardando Finaud (§3 última mensagem CLIENTE)
+   GMTHRID_1858035735798937779 → Aguardando cliente (SUPORTE — última F→C fora §5/§3-inv/§3.5)

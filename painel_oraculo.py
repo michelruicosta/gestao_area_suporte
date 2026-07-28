@@ -3526,20 +3526,23 @@ def coletar_stats_gestao_direcao(periodo: str | None = None, ref_iso: str | None
 
 
 @app.route('/api/dados')
-@login_required  
+@login_required
 def api_dados():
     logger.info("🔍 API_DADOS - Requisição recebida")
     data_filtro_raw = request.args.get('data')
     busca_ativa = request.args.get('busca') == '1'  # Quando busca ativa, incluir FILTRADO_POR_DATA e retornar tudo
+    termo_busca = (request.args.get('q') or "").strip()  # Novo: termo de busca do usuário
 
     try:
         # Normaliza a chave de cache (None → "" para tratar igual)
         data_norm = (data_filtro_raw or "").strip()
 
-        payload_cached = _payload_cache_get(data_norm, busca_ativa)
-        if payload_cached is not None:
-            logger.info(f"✅ CACHE HIT payload /api/dados data={data_norm!r} busca={busca_ativa}")
-            return jsonify(payload_cached)
+        # Se há termo de busca, não usar cache (cada termo é uma busca diferente)
+        if not termo_busca:
+            payload_cached = _payload_cache_get(data_norm, busca_ativa)
+            if payload_cached is not None:
+                logger.info(f"✅ CACHE HIT payload /api/dados data={data_norm!r} busca={busca_ativa}")
+                return jsonify(payload_cached)
 
         dados_json = _carregar_json_cached(BASE_DADOS)
         from painel_operacional_snapshot import montagem_api_dados_snapshot  # noqa: WPS433 pylint: disable=import-outside-toplevel
@@ -3549,6 +3552,7 @@ def api_dados():
             data_filtro_raw,
             busca_ativa=busca_ativa,
             modo_leitura_gestacao=False,
+            termo_busca=termo_busca,  # Novo: passar termo para filtrar
         )
         err = snap.get("error")
         if err:

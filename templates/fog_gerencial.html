@@ -1,0 +1,125 @@
+{% extends "layout.html" %}
+
+{% block title %}FOG · KPIs{% endblock %}
+
+{% block header_title %}KPIs FOG{% endblock %}
+{% block header_subtitle %}Indicadores de performance, gargalos e tempos médios{% endblock %}
+
+{# --- REMOVE O CALENDÁRIO DESTA PÁGINA --- #}
+{% block date_selector %}{% endblock %}
+
+{% block content %}
+<div class="max-w-[1400px] mx-auto pb-12">
+
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+        
+        <a href="/fog/operacional?status=Ativo" class="block">
+            <div class="bg-[var(--bg-card)] p-5 rounded-xl border border-[var(--border)] shadow-sm relative overflow-hidden group hover:border-blue-500 transition cursor-pointer h-full">
+                <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition text-6xl text-blue-500">
+                    <i class="fas fa-list-ul"></i>
+                </div>
+                <p class="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-wider mb-1">Total Ativos</p>
+                <h3 class="text-3xl font-black text-[var(--text-main)]">{{ stats.total_ativos }}</h3>
+                <p class="text-xs text-blue-400 mt-2 font-medium">Casos em andamento</p>
+            </div>
+        </a>
+
+        <a href="/fog/operacional?alerta=normal" class="block">
+            <div class="bg-[var(--bg-card)] p-5 rounded-xl border-l-4 border-emerald-500 border-y border-r border-[var(--border)] shadow-sm hover:translate-y-[-2px] transition cursor-pointer h-full">
+                <div class="flex justify-between items-start mb-2">
+                    <p class="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-wider">Em Andamento</p>
+                    <span class="bg-emerald-500/10 text-emerald-400 text-xs font-bold px-2 py-0.5 rounded">{{ stats.recentes.perc }}%</span>
+                </div>
+                <h3 class="text-3xl font-black text-[var(--text-main)]">{{ stats.recentes.qtd }}</h3>
+                <div class="w-full bg-[var(--border)] h-1.5 rounded-full mt-3 overflow-hidden">
+                    <div class="bg-emerald-500 h-full" style="width: {{ stats.recentes.perc }}%"></div>
+                </div>
+                <p class="text-[10px] text-[var(--text-muted)] mt-1 italic">Até 7 dias parado</p>
+            </div>
+        </a>
+
+        <a href="/fog/operacional?alerta=atencao" class="block">
+            <div class="bg-[var(--bg-card)] p-5 rounded-xl border-l-4 border-yellow-500 border-y border-r border-[var(--border)] shadow-sm hover:translate-y-[-2px] transition cursor-pointer h-full">
+                <div class="flex justify-between items-start mb-2">
+                    <p class="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-wider">Atenção</p>
+                    <span class="bg-yellow-500/10 text-yellow-400 text-xs font-bold px-2 py-0.5 rounded">{{ stats.atencao.perc }}%</span>
+                </div>
+                <h3 class="text-3xl font-black text-[var(--text-main)]">{{ stats.atencao.qtd }}</h3>
+                <div class="w-full bg-[var(--border)] h-1.5 rounded-full mt-3 overflow-hidden">
+                    <div class="bg-yellow-500 h-full" style="width: {{ stats.atencao.perc }}%"></div>
+                </div>
+                <p class="text-[10px] text-[var(--text-muted)] mt-1 italic">8 a 14 dias parado</p>
+            </div>
+        </a>
+
+        <a href="/fog/operacional?alerta=critico" class="block">
+            <div class="bg-[var(--bg-card)] p-5 rounded-xl border-l-4 border-red-500 border-y border-r border-[var(--border)] shadow-sm hover:translate-y-[-2px] transition cursor-pointer h-full">
+                <div class="flex justify-between items-start mb-2">
+                    <p class="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-wider">Crítico</p>
+                    <span class="bg-red-500/10 text-red-400 text-xs font-bold px-2 py-0.5 rounded">{{ stats.critico.perc }}%</span>
+                </div>
+                <h3 class="text-3xl font-black text-[var(--text-main)]">{{ stats.critico.qtd }}</h3>
+                <div class="w-full bg-[var(--border)] h-1.5 rounded-full mt-3 overflow-hidden">
+                    <div class="bg-red-500 h-full" style="width: {{ stats.critico.perc }}%"></div>
+                </div>
+                <p class="text-[10px] text-[var(--text-muted)] mt-1 italic">+15 dias parado</p>
+            </div>
+        </a>
+
+        <a href="/fog/operacional?status=Fechado" class="block">
+            <div class="bg-[var(--bg-card)] p-5 rounded-xl border-l-4 border-blue-500 border-y border-r border-[var(--border)] shadow-sm hover:translate-y-[-2px] transition cursor-pointer h-full">
+                <div class="flex justify-between items-start mb-2">
+                    <p class="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-wider">Concluídos</p>
+                    <div class="bg-blue-500/10 text-blue-400 w-6 h-6 rounded flex items-center justify-center text-xs">
+                        <i class="fas fa-flag-checkered"></i>
+                    </div>
+                </div>
+                <h3 class="text-3xl font-black text-[var(--text-main)]">{{ stats.total_concluidos }}</h3>
+                <p class="text-[10px] text-blue-400 mt-auto pt-4 font-bold uppercase tracking-wider">Entrega Acumulada</p>
+            </div>
+        </a>
+    </div>
+
+    <div class="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
+        <div class="p-6 border-b border-[var(--border)] flex justify-between items-center">
+            <div>
+                <h3 class="text-lg font-bold text-[var(--text-main)] flex items-center gap-2">
+                    <i class="fas fa-chart-bar text-blue-500"></i> Ranking de Carga & Gargalos
+                </h3>
+                <p class="text-[var(--text-muted)] text-xs mt-1">Ordenado por dias acumulados de espera (Soma dos dias parados)</p>
+            </div>
+        </div>
+
+        <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for nome, dados in stats.ranking.items() %}
+                {% if nome and nome not in ["Sem Responsável", "N/A", "Unknown", "None", ""] %}
+                
+                <div class="bg-[var(--bg-dark)] rounded-lg p-4 border border-[var(--border)] flex items-center justify-between hover:border-[var(--text-muted)] transition group">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <div class="w-8 h-8 rounded-full bg-[var(--border)] flex items-center justify-center text-xs font-bold text-[var(--text-muted)]">
+                                {{ nome[:2].upper() }}
+                            </div>
+                            <p class="text-sm font-bold text-[var(--text-main)] truncate w-32">{{ nome }}</p>
+                        </div>
+                        <div class="flex gap-3 mt-2 text-[10px] uppercase font-bold text-[var(--text-muted)]">
+                            <span><i class="fas fa-layer-group text-blue-500"></i> {{ dados.tickets }} Casos</span>
+                            {% if dados.criticos > 0 %}
+                            <span class="text-red-400"><i class="fas fa-exclamation-circle"></i> {{ dados.criticos }} Lentidão</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="text-right">
+                        <p class="text-2xl font-black text-[var(--text-main)]">{{ dados.dias_acumulados }}</p>
+                        <p class="text-[9px] text-[var(--text-muted)] uppercase font-bold">Dias Acum.</p>
+                    </div>
+                </div>
+
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

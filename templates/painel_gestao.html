@@ -1,0 +1,535 @@
+{% extends "layout.html" %}
+
+{% block title %}Resumo Período{% endblock %}
+{% block header_title %}Resumo Período{% endblock %}
+{% block header_subtitle %}Visão executiva geral · todas as categorias (DDR, DLO, DLI, S5, SUPORTE, Retorno Bacen){% endblock %}
+
+{% block date_selector %}{% endblock %}
+
+{% block head %}
+<style>
+    .pg-toolbar {
+        display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+        background: var(--bg-card); border: 1px solid var(--border);
+        border-radius: 12px; padding: 12px 16px; margin-bottom: 18px;
+    }
+    .pg-period-btn {
+        padding: 6px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 600;
+        cursor: pointer; border: 1px solid var(--border); background: transparent;
+        color: var(--text-muted); transition: all .15s;
+    }
+    .pg-period-btn:hover { color: var(--text-main); background: rgba(255,255,255,.04); }
+    .pg-period-btn.active {
+        background: var(--accent); color: #fff; border-color: var(--accent);
+    }
+    .pg-custom-input {
+        padding: 6px 10px; border-radius: 8px; font-size: 12.5px;
+        background: var(--input-bg); border: 1px solid var(--input-border);
+        color: var(--text-main);
+    }
+    .pg-period-info {
+        margin-left: auto; font-size: 12px; color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    /* KPI cards */
+    .pg-kpi-grid {
+        display: grid; grid-template-columns: repeat(4, 1fr);
+        gap: 14px; margin-bottom: 22px;
+    }
+    @media (max-width: 1100px) { .pg-kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+    .pg-kpi {
+        background: var(--bg-card); border: 1px solid var(--border);
+        border-radius: 14px; padding: 18px 20px; position: relative;
+        overflow: hidden; min-height: 138px;
+    }
+    .pg-kpi-label {
+        font-size: 11px; font-weight: 700; color: var(--text-muted);
+        text-transform: uppercase; letter-spacing: .6px; margin-bottom: 8px;
+    }
+    .pg-kpi-value {
+        font-size: 38px; font-weight: 800; color: var(--text-main);
+        line-height: 1.05; letter-spacing: -.5px;
+    }
+    .pg-kpi-value-sm { font-size: 24px; }
+    .pg-kpi-trend {
+        margin-top: 10px; font-size: 12.5px; color: var(--text-muted);
+        display: flex; align-items: center; gap: 6px;
+    }
+    .pg-kpi-trend .delta-up    { color: #22c55e; font-weight: 700; }
+    .pg-kpi-trend .delta-down  { color: #ef4444; font-weight: 700; }
+    .pg-kpi-trend .delta-flat  { color: var(--text-muted); font-weight: 600; }
+    .pg-kpi-icon {
+        position: absolute; top: 16px; right: 18px; font-size: 20px;
+        opacity: .25;
+    }
+    .pg-kpi.danger .pg-kpi-value { color: #ef4444; }
+    .pg-kpi.warn   .pg-kpi-value { color: #f59e0b; }
+    .pg-kpi.good   .pg-kpi-value { color: #22c55e; }
+
+    /* Panels (collapsible) */
+    .pg-panel {
+        background: var(--bg-card); border: 1px solid var(--border);
+        border-radius: 14px; margin-bottom: 14px; overflow: hidden;
+    }
+    .pg-panel-header {
+        display: flex; align-items: center; gap: 12px; padding: 16px 20px;
+        cursor: pointer; user-select: none;
+    }
+    .pg-panel-header:hover { background: rgba(255,255,255,.025); }
+    .pg-panel-icon {
+        width: 34px; height: 34px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 16px; color: #fff; flex-shrink: 0;
+    }
+    .pg-panel-title {
+        font-size: 14.5px; font-weight: 700; color: var(--text-main);
+    }
+    .pg-panel-subtitle {
+        font-size: 12px; color: var(--text-muted); margin-top: 2px;
+    }
+    .pg-panel-count {
+        margin-left: auto; padding: 4px 12px; border-radius: 999px;
+        font-size: 12px; font-weight: 700;
+        background: rgba(255,255,255,.06); color: var(--text-muted);
+    }
+    .pg-panel-chevron {
+        font-size: 11px; opacity: .5; margin-left: 8px;
+        transition: transform .2s;
+    }
+    .pg-panel.open .pg-panel-chevron { transform: rotate(90deg); }
+    .pg-panel-body {
+        max-height: 0; overflow: hidden;
+        transition: max-height .3s ease;
+    }
+    .pg-panel.open .pg-panel-body { max-height: 1200px; }
+    .pg-panel-body-inner { padding: 0 20px 18px 20px; }
+
+    /* Tabela genérica */
+    .pg-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .pg-table th {
+        text-align: left; padding: 10px 12px; font-size: 11px;
+        font-weight: 700; color: var(--text-muted);
+        text-transform: uppercase; letter-spacing: .4px;
+        border-bottom: 1px solid var(--border);
+    }
+    .pg-table td {
+        padding: 12px; border-bottom: 1px solid rgba(255,255,255,.05);
+        color: var(--text-main); vertical-align: middle;
+    }
+    .pg-table tr:hover td { background: rgba(255,255,255,.025); }
+    .pg-pill {
+        display: inline-block; padding: 2px 10px; border-radius: 999px;
+        font-size: 11px; font-weight: 700;
+    }
+    .pg-pill.cadoc { background: rgba(59,130,246,.18); color: #93c5fd; }
+    .pg-pill.atraso-grave { background: rgba(239,68,68,.2); color: #fca5a5; }
+    .pg-pill.atraso-medio { background: rgba(245,158,11,.2); color: #fcd34d; }
+    .pg-pill.alerta-vence { background: rgba(239,68,68,.18); color: #fca5a5; }
+    .pg-pill.atencao { background: rgba(245,158,11,.18); color: #fcd34d; }
+    .pg-pill.ok-vence { background: rgba(34,197,94,.18); color: #86efac; }
+
+    /* Grid 2 colunas (ágeis × lentos) */
+    .pg-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 800px) { .pg-2col { grid-template-columns: 1fr; } }
+    .pg-rank-card {
+        background: rgba(255,255,255,.025); border: 1px solid var(--border);
+        border-radius: 10px; padding: 14px 16px;
+    }
+    .pg-rank-title {
+        font-size: 12.5px; font-weight: 700; margin-bottom: 10px;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .pg-rank-row {
+        display: flex; align-items: center; gap: 10px; padding: 8px 0;
+        border-bottom: 1px solid rgba(255,255,255,.04); font-size: 13px;
+    }
+    .pg-rank-row:last-child { border-bottom: none; }
+    .pg-rank-pos {
+        width: 22px; height: 22px; border-radius: 50%;
+        background: rgba(255,255,255,.06); color: var(--text-muted);
+        font-size: 11px; font-weight: 700;
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .pg-rank-name { flex: 1; font-weight: 600; }
+    .pg-rank-metric { color: var(--text-muted); font-size: 12px; }
+
+    .pg-empty {
+        padding: 32px 20px; text-align: center; color: var(--text-muted);
+        font-size: 13.5px;
+    }
+    .pg-loading {
+        padding: 60px 20px; text-align: center; color: var(--text-muted);
+        font-size: 14px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-[1500px] mx-auto pb-12">
+
+    <!-- TOOLBAR de período -->
+    <div class="pg-toolbar">
+        <button class="pg-period-btn" data-periodo="7d">7 dias</button>
+        <button class="pg-period-btn active" data-periodo="30d">30 dias</button>
+        <button class="pg-period-btn" data-periodo="90d">90 dias</button>
+        <button class="pg-period-btn" data-periodo="mes_corrente">Mês corrente</button>
+        <span style="color:var(--text-muted);font-size:12px;margin:0 6px;">|</span>
+        <span style="font-size:12.5px;color:var(--text-muted);">Personalizado:</span>
+        <input type="date" id="pgIniCustom" class="pg-custom-input"
+               min="2020-01-01" max="2030-12-31">
+        <span style="font-size:12px;color:var(--text-muted);">até</span>
+        <input type="date" id="pgFimCustom" class="pg-custom-input"
+               min="2020-01-01" max="2030-12-31">
+        <button class="pg-period-btn" id="pgAplicarCustom">Aplicar</button>
+        <span class="pg-period-info" id="pgPeriodoInfo">—</span>
+    </div>
+
+    <!-- KPIs do topo -->
+    <div class="pg-kpi-grid" id="pgKpiGrid">
+        <div class="pg-kpi">
+            <i class="fas fa-check-circle pg-kpi-icon" style="color:#22c55e;"></i>
+            <div class="pg-kpi-label">Casos resolvidos</div>
+            <div class="pg-kpi-value" id="kpiTotal">--</div>
+            <div class="pg-kpi-trend" id="kpiTotalDelta">vs. período anterior</div>
+        </div>
+        <div class="pg-kpi">
+            <i class="fas fa-clock pg-kpi-icon" style="color:#3b82f6;"></i>
+            <div class="pg-kpi-label">Tempo médio resolução</div>
+            <div class="pg-kpi-value" id="kpiTempoMedio">--</div>
+            <div class="pg-kpi-trend" style="color:var(--text-muted);">do recebimento até o fechamento</div>
+        </div>
+        <div class="pg-kpi danger">
+            <i class="fas fa-exclamation-triangle pg-kpi-icon" style="color:#ef4444;"></i>
+            <div class="pg-kpi-label">Fora do prazo</div>
+            <div class="pg-kpi-value" id="kpiForaPrazo">--</div>
+            <div class="pg-kpi-trend"><span id="kpiForaPrazoPct">--</span> dos casos do período</div>
+        </div>
+        <div class="pg-kpi">
+            <i class="fas fa-layer-group pg-kpi-icon" style="color:#a855f7;"></i>
+            <div class="pg-kpi-label">Categoria + volumosa</div>
+            <div class="pg-kpi-value pg-kpi-value-sm" id="kpiCadocTop">--</div>
+            <div class="pg-kpi-trend"><span id="kpiCadocTopQtd">--</span> casos no período</div>
+        </div>
+    </div>
+
+
+    <!-- 4 PAINÉIS expansíveis -->
+
+    <!-- Painel 1: Fora do prazo -->
+    <div class="pg-panel" data-panel="foraprazo">
+        <div class="pg-panel-header" onclick="togglePanel('foraprazo')">
+            <div class="pg-panel-icon" style="background:linear-gradient(135deg,#ef4444,#b91c1c);">
+                <i class="fas fa-stopwatch"></i>
+            </div>
+            <div>
+                <div class="pg-panel-title">Casos resolvidos fora do prazo</div>
+                <div class="pg-panel-subtitle">Onde a operação estourou o prazo regulatório</div>
+            </div>
+            <span class="pg-panel-count" id="cntForaPrazo">0</span>
+            <i class="fas fa-chevron-right pg-panel-chevron"></i>
+        </div>
+        <div class="pg-panel-body">
+            <div class="pg-panel-body-inner" id="bodyForaPrazo">
+                <div class="pg-loading">Carregando…</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Painel 3: Perto de vencer -->
+    <div class="pg-panel" data-panel="pertovencer">
+        <div class="pg-panel-header" onclick="togglePanel('pertovencer')">
+            <div class="pg-panel-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);">
+                <i class="fas fa-hourglass-half"></i>
+            </div>
+            <div>
+                <div class="pg-panel-title">Casos perto de vencer</div>
+                <div class="pg-panel-subtitle">Prazos nos próximos 5 dias ainda em aberto</div>
+            </div>
+            <span class="pg-panel-count" id="cntPertoVencer">0</span>
+            <i class="fas fa-chevron-right pg-panel-chevron"></i>
+        </div>
+        <div class="pg-panel-body">
+            <div class="pg-panel-body-inner" id="bodyPertoVencer">
+                <div class="pg-loading">Carregando…</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Painel 4: Performance por colaborador -->
+    <div class="pg-panel" data-panel="colaboradores">
+        <div class="pg-panel-header" onclick="togglePanel('colaboradores')">
+            <div class="pg-panel-icon" style="background:linear-gradient(135deg,#3b82f6,#2563eb);">
+                <i class="fas fa-users"></i>
+            </div>
+            <div>
+                <div class="pg-panel-title">Performance por colaborador</div>
+                <div class="pg-panel-subtitle">Quem é mais ágil, quem demora mais — ranking do período</div>
+            </div>
+            <span class="pg-panel-count" id="cntColab">—</span>
+            <i class="fas fa-chevron-right pg-panel-chevron"></i>
+        </div>
+        <div class="pg-panel-body">
+            <div class="pg-panel-body-inner" id="bodyColaboradores">
+                <div class="pg-loading">Carregando…</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Painel 5: Assuntos lentos -->
+    <div class="pg-panel" data-panel="assuntos">
+        <div class="pg-panel-header" onclick="togglePanel('assuntos')">
+            <div class="pg-panel-icon" style="background:linear-gradient(135deg,#14b8a6,#0d9488);">
+                <i class="fas fa-clock-rotate-left"></i>
+            </div>
+            <div>
+                <div class="pg-panel-title">Assuntos que demoraram mais</div>
+                <div class="pg-panel-subtitle">Tipos de demanda com maior tempo médio até o fechamento</div>
+            </div>
+            <span class="pg-panel-count" id="cntAssuntos">0</span>
+            <i class="fas fa-chevron-right pg-panel-chevron"></i>
+        </div>
+        <div class="pg-panel-body">
+            <div class="pg-panel-body-inner" id="bodyAssuntos">
+                <div class="pg-loading">Carregando…</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+let pgCurrentPeriodo = '30d';
+let _pgReqId = 0;
+
+function togglePanel(nome) {
+    const p = document.querySelector(`.pg-panel[data-panel="${nome}"]`);
+    if (p) p.classList.toggle('open');
+}
+
+function fmtDelta(pct) {
+    if (pct === null || pct === undefined) {
+        return '<span class="delta-flat">— sem base de comparação</span>';
+    }
+    if (Math.abs(pct) < 0.1) {
+        return '<span class="delta-flat">≈ estável</span>';
+    }
+    if (pct > 0) {
+        return `<span class="delta-up">↑ +${pct}%</span> vs. período anterior`;
+    }
+    return `<span class="delta-down">↓ ${pct}%</span> vs. período anterior`;
+}
+
+function fmtTempoH(horas) {
+    if (horas === null || horas === undefined) return '—';
+    if (horas < 24) return `${Math.floor(horas)}h`;
+    return `${Math.floor(horas / 24)}d`;
+}
+
+function fmtData(iso) {
+    if (!iso) return '—';
+    const p = iso.split('-');
+    if (p.length !== 3) return iso;
+    return `${p[2]}/${p[1]}/${p[0]}`;
+}
+
+function pillAtraso(dias) {
+    if (dias > 5) return `<span class="pg-pill atraso-grave">+${dias} dias</span>`;
+    return `<span class="pg-pill atraso-medio">+${dias} dia${dias > 1 ? 's' : ''}</span>`;
+}
+
+function pillVence(dias) {
+    if (dias < 0)  return `<span class="pg-pill alerta-vence">vencido há ${Math.abs(dias)}d</span>`;
+    if (dias === 0) return `<span class="pg-pill alerta-vence">VENCE HOJE</span>`;
+    if (dias <= 2) return `<span class="pg-pill atencao">em ${dias}d</span>`;
+    return `<span class="pg-pill ok-vence">em ${dias}d</span>`;
+}
+
+function renderKpis(d) {
+    document.getElementById('kpiTotal').textContent = d.kpis.total_resolvidos;
+    document.getElementById('kpiTotalDelta').innerHTML = fmtDelta(d.kpis.total_resolvidos_delta_pct);
+
+    const tm = d.kpis.tempo_medio_dias;
+    document.getElementById('kpiTempoMedio').textContent = (tm === null || tm === undefined) ? '—' : `${tm}d`;
+
+    document.getElementById('kpiForaPrazo').textContent = d.kpis.fora_do_prazo_qtd;
+    document.getElementById('kpiForaPrazoPct').textContent = `${d.kpis.fora_do_prazo_pct}%`;
+
+    document.getElementById('kpiCadocTop').textContent = d.kpis.cadoc_top_codigo || '—';
+    document.getElementById('kpiCadocTopQtd').textContent = d.kpis.cadoc_top_qtd || 0;
+}
+
+function renderForaPrazo(arr) {
+    document.getElementById('cntForaPrazo').textContent = arr.length;
+    if (!arr.length) {
+        document.getElementById('bodyForaPrazo').innerHTML = '<div class="pg-empty">🎉 Nenhum caso resolvido fora do prazo no período.</div>';
+        return;
+    }
+    let html = '<table class="pg-table"><thead><tr>';
+    html += '<th>Cliente</th><th>Cadoc</th><th>Prazo</th><th>Concluído em</th><th>Atraso</th>';
+    html += '</tr></thead><tbody>';
+    arr.forEach(c => {
+        html += `<tr>
+            <td>${c.cliente || '—'}</td>
+            <td><span class="pg-pill cadoc">${c.cadoc || '—'}</span></td>
+            <td>${fmtData(c.prazo)}</td>
+            <td>${fmtData(c.data_conclusao)}</td>
+            <td>${pillAtraso(c.atraso_dias)}</td>
+        </tr>`;
+    });
+    html += '</tbody></table>';
+    document.getElementById('bodyForaPrazo').innerHTML = html;
+}
+
+function renderPertoVencer(arr) {
+    document.getElementById('cntPertoVencer').textContent = arr.length;
+    if (!arr.length) {
+        document.getElementById('bodyPertoVencer').innerHTML = '<div class="pg-empty">✅ Nenhum prazo crítico nos próximos 5 dias.</div>';
+        return;
+    }
+    let html = '<table class="pg-table"><thead><tr>';
+    html += '<th>Cliente</th><th>Cadoc</th><th>Assunto</th><th>Prazo</th><th>Status</th>';
+    html += '</tr></thead><tbody>';
+    arr.forEach(c => {
+        html += `<tr>
+            <td>${c.cliente || '—'}</td>
+            <td><span class="pg-pill cadoc">${c.cadoc || '—'}</span></td>
+            <td style="font-size:12.5px;max-width:380px;color:var(--text-muted);">${c.titulo || '—'}</td>
+            <td>${fmtData(c.prazo)}</td>
+            <td>${pillVence(c.dias_restantes)}</td>
+        </tr>`;
+    });
+    html += '</tbody></table>';
+    document.getElementById('bodyPertoVencer').innerHTML = html;
+}
+
+function renderColaboradores(d) {
+    const totColabs = d.total_colaboradores || 0;
+    document.getElementById('cntColab').textContent = totColabs > 0 ? `${totColabs} analistas` : 'sem dados';
+
+    const rank = d.ranking || [];
+    const volume = d.volume_total || [];
+    if (!rank.length && !volume.length) {
+        document.getElementById('bodyColaboradores').innerHTML =
+            '<div class="pg-empty">Sem casos de analistas no período.<br><span style="font-size:12px;">' +
+            '(Só aparecem aqui analistas cadastrados em Admin → Usuários.)</span></div>';
+        return;
+    }
+
+    // Ranking único: do mais ágil ao mais lento (todos os analistas)
+    let html = '<div class="pg-rank-card">';
+    html += '<div class="pg-rank-title" style="color:#22c55e;"><i class="fas fa-trophy"></i> Ranking de agilidade — todos os analistas</div>';
+    if (!rank.length) {
+        html += '<div style="color:var(--text-muted);font-size:12.5px;">Sem tempos medidos no período</div>';
+    } else {
+        const lastComTempo = rank.reduce((acc, c, i) => c.tempo_medio_horas !== null ? i : acc, -1);
+        rank.forEach((c, i) => {
+            let cor = '';
+            if (c.tempo_medio_horas !== null && i === 0) {
+                cor = 'background:rgba(34,197,94,.18);color:#86efac;';
+            } else if (c.tempo_medio_horas !== null && i === lastComTempo && lastComTempo > 0) {
+                cor = 'background:rgba(239,68,68,.18);color:#fca5a5;';
+            }
+            const metrica = c.tempo_medio_horas !== null
+                ? `<div style="font-weight:600;">${fmtTempoH(c.tempo_medio_horas)}</div>
+                   <div style="font-size:11px;color:var(--text-muted);margin-top:1px;">${c.casos} demanda${c.casos !== 1 ? 's' : ''}</div>`
+                : `<div style="color:var(--text-muted);">${c.casos} demanda${c.casos !== 1 ? 's' : ''}</div>`;
+            html += `<div class="pg-rank-row">
+                <div class="pg-rank-pos" style="${cor}">${i + 1}</div>
+                <div class="pg-rank-name">${c.colaborador}</div>
+                <div class="pg-rank-metric" style="text-align:right;line-height:1.3;">${metrica}</div>
+            </div>`;
+        });
+    }
+    html += '</div>';
+    document.getElementById('bodyColaboradores').innerHTML = html;
+}
+
+function renderAssuntos(arr) {
+    document.getElementById('cntAssuntos').textContent = arr.length;
+    if (!arr.length) {
+        document.getElementById('bodyAssuntos').innerHTML =
+            '<div class="pg-empty">Sem tempos medidos por assunto no período.</div>';
+        return;
+    }
+    let html = '<table class="pg-table"><thead><tr>';
+    html += '<th>Tipo de demanda</th><th>Casos no período</th><th>Tempo médio</th>';
+    html += '</tr></thead><tbody>';
+    arr.forEach(a => {
+        html += `<tr>
+            <td><span class="pg-pill cadoc">${a.cadoc}</span></td>
+            <td>${a.casos}</td>
+            <td><b>${fmtTempoH(a.tempo_medio_horas)}</b></td>
+        </tr>`;
+    });
+    html += '</tbody></table>';
+    document.getElementById('bodyAssuntos').innerHTML = html;
+}
+
+async function carregarPainel(periodo) {
+    pgCurrentPeriodo = periodo;
+    const reqId = ++_pgReqId;  // cada chamada tem um ID único; respostas atrasadas são descartadas
+
+    // Atualiza estado dos botões
+    document.querySelectorAll('.pg-period-btn[data-periodo]').forEach(b => {
+        b.classList.toggle('active', b.dataset.periodo === periodo);
+    });
+
+    document.getElementById('pgPeriodoInfo').textContent = 'Carregando…';
+    try {
+        const resp = await fetch(`/api/painel_gestao/dados?periodo=${encodeURIComponent(periodo)}`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const d = await resp.json();
+        if (reqId !== _pgReqId) return;  // chegou resposta de período anterior — descartar
+
+        document.getElementById('pgPeriodoInfo').textContent =
+            `${fmtData(d.periodo.inicio)} → ${fmtData(d.periodo.fim)}`;
+
+        renderKpis(d);
+        renderForaPrazo(d.fora_do_prazo || []);
+        renderPertoVencer(d.perto_de_vencer || []);
+        renderColaboradores(d.colaboradores || {ranking: [], volume_total: []});
+        renderAssuntos(d.assuntos_lentos || []);
+    } catch (e) {
+        if (reqId !== _pgReqId) return;  // erro de requisição descartada — ignorar
+        document.getElementById('pgPeriodoInfo').textContent = 'Erro: ' + e.message;
+    }
+}
+
+// Bind dos botões de período
+document.querySelectorAll('.pg-period-btn[data-periodo]').forEach(btn => {
+    btn.addEventListener('click', () => carregarPainel(btn.dataset.periodo));
+});
+
+function _pgValidarDataIso(s) {
+    if (!s || typeof s !== 'string') return false;
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+    if (!m) return false;
+    const ano = parseInt(m[1], 10);
+    if (ano < 2020 || ano > 2030) return false;
+    return !isNaN(new Date(s + 'T00:00:00').getTime());
+}
+
+document.getElementById('pgAplicarCustom').addEventListener('click', () => {
+    const ini = document.getElementById('pgIniCustom').value;
+    const fim = document.getElementById('pgFimCustom').value;
+    if (!ini || !fim) { alert('Preencha início e fim do período.'); return; }
+    if (!_pgValidarDataIso(ini) || !_pgValidarDataIso(fim)) {
+        alert('Datas inválidas. Use o formato dd/mm/aaaa com ano entre 2020 e 2030.');
+        return;
+    }
+    if (ini > fim) {
+        alert('A data inicial deve ser anterior ou igual à data final.');
+        return;
+    }
+    document.querySelectorAll('.pg-period-btn[data-periodo]').forEach(b => b.classList.remove('active'));
+    carregarPainel(`${ini}..${fim}`);
+});
+
+// Auto-abre o painel "Fora do prazo" no primeiro carregamento
+document.querySelector('.pg-panel[data-panel="foraprazo"]').classList.add('open');
+
+// Carga inicial
+carregarPainel('30d');
+</script>
+{% endblock %}

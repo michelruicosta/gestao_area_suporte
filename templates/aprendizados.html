@@ -1,0 +1,443 @@
+{% extends "layout.html" %}
+
+{% block title %}Aprendizados{% endblock %}
+{% block header_title %}Aprendizados{% endblock %}
+{% block header_subtitle %}Threads concluídas (Aprender e Concluir){% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-[1600px] mx-auto pb-12">
+
+  <!-- SEÇÃO 1 — Filtros -->
+  <div class="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4 mb-6 shadow-sm">
+    <h3 class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-3">Filtros</h3>
+    <div class="flex flex-wrap items-center gap-4">
+      <div class="flex items-center gap-2">
+        <span class="text-sm text-[var(--text-muted)]">Período:</span>
+        <div class="flex rounded-lg overflow-hidden border border-[var(--border)]">
+          <button type="button" class="aprendizados-btn-dias px-3 py-2 text-sm font-medium bg-[var(--bg-dark)] text-[var(--text-muted)] hover:bg-[var(--border)] hover:text-[var(--text-main)] transition" data-dias="7">7 dias</button>
+          <button type="button" class="aprendizados-btn-dias px-3 py-2 text-sm font-medium bg-[var(--bg-dark)] text-[var(--text-muted)] hover:bg-[var(--border)] hover:text-[var(--text-main)] transition" data-dias="15">15 dias</button>
+          <button type="button" class="aprendizados-btn-dias px-3 py-2 text-sm font-medium bg-blue-600 text-white transition" data-dias="30">30 dias</button>
+          <button type="button" class="aprendizados-btn-dias px-3 py-2 text-sm font-medium bg-[var(--bg-dark)] text-[var(--text-muted)] hover:bg-[var(--border)] hover:text-[var(--text-main)] transition" data-dias="90">90 dias</button>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-sm text-[var(--text-muted)]">Tipo demanda:</span>
+        <select id="aprendizados-tipo" class="bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="">Todos</option>
+          <option value="DDR_2011">DDR_2011</option>
+          <option value="4111">4111</option>
+          <option value="DLO_2061">DLO_2061</option>
+          <option value="DRM_2060">DRM_2060</option>
+          <option value="DRL_2160">DRL_2160</option>
+          <option value="DLI_2062">DLI_2062</option>
+          <option value="S5">S5</option>
+          <option value="SUPORTE">SUPORTE</option>
+          <option value="DRSAC">DRSAC</option>
+          <option value="FORCAPITAL">FORCAPITAL</option>
+          <option value="RETORNO_BACEN">RETORNO_BACEN</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Spinner de carregamento -->
+  <div id="aprendizados-spinner" class="flex items-center justify-center py-12">
+    <div class="animate-spin rounded-full h-10 w-10 border-2 border-blue-500 border-t-transparent"></div>
+    <span class="ml-3 text-[var(--text-muted)]">Carregando...</span>
+  </div>
+
+  <div id="aprendizados-conteudo" class="hidden">
+
+    <!-- SEÇÃO 2 — Cards de resumo -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div class="bg-[var(--bg-card)] p-6 rounded-xl border border-[var(--border)] shadow-sm relative overflow-hidden">
+        <div class="absolute right-0 top-0 p-4 opacity-10 text-6xl text-blue-500"><i class="fas fa-check-double"></i></div>
+        <p class="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-wider mb-2">Total concluídas</p>
+        <h3 class="text-4xl font-black text-[var(--text-main)]" id="card-total">0</h3>
+      </div>
+      <div class="bg-[var(--bg-card)] p-6 rounded-xl border border-[var(--border)] shadow-sm relative overflow-hidden">
+        <div class="absolute right-0 top-0 p-4 opacity-10 text-6xl text-red-500"><i class="fas fa-clock"></i></div>
+        <p class="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-wider mb-2">Prazo não cumprido</p>
+        <h3 class="text-4xl font-black text-[var(--text-main)]" id="card-prazo-nao">0</h3>
+        <p class="text-xs text-[var(--text-muted)] mt-1">não + parcial</p>
+      </div>
+      <div class="bg-[var(--bg-card)] p-6 rounded-xl border border-[var(--border)] shadow-sm relative overflow-hidden">
+        <div class="absolute right-0 top-0 p-4 opacity-10 text-6xl text-amber-500"><i class="fas fa-bug"></i></div>
+        <p class="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-wider mb-2">Geraram FOG</p>
+        <h3 class="text-4xl font-black text-[var(--text-main)]" id="card-gerou-fog">0</h3>
+      </div>
+      <div class="bg-[var(--bg-card)] p-6 rounded-xl border border-[var(--border)] shadow-sm relative overflow-hidden">
+        <div class="absolute right-0 top-0 p-4 opacity-10 text-6xl text-emerald-500"><i class="fas fa-users"></i></div>
+        <p class="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-wider mb-2">Clientes ativos</p>
+        <h3 class="text-4xl font-black text-[var(--text-main)]" id="card-clientes">0</h3>
+        <p class="text-xs text-[var(--text-muted)] mt-1">excl. Não identificado</p>
+      </div>
+    </div>
+
+    <!-- SEÇÃO 3 — Gráficos -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-6 shadow-sm">
+        <h3 class="text-sm font-bold text-[var(--text-main)] mb-4">Volume por tipo de demanda</h3>
+        <div class="h-64"><canvas id="chart-tipo-demanda"></canvas></div>
+      </div>
+      <div class="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-6 shadow-sm">
+        <h3 class="text-sm font-bold text-[var(--text-main)] mb-4">Prazo cumprido</h3>
+        <div class="h-64 flex items-center justify-center"><canvas id="chart-prazo"></canvas></div>
+      </div>
+    </div>
+
+    <!-- SEÇÃO 4 — Tabela últimos aprendizados -->
+    <div class="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden mb-8 shadow-sm">
+      <h3 class="text-lg font-bold text-[var(--text-main)] p-4 border-b border-[var(--border)] flex items-center gap-2">
+        <i class="fas fa-list text-blue-500"></i> Últimos aprendizados
+      </h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-[var(--bg-dark)] text-[var(--text-muted)] text-left text-xs font-bold uppercase tracking-wider">
+              <th class="px-4 py-3">Data</th>
+              <th class="px-4 py-3">Cliente</th>
+              <th class="px-4 py-3">Tipo</th>
+              <th class="px-4 py-3">Prazo</th>
+              <th class="px-4 py-3">FOG</th>
+              <th class="px-4 py-3">Resolução</th>
+              <th class="px-4 py-3 w-20">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="aprendizados-tbody" class="divide-y divide-[var(--border)]">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SEÇÃO 5 — Acordeão resoluções por tipo -->
+    <div class="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden shadow-sm">
+      <h3 class="text-lg font-bold text-[var(--text-main)] p-4 border-b border-[var(--border)] flex items-center gap-2">
+        <i class="fas fa-lightbulb text-amber-500"></i> Resoluções por tipo — como resolvemos
+      </h3>
+      <div id="aprendizados-acordeao" class="divide-y divide-[var(--border)]">
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Modal Editar Aprendizado -->
+  <div id="modal-editar-aprendizado" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/60">
+    <div class="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4">
+      <div class="p-6 border-b border-[var(--border)] flex items-center justify-between">
+        <h3 class="text-lg font-bold text-[var(--text-main)]"><i class="fas fa-edit text-blue-500 mr-2"></i>Editar aprendizado</h3>
+        <button type="button" id="modal-editar-fechar" class="text-[var(--text-muted)] hover:text-[var(--text-main)] p-1"><i class="fas fa-times"></i></button>
+      </div>
+      <form id="form-editar-aprendizado" class="p-6 space-y-4">
+        <input type="hidden" id="edit-threadId" name="threadId">
+        <div>
+          <label class="block text-sm font-medium text-[var(--text-muted)] mb-1">Resumo do desfecho</label>
+          <textarea id="edit-resumo_desfecho" name="resumo_desfecho" rows="2" class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)]"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-[var(--text-muted)] mb-1">Resolução final</label>
+          <textarea id="edit-resolucao_final" name="resolucao_final" rows="3" class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)]"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-[var(--text-muted)] mb-1">Cliente identificado</label>
+          <input type="text" id="edit-cliente_identificado" name="cliente_identificado" class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)]">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-[var(--text-muted)] mb-1">Tipo demanda</label>
+          <select id="edit-tipo_demanda" name="tipo_demanda" class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)]">
+            <option value="">—</option>
+            <option value="DDR_2011">DDR_2011</option>
+            <option value="4111">4111</option>
+            <option value="DLO_2061">DLO_2061</option>
+            <option value="DRM_2060">DRM_2060</option>
+            <option value="DRL_2160">DRL_2160</option>
+            <option value="DLI_2062">DLI_2062</option>
+            <option value="S5">S5</option>
+            <option value="SUPORTE">SUPORTE</option>
+            <option value="DRSAC">DRSAC</option>
+            <option value="FORCAPITAL">FORCAPITAL</option>
+            <option value="RETORNO_BACEN">RETORNO_BACEN</option>
+            <option value="OUTROS">OUTROS</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-[var(--text-muted)] mb-1">Prazo cumprido</label>
+          <select id="edit-prazo_cumprido" name="prazo_cumprido" class="w-full bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)]">
+            <option value="não se aplica">não se aplica</option>
+            <option value="sim">sim</option>
+            <option value="não">não</option>
+            <option value="parcial">parcial</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2">
+          <input type="checkbox" id="edit-gerou_fog" name="gerou_fog" class="rounded border-[var(--input-border)]">
+          <label for="edit-gerou_fog" class="text-sm text-[var(--text-main)]">Gerou FOG</label>
+        </div>
+        <div class="flex justify-end gap-2 pt-4 border-t border-[var(--border)]">
+          <button type="button" id="modal-editar-cancelar" class="px-4 py-2 text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text-main)] rounded-lg border border-[var(--border)]">Cancelar</button>
+          <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-lg">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  var dias = 30;
+  var tipoDemanda = '';
+  var chartTipo = null;
+  var chartPrazo = null;
+
+  function el(id) { return document.getElementById(id); }
+  function qs(sel) { return document.querySelector(sel); }
+  function qsAll(sel) { return document.querySelectorAll(sel); }
+
+  function setLoading(loading) {
+    el('aprendizados-spinner').classList.toggle('hidden', !loading);
+    el('aprendizados-conteudo').classList.toggle('hidden', loading);
+  }
+
+  function updateFilterButtons() {
+    qsAll('.aprendizados-btn-dias').forEach(function(btn) {
+      var d = parseInt(btn.getAttribute('data-dias'), 10);
+      btn.classList.remove('bg-blue-600', 'text-white');
+      btn.classList.add('bg-[var(--bg-dark)]', 'text-[var(--text-muted)]');
+      if (d === dias) {
+        btn.classList.add('bg-blue-600', 'text-white');
+        btn.classList.remove('bg-[var(--bg-dark)]', 'text-[var(--text-muted)]');
+      }
+    });
+  }
+
+  function prazoBadgeClass(p) {
+    if (!p) return 'bg-slate-600 text-slate-300';
+    p = (p + '').toLowerCase().trim();
+    if (p === 'sim') return 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30';
+    if (p === 'não' || p === 'nao') return 'bg-red-600/20 text-red-400 border border-red-500/30';
+    if (p === 'parcial') return 'bg-amber-600/20 text-amber-400 border border-amber-500/30';
+    return 'bg-slate-600/20 text-slate-400 border border-slate-500/30';
+  }
+
+  function truncate(str, max) {
+    if (!str) return '';
+    str = String(str);
+    return str.length <= max ? str : str.slice(0, max) + '…';
+  }
+
+  function renderCharts(data) {
+    if (chartTipo) chartTipo.destroy();
+    if (chartPrazo) chartPrazo.destroy();
+
+    var pt = data.por_tipo_demanda || {};
+    var labelsTipo = Object.keys(pt);
+    var valuesTipo = labelsTipo.map(function(k) { return pt[k].total || 0; });
+    var ctxTipo = document.getElementById('chart-tipo-demanda').getContext('2d');
+    chartTipo = new Chart(ctxTipo, {
+      type: 'bar',
+      data: {
+        labels: labelsTipo,
+        datasets: [{ label: 'Total', data: valuesTipo, backgroundColor: 'rgba(59, 130, 246, 0.6)', borderColor: 'rgb(59, 130, 246)', borderWidth: 1 }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { color: '#94a3b8' } },
+          x: { ticks: { color: '#94a3b8', maxRotation: 45 } }
+        }
+      }
+    });
+
+    var pg = data.prazo_cumprido_geral || {};
+    chartPrazo = new Chart(document.getElementById('chart-prazo').getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: ['sim', 'não', 'parcial', 'não se aplica'],
+        datasets: [{
+          data: [pg.sim || 0, pg['não'] || 0, pg.parcial || 0, pg['não se aplica'] || 0],
+          backgroundColor: ['#10b981', '#ef4444', '#f59e0b', '#64748b'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'right', labels: { color: '#94a3b8', padding: 12 } } }
+      }
+    });
+  }
+
+  function renderTable(ultimos) {
+    var tbody = el('aprendizados-tbody');
+    tbody.innerHTML = '';
+    (ultimos || []).forEach(function(row) {
+      var dataStr = row.data_conclusao ? row.data_conclusao.slice(0, 10) : '—';
+      var cliente = row.cliente_identificado;
+      var clienteHtml = cliente
+        ? '<span class="text-[var(--text-main)]">' + escapeHtml(cliente) + '</span>'
+        : '<span class="text-[var(--text-muted)] italic">Não identificado</span>';
+      var prazo = (row.prazo_cumprido || 'n/a').trim();
+      var fog = row.gerou_fog === true || row.gerou_fog === 'true' || row.gerou_fog === 1
+        ? '<i class="fas fa-check text-emerald-500" title="Sim"></i>'
+        : '<span class="text-[var(--text-muted)]">—</span>';
+      var res = (row.resolucao_final || '').trim();
+      var resShort = truncate(res, 60);
+      var resTitle = res ? ' title="' + escapeHtml(res).replace(/"/g, '&quot;') + '"' : '';
+      var tr = document.createElement('tr');
+      tr.className = 'hover:bg-[var(--bg-dark)]/50 transition';
+      tr.dataset.row = JSON.stringify(row);
+      tr.innerHTML =
+        '<td class="px-4 py-3 text-[var(--text-muted)]">' + escapeHtml(dataStr) + '</td>' +
+        '<td class="px-4 py-3">' + clienteHtml + '</td>' +
+        '<td class="px-4 py-3 text-[var(--text-main)]">' + escapeHtml(row.tipo_demanda || '—') + '</td>' +
+        '<td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-xs font-medium ' + prazoBadgeClass(prazo) + '">' + escapeHtml(prazo) + '</span></td>' +
+        '<td class="px-4 py-3">' + fog + '</td>' +
+        '<td class="px-4 py-3 text-[var(--text-muted)] max-w-xs"' + resTitle + '>' + escapeHtml(resShort) + '</td>' +
+        '<td class="px-4 py-3"><button type="button" class="btn-editar-aprendizado px-2 py-1 text-xs font-medium text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded transition" title="Editar"><i class="fas fa-edit"></i></button></td>';
+      tbody.appendChild(tr);
+    });
+    qsAll('.btn-editar-aprendizado').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var tr = btn.closest('tr');
+        var row = tr && tr.dataset.row ? JSON.parse(tr.dataset.row) : null;
+        if (row) openModalEditar(row);
+      });
+    });
+  }
+
+  function openModalEditar(row) {
+    el('edit-threadId').value = row.threadId || '';
+    el('edit-resumo_desfecho').value = row.resumo_desfecho || '';
+    el('edit-resolucao_final').value = row.resolucao_final || '';
+    el('edit-cliente_identificado').value = row.cliente_identificado || '';
+    el('edit-tipo_demanda').value = row.tipo_demanda || '';
+    el('edit-prazo_cumprido').value = (row.prazo_cumprido || 'não se aplica').trim();
+    el('edit-gerou_fog').checked = row.gerou_fog === true || row.gerou_fog === 'true' || row.gerou_fog === 1;
+    el('modal-editar-aprendizado').classList.remove('hidden');
+  }
+
+  function closeModalEditar() {
+    el('modal-editar-aprendizado').classList.add('hidden');
+  }
+
+  function escapeHtml(s) {
+    if (s == null) return '';
+    var div = document.createElement('div');
+    div.textContent = s;
+    return div.innerHTML;
+  }
+
+  function renderAcordeao(resolucoesPorTipo) {
+    var container = el('aprendizados-acordeao');
+    container.innerHTML = '';
+    var tipos = Object.keys(resolucoesPorTipo || {}).sort();
+    tipos.forEach(function(tipo) {
+      var lista = resolucoesPorTipo[tipo] || [];
+      var id = 'acc-' + tipo.replace(/[^a-z0-9]/gi, '_');
+      var details = document.createElement('details');
+      details.className = 'group';
+      details.innerHTML =
+        '<summary class="px-4 py-3 cursor-pointer list-none flex items-center justify-between hover:bg-[var(--bg-dark)]/50 transition text-[var(--text-main)] font-medium">' +
+        '<span><i class="fas fa-chevron-right mr-2 text-[var(--text-muted)] group-open:rotate-90 transition-transform"></i>' + escapeHtml(tipo) + ' — como resolvemos</span>' +
+        '<span class="text-xs text-[var(--text-muted)]">' + lista.length + ' resolução(ões)</span>' +
+        '</summary>' +
+        '<div class="px-4 pb-4 pt-1 border-t border-[var(--border)]">' +
+        '<ul class="space-y-2 text-sm text-[var(--text-muted)]">' +
+        lista.map(function(r) { return '<li class="pl-6 border-l-2 border-[var(--border)]">' + escapeHtml(r) + '</li>'; }).join('') +
+        '</ul></div>';
+      container.appendChild(details);
+    });
+  }
+
+  function loadData() {
+    setLoading(true);
+    updateFilterButtons();
+    var url = '/api/aprendizados?dias=' + dias;
+    if (tipoDemanda) url += '&tipo_demanda=' + encodeURIComponent(tipoDemanda);
+    fetch(url)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var total = data.total_threads || 0;
+        var prazoGeral = data.prazo_cumprido_geral || {};
+        var prazoNao = (prazoGeral['não'] || 0) + (prazoGeral.parcial || 0);
+        var gerouFog = data.gerou_fog_total || 0;
+        var porCliente = data.por_cliente || {};
+        var clientesAtivos = Object.keys(porCliente).filter(function(k) {
+          return (k || '').toLowerCase().indexOf('não identificado') < 0 && (k || '').toLowerCase().indexOf('nao identificado') < 0;
+        }).length;
+
+        el('card-total').textContent = total;
+        el('card-prazo-nao').textContent = prazoNao;
+        el('card-gerou-fog').textContent = gerouFog;
+        el('card-clientes').textContent = clientesAtivos;
+
+        renderCharts(data);
+        renderTable(data.ultimos_aprendizados || []);
+        renderAcordeao(data.resolucoes_por_tipo || {});
+
+        setLoading(false);
+      })
+      .catch(function(err) {
+        console.error(err);
+        setLoading(false);
+      });
+  }
+
+  qsAll('.aprendizados-btn-dias').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      dias = parseInt(btn.getAttribute('data-dias'), 10);
+      loadData();
+    });
+  });
+  el('aprendizados-tipo').addEventListener('change', function() {
+    tipoDemanda = (this.value || '').trim();
+    loadData();
+  });
+
+  el('modal-editar-fechar').addEventListener('click', closeModalEditar);
+  el('modal-editar-cancelar').addEventListener('click', closeModalEditar);
+  el('modal-editar-aprendizado').addEventListener('click', function(e) {
+    if (e.target === this) closeModalEditar();
+  });
+  el('form-editar-aprendizado').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var payload = {
+      threadId: el('edit-threadId').value,
+      resumo_desfecho: el('edit-resumo_desfecho').value.trim(),
+      resolucao_final: el('edit-resolucao_final').value.trim(),
+      cliente_identificado: el('edit-cliente_identificado').value.trim(),
+      tipo_demanda: el('edit-tipo_demanda').value.trim(),
+      prazo_cumprido: el('edit-prazo_cumprido').value.trim(),
+      gerou_fog: el('edit-gerou_fog').checked
+    };
+    fetch('/api/aprendizado/editar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        if (res.status === 'success') {
+          closeModalEditar();
+          loadData();
+        } else {
+          alert(res.message || 'Erro ao salvar');
+        }
+      })
+      .catch(function(err) {
+        console.error(err);
+        alert('Erro ao salvar');
+      });
+  });
+
+  loadData();
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends "layout.html" %}
+
+{% block title %}Configurações{% endblock %}
+{% block header_title %}Configurações{% endblock %}
+{% block header_subtitle %}Preferências do Sistema e Aparência{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto pb-12">
+    
+    <div class="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-6 mb-6 transition-colors duration-300">
+        <h3 class="text-lg font-bold text-[var(--text-main)] mb-4 flex items-center gap-2">
+            <i class="fas fa-paint-brush text-blue-500"></i> Aparência
+        </h3>
+        
+        <div class="flex items-center justify-between p-4 rounded-lg border border-[var(--border)] bg-[var(--bg-dark)] transition-colors duration-300">
+            <div>
+                <p class="font-bold text-[var(--text-main)]">Modo Claro (Light Mode)</p>
+                <p class="text-xs text-[var(--text-muted)]">Altera o esquema de cores para fundo claro e alto contraste.</p>
+            </div>
+            
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="themeToggle" class="sr-only peer" onchange="toggleTheme()">
+                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            </label>
+        </div>
+    </div>
+
+    <div class="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-6 mb-6 opacity-60 transition-colors duration-300">
+        <h3 class="text-lg font-bold text-[var(--text-main)] mb-4 flex items-center gap-2">
+            <i class="fas fa-bell text-yellow-500"></i> Notificações (Em Breve)
+        </h3>
+        <div class="space-y-4">
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-[var(--text-main)]">Alertas por E-mail</span>
+                <i class="fas fa-toggle-on text-green-500 text-xl cursor-not-allowed"></i>
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-[var(--text-main)]">Sons de Alerta</span>
+                <i class="fas fa-toggle-off text-slate-500 text-xl cursor-not-allowed"></i>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Sincroniza o botão com o estado atual ao abrir a página
+    document.addEventListener("DOMContentLoaded", function() {
+        const tema = localStorage.getItem('oraculo_theme');
+        const toggle = document.getElementById('themeToggle');
+        
+        // Se o tema for light, marca o checkbox
+        if (tema === 'light') {
+            toggle.checked = true;
+        }
+    });
+
+    function toggleTheme() {
+        const body = document.body;
+        const toggle = document.getElementById('themeToggle');
+        
+        if (toggle.checked) {
+            body.classList.add('light-mode');
+            localStorage.setItem('oraculo_theme', 'light');
+        } else {
+            body.classList.remove('light-mode');
+            localStorage.setItem('oraculo_theme', 'dark');
+        }
+    }
+</script>
+{% endblock %}

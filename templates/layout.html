@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oráculo 360 | {% block title %}Dashboard{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+      /* ── Flatpickr — tema Oráculo ── */
+      .flatpickr-calendar { background:var(--bg-card,#1e293b); border:1px solid var(--border,#334155); border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,.4); font-family:Inter,sans-serif; }
+      .flatpickr-months { padding:6px 4px 0; }
+      .flatpickr-month { color:var(--text-main,#f1f5f9); }
+      .flatpickr-current-month .flatpickr-monthDropdown-months,
+      .flatpickr-current-month input.cur-year { color:var(--text-main,#f1f5f9); background:transparent; }
+      .flatpickr-prev-month svg, .flatpickr-next-month svg { fill:var(--text-muted,#94a3b8); }
+      .flatpickr-prev-month:hover svg, .flatpickr-next-month:hover svg { fill:var(--text-main,#f1f5f9); }
+      .flatpickr-weekdays { background:transparent; }
+      span.flatpickr-weekday { color:var(--text-muted,#94a3b8); font-weight:700; font-size:11px; }
+      .flatpickr-day { color:var(--text-main,#f1f5f9); border-radius:8px; }
+      .flatpickr-day:hover { background:rgba(124,58,237,.25); border-color:transparent; }
+      .flatpickr-day.selected, .flatpickr-day.selected:hover { background:#7c3aed; border-color:#7c3aed; color:#fff; }
+      .flatpickr-day.flatpickr-disabled, .flatpickr-day.flatpickr-disabled:hover { color:var(--text-muted,#475569); opacity:.4; cursor:not-allowed; }
+      .flatpickr-day.today:not(.selected) { border-color:#7c3aed; color:#c4b5fd; }
+      /* Input wrapper */
+      #fp-data-ref-wrap { display:flex; align-items:center; gap:6px; cursor:pointer; }
+      #fp-data-ref-wrap input { background:transparent; border:none; outline:none; color:var(--text-main,#f1f5f9); font-size:13px; font-weight:600; width:100px; cursor:pointer; }
+    </style>
+    
+    <style>
+        :root {
+            /* TEMA PADRÃO (DARK) */
+            --bg-dark: #0f172a;       /* Slate 900 */
+            --bg-card: #1e293b;       /* Slate 800 */
+            --bg-sidebar: #020617;    /* Slate 950 */
+            --text-main: #f1f5f9;     /* Slate 100 */
+            --text-muted: #94a3b8;    /* Slate 400 */
+            --accent: #3b82f6;        /* Blue 500 */
+            --border: #334155;        /* Slate 700 */
+            --input-bg: #334155;      /* Cor de fundo inputs */
+            --input-border: #475569;
+        }
+
+        /* TEMA CLARO (LIGHT) */
+        body.light-mode {
+            --bg-dark: #f1f5f9;       /* Slate 100 */
+            --bg-card: #ffffff;       /* White */
+            --bg-sidebar: #ffffff;    /* White */
+            --text-main: #1e293b;     /* Slate 800 */
+            --text-muted: #64748b;    /* Slate 500 */
+            --accent: #2563eb;        /* Blue 600 */
+            --border: #e2e8f0;        /* Slate 200 */
+            --input-bg: #ffffff;      /* Fundo Branco */
+            --input-border: #cbd5e1;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* --- SIDEBAR --- */
+        aside {
+            width: 260px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            transition: width 0.3s ease, background-color 0.3s;
+            position: relative;
+        }
+
+        aside.collapsed { width: 80px; }
+
+        aside.collapsed .logo-text,
+        aside.collapsed .nav-text,
+        aside.collapsed .nav-label,
+        aside.collapsed .footer-text { display: none; opacity: 0; }
+
+        aside.collapsed .nav-item { justify-content: center; padding-left: 0; padding-right: 0; }
+        aside.collapsed .logo { justify-content: center; padding: 24px 0; position: relative; }
+        aside.collapsed .header-container { display: none; }
+
+        aside.collapsed .toggle-btn {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            display: flex; align-items: center; justify-content: center;
+            width: 40px; height: 40px; border-radius: 50%;
+            background-color: rgba(255,255,255,0.05);
+        }
+        body.light-mode aside.collapsed .toggle-btn { background-color: rgba(0,0,0,0.05); color: var(--text-muted); }
+        aside.collapsed .toggle-btn:hover { background-color: var(--accent); color: #fff !important; }
+
+        .logo {
+            padding: 24px; font-size: 20px; font-weight: 700; color: var(--text-main);
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid var(--border); white-space: nowrap; overflow: hidden; height: 70px; box-sizing: border-box;
+        }
+
+        .toggle-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+        .toggle-btn:hover { color: var(--text-main); }
+
+        .nav-links { flex: 1; padding: 20px 12px; overflow-y: auto; overflow-x: hidden; }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+            color: var(--text-muted); text-decoration: none; border-radius: 8px;
+            margin-bottom: 4px; font-size: 14px; font-weight: 500; transition: all 0.2s; white-space: nowrap;
+        }
+
+        .nav-item:hover { background-color: rgba(255,255,255,0.05); color: var(--text-main); }
+        body.light-mode .nav-item:hover { background-color: rgba(0,0,0,0.05); }
+        .nav-item.active { background-color: var(--accent); color: #fff !important; }
+        
+        .nav-label {
+            font-size: 11px; text-transform: uppercase; color: var(--text-muted);
+            font-weight: 700; margin: 24px 16px 8px 16px; letter-spacing: 0.05em; white-space: nowrap;
+        }
+
+        /* ─── Grupos colapsáveis no menu (refactor 2026-05-07) ─────────── */
+        .nav-group { margin-top: 6px; }
+        .nav-group-header {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 16px; margin: 2px 8px; border-radius: 8px;
+            color: var(--text-muted); font-size: 12px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.05em;
+            cursor: pointer; user-select: none; white-space: nowrap;
+            transition: background-color .15s, color .15s;
+        }
+        .nav-group-header:hover {
+            background-color: rgba(255,255,255,0.04);
+            color: var(--text-main);
+        }
+        body.light-mode .nav-group-header:hover { background-color: rgba(0,0,0,0.04); }
+        .nav-group-chevron {
+            margin-left: auto; font-size: 10px; opacity: .55;
+            transition: transform .2s ease;
+        }
+        .nav-group.open .nav-group-chevron { transform: rotate(90deg); }
+        .nav-group-items {
+            max-height: 0; overflow: hidden;
+            transition: max-height .25s ease;
+        }
+        .nav-group.open .nav-group-items {
+            max-height: 600px;  /* "auto" não anima — valor alto basta */
+        }
+        .nav-item.nav-sub {
+            padding-left: 36px; font-size: 13.5px;
+        }
+        .nav-item.nav-root {
+            font-weight: 600;
+        }
+        /* No modo recolhido, esconder labels de grupo e indentação */
+        aside.collapsed .nav-group-header { justify-content: center; padding-left: 0; padding-right: 0; }
+        aside.collapsed .nav-group-chevron { display: none; }
+        aside.collapsed .nav-group-items { max-height: 600px; }
+        aside.collapsed .nav-item.nav-sub { padding-left: 0; justify-content: center; }
+        aside.collapsed .nav-group-header .nav-text { display: none; }
+
+        main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+        header {
+            height: 70px; background-color: var(--bg-card); border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between; padding: 0 32px;
+            position: relative; z-index: 20; transition: background-color 0.3s;
+        }
+
+        .content-scroll { flex: 1; overflow-y: auto; padding: 32px; z-index: 10; }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        /* --- CORREÇÃO INPUTS E CALENDÁRIO --- */
+        input[type="date"], input[type="text"], select, textarea {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-family: inherit;
+            color-scheme: dark; 
+            cursor: pointer;
+            outline: none;
+        }
+        body.light-mode input[type="date"],
+        body.light-mode input[type="text"],
+        body.light-mode select {
+            color-scheme: light;
+            background-color: #ffffff !important;
+            color: #1e293b !important;
+            border-color: #cbd5e1 !important;
+        }
+        input:focus { border-color: var(--accent); }
+
+        /* --- CORREÇÃO MENU DROPDOWN --- */
+        .user-dropdown {
+            position: absolute; top: 60px; right: 32px; width: 220px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            display: none; flex-direction: column; padding: 8px 0; z-index: 50;
+        }
+        body.light-mode .user-dropdown {
+            background-color: #ffffff !important;
+            border-color: #e2e8f0;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .user-dropdown.show { display: flex; animation: fadeIn 0.15s ease-out; }
+        .dropdown-header { padding: 8px 16px 12px 16px; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+        .dropdown-item {
+            padding: 8px 16px; font-size: 14px; color: var(--text-muted);
+            text-decoration: none; display: flex; align-items: center; gap: 10px; transition: background 0.2s;
+        }
+        .dropdown-item:hover { background-color: rgba(255,255,255,0.05); color: var(--text-main); }
+        body.light-mode .dropdown-item:hover { background-color: rgba(0,0,0,0.05); }
+        .dropdown-item.danger:hover { background-color: rgba(239, 68, 68, 0.1); color: #ef4444; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        body.light-mode h1.text-white { color: var(--text-main) !important; }
+    </style>
+    {% block head %}{% endblock %}
+</head>
+<body>
+
+    <aside id="sidebar">
+        <div class="logo">
+            <div class="flex items-center gap-2 header-container">
+                <i class="fas fa-robot text-blue-500"></i> 
+                <span class="logo-text">ORÁCULO 360</span>
+            </div>
+            <button class="toggle-btn" onclick="toggleSidebar()" title="Recolher/Expandir Menu">
+                <i class="fas fa-chevron-left" id="toggleIcon"></i>
+            </button>
+        </div>
+        
+        <nav class="nav-links" id="mainNav">
+            {# ─────────────────────────────────────────────────────────────
+               Item raiz (sempre visível, fora dos grupos colapsáveis).
+               ───────────────────────────────────────────────────────────── #}
+            <a href="/" class="nav-item nav-root {% if request.path == '/' %}active{% endif %}" title="Visão Geral — resumo executivo da operação">
+                <i class="fas fa-home w-5 text-center"></i> <span class="nav-text">Visão Geral</span>
+            </a>
+            {# Painel de Gestão — seção com subpáginas para gestores e diretores #}
+            {% if current_user.is_authenticated and current_user.role in ['admin','gestor','diretor','gerencial'] %}
+            <div class="nav-group" data-group="painel-gestao">
+                <div class="nav-group-header" onclick="toggleNavGroup('painel-gestao')">
+                    <i class="fas fa-chart-line w-5 text-center"></i>
+                    <span class="nav-text">Painel de Gestão</span>
+                    <i class="fas fa-chevron-right nav-group-chevron"></i>
+                </div>
+                <div class="nav-group-items">
+                    <a href="/painel/gestao" class="nav-item nav-sub {% if request.path == '/painel/gestao' %}active{% endif %}" title="Resumo do período — KPIs, ranking de analistas, prazos">
+                        <i class="fas fa-chart-bar w-5 text-center"></i> <span class="nav-text">Resumo Período</span>
+                    </a>
+                    <a href="/painel/base-conhecimento-bacen" class="nav-item nav-sub {% if request.path == '/painel/base-conhecimento-bacen' %}active{% endif %}" title="Aprendizado IA — críticas e orientações do Banco Central">
+                        <i class="fas fa-brain w-5 text-center"></i> <span class="nav-text">Aprendizado IA</span>
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            {# ─────────────────────────────────────────────────────────────
+               Estrutura colapsável: cada grupo abre/fecha ao clicar.
+               Estado salvo em localStorage (persiste entre navegações).
+               ───────────────────────────────────────────────────────────── #}
+
+            {# E-MAILS #}
+            <div class="nav-group" data-group="emails">
+                <div class="nav-group-header" onclick="toggleNavGroup('emails')">
+                    <i class="fas fa-envelope w-5 text-center"></i>
+                    <span class="nav-text">E-mails</span>
+                    <i class="fas fa-chevron-right nav-group-chevron"></i>
+                </div>
+                <div class="nav-group-items">
+                    <a href="/operacional" class="nav-item nav-sub {% if request.path == '/operacional' %}active{% endif %}" title="Triagem do dia (caixa de e-mails operacional)">
+                        <i class="fas fa-inbox w-5 text-center"></i> <span class="nav-text">Triagem</span>
+                    </a>
+                </div>
+            </div>
+
+            {# NORMATIVOS #}
+            <div class="nav-group" data-group="normativos">
+                <div class="nav-group-header" onclick="toggleNavGroup('normativos')">
+                    <i class="fas fa-book w-5 text-center"></i>
+                    <span class="nav-text">Normativos</span>
+                    <i class="fas fa-chevron-right nav-group-chevron"></i>
+                </div>
+                <div class="nav-group-items">
+                    <a href="/normativos" class="nav-item nav-sub {% if request.path == '/normativos' %}active{% endif %}" title="Diários Oficiais — consulta + abertura de FOG a partir do diário">
+                        <i class="fas fa-newspaper w-5 text-center"></i> <span class="nav-text">Diários Oficiais / Abertura de FOG</span>
+                    </a>
+                </div>
+            </div>
+
+            {# FOG #}
+            <div class="nav-group" data-group="fog">
+                <div class="nav-group-header" onclick="toggleNavGroup('fog')">
+                    <i class="fas fa-tasks w-5 text-center"></i>
+                    <span class="nav-text">FOG</span>
+                    <i class="fas fa-chevron-right nav-group-chevron"></i>
+                </div>
+                <div class="nav-group-items">
+                    <a href="/fog/operacional" class="nav-item nav-sub {% if request.path == '/fog/operacional' %}active{% endif %}" title="Casos FOG — listagem e gestão de prazos">
+                        <i class="fas fa-list-check w-5 text-center"></i> <span class="nav-text">Casos</span>
+                    </a>
+                    <a href="/fog/gerencial" class="nav-item nav-sub {% if request.path == '/fog/gerencial' %}active{% endif %}" title="KPIs FOG — performance e gargalos">
+                        <i class="fas fa-chart-line w-5 text-center"></i> <span class="nav-text">KPIs</span>
+                    </a>
+                </div>
+            </div>
+
+            {# PROTÓTIPOS — telas em refinamento + IA Assistente #}
+            <div class="nav-group" data-group="prototipos">
+                <div class="nav-group-header" onclick="toggleNavGroup('prototipos')">
+                    <i class="fas fa-flask w-5 text-center"></i>
+                    <span class="nav-text">Protótipos</span>
+                    <i class="fas fa-chevron-right nav-group-chevron"></i>
+                </div>
+                <div class="nav-group-items">
+                    <a href="/ia-assistente" class="nav-item nav-sub {% if request.path == '/ia-assistente' %}active{% endif %}" title="IA Assistente — perguntas inteligentes sobre o painel">
+                        <i class="fas fa-robot w-5 text-center"></i> <span class="nav-text">IA Assistente</span>
+                    </a>
+                    <a href="/gerencial" class="nav-item nav-sub {% if request.path == '/gerencial' %}active{% endif %}" title="Produtividade por analista (carga, fila, atrasos)">
+                        <i class="fas fa-chart-pie w-5 text-center"></i> <span class="nav-text">Produtividade por Analista</span>
+                    </a>
+                    <a href="/gestao/prototipo" class="nav-item nav-sub {% if request.path == '/gestao/prototipo' %}active{% endif %}" title="Visão Gestão — o que priorizar hoje (protótipo em refinamento)">
+                        <i class="fas fa-bullseye w-5 text-center"></i> <span class="nav-text">Visão Gestão</span>
+                    </a>
+                    {% if current_user.role == 'admin' %}
+                    <a href="/gerencial/mensal" class="nav-item nav-sub {% if request.path == '/gerencial/mensal' %}active{% endif %}" title="Gerencial Mensal — relatório histórico (em validação)">
+                        <i class="fas fa-calendar-check w-5 text-center"></i> <span class="nav-text">Gerencial Mensal</span>
+                    </a>
+                    {% endif %}
+                    {% if current_user.is_authenticated and current_user.role in ['admin','gestor','diretor','gerencial'] %}
+                    <a href="/gestao/direcao" class="nav-item nav-sub {% if request.path == '/gestao/direcao' %}active{% endif %}" title="Gestão e Direção — cartões por categoria/colaborador">
+                        <i class="fas fa-chart-column w-5 text-center"></i> <span class="nav-text">Gestão e Direção</span>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# ADMINISTRADOR #}
+            {% if current_user.role == 'admin' %}
+            <div class="nav-group" data-group="admin">
+                <div class="nav-group-header" onclick="toggleNavGroup('admin')">
+                    <i class="fas fa-user-shield w-5 text-center"></i>
+                    <span class="nav-text">Administrador</span>
+                    <i class="fas fa-chevron-right nav-group-chevron"></i>
+                </div>
+                <div class="nav-group-items">
+                    <a href="/admin/pipeline" class="nav-item nav-sub {% if request.path == '/admin/pipeline' %}active{% endif %}" title="Atualizar ou limpar dados (carga do pipeline)">
+                        <i class="fas fa-gears w-5 text-center"></i> <span class="nav-text">Carga</span>
+                    </a>
+                    <a href="/admin/logs" class="nav-item nav-sub {% if request.path == '/admin/logs' %}active{% endif %}" title="Histórico de execuções do pipeline">
+                        <i class="fas fa-list-check w-5 text-center"></i> <span class="nav-text">Logs do pipeline</span>
+                    </a>
+                    <a href="/admin/alertas" class="nav-item nav-sub {% if request.path == '/admin/alertas' %}active{% endif %}" title="Configurar alertas por e-mail">
+                        <i class="fas fa-bell w-5 text-center"></i> <span class="nav-text">Alertas por E-mail</span>
+                    </a>
+                    <a href="/admin/usuarios" class="nav-item nav-sub {% if request.path == '/admin/usuarios' %}active{% endif %}" title="Gerenciar usuários (cadastro, edição, senhas)">
+                        <i class="fas fa-users-gear w-5 text-center"></i> <span class="nav-text">Usuários</span>
+                    </a>
+                    <a href="{{ url_for('page_custos') }}" class="nav-item nav-sub {% if request.path == '/custos' %}active{% endif %}" title="Custos de APIs (OpenAI, Gmail, FogBugz, etc.)">
+                        <i class="fas fa-plug w-5 text-center"></i> <span class="nav-text">APIs Custos</span>
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <a href="{{ url_for('logout') }}" class="nav-item hover:bg-red-500/10 hover:text-red-400 transition" title="Sair" style="margin-top: 24px;">
+                <i class="fas fa-sign-out-alt w-5 text-center"></i> <span class="nav-text">Sair</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-slate-700 text-xs text-slate-500 footer-text">
+            v3.0.1 Stable<br>Finaud Inc.
+        </div>
+    </aside>
+
+    <main>
+        <header>
+            <div>
+                <h1 class="text-xl font-bold text-white">{% block header_title %}Painel{% endblock %}</h1>
+                <p class="text-sm text-slate-400">{% block header_subtitle %}Visão consolidada{% endblock %}</p>
+            </div>
+
+            <div class="flex items-center gap-4">
+                {% block date_selector %}
+                <div class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700" style="background-color: var(--input-bg); border-color: var(--border);">
+                    <span class="text-xs font-bold text-slate-400 uppercase">Data Ref:</span>
+                    <div id="fp-data-ref-wrap">
+                        <input type="text" id="global-date" readonly placeholder="dd/mm/aaaa">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--text-muted);flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </div>
+                </div>
+                {% endblock %}
+
+                <div class="relative">
+                    <div onclick="toggleUserMenu()" class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-xs cursor-pointer hover:bg-blue-500 transition select-none ring-2 ring-transparent hover:ring-blue-400/30">
+                        {{ current_user.name[:2].upper() if current_user.is_authenticated else 'VI' }}
+                    </div>
+                    
+                    <div id="userDropdown" class="user-dropdown">
+                        <div class="dropdown-header">
+                            <p class="text-[var(--text-main)] text-sm font-semibold">
+                                {{ current_user.name if current_user.is_authenticated else 'Visitante' }}
+                            </p>
+                            <p class="text-xs text-[var(--text-muted)] truncate">
+                                {{ current_user.id if current_user.is_authenticated else 'guest' }}@finaud.com
+                            </p>
+                        </div>
+                        <a href="{{ url_for('perfil') }}" class="dropdown-item">
+                            <i class="fas fa-user w-4 text-center"></i> Meu Perfil
+                        </a>
+                        <a href="{{ url_for('configuracoes') }}" class="dropdown-item">
+                            <i class="fas fa-cog w-4 text-center"></i> Configurações
+                        </a>
+                        <div class="h-px bg-slate-700 my-1 mx-2" style="background-color: var(--border);"></div>
+                        <a href="{{ url_for('logout') }}" class="dropdown-item danger">
+                            <i class="fas fa-sign-out-alt w-4 text-center"></i> Sair
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-scroll">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="fixed top-4 right-4 z-[100] animate-bounce">
+                      <div class="px-6 py-3 rounded-lg shadow-xl text-white font-bold text-sm {% if category == 'success' %}bg-emerald-500{% else %}bg-red-500{% endif %}">
+                          <i class="fas {% if category == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} mr-2"></i>
+                          {{ message }}
+                      </div>
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Portal para modais (fica acima do header/sidebar) -->
+    <div id="modal-portal" style="position:fixed;inset:0;z-index:99999;pointer-events:none;"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const icon = document.getElementById('toggleIcon');
+            sidebar.classList.toggle('collapsed');
+            if (sidebar.classList.contains('collapsed')) {
+                localStorage.setItem('sidebarState', 'collapsed');
+                icon.classList.remove('fa-chevron-left');
+                icon.classList.add('fa-chevron-right');
+            } else {
+                localStorage.setItem('sidebarState', 'expanded');
+                icon.classList.remove('fa-chevron-right');
+                icon.classList.add('fa-chevron-left');
+            }
+        }
+
+        /* ─── Grupos colapsáveis do menu ─────────────────────────────── */
+        // Estado: localStorage 'navGroups' = JSON {emails:true, fog:false, ...}
+        function _carregarEstadoGrupos() {
+            try { return JSON.parse(localStorage.getItem('navGroups') || '{}'); }
+            catch (e) { return {}; }
+        }
+        function _salvarEstadoGrupos(estado) {
+            try { localStorage.setItem('navGroups', JSON.stringify(estado)); }
+            catch (e) {}
+        }
+        function toggleNavGroup(nomeGrupo) {
+            const grupo = document.querySelector('.nav-group[data-group="' + nomeGrupo + '"]');
+            if (!grupo) return;
+            grupo.classList.toggle('open');
+            const estado = _carregarEstadoGrupos();
+            estado[nomeGrupo] = grupo.classList.contains('open');
+            _salvarEstadoGrupos(estado);
+        }
+        // Ao carregar a página: aplica o estado salvo, e força abertura do
+        // grupo que contém a página ativa (pra não ficar "perdido").
+        document.addEventListener('DOMContentLoaded', function () {
+            const estado = _carregarEstadoGrupos();
+            document.querySelectorAll('.nav-group').forEach(function (g) {
+                const nome = g.getAttribute('data-group');
+                const temAtivo = !!g.querySelector('.nav-item.active');
+                // Padrão: "emails" e "admin" abertos no primeiro acesso
+                const padraoAberto = (nome === 'emails' || nome === 'admin');
+                const aberto = (nome in estado) ? !!estado[nome] : padraoAberto;
+                if (aberto || temAtivo) g.classList.add('open');
+                if (temAtivo && !(nome in estado)) {
+                    // Persiste a abertura forçada para próxima visita
+                    estado[nome] = true;
+                    _salvarEstadoGrupos(estado);
+                }
+            });
+        });
+
+        function toggleUserMenu() {
+            const menu = document.getElementById('userDropdown');
+            menu.classList.toggle('show');
+        }
+
+        window.addEventListener('click', function(e) {
+            const menu = document.getElementById('userDropdown');
+            const avatar = document.querySelector('.relative .rounded-full');
+            if (menu && !menu.contains(e.target) && !avatar.contains(e.target)) {
+                menu.classList.remove('show');
+            }
+        });
+
+        function aplicarTema() {
+            const tema = localStorage.getItem('oraculo_theme');
+            if (tema === 'light') {
+                document.body.classList.add('light-mode');
+            } else {
+                document.body.classList.remove('light-mode');
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const sidebar = document.getElementById('sidebar');
+            const icon = document.getElementById('toggleIcon');
+            const savedSidebar = localStorage.getItem('sidebarState');
+            if (savedSidebar === 'collapsed') {
+                sidebar.classList.add('collapsed');
+                icon.classList.remove('fa-chevron-left');
+                icon.classList.add('fa-chevron-right');
+            }
+            aplicarTema();
+            iniciarData();
+        });
+
+        // --- FLATPICKR — feriados nacionais BR 2025/2026 ---
+        const _feriados = [
+          '2025-01-01','2025-04-07','2025-04-18','2025-04-21','2025-05-01',
+          '2025-06-19','2025-09-07','2025-10-12','2025-11-02','2025-11-15',
+          '2025-11-20','2025-12-25',
+          '2026-01-01','2026-04-03','2026-04-24','2026-04-21','2026-05-01',
+          '2026-06-11','2026-09-07','2026-10-12','2026-11-02','2026-11-15',
+          '2026-11-20','2026-12-25',
+        ];
+        let _fpInstance = null;
+
+        // --- FUNÇÃO DE DATA INICIAL (COM AVISO) ---
+        // Data = hoje apenas no primeiro carregamento após login. Ao atualizar (F5), restaura do localStorage.
+        // Telas SEM carga (max = hoje); todas as outras usam a última data de carga
+        const _TELAS_SEM_CARGA = [
+            '/painel/base-conhecimento-bacen',
+            '/normativos', '/admin/', '/custos', '/configuracoes', '/perfil',
+        ];
+
+        function iniciarData() {
+            const input = document.querySelector('header #global-date');
+            if (!input || typeof flatpickr === 'undefined') return;
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const dataUrl = urlParams.get('data');
+            const hoje = new Date().toISOString().slice(0, 10);
+            let dataToUse;
+            if (dataUrl) {
+                dataToUse = dataUrl;
+            } else if (sessionStorage.getItem('oraculo_data_ref_restored')) {
+                dataToUse = localStorage.getItem('oraculo_data_ref') || hoje;
+            } else {
+                sessionStorage.setItem('oraculo_data_ref_restored', '1');
+                dataToUse = hoje;
+            }
+
+            // Inicializar imediatamente com maxDate=today para não travar
+            _fpInstance = flatpickr(input, {
+                dateFormat:  'Y-m-d',
+                altInput:    true,
+                altFormat:   'd/m/Y',
+                maxDate:     'today',
+                locale:      { firstDayOfWeek: 0 },
+                disable: [
+                    d => d.getDay() === 0 || d.getDay() === 6,
+                    ..._feriados,
+                ],
+                onChange(selectedDates, dateStr) {
+                    if (!dateStr) return;
+                    localStorage.setItem('oraculo_data_ref', dateStr);
+                    window.dispatchEvent(new CustomEvent('dataAlterada', { detail: dateStr }));
+                    const paginasDinamicas = ['operacional', 'gerencial', 'normativos', 'custos', 'gestao'];
+                    const ehDinamica = paginasDinamicas.some(p => window.location.pathname.includes(p));
+                    if (!ehDinamica) {
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('data', dateStr);
+                        window.location.href = url.toString();
+                    }
+                },
+            });
+
+            // Estilizar o altInput
+            const altEl = input.nextElementSibling;
+            if (altEl && altEl.classList.contains('flatpickr-input')) {
+                altEl.style.cssText = 'background:transparent;border:none;outline:none;color:var(--text-main);font-size:13px;font-weight:600;width:100px;cursor:pointer;';
+            }
+
+            _fpInstance.setDate(dataToUse, false);
+            localStorage.setItem('oraculo_data_ref', dataToUse);
+            window.dispatchEvent(new CustomEvent('dataAlterada', { detail: dataToUse }));
+
+            // Após renderizar: buscar última data de carga e ajustar maxDate se necessário
+            const semCarga = _TELAS_SEM_CARGA.some(p => window.location.pathname.startsWith(p));
+            if (!semCarga) {
+                fetch('/api/ultima_data_carga')
+                    .then(r => r.json())
+                    .then(j => {
+                        if (j.ultima_data) {
+                            _fpInstance.set('maxDate', j.ultima_data);
+                            // Se data atual for posterior ao max, corrigir
+                            const cur = _fpInstance.input.value;
+                            if (cur > j.ultima_data) {
+                                _fpInstance.setDate(j.ultima_data, true);
+                            }
+                        }
+                    })
+                    .catch(() => {});
+            }
+        }
+
+        // --- FUNÇÃO DE ATUALIZAÇÃO (mantida para compatibilidade) ---
+        function atualizarDataGlobal() {
+            const novaData = document.getElementById('global-date').value;
+            localStorage.setItem('oraculo_data_ref', novaData);
+            window.dispatchEvent(new CustomEvent('dataAlterada', { detail: novaData }));
+
+            const paginasDinamicas = ['operacional', 'gerencial', 'normativos', 'custos', 'gestao'];
+            const ehDinamica = paginasDinamicas.some(p => window.location.pathname.includes(p));
+
+            if (!ehDinamica) {
+                const url = new URL(window.location.href);
+                url.searchParams.set('data', novaData);
+                window.location.href = url.toString();
+            }
+        }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

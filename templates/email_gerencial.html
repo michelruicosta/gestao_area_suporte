@@ -1,0 +1,180 @@
+{% extends "layout.html" %}
+
+{% block title %}Produtividade por Analista{% endblock %}
+{% block header_title %}Produtividade por Analista{% endblock %}
+{% block header_subtitle %}Carga de trabalho, fila e atrasos por colaborador da equipe Finaud{% endblock %}
+
+{% block head %}
+<style>
+    /* Componentes do Dashboard Gerencial */
+    .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; transition: all 0.3s; }
+    .stat-card.active { border-color: var(--accent); ring: 2px solid rgba(59, 130, 246, 0.3); }
+    .bar-container { background: var(--border); border-radius: 4px; height: 8px; width: 100%; overflow: hidden; }
+    .bar-fill { height: 100%; transition: width 0.5s ease-in-out; }
+
+    /* Estilos para a Fila Detalhada integrada */
+    .border-extrema { border-left: 4px solid #ef4444 !important; }
+    .border-atrasado { border-left: 4px solid #f59e0b !important; }
+    .border-normal { border-left: 4px solid var(--border) !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-[1600px] mx-auto pb-12">
+    
+    <div class="flex justify-end gap-4 mb-8">
+        <div class="bg-[var(--bg-card)] p-4 rounded-xl border border-[var(--border)] text-center min-w-[140px]">
+            <p class="text-[10px] uppercase font-bold text-[var(--text-muted)] tracking-widest">Total Pendente</p>
+            <p id="total-geral" class="text-3xl font-black text-[var(--text-main)]">--</p>
+        </div>
+        <div class="bg-[var(--bg-card)] p-4 rounded-xl border border-[var(--border)] text-center min-w-[140px]">
+            <p class="text-[10px] uppercase font-bold text-red-500 tracking-widest">Críticos</p>
+            <p id="total-critico" class="text-3xl font-black text-red-500">--</p>
+        </div>
+    </div>
+
+    <div id="grid-analistas" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+        </div>
+
+    <div id="secao-detalhe" class="hidden animate-in fade-in slide-in-from-bottom-4 duration-500 border-t border-[var(--border)] pt-8">
+        <div class="flex items-center justify-between mb-8">
+            <h2 class="text-xl font-bold flex items-center gap-3 text-[var(--text-main)]">
+                <i class="fas fa-list-ul text-blue-500"></i> 
+                Fila Detalhada: <span id="nome-analista-detalhe" class="text-blue-400 text-2xl ml-2">---</span>
+            </h2>
+            <button onclick="fecharDetalhe()" class="text-[var(--text-muted)] hover:text-white text-xs uppercase font-black tracking-widest">
+                <i class="fas fa-times mr-1"></i> FECHAR
+            </button>
+        </div>
+        <div id="container-fila" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            </div>
+    </div>
+</div>
+
+<script>
+let dadosMestre = [];
+
+async function carregarDados() {
+    try {
+        const response = await fetch('/api/dados');
+        const payload = await response.json();
+        if (!response.ok) {
+            console.error('API retornou erro:', payload);
+            return;
+        }
+        dadosMestre = Array.isArray(payload) ? payload : [...(payload.hoje || []), ...(payload.acumulado || [])];
+        processarGerencial();
+    } catch (error) {
+        console.error('Erro ao carregar dados gerenciais:', error);
+    }
+}
+
+function processarGerencial() {
+    const analistas = {};
+    let globalPendentes = 0;
+    let globalCriticos = 0;
+
+    dadosMestre.forEach(item => {
+        if true {
+            const nome = item.colaborador || 'Sem Atribuição';
+            if (!analistas[nome]) {
+                analistas[nome] = { nome, pendentes: 0, atrasados: 0, urgentes: 0, concluidos: 0, fila: [] };
+            }
+
+            const status = item.status_processo || 'PENDENTE';
+            const urgencia = item.status_prazo || 'NORMAL';
+
+            if (status === 'PENDENTE') {
+                analistas[nome].pendentes++;
+                globalPendentes++;
+                if (urgencia === 'EXTREMA URGÊNCIA') { analistas[nome].urgentes++; globalCriticos++; }
+                if (urgencia === 'ATRASADO') analistas[nome].atrasados++;
+                analistas[nome].fila.push(item);
+            } else {
+                analistas[nome].concluidos++;
+            }
+        }
+    });
+
+    document.getElementById('total-geral').innerText = globalPendentes;
+    document.getElementById('total-critico').innerText = globalCriticos;
+    
+    renderizarGrid(analistas);
+}
+
+function renderizarGrid(analistas) {
+    const grid = document.getElementById('grid-analistas');
+    grid.innerHTML = '';
+    
+    Object.values(analistas).forEach(a => {
+        // Cálculo de carga simplificado (max 20 itens)
+        const cargaPerc = Math.min(Math.round((a.pendentes / 20) * 100), 100);
+        let corCarga = cargaPerc > 80 ? 'bg-red-500' : (cargaPerc > 50 ? 'bg-amber-500' : 'bg-emerald-500');
+
+        const div = document.createElement('div');
+        div.id = `card-${a.nome.replace(/\s/g, '')}`;
+        div.className = 'stat-card shadow-xl';
+        div.innerHTML = `
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white uppercase">${a.nome.substring(0,2)}</div>
+                    <h3 class="text-lg font-bold text-[var(--text-main)]">${a.nome}</h3>
+                </div>
+                <span class="text-[10px] font-black px-2 py-1 bg-slate-700 text-slate-300 rounded uppercase">${a.concluidos} Entregas Hoje</span>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <div class="flex justify-between text-[10px] uppercase font-bold text-[var(--text-muted)] mb-1">
+                        <span>Carga de Trabalho</span><span>${cargaPerc}%</span>
+                    </div>
+                    <div class="bar-container"><div class="bar-fill ${corCarga}" style="width: ${cargaPerc}%"></div></div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 pt-4">
+                    <div class="bg-slate-900/50 p-3 rounded-lg text-center"><p class="text-[9px] text-[var(--text-muted)] uppercase font-bold">Pendentes</p><p class="text-xl font-black">${a.pendentes}</p></div>
+                    <div class="bg-slate-900/50 p-3 rounded-lg text-center border-b-2 border-amber-500"><p class="text-[9px] text-amber-500 uppercase font-bold">Atrasados</p><p class="text-xl font-black text-amber-500">${a.atrasados}</p></div>
+                    <div class="bg-slate-900/50 p-3 rounded-lg text-center border-b-2 border-red-500"><p class="text-[9px] text-red-500 uppercase font-bold">Urgentes</p><p class="text-xl font-black text-red-500">${a.urgentes}</p></div>
+                </div>
+            </div>
+            <button onclick='verFilaDetalhada(${JSON.stringify(a.fila)}, "${a.nome}")' class="w-full mt-6 py-2 bg-slate-700 hover:bg-blue-600 text-[var(--text-main)] rounded-lg text-xs font-black transition uppercase tracking-widest">Ver Fila Detalhada</button>
+        `;
+        grid.appendChild(div);
+    });
+}
+
+function verFilaDetalhada(fila, nome) {
+    const secao = document.getElementById('secao-detalhe');
+    const container = document.getElementById('container-fila');
+    document.getElementById('nome-analista-detalhe').innerText = nome;
+    
+    secao.classList.remove('hidden');
+    container.innerHTML = '';
+
+    fila.forEach(item => {
+        const isUrgente = item.status_prazo === 'EXTREMA URGÊNCIA';
+        const isAtrasado = item.status_prazo === 'ATRASADO';
+        let border = isUrgente ? 'border-extrema' : (isAtrasado ? 'border-atrasado' : 'border-normal');
+        
+        const card = document.createElement('div');
+        card.className = `bg-[var(--bg-card)] p-5 rounded-lg border border-[var(--border)] shadow-lg ${border}`;
+        card.innerHTML = `
+            <div class="flex justify-between mb-3">
+                <span class="text-[9px] font-black px-2 py-1 rounded ${isUrgente ? 'bg-red-500 text-white' : (isAtrasado ? 'bg-amber-500 text-slate-900' : 'bg-slate-700')}">
+                    ${item.status_prazo}
+                </span>
+                <span class="text-[10px] text-[var(--text-muted)] font-mono">${item.tempo_espera}</span>
+            </div>
+            <h4 class="font-bold text-sm text-[var(--text-main)] mb-1 truncate" title="${item.titulo}">${item.titulo}</h4>
+            <p class="text-xs text-blue-400 font-medium">${item.cliente}</p>
+        `;
+        container.appendChild(card);
+    });
+    secao.scrollIntoView({ behavior: 'smooth' });
+}
+
+function fecharDetalhe() {
+    document.getElementById('secao-detalhe').classList.add('hidden');
+}
+
+document.addEventListener('DOMContentLoaded', carregarDados);
+</script>
+{% endblock %}

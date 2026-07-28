@@ -1,0 +1,4 @@
+# Hooks e workflows precisam de fim-de-linha LF (senão o shebang #!/bin/sh quebra no git).
+.githooks/** text eol=lf
+*.sh text eol=lf
+.github/workflows/*.yml text eol=lf

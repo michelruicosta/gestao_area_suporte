@@ -1,0 +1,12 @@
+[triagem_auto_dlo] PASTA_JSON=D:\oraculo_360_finaud\data\json\pipeline
+[triagem_auto_dlo] data_ref=2026-02-25 candidatos pós-filtro manual
+  threadIds excluídos (fecho automático alvo='DLO' com data < data_ref): 123
+  Removidos auto anteriores: concluidas=1, aguardando=6
+  Novos Concluído: 1, Novos Aguardando: 6
+   GMTHRID_1857035117109188016 → Concluído (§4d cliente agradece após remessa Finaud → cliente)
+   GMTHRID_1858108884971463202 → Aguardando Finaud (§3 última mensagem CLIENTE)
+   GMTHRID_1858108266629233345 → Aguardando Finaud (§3 última mensagem CLIENTE)
+   GMTHRID_1814345576778325508 → Aguardando Finaud (§3 última mensagem CLIENTE)
+   GMTHRID_1858108538964463383 → Aguardando Finaud (§3 última mensagem CLIENTE)
+   GMTHRID_1858108407566624517 → Aguardando cliente (§3-inv pedido Finaud)
+   GMTHRID_1858108051846508152 → Aguardando cliente (§3-inv pedido Finaud)

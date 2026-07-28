@@ -1,0 +1,147 @@
+{% extends "layout.html" %}
+
+{% block title %}Visão Geral{% endblock %}
+{% block header_title %}Visão Geral{% endblock %}
+{% block header_subtitle %}Resumo executivo da operação{% endblock %}
+
+{# --- REMOVE O CALENDÁRIO DESTA PÁGINA --- #}
+{% block date_selector %}{% endblock %}
+
+{% block content %}
+<div class="max-w-[1600px] mx-auto pb-12">
+
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-[var(--text-main)] mb-1">
+            Olá, {{ current_user.name if current_user.is_authenticated else 'Visitante' }}
+        </h2>
+        <p class="text-[var(--text-muted)] text-sm" id="home-saudacao-data">Carregando informações do dia...</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+
+        <div class="bg-[var(--bg-card)] p-6 rounded-xl border border-[var(--border)] shadow-sm relative overflow-hidden">
+            <div class="absolute right-0 top-0 p-4 opacity-10 text-6xl text-blue-500">
+                <i class="fas fa-envelope"></i>
+            </div>
+            <p class="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-wider mb-3">E-mails</p>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <p class="text-[10px] text-[var(--text-muted)] mb-1">Pendente</p>
+                    <p class="text-2xl font-black text-[var(--text-main)]" id="home-email-pendente">--</p>
+                </div>
+                <div>
+                    <p class="text-[10px] text-yellow-500 mb-1">Aguardando</p>
+                    <p class="text-2xl font-black text-yellow-500" id="home-email-aguardando">--</p>
+                </div>
+                <div>
+                    <p class="text-[10px] text-emerald-500 mb-1">Concluído</p>
+                    <p class="text-2xl font-black text-emerald-500" id="home-email-concluido">--</p>
+                </div>
+                <div>
+                    <p class="text-[10px] text-red-400 mb-1">Não resolvidos</p>
+                    <p class="text-2xl font-black text-red-400" id="home-email-nao-resolvidos">--</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-[var(--bg-card)] p-6 rounded-xl border border-[var(--border)] shadow-sm relative overflow-hidden">
+            <div class="absolute right-0 top-0 p-4 opacity-10 text-6xl text-purple-500">
+                <i class="fas fa-bug"></i>
+            </div>
+            <p class="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-wider mb-3">FOG</p>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <p class="text-[10px] text-[var(--text-muted)] mb-1">Em aberto</p>
+                    <p class="text-2xl font-black text-[var(--text-main)]" id="home-fog-ativos">--</p>
+                </div>
+                <div>
+                    <p class="text-[10px] text-red-400 mb-1">Críticos (+15d)</p>
+                    <p class="text-2xl font-black text-red-400" id="home-fog-criticos">--</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-[var(--bg-card)] p-6 rounded-xl border border-[var(--border)] shadow-sm relative overflow-hidden">
+            <div class="absolute right-0 top-0 p-4 opacity-10 text-6xl text-emerald-500">
+                <i class="fas fa-file-pdf"></i>
+            </div>
+            <p class="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-wider mb-3">Normativos</p>
+            <p class="text-[10px] text-[var(--text-muted)] mb-1">Com impacto detectado</p>
+            <p class="text-2xl font-black text-[var(--text-main)]" id="home-normativos-impacto">--</p>
+        </div>
+    </div>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/kpis_email_compartilhado.js') }}"></script>
+<script>
+    let THREADS = {};
+    let PAR_SUGERIDOS = {};
+    let PAR_CONFIRMADOS = {};
+
+    function hojeLocalIso() {
+        const d = new Date();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${d.getFullYear()}-${m}-${day}`;
+    }
+
+    function isoParaBr(iso) {
+        if (!iso || iso.length < 10) return '--';
+        const [y, m, d] = iso.slice(0, 10).split('-');
+        return `${d}/${m}/${y}`;
+    }
+
+    document.addEventListener("DOMContentLoaded", async function() {
+        const saudacaoEl = document.getElementById('home-saudacao-data');
+        try {
+            const cargaReq = await fetch('/api/ultima_data_carga');
+            const cargaInfo = await cargaReq.json();
+            const dataCarga = (cargaInfo.gerado_em || '').slice(0, 10);
+            const hoje = hojeLocalIso();
+
+            if (!dataCarga || dataCarga !== hoje) {
+                saudacaoEl.textContent = dataCarga
+                    ? `Ainda não há carga rodada hoje, ${isoParaBr(hoje)}. Última carga: ${isoParaBr(dataCarga)}.`
+                    : `Ainda não há nenhuma carga rodada.`;
+                return; // opção B: sem carga do dia, os 3 cards ficam em "--"
+            }
+
+            saudacaoEl.textContent = `Aqui estão as informações do dia ${isoParaBr(dataCarga)}.`;
+
+            const [dadosReq, fogReq, normReq] = await Promise.all([
+                fetch('/api/dados?data=' + encodeURIComponent(dataCarga)),
+                fetch('/api/fog_resumo_dia'),
+                fetch('/api/normativos_resumo_dia?data=' + encodeURIComponent(dataCarga)),
+            ]);
+
+            // ----- E-mails: mesmo cálculo da tela de Triagem (kpis_email_compartilhado.js) -----
+            const payload = await dadosReq.json();
+            const allData = [...(payload.hoje || []), ...(payload.acumulado || []), ...(payload.nao_resolvidos_eventos || [])];
+            THREADS = groupByThread(allData);
+            PAR_SUGERIDOS = payload.pares_sugeridos || {};
+            PAR_CONFIRMADOS = payload.pares_confirmados || {};
+            const aguardandoIds = new Set((payload.aguardando || []).map(x => typeof x === 'string' ? x : (x && x.threadId) || x));
+            const naoResolvidosIds = new Set((payload.nao_resolvidos || []).map(x => typeof x === 'string' ? x : (x && x.threadId) || x));
+            const kpis = calcularContagemKpisEmailDia(THREADS, aguardandoIds, naoResolvidosIds);
+            document.getElementById('home-email-pendente').textContent = kpis.pendente;
+            document.getElementById('home-email-aguardando').textContent = kpis.aguardando;
+            document.getElementById('home-email-concluido').textContent = kpis.concluido;
+            document.getElementById('home-email-nao-resolvidos').textContent = kpis.naoResolvidos;
+
+            // ----- FOG -----
+            const fog = await fogReq.json();
+            document.getElementById('home-fog-ativos').textContent = fog.ativos ?? '--';
+            document.getElementById('home-fog-criticos').textContent = fog.criticos ?? '--';
+
+            // ----- Normativos -----
+            const norm = await normReq.json();
+            document.getElementById('home-normativos-impacto').textContent = norm.com_impacto ?? '--';
+
+        } catch (e) {
+            console.error("Erro ao carregar resumo da Home:", e);
+            saudacaoEl.textContent = 'Não foi possível carregar as informações do dia.';
+        }
+    });
+</script>
+{% endblock %}

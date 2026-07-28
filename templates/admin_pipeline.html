@@ -1,0 +1,1502 @@
+{% extends "layout.html" %}
+
+{% block title %}Atualização de dados (admin){% endblock %}
+{% block header_title %}Atualização de dados (equipe técnica){% endblock %}
+{% block header_subtitle %}Um período só · várias datas na fila · limpar um dia ou tudo · só administrador{% endblock %}
+
+{% block date_selector %}{% endblock %}
+
+{% block head %}
+<style>
+    .pipeline-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1.25rem 1.5rem;
+    }
+    /* Painel de andamento (sticky só na página principal; na modal sobrescreve-se) */
+    .pipeline-status-shell {
+        position: sticky;
+        top: 0.75rem;
+        z-index: 30;
+        max-width: 100%;
+        background: linear-gradient(165deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 0.98) 100%);
+        border: 1px solid rgba(59, 130, 246, 0.35);
+        border-radius: 16px;
+        padding: 1rem 1.25rem 1.125rem;
+        box-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.45);
+    }
+    body.light-mode .pipeline-status-shell {
+        background: linear-gradient(165deg, #fff 0%, #f1f5f9 100%);
+        border-color: rgba(37, 99, 235, 0.25);
+        box-shadow: 0 8px 24px -8px rgba(15, 23, 42, 0.12);
+    }
+    .pipeline-status-shell.pipeline-status--running {
+        border-color: rgba(59, 130, 246, 0.55);
+        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.12), 0 12px 40px -12px rgba(37, 99, 235, 0.2);
+    }
+    /* Modal de andamento por cima da página (sem misturar com o formulário) */
+    .pipeline-progress-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 230;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding: 0.75rem;
+        display: none;
+        align-items: flex-start;
+        justify-content: center;
+    }
+    .pipeline-progress-overlay.is-open {
+        display: flex;
+    }
+    .pipeline-progress-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.88);
+        z-index: 0;
+        cursor: default;
+    }
+    body.light-mode .pipeline-progress-backdrop {
+        background: rgba(15, 23, 42, 0.52);
+    }
+    .pipeline-progress-sheet {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        max-width: 1100px;
+        margin: 0.35rem auto 1rem;
+    }
+    /* dentro da modal o shell não usa sticky */
+    .pipeline-progress-sheet .pipeline-status-shell {
+        position: relative;
+        top: auto;
+        margin-bottom: 0;
+    }
+    .aba-btn { border-bottom: 2px solid transparent; margin-bottom: -1px; }
+    .aba-ativa { border-color: rgb(99 102 241) !important; color: white !important; background: rgba(99,102,241,0.15) !important; }
+    .painel-aba.hidden { display: none; }
+
+    .pipeline-metric {
+        background: rgba(15, 23, 42, 0.45);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 0.65rem 0.85rem;
+        min-width: 0;
+    }
+    body.light-mode .pipeline-metric {
+        background: rgba(241, 245, 249, 0.9);
+    }
+    .pipeline-metric-label {
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 0.2rem;
+    }
+    .pipeline-log-panel {
+        display: flex;
+        flex-direction: column;
+        margin-top: 0.75rem;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: rgba(0, 0, 0, 0.22);
+        overflow: hidden;
+        height: 220px;
+        max-height: min(220px, 38vh);
+    }
+    body.light-mode .pipeline-log-panel {
+        background: rgba(241, 245, 249, 0.65);
+    }
+    .pipeline-log-head {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        padding: 0.35rem 0.65rem;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        background: rgba(30, 41, 59, 0.65);
+        border-bottom: 1px solid var(--border);
+    }
+    body.light-mode .pipeline-log-head {
+        background: rgba(226, 232, 240, 0.9);
+    }
+    #st-log-wrap {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        overscroll-behavior: contain;
+        padding: 0.5rem 0.65rem 0.65rem;
+        scroll-behavior: smooth;
+    }
+    .pipeline-log-pre {
+        margin: 0;
+        font-family: ui-monospace, "Cascadia Code", "Consolas", monospace;
+        font-size: 11px;
+        line-height: 1.45;
+        white-space: pre-wrap;
+        word-break: break-word;
+        color: var(--text-muted);
+    }
+    #msg-global.msg-info,
+    #msg-global-modal.msg-info {
+        border-color: rgba(59, 130, 246, 0.5);
+        background: rgba(30, 58, 138, 0.35);
+        color: #93c5fd;
+    }
+    #msg-global,
+    #msg-global-modal {
+        max-height: 5.5rem;
+        overflow-y: auto;
+    }
+    button.pipeline-btn-busy:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+    /* Grade passo a passo (executar_tudo) */
+    .pipeline-steps-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+    }
+    .pipeline-steps-table th {
+        text-align: left;
+        padding: 0.45rem 0.5rem;
+        font-weight: 800;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border);
+    }
+    .pipeline-steps-table td {
+        padding: 0.42rem 0.5rem;
+        border-bottom: 1px solid rgba(51, 65, 85, 0.45);
+        vertical-align: top;
+    }
+    .pipeline-steps-table tr.pipeline-step--active td.pipeline-step-num {
+        color: #60a5fa;
+        font-weight: 700;
+    }
+    .pipeline-steps-table tr.pipeline-step--done:not(.pipeline-step-row--prog) td {
+        opacity: 0.82;
+    }
+    .pipeline-col-json ul.pipeline-json-list {
+        margin: 0;
+        padding-left: 1rem;
+        font-size: 10px;
+        line-height: 1.42;
+        color: var(--text-muted);
+        max-height: 6.5rem;
+        overflow-y: auto;
+    }
+    .pipeline-col-json ul.pipeline-json-list li.mono {
+        font-family: ui-monospace, monospace;
+        font-size: 9px;
+    }
+    .pipeline-prog-wrap {
+        margin-top: 2px;
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(30, 41, 59, 0.9);
+        border: 1px solid rgba(51, 65, 85, 0.6);
+        overflow: hidden;
+    }
+    body.light-mode .pipeline-prog-wrap {
+        background: rgba(226, 232, 240, 0.9);
+    }
+    .pipeline-prog-fill {
+        height: 100%;
+        width: 0%;
+        border-radius: 999px;
+        transition: width 0.35s ease, background 0.2s ease;
+        background: rgba(148, 163, 184, 0.5);
+    }
+    .pipeline-prog-fill--busy {
+        width: 70%;
+        background: linear-gradient(90deg, rgb(56 189 248), rgb(34 211 238));
+        box-shadow: 0 0 8px rgba(56, 189, 248, 0.45);
+        animation: pipelinePulse 1.1s ease-in-out infinite alternate;
+    }
+    @keyframes pipelinePulse {
+        from { opacity: 0.88; transform: translateX(0); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    .pipeline-prog-fill--done {
+        width: 100% !important;
+        background: rgb(34 197 94) !important;
+        animation: none;
+    }
+    .pipeline-prog-pct {
+        margin-top: 5px;
+        font-size: 10px;
+        font-weight: 700;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        color: var(--text-muted);
+    }
+    .pipeline-prog-pct--done {
+        color: rgb(34 197 94);
+        font-weight: 800;
+    }
+    /* Modal confirmação */
+    .pipeline-modal-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 200;
+        background: rgba(15, 23, 42, 0.75);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
+    .pipeline-modal-overlay.show { display: flex; }
+    .pipeline-modal-inner {
+        max-width: 28rem;
+        width: 100%;
+        padding: 1.25rem 1.35rem;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        background: var(--bg-card);
+        box-shadow: 0 22px 50px rgba(0,0,0,0.55);
+    }
+    body.light-mode .pipeline-modal-inner { box-shadow: 0 22px 50px rgba(0,0,0,0.12); }
+    #pipeline-modal-deletar.pipeline-modal-btn--amber {
+        background-color: rgb(180 83 9);
+    }
+    #pipeline-modal-deletar.pipeline-modal-btn--amber:hover {
+        background-color: rgb(217 119 6);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="pipeline-progress-overlay" class="pipeline-progress-overlay" aria-hidden="true">
+    <div class="pipeline-progress-backdrop" aria-hidden="true"></div>
+    <div class="pipeline-progress-sheet">
+        <div id="msg-global-modal" class="hidden px-4 py-3 rounded-lg border text-sm font-medium"></div>
+
+    <!-- Painel de andamento: abre dentro deste overlay (backdrop cobre o fundo inteiro). -->
+    <div id="status-box" class="pipeline-status-shell hidden">
+        <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
+            <div class="flex-1 min-w-0">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-blue-400/95 mb-2">Andamento do trabalho</p>
+                <p id="st-step" class="text-sm leading-snug text-[var(--text-main)] font-medium max-w-[65ch]"></p>
+                <p id="st-dias" class="text-xs text-slate-400 mt-1.5 hidden font-medium"></p>
+                <p id="st-llm" class="text-xs text-amber-400/90 mt-1 hidden font-medium"></p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 shrink-0">
+                <span id="st-status-pill" class="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold border border-slate-600 bg-slate-800/80 text-slate-200">—</span>
+                <button type="button" id="btn-st-fechar" class="inline-flex items-center rounded-lg px-3 py-1.5 text-xs font-bold border border-slate-500 bg-slate-800/70 text-slate-200 hover:bg-slate-700/80 transition"
+                    title="Fecha este painel. Se o trabalho ainda estiver em execução, continua em segundo plano no servidor até terminar.">
+                    Fechar
+                </button>
+            </div>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="pipeline-metric">
+                <div class="pipeline-metric-label">Estado</div>
+                <p id="st-status" class="text-lg font-bold text-[var(--text-main)] truncate">—</p>
+            </div>
+            <div class="pipeline-metric">
+                <div class="pipeline-metric-label">Tempo decorrido</div>
+                <p id="st-elapsed" class="text-xl font-mono font-semibold tabular-nums text-[var(--text-main)]">—</p>
+            </div>
+            <div class="pipeline-metric">
+                <div class="pipeline-metric-label">Previsão de tempo para acabar (~)</div>
+                <p id="st-eta" class="text-xl font-mono font-semibold tabular-nums text-emerald-400/95">—</p>
+            </div>
+            <div class="pipeline-metric">
+                <div class="pipeline-metric-label">Última atividade</div>
+                <p id="st-atividade" class="text-sm font-semibold text-[var(--text-main)]">—</p>
+                <p id="st-atividade-aviso" class="hidden text-[10px] mt-1 font-medium text-amber-400">⚠ Sem resposta — pode estar travado</p>
+            </div>
+        </div>
+
+        <div id="st-passos-shell" class="hidden mt-4 rounded-xl border border-slate-600/45 overflow-hidden">
+            <div id="st-passos-lead" class="px-3 py-2 bg-slate-800/50 border-b border-slate-700/60">
+                <p id="st-passos-titulo" class="text-[11px] font-semibold text-[var(--text-main)]">Passo a passo — corrida completa (atualização de período ou fila)</p>
+                <p id="st-passos-pct" class="text-[10px] text-[var(--text-muted)] mt-1">Estimativa visual de avanço: <span id="st-passos-pct-num">—</span></p>
+                <p id="st-passos-dica-tab" class="text-[10px] text-[var(--text-muted)] mt-1">À esquerda o nome breve da etapa; no meio uma frase para entender o efeito; à direita o estado neste momento (pendente, em execução ou concluído).</p>
+                <p id="st-passos-dica-deletar" class="hidden text-[10px] text-[var(--text-muted)] mt-1">A grade alinha-se à lista no registro "Mensagens do sistema": o que se apaga, o que se mantém e, em seguida, o relatório do programa.</p>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="pipeline-steps-table">
+                    <thead>
+                        <tr>
+                            <th class="w-[20%]">Script / etapa</th>
+                            <th class="w-[30%]">Para que serve</th>
+                            <th class="w-[34%] pipeline-col-json">Arquivos (JSON principal)</th>
+                            <th class="w-[16%] text-right">Progresso</th>
+                        </tr>
+                    </thead>
+                    <tbody id="st-passos-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="pipeline-log-panel" aria-live="polite" aria-label="Últimas linhas do output">
+            <div class="pipeline-log-head">
+                <span>Mensagens do sistema</span>
+                <span class="font-normal opacity-80 normal-case tracking-normal text-[10px]">Caixa com barra de deslocamento</span>
+            </div>
+            <div id="st-log-wrap">
+                <pre id="st-log" class="pipeline-log-pre"></pre>
+            </div>
+        </div>
+    </div>
+    </div>
+</div>
+
+<div class="max-w-[1100px] mx-auto pb-16">
+
+    <div id="msg-global" class="hidden px-4 py-3 rounded-lg border text-sm font-medium mb-4"></div>
+
+    <!-- Abas de navegação -->
+    <div class="flex flex-wrap gap-1 mb-6 border-b border-slate-700/60 pb-0">
+        <button type="button" onclick="trocarAba('carga')" id="aba-carga"
+            class="aba-btn aba-ativa px-4 py-2 text-sm font-semibold rounded-t-lg border border-b-0 border-slate-600 bg-slate-800 text-white transition">
+            <i class="fas fa-calendar-day mr-1"></i> Carga do dia
+        </button>
+        <button type="button" onclick="trocarAba('reprocessar')" id="aba-reprocessar"
+            class="aba-btn px-4 py-2 text-sm font-semibold rounded-t-lg border border-b-0 border-slate-700/50 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition">
+            <i class="fas fa-arrow-right-arrow-left mr-1"></i> Reprocessar período
+            <span class="ml-1 text-[10px] bg-amber-800/60 text-amber-300 px-1.5 py-0.5 rounded font-normal">técnico</span>
+        </button>
+        <button type="button" onclick="trocarAba('apagar')" id="aba-apagar"
+            class="aba-btn px-4 py-2 text-sm font-semibold rounded-t-lg border border-b-0 border-slate-700/50 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition">
+            <i class="fas fa-eraser mr-1"></i> Apagar dados
+        </button>
+        <button type="button" onclick="trocarAba('zerar')" id="aba-zerar"
+            class="aba-btn px-4 py-2 text-sm font-semibold rounded-t-lg border border-b-0 border-slate-700/50 text-red-400 hover:text-red-300 hover:bg-slate-800/50 transition">
+            <i class="fas fa-triangle-exclamation mr-1"></i> Zerar tudo
+        </button>
+    </div>
+
+    <!-- ABA: Carga do dia — painel visível por padrão -->
+    <div id="painel-carga" class="painel-aba space-y-4">
+        <div class="pipeline-card bg-emerald-950/20 border-emerald-700/30">
+            <p class="text-xs text-emerald-300/80 leading-relaxed mb-0">
+                <i class="fas fa-circle-info mr-1"></i>
+                Use esta tela para o <strong>uso diário</strong> — informe os dias que precisa atualizar e clique em processar. O sistema cuida do resto.
+            </p>
+        </div>
+        <!-- sec-lista será movida para cá pelo JS -->
+    </div>
+
+    <!-- ABA: Reprocessar período -->
+    <div id="painel-reprocessar" class="painel-aba hidden space-y-4">
+        <div class="pipeline-card bg-amber-950/20 border-amber-700/40">
+            <p class="text-xs text-amber-300/80 leading-relaxed mb-0">
+                <i class="fas fa-triangle-exclamation mr-1"></i>
+                <strong>Uso técnico.</strong> Esta opção processa todo um período de uma vez, sem separar dia a dia.
+                Use apenas para reprocessar dados antigos após uma mudança de regra.
+                <strong>Não use para trazer e-mails novos do dia a dia</strong> — para isso use a aba "Carga do dia".
+            </p>
+        </div>
+        <!-- sec-periodo será movida para cá pelo JS -->
+    </div>
+
+    <!-- ABA: Apagar dados -->
+    <div id="painel-apagar" class="painel-aba hidden space-y-4">
+        <!-- sec-apagar será movida para cá pelo JS -->
+    </div>
+
+    <!-- ABA: Zerar tudo -->
+    <div id="painel-zerar" class="painel-aba hidden space-y-4">
+        <!-- sec-zerar será movida para cá pelo JS -->
+    </div>
+
+    <!-- 1. Período contínuo (será movido para painel-reprocessar pelo JS) -->
+    <section class="pipeline-card" id="sec-periodo">
+        <h2 class="text-base font-bold text-[var(--text-main)] mb-1 flex items-center gap-2">
+            <i class="fas fa-arrow-right-arrow-left text-blue-500"></i>
+            De um dia até outro — uma única corrida
+        </h2>
+        <p class="text-xs text-[var(--text-muted)] mb-2 leading-relaxed">
+            Serve para atualizar <strong>tudo entre duas datas</strong> de uma vez (primeiro dia e último dia <strong>contam</strong>).
+            Bom exemplo: reprocessar <strong>toda uma semana</strong> ou o mês, sem precisar clicar dia a dia.
+        </p>
+        <details class="text-[11px] text-[var(--text-muted)] mb-4 border border-slate-700/60 rounded-lg px-3 py-2 bg-slate-900/40">
+            <summary class="cursor-pointer font-medium text-slate-400">Informação técnica (opcional)</summary>
+            <p class="mt-2 mb-0">Corresponde a executar todo o ciclo automático sobre o período definido nos campos (<code class="bg-slate-800/90 px-1 rounded text-[10px]">executar_tudo.py</code>).</p>
+        </details>
+        <div class="flex flex-wrap gap-4 items-end">
+            <div>
+                <label class="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">Primeiro dia</label>
+                <input type="text" id="pu-ini" placeholder="Ex.: 23/02/2026 ou 2026-02-23"
+                    class="w-56 px-3 py-2 rounded-lg border text-sm bg-[var(--input-bg)] border-[var(--input-border)] text-[var(--text-main)]">
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">Último dia</label>
+                <input type="text" id="pu-fim" placeholder="Mesmo tipo de formato"
+                    class="w-56 px-3 py-2 rounded-lg border text-sm bg-[var(--input-bg)] border-[var(--input-border)] text-[var(--text-main)]">
+            </div>
+            <button type="button" id="btn-periodo" class="pipeline-btn-busy px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold transition disabled:opacity-50">
+                Começar atualização neste período
+            </button>
+        </div>
+    </section>
+
+    <!-- 2. Lista dia a dia (será movido para painel-carga pelo JS) -->
+    <section class="pipeline-card" id="sec-lista">
+        <h2 class="text-base font-bold text-[var(--text-main)] mb-1 flex items-center gap-2">
+            <i class="fas fa-list-ol text-emerald-500"></i>
+            Uma lista de dias — trabalha cada data à vez
+        </h2>
+        <p class="text-xs text-[var(--text-muted)] mb-2 leading-relaxed">
+            Cole abaixo <strong>cada dia</strong> que precisa refrescar (um por linha ou separados por vírgula). O sistema faz <strong>uma corrida completa por cada data</strong>, pela ordem. Três dias na lista = três voltas ao processo — não são misturadas num só passo como no bloco azul anterior.
+        </p>
+        <p class="text-xs text-[var(--text-muted)] mb-3 leading-relaxed flex items-start gap-2">
+            <i class="fas fa-info-circle mt-0.5 text-emerald-500 shrink-0" aria-hidden="true"></i>
+            Pode usar <strong>dia/mês/ano</strong> ou <strong>ano-mês-dia</strong>; exemplos válidos: <kbd class="bg-slate-800/90 px-1 rounded text-[11px]">27/02/2026</kbd>,
+            <kbd class="bg-slate-800/90 px-1 rounded text-[11px]">2026-02-27</kbd>.
+        </p>
+        <label class="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">Quais dias atualizar?</label>
+        <textarea id="lista-datas" rows="5" placeholder="Um dia por linha, por exemplo:&#10;27/02/2026&#10;28/02/2026"
+            class="w-full px-3 py-2 rounded-lg border text-sm font-mono bg-[var(--input-bg)] border-[var(--input-border)] text-[var(--text-main)] mb-3"></textarea>
+        <!-- Modo fixo em "subir" — opção técnica oculta do usuário -->
+        <input type="hidden" id="lista-modo" value="subir">
+        <div class="flex flex-wrap gap-4 items-start mb-3">
+            <div class="flex flex-col gap-4 text-sm">
+                <label class="flex items-start gap-3 cursor-pointer select-none max-w-xl">
+                    <input type="checkbox" id="lista-inc" class="rounded border-slate-600 mt-1 shrink-0">
+                    <span>
+                        <strong class="text-[var(--text-main)]">Ir mais rápido reaproveitando classificações antigas</strong>
+                        <span class="block text-xs text-[var(--text-muted)] mt-1">Marcar em geral <strong>sim</strong> quando já há histórico: evita repetir trabalho já feito. Só faz sentido com «Atualizar apenas esse dia». Se o dia for o primeiro ou quiser mesmo tudo novo, pode deixar desmarcado.</span>
+                    </span>
+                </label>
+                <label class="flex items-start gap-3 cursor-pointer select-none max-w-xl">
+                    <input type="checkbox" id="lista-tri" class="rounded border-slate-600 mt-1 shrink-0">
+                    <span>
+                        <strong class="text-[var(--text-main)]">Triagem completa em tudo o que já está no painel</strong>
+                        <span class="block text-xs text-[var(--text-muted)] mt-1">Só por exceção pedida pela equipe técnica: demora mais e percorre tudo que está integrado ao painel, não só o dia marcado.</span>
+                    </span>
+                </label>
+            </div>
+        </div>
+        <details class="text-[11px] text-[var(--text-muted)] mb-3 border border-slate-700/60 rounded-lg px-3 py-2 bg-slate-900/40">
+            <summary class="cursor-pointer font-medium text-slate-400">O que faz por dentro (técnico)</summary>
+            <p class="mt-2 mb-0">O painel ordena cada data e chama um assistente já existente (<code class="bg-slate-800/90 px-1 rounded text-[10px]">oraculo_cenarios_pipeline.py</code>) conforme modo e marcadores por cima.</p>
+        </details>
+        <button type="button" id="btn-lista" class="pipeline-btn-busy px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold transition disabled:opacity-50">
+            Processar a fila de datas
+        </button>
+    </section>
+
+    <!-- 3. Apagar dados (será movido para painel-apagar pelo JS) -->
+    <section class="pipeline-card border-amber-600/35" id="sec-apagar">
+        <h2 class="text-base font-bold text-amber-200 mb-1 flex items-center gap-2">
+            <i class="fas fa-eraser text-amber-500"></i>
+            Apagar dados de um dia ou vários dias (sem estragar o resto)
+        </h2>
+        <p class="text-xs leading-relaxed text-[var(--text-muted)] mb-3">
+            Use isto quando quiser «desfazer» <strong>só esse período</strong> dentro do que o sistema já guardou sobre e-mails e painel —
+            não apaga bases de usuários nem regras configuradas lá fora.<br class="hidden sm:inline">
+            Depois pode voltar a carregar esse dia usando o bloco verde <strong>«Processar a fila de datas»</strong>.
+        </p>
+        <div class="mb-3">
+            <label class="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">O que deseja remover?</label>
+            <select id="lp-modo" class="max-w-md px-3 py-2 rounded-lg border text-sm bg-[var(--input-bg)] border-[var(--input-border)] text-[var(--text-main)]">
+                <option value="dia">Só um dia</option>
+                <option value="intervalo">Um intervalo (do primeiro ao último dia, ambos inclusos)</option>
+            </select>
+        </div>
+        <div id="lp-grupo-dia" class="mb-3">
+            <label class="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">Qual dia</label>
+            <input type="text" id="lp-data" placeholder="Ex.: 27/02/2026 ou 2026-02-27"
+                class="w-72 max-w-full px-3 py-2 rounded-lg border text-sm bg-[var(--input-bg)] border-[var(--input-border)] text-[var(--text-main)]">
+        </div>
+        <div id="lp-grupo-intervalo" class="hidden mb-3 flex flex-wrap gap-4 items-end">
+            <div>
+                <label class="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">Do dia</label>
+                <input type="text" id="lp-de" placeholder="dia/mês/ano ou formato ISO"
+                    class="w-52 px-3 py-2 rounded-lg border text-sm bg-[var(--input-bg)] border-[var(--input-border)] text-[var(--text-main)]">
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold uppercase text-[var(--text-muted)] mb-1">Ao dia</label>
+                <input type="text" id="lp-ate" placeholder="mesmo formato"
+                    class="w-52 px-3 py-2 rounded-lg border text-sm bg-[var(--input-bg)] border-[var(--input-border)] text-[var(--text-main)]">
+            </div>
+        </div>
+        <div class="flex flex-col gap-4 text-sm mb-4">
+            <label class="flex items-start gap-3 cursor-pointer select-none max-w-3xl">
+                <input type="checkbox" id="lp-preservar-threads" class="rounded border-slate-600 mt-1 shrink-0">
+                <span>
+                    <strong class="text-[var(--text-main)]">Não mexer nos cartões (Aguardando / Concluído) já visíveis no painel</strong>
+                    <span class="block text-xs text-[var(--text-muted)] mt-1 leading-relaxed">
+                        Marcada: apenas apaga o material em bruto/classificação desse período e deixa como estão os estados já vistos nos cartões —
+                        típico «apaguei só para voltar a importar esse dia». Sem marcar: o programa também volta a encaixar os estados conforme esta limpeza.
+                    </span>
+                </span>
+            </label>
+
+            <details class="text-[11px] text-[var(--text-muted)] border border-slate-700/50 rounded-lg px-3 py-2 bg-slate-900/30">
+                <summary class="cursor-pointer font-medium text-slate-400">Nome do programa técnico (suporte TI)</summary>
+                <p class="mt-2 mb-0">Corresponde ao utilitário <code class="bg-slate-800/90 px-1 rounded">scripts/limpar_periodo.py</code> quando precisarem de igualar relatórios com a equipe de sistema.</p>
+            </details>
+        </div>
+        <button type="button" id="btn-limpar-periodo" class="pipeline-btn-busy px-5 py-2 rounded-lg bg-amber-700 hover:bg-amber-600 text-white text-sm font-bold transition disabled:opacity-50">
+            Confirmar limpeza deste período
+        </button>
+    </section>
+
+    <!-- 4. Zerar tudo (será movido para painel-zerar pelo JS) -->
+    <section class="pipeline-card border-red-900/40" id="sec-zerar">
+        <h2 class="text-base font-bold text-red-400 mb-1 flex items-center gap-2">
+            <i class="fas fa-triangle-exclamation"></i>
+            Zerar todos os dados de processamento na máquina
+        </h2>
+        <p class="text-xs leading-relaxed text-[var(--text-muted)] mb-3">
+            <strong class="text-red-300/90">Não pergunta por dia — apaga tudo o que o robô já preparou.</strong> Use apenas em situações graves (recomeçar projeto, troca de servidor, teste isolado).
+            Se quer só tirar um período, pare no bloco alaranjado de cima ("Apagar dados de um dia…").
+        </p>
+        <details class="text-[11px] text-[var(--text-muted)] mb-4 border border-red-900/35 rounded-lg px-3 py-2 bg-red-950/15">
+            <summary class="cursor-pointer font-medium text-red-300/90">Informação técnica (opcional)</summary>
+            <p class="mt-2 mb-0">Equivalente a apagar a pasta de trabalho onde juntamos e-mails, integração e arquivos JSON grandes (<code class="bg-slate-900/90 px-1 rounded">data/json/pipeline/</code>). Regras e certas marcações ficam habitualmente guardadas até ordem em contrário — confirme sempre com a TI se tiver dúvida.</p>
+        </details>
+        <label class="flex items-start gap-3 text-sm mb-3 cursor-pointer select-none max-w-xl">
+            <input type="checkbox" id="del-backups" class="rounded border-slate-600 mt-1 shrink-0">
+            <span>
+                <strong class="text-[var(--text-main)]">Apagar também cópias de segurança antigas já guardadas</strong>
+                <span class="block text-xs text-[var(--text-muted)] mt-1">Opcionalmente remove os respaldos históricos; desmarcado mantém essas cópias.</span>
+            </span>
+        </label>
+        <button type="button" id="btn-deletar" class="pipeline-btn-busy px-5 py-2 rounded-lg bg-red-700 hover:bg-red-600 text-white text-sm font-bold transition disabled:opacity-50">
+            Zerar tudo mesmo (confirmar primeiro)
+        </button>
+    </section>
+
+    <!-- Modal: confirmação de exclusão (substitui o diálogo nativo nos apagamentos) -->
+    <div id="pipeline-modal" class="pipeline-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="pipeline-modal-title" aria-hidden="true">
+        <div class="pipeline-modal-inner">
+            <h3 id="pipeline-modal-title" class="text-base font-bold text-[var(--text-main)] mb-2">Confirmar</h3>
+            <p id="pipeline-modal-text" class="text-sm text-[var(--text-muted)] leading-relaxed"></p>
+            <div class="flex flex-wrap justify-end gap-3 mt-6">
+                <button type="button" id="pipeline-modal-cancelar" class="px-5 py-2 rounded-lg border border-slate-500 text-sm font-bold text-[var(--text-main)] hover:bg-white/5">
+                    Cancelar
+                </button>
+                <button type="button" id="pipeline-modal-deletar" class="px-5 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white text-sm font-bold">
+                    Excluir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    // --- Sistema de abas ---
+    (function inicializarAbas() {
+        // Move seções para os painéis corretos
+        var mapa = [
+            ['sec-lista',    'painel-carga'],
+            ['sec-periodo',  'painel-reprocessar'],
+            ['sec-apagar',   'painel-apagar'],
+            ['sec-zerar',    'painel-zerar'],
+        ];
+        mapa.forEach(function(par) {
+            var sec = document.getElementById(par[0]);
+            var painel = document.getElementById(par[1]);
+            if (sec && painel) painel.appendChild(sec);
+        });
+    })();
+
+    window.trocarAba = function(nome) {
+        ['carga','reprocessar','apagar','zerar'].forEach(function(id) {
+            var painel = document.getElementById('painel-' + id);
+            var btn = document.getElementById('aba-' + id);
+            if (!painel || !btn) return;
+            if (id === nome) {
+                painel.classList.remove('hidden');
+                btn.classList.add('aba-ativa');
+            } else {
+                painel.classList.add('hidden');
+                btn.classList.remove('aba-ativa');
+            }
+        });
+    };
+    // --- Fim abas ---
+
+    var pollTimer = null;
+    var jobId = null;
+    var jobTipoPendente = null;
+    var _pollErros = 0;
+    /** Alinhado a executar_tudo (14 etapas). Coluna JSON: arquivo principal tocado pela etapa (pasta pipeline/). */
+    var ETAPAS_SCRIPT_JSON = [
+        ['01_coletar_feriados_bancarios.py', ['pipeline/calendario_feriados.json — calendário de dias úteis']],
+        ['02_coletar_emails_gmail.py', ['pipeline/01_extração_dados_brutos_gmail.json — e-mails crus coletados do Gmail']],
+        ['03_corrigir_anexos_resposta_finaud.py', ['pipeline/01_extração_dados_brutos_gmail.json — corrige vínculos de anexo depois da Finaud responder']],
+        ['04_mapear_clientes.py', ['pipeline/01_* (uso) — cruza cliente nos e-mails já coletados']],
+        ['05_classificar_emails_regulatorio.py', ['pipeline/02_classificação_dados_brutos_gmail_editado.json — CADOC, prazo, sensível']],
+        ['06_coletar_chat_google.py', ['pipeline/massa_bruta_chat.json — conversas do Chat ligadas ao assunto']],
+        ['07_abrir_casos_fogbugz.py', ['FogBugz (API + eventos já no 01); não grava arquivo fixo próprio']],
+        ['08_coletar_fogbugz.py', ['pipeline/massa_bruta_fog.json — registros vindos do FogBugz']],
+        ['09_integrar_dados_painel.py', ['pipeline/03_integrador_dados_site.json — base consolidada vista no painel']],
+        ['10_resolver_threads_aguardando.py', ['pipeline/threads_aguardando_*.json — retira ou mantém pedidos em Espera']],
+        ['11_triar_threads_por_cadoc.py', ['pipeline/threads_* + regras — triagens DDR/4111 quando ligadas']],
+        ['12_enriquecer_texto_imagens.py', ['pipeline/03_* + cache — OCR / texto_extra em anexos de imagem']],
+        ['13_correlacionar_threads.py', ['pipeline/correlacoes.json — ligação entre conversas relacionadas']],
+        ['14_sincronizar_indicios_qualidade_crd.py', ['pipeline/crd_indicio_qualidade.json — marcações CRD']],
+        ['15_reprocessar_aprendizados_ia.py', ['threads concluídas re-analisadas via LLM (gpt-4o) — alimenta a tela Aprendizados; custo registrado em /custos']],
+        ['16_resumir_retorno_bacen_llm.py', ['resumos LLM de eventos Retorno Bacen — usados nos cartões; custo registrado em /custos']]
+    ];
+
+    /** Nome bonito + explicação simples — índice alinhado a ETAPAS_SCRIPT_JSON. */
+    var ETAPAS_LEGIVEL = [
+        ['Atualizar feriados bancários', 'O sistema apura quais dias não contam para prazos bancários antes de analisar mensagens.'],
+        ['Trazer e-mails do Gmail', 'Descarrega da caixa todas as mensagens do período pedido, que é a matéria‑prima dos restantes passos.'],
+        ['Tratar anexos quando a Finaud já respondeu', 'Conserta referências e cópias quando a equipe já respondeu por e-mail para nada ficar incoerente.'],
+        ['Ligar aos clientes cadastrados', 'Cruza remetentes e assuntos com os clientes que já estão no CADOC / cadastro.'],
+        ['Classificar e regulatório', 'Identifica CADOCs, prazos e temas sensíveis dentro de cada mensagem.'],
+        ['Incluir conversas do Chat', 'Junta (quando existirem) mensagens do Google Chat úteis ao mesmo fio de trabalho.'],
+        ['Pontos no sistema de tarefas interno', 'Abre ou atualiza o que for necessário em auditoria / acompanhamento de casos.'],
+        ['Sincronizar detalhes desses casos', 'Traz o estado atualizado dos registros internos que acompanham cada assunto.'],
+        ['Integrar tudo no painel', 'Constrói ou atualiza a vista que a equipe opera no dia a dia — o passo que “encaixa” a informação.'],
+        ['Resolver pedidos em Aguardando', 'Pode mover fios em Aguarde automaticamente; em muitos servidores este passo não mexe nos cartões até haver uma nova carga completa.'],
+        ['Organizar por CADOC', 'Aplica as regras de cada CADOC para ordenar o que ainda precisa de tratamento.'],
+        ['Ler texto em imagens (OCR)', 'Transforma prints e anexos em texto pesquisável para não perder pedidos “só em imagem”.'],
+        ['Relacionar assuntos entre si', 'Liga fios diferentes que falam do mesmo assunto ou do mesmo pedido.'],
+        ['Indícios de qualidade (CRD)', 'Atualiza marcadores internos de qualidade ligados ao reporte regulatório.'],
+        ['Reprocessar aprendizados (IA)', 'Re-analisa as threads já concluídas usando IA para alimentar a tela de Aprendizados. Consome créditos da OpenAI — o custo aparece em /custos.'],
+        ['Resumir Retorno Bacen (IA)', 'Gera resumos automáticos dos eventos de Retorno Bacen, usados nos cartões da operação. Consome créditos da OpenAI — o custo aparece em /custos.']
+    ];
+
+    var N_ETAPAS = ETAPAS_SCRIPT_JSON.length;
+
+    var pendingDeletarBackups = false;
+
+    function abrirModalAndamento() {
+        var ov = document.getElementById('pipeline-progress-overlay');
+        if (!ov) return;
+        // Move para document.body para escapar do stacking context do content-scroll
+        // (que tem z-index:10 e impedia o backdrop de cobrir o cabeçalho da página)
+        if (ov.parentNode !== document.body) {
+            document.body.appendChild(ov);
+        }
+        ov.classList.add('is-open');
+        ov.setAttribute('aria-hidden', 'false');
+        document.documentElement.style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden';
+        if (!window.__pipelineProgressOnKey) {
+            window.__pipelineProgressOnKey = function (ev) {
+                if (ev.key === 'Escape') {
+                    var b = document.getElementById('btn-st-fechar');
+                    if (b) b.click();
+                }
+            };
+            document.addEventListener('keydown', window.__pipelineProgressOnKey);
+        }
+    }
+
+    function fecharModalAndamento() {
+        var ov = document.getElementById('pipeline-progress-overlay');
+        if (ov) {
+            ov.classList.remove('is-open');
+            ov.setAttribute('aria-hidden', 'true');
+        }
+        document.documentElement.style.overflow = '';
+        document.body.style.overflow = '';
+        if (window.__pipelineProgressOnKey) {
+            document.removeEventListener('keydown', window.__pipelineProgressOnKey);
+            window.__pipelineProgressOnKey = null;
+        }
+    }
+
+    function celulaListaJson(strings) {
+        var td = document.createElement('td');
+        td.className = 'pipeline-col-json align-top';
+        var ul = document.createElement('ul');
+        ul.className = 'pipeline-json-list mono';
+        (strings || []).forEach(function (s) {
+            var li = document.createElement('li');
+            li.className = 'mono';
+            li.textContent = s;
+            ul.appendChild(li);
+        });
+        if (!strings || !strings.length) {
+            var li0 = document.createElement('li');
+            li0.className = 'mono';
+            li0.textContent = '(não há JSON fixo listado)';
+            ul.appendChild(li0);
+        }
+        td.appendChild(ul);
+        return td;
+    }
+
+    /** Barra + texto de % na coluna Progresso */
+    function celulaProgresso(initialCls) {
+        var td = document.createElement('td');
+        td.className = 'pipeline-prog-cell text-right align-top';
+        var wrap = document.createElement('div');
+        wrap.className = 'pipeline-prog-wrap';
+        var fill = document.createElement('div');
+        fill.className = 'pipeline-prog-fill' + (initialCls ? (' ' + initialCls) : '');
+        wrap.appendChild(fill);
+        td.appendChild(wrap);
+        var pctSpan = document.createElement('div');
+        pctSpan.className = 'pipeline-prog-pct';
+        pctSpan.textContent = '0%';
+        td.appendChild(pctSpan);
+        td.dataset.progPct = pctSpan.textContent;
+        return td;
+    }
+
+    function atualizarLinhaProg(tdProg, pct, clsFill, pctTextCls) {
+        if (!tdProg) return;
+        var wrap = tdProg.querySelector('.pipeline-prog-wrap');
+        var fill = wrap && wrap.querySelector('.pipeline-prog-fill');
+        var pctLab = tdProg.querySelector('.pipeline-prog-pct');
+        if (!fill || !pctLab) return;
+        fill.className = 'pipeline-prog-fill' + (clsFill ? (' ' + clsFill) : '');
+        pct = Math.max(0, Math.min(100, Math.round(pct)));
+        if (clsFill === 'pipeline-prog-fill--busy') fill.style.width = '70%';
+        else if (clsFill === 'pipeline-prog-fill--done') fill.style.width = '100%';
+        else fill.style.width = pct + '%';
+        pctLab.textContent = pct + '%';
+        pctLab.className = 'pipeline-prog-pct' + (pctTextCls === 'done' ? ' pipeline-prog-pct--done' : '');
+        tdProg.dataset.progPct = pct + '%';
+    }
+
+    /** Percentual estimado por linha da corrida grande (usa etapa_atual_ord e steps_done). */
+    function pctLinhaCorridaCompleta(st, sd, eo, ord, total) {
+        if (st === 'done') return { pct: 100, modo: 'done' };
+        if (st === 'failed') {
+            if (ord <= sd) return { pct: 100, modo: 'done' };
+            return { pct: 0, modo: 'idle' };
+        }
+        var s = parseInt(String(sd || 0), 10);
+        var eoo = eo == null ? null : parseInt(String(eo), 10);
+        if (st !== 'running') return { pct: 0, modo: 'idle' };
+        if (eoo != null && !isNaN(eoo)) {
+            if (ord < eoo) return { pct: 100, modo: 'done' };
+            if (ord === eoo) return { pct: 50, modo: 'busy' };
+            return { pct: 0, modo: 'idle' };
+        }
+        if (s >= ord) return { pct: 100, modo: 'done' };
+        if (s + 1 === ord) return { pct: 50, modo: 'busy' };
+        return { pct: 0, modo: 'idle' };
+    }
+
+    /** Linhas zerar carga (= grupos físicos ao apagar). */
+    function montarTabelaPassosDeletar(data, jobIdParaCache) {
+        var tb = document.getElementById('st-passos-tbody');
+        if (!tb) return;
+        var etapas = data.delete_etapas;
+        var jkc = jobIdParaCache || jobId || '';
+        if (
+            tb.dataset.builtJob === jkc &&
+            tb.dataset.mode === 'deletar' &&
+            etapas &&
+            etapas.length &&
+            tb.querySelectorAll('tr').length >= etapas.length
+        ) {
+            return;
+        }
+        tb.innerHTML = '';
+        tb.dataset.mode = 'deletar';
+        tb.dataset.builtJob = jkc;
+        if (!etapas || !etapas.length) {
+            var tr = document.createElement('tr');
+            var tdMsg = document.createElement('td');
+            tdMsg.colSpan = 4;
+            tdMsg.className = 'text-center text-[11px] text-slate-400 py-4';
+            tdMsg.textContent = 'A carregar lista de arquivos (aguarde a primeira atualização)…';
+            tr.appendChild(tdMsg);
+            tb.appendChild(tr);
+            var ttl = document.getElementById('st-passos-titulo');
+            if (ttl) ttl.textContent = 'Zerar dados — agrupamento por arquivo (pipeline / backup)';
+            document.getElementById('st-passos-dica-tab').classList.add('hidden');
+            document.getElementById('st-passos-dica-deletar').classList.remove('hidden');
+            return;
+        }
+        etapas.forEach(function (blo, ix) {
+            var ordLocal = ix + 1;
+            var tr = document.createElement('tr');
+            tr.className = 'pipeline-step-row--prog';
+            tr.dataset.linhaTipo = 'deletar';
+            tr.dataset.idx = String(ordLocal);
+            var tdN = document.createElement('td');
+            tdN.className = 'pipeline-step-num align-top';
+            var sm = document.createElement('small');
+            sm.className = 'block text-[10px] text-slate-500 font-mono';
+            sm.textContent = 'Limpeza de grupo — script deletar_carga.py';
+            tdN.innerHTML = '<strong>' + String(ordLocal).padStart(2, '0') + '. Apagar dados</strong>';
+            tdN.appendChild(sm);
+
+            var tdU = document.createElement('td');
+            tdU.className = 'align-top';
+            tdU.innerHTML =
+                '<p class="m-0 text-[11px]">' +
+                '<strong>A que serve:</strong> remove do disco este bloco relacionado ao processamento (pasta pipeline ou backup).</p>' +
+                '<p class="mt-2 m-0 text-[10px] text-slate-500">' +
+                '<strong>Categoria nesta linha:</strong> ' +
+                (blo.titulo || '').replace(/</g, '') +
+                '</p>';
+
+            var arqs = (blo.arquivos || []).slice(0);
+            var jsonLines = [];
+            arqs.slice(0, 18).forEach(function (f) {
+                jsonLines.push('data/json/pipeline/' + f + ' — removido nesta etapa quando existir.');
+            });
+            if (blo.titulo && String(blo.titulo).indexOf('_backups') >= 0) {
+                jsonLines = arqs.slice(0, 18).map(function (f) {
+                    return 'data/json/_backups/' + f + ' — cópia antiga apagada (opção marcada).';
+                });
+            }
+
+            tr.appendChild(tdN);
+            tr.appendChild(tdU);
+            tr.appendChild(celulaListaJson(jsonLines));
+            var tdProg = celulaProgresso('');
+            tdProg.dataset.linhaTipo = 'deletar';
+            tr.appendChild(tdProg);
+            tb.appendChild(tr);
+        });
+        var ttl = document.getElementById('st-passos-titulo');
+        if (ttl) ttl.textContent = 'Zerar dados — cada linha é um grupo de arquivos apagados juntos';
+        document.getElementById('st-passos-dica-tab').classList.add('hidden');
+        document.getElementById('st-passos-dica-deletar').classList.remove('hidden');
+    }
+
+    /** Uma etapa: limpar_periodo.py (intervalo nos JSON 01/02/03). */
+    function montarTabelaLimparPeriodo(jobIdParaCache) {
+        var tb = document.getElementById('st-passos-tbody');
+        if (!tb) return;
+        var jkc = jobIdParaCache || jobId || '';
+        if (tb.dataset.builtJob === jkc && tb.dataset.mode === 'limpar' && tb.querySelectorAll('tr').length >= 1) {
+            return;
+        }
+        tb.innerHTML = '';
+        tb.dataset.mode = 'limpar';
+        tb.dataset.builtJob = jkc;
+        var tr = document.createElement('tr');
+        tr.className = 'pipeline-step-row--prog';
+        tr.dataset.linhaTipo = 'limpar';
+        tr.dataset.idx = '1';
+        var tdN = document.createElement('td');
+        tdN.className = 'pipeline-step-num align-top';
+        tdN.innerHTML =
+            '<strong>01. </strong><span class="font-mono text-[10px] text-sky-400/95">scripts/limpar_periodo.py</span>';
+        var tdU = document.createElement('td');
+        tdU.className = 'align-top';
+        tdU.innerHTML =
+            '<p class="m-0 text-[12px] font-semibold">Limpar só o período nos JSON do painel</p>' +
+            '<p class="m-0 mt-1 text-[11px] text-[var(--text-muted)]">' +
+            'Retira do 01 (e-mails crus), 02 (classificação) e 03 (integração) as entradas ligadas às datas escolhidas, ' +
+            'conforme as opções marcadas (cartões no painel, marcações manuais, etc.). Não remove usuários nem regras em config/.</p>';
+        var jsonLs = [
+            'pipeline/01_extração_dados_brutos_gmail.json',
+            'pipeline/02_classificação_dados_brutos_gmail_editado.json',
+            'pipeline/03_integrador_dados_site.json',
+            'demais arquivos derivados do mesmo intervalo, conforme o script'
+        ];
+        tr.appendChild(tdN);
+        tr.appendChild(tdU);
+        tr.appendChild(celulaListaJson(jsonLs));
+        tr.appendChild(celulaProgresso(''));
+        tb.appendChild(tr);
+        var ttl = document.getElementById('st-passos-titulo');
+        if (ttl) ttl.textContent = 'Limpar período — uma etapa (scripts/limpar_periodo.py)';
+        document.getElementById('st-passos-dica-tab').classList.remove('hidden');
+        document.getElementById('st-passos-dica-deletar').classList.add('hidden');
+    }
+
+    /** 14 scripts do executar_tudo (período ou fila). */
+    function montarTabelaPassosExecutarTodo(jobIdParaCache) {
+        var tb = document.getElementById('st-passos-tbody');
+        if (!tb) return;
+        var jkc = jobIdParaCache || jobId || '';
+        if (tb.dataset.builtJob === jkc && tb.dataset.mode === 'pipeline' && tb.querySelectorAll('tr').length >= N_ETAPAS) {
+            return;
+        }
+        tb.innerHTML = '';
+        tb.dataset.mode = 'pipeline';
+        tb.dataset.builtJob = jkc;
+        ETAPAS_LEGIVEL.forEach(function (rowLeg, idx) {
+            var ord = idx + 1;
+            var tr = document.createElement('tr');
+            tr.className = 'pipeline-step-row--prog';
+            tr.dataset.linhaTipo = 'executar';
+            tr.dataset.idx = String(ord);
+            var sj = ETAPAS_SCRIPT_JSON[idx];
+            var tdScript = document.createElement('td');
+            tdScript.className = 'pipeline-step-num align-top';
+            tdScript.innerHTML =
+                '<strong>' +
+                String(ord).padStart(2, '0') +
+                '. </strong><span class="font-mono text-[10px] text-sky-400/95">' +
+                (sj ? sj[0] : '').replace(/</g, '') +
+                '</span>';
+
+            var tdRes = document.createElement('td');
+            tdRes.className = 'align-top';
+            tdRes.innerHTML =
+                '<p class="m-0 text-[12px] font-semibold">' +
+                rowLeg[0].replace(/</g, '') +
+                '</p>' +
+                '<p class="m-0 mt-1 text-[11px] text-[var(--text-muted)]">' +
+                rowLeg[1].replace(/</g, '') +
+                '</p>';
+
+            var jsonLs = sj ? sj[1] : [];
+            tr.appendChild(tdScript);
+            tr.appendChild(tdRes);
+            tr.appendChild(celulaListaJson(jsonLs));
+            var tdProg = celulaProgresso('');
+            tdProg.dataset.linhaTipo = 'executar';
+            tr.appendChild(tdProg);
+            tb.appendChild(tr);
+        });
+        var ttl = document.getElementById('st-passos-titulo');
+        if (ttl) ttl.textContent = 'Atualização completa — um script Python por linha (executar_tudo.py)';
+        document.getElementById('st-passos-dica-tab').classList.remove('hidden');
+        document.getElementById('st-passos-dica-deletar').classList.add('hidden');
+    }
+
+    /** Progresso global na faixa de cima + atualiza barra de cada linha */
+    function actualizarGrelhaPassos(data) {
+        var kind = data.kind || jobTipoPendente;
+        var shell = document.getElementById('st-passos-shell');
+        var pctWrap = document.getElementById('st-passos-pct');
+        var pctSpan = document.getElementById('st-passos-pct-num');
+        if (!shell || !pctWrap || !pctSpan) return;
+        var isDeletar = kind === 'deletar_carga';
+        var isExecutar = kind === 'periodo_unico' || kind === 'lista_dias';
+        var isLimpar = kind === 'limpar_periodo';
+        var mostrar = isDeletar || isExecutar || isLimpar;
+        shell.classList.toggle('hidden', !mostrar);
+        pctWrap.classList.toggle('hidden', !mostrar);
+        if (!mostrar) return;
+
+        if (isDeletar) {
+            montarTabelaPassosDeletar(data, jobId);
+        } else if (isLimpar) {
+            montarTabelaLimparPeriodo(jobId);
+        } else {
+            montarTabelaPassosExecutarTodo(jobId);
+        }
+
+        var tb = document.getElementById('st-passos-tbody');
+        if (!tb) return;
+
+        var st = data.status || '';
+        var sd = parseInt(String(data.steps_done != null ? data.steps_done : 0), 10) || 0;
+        var tot = parseInt(String(data.total_steps_est != null ? data.total_steps_est : N_ETAPAS), 10)
+            || (isDeletar || isLimpar ? 1 : N_ETAPAS);
+        var eoRaw = data.etapa_atual_ord;
+        var eo = eoRaw != null && eoRaw !== '' ? parseInt(String(eoRaw), 10) : null;
+        if (eo != null && (isNaN(eo) || eo < 1)) eo = null;
+
+        var pctGlob = 0;
+        if (st === 'done') {
+            pctGlob = 100;
+        } else if (st === 'running') {
+            pctGlob = Math.min(100, Math.round((sd / Math.max(tot, 1)) * 100));
+        } else if (st === 'failed' && sd > 0) {
+            pctGlob = Math.min(100, Math.round((sd / Math.max(tot, 1)) * 100));
+        }
+        if (isDeletar) {
+            pctSpan.textContent = pctGlob + '% — totais sobre ' + tot + ' grupo(s)';
+        } else if (isLimpar) {
+            pctSpan.textContent = pctGlob + '% — limpeza de período (' + tot + ' etapa)';
+        } else {
+            pctSpan.textContent = pctGlob + '% no total (' + tot + ' scripts do executar_tudo)';
+            if (data.dia_progresso_txt && kind === 'lista_dias') {
+                pctSpan.textContent += ' · ' + data.dia_progresso_txt;
+            }
+        }
+
+        var rows = tb.querySelectorAll('tr.pipeline-step-row--prog');
+        for (var i = 0; i < rows.length; i++) {
+            var tr = rows[i];
+            var ord = i + 1;
+            var tdProg = tr.querySelector('td.pipeline-prog-cell');
+            if (!tdProg) continue;
+            var pr;
+            tr.classList.remove('pipeline-step--done', 'pipeline-step--active');
+            if (isDeletar || isLimpar) {
+                if (st === 'done') {
+                    pr = { pct: 100, modo: 'done' };
+                    tr.classList.add('pipeline-step--done');
+                } else if (st === 'failed') {
+                    pr = ord <= sd ? { pct: 100, modo: 'done' } : { pct: 0, modo: 'idle' };
+                    if (ord <= sd) tr.classList.add('pipeline-step--done');
+                    else tr.classList.add('pipeline-step--active');
+                } else if (st === 'running') {
+                    if (ord <= sd) {
+                        pr = { pct: 100, modo: 'done' };
+                        tr.classList.add('pipeline-step--done');
+                    } else if (ord === sd + 1) {
+                        pr = { pct: 78, modo: 'busy' };
+                        tr.classList.add('pipeline-step--active');
+                    } else {
+                        pr = { pct: 0, modo: 'idle' };
+                    }
+                } else {
+                    pr = { pct: 0, modo: 'idle' };
+                }
+            } else {
+                pr = pctLinhaCorridaCompleta(st, sd, eo, ord, tot);
+                if (pr.modo === 'done') tr.classList.add('pipeline-step--done');
+                if (pr.modo === 'busy') tr.classList.add('pipeline-step--active');
+            }
+            var clsFill = pr.modo === 'done' ? 'pipeline-prog-fill--done' : (pr.modo === 'busy' ? 'pipeline-prog-fill--busy' : '');
+            var txtDone = pr.modo === 'done' ? 'done' : '';
+            atualizarLinhaProg(tdProg, pr.pct, clsFill, txtDone);
+        }
+    }
+
+    function modalFechar() {
+        var m = document.getElementById('pipeline-modal');
+        if (!m) return;
+        m.classList.remove('show');
+        m.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        if (window.__pipelineModalOnKey) {
+            document.removeEventListener('keydown', window.__pipelineModalOnKey);
+            window.__pipelineModalOnKey = null;
+        }
+    }
+
+    /** Em vez da caixa imediata do navegador: só continua se a pessoa clicar em «Excluir». */
+    function confirmarEliminacaoPorModal(tituloHtml, textoLinhas, estiloBotao) {
+        return new Promise(function (resolve) {
+            var m = document.getElementById('pipeline-modal');
+            var t = document.getElementById('pipeline-modal-title');
+            var p = document.getElementById('pipeline-modal-text');
+            var btOk = document.getElementById('pipeline-modal-deletar');
+            var btC = document.getElementById('pipeline-modal-cancelar');
+            if (!m || !t || !p || !btOk || !btC) {
+                resolve(false);
+                return;
+            }
+            function finalizar(sim) {
+                modalFechar();
+                btOk.onclick = null;
+                btC.onclick = null;
+                m.onclick = null;
+                resolve(!!sim);
+            }
+            t.textContent = tituloHtml || 'Confirmar exclusão';
+            p.textContent = '';
+            textoLinhas.forEach(function (line, idx) {
+                var span = document.createElement('span');
+                span.className = idx ? 'block mt-2' : 'block';
+                span.textContent = line;
+                p.appendChild(span);
+            });
+            btOk.classList.remove('pipeline-modal-btn--amber');
+            if (estiloBotao === 'amber') {
+                btOk.classList.add('pipeline-modal-btn--amber');
+            }
+            m.classList.add('show');
+            m.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+            btOk.onclick = function () { finalizar(true); };
+            btC.onclick = function () { finalizar(false); };
+            m.onclick = function (ev) {
+                if (ev.target === m) finalizar(false);
+            };
+            window.__pipelineModalOnKey = function (ev) {
+                if (ev.key === 'Escape') finalizar(false);
+            };
+            document.addEventListener('keydown', window.__pipelineModalOnKey);
+        });
+    }
+
+    function showMsg(text, kind) {
+        var ov = document.getElementById('pipeline-progress-overlay');
+        var modalAberto = ov && ov.classList.contains('is-open');
+        var el = document.getElementById(modalAberto ? 'msg-global-modal' : 'msg-global');
+        if (!el) return;
+        el.textContent = text;
+        el.classList.remove('hidden', 'msg-info', 'border-emerald-700', 'bg-emerald-950/40', 'text-emerald-200', 'border-red-700', 'bg-red-950/40', 'text-red-200');
+        if (kind === 'ok') {
+            el.classList.add('border-emerald-700', 'bg-emerald-950/40', 'text-emerald-200');
+        } else if (kind === 'info') {
+            el.classList.add('msg-info');
+        } else {
+            el.classList.add('border-red-700', 'bg-red-950/40', 'text-red-200');
+        }
+    }
+    function hideMsg() {
+        ['msg-global', 'msg-global-modal'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.classList.add('hidden');
+            el.classList.remove('msg-info', 'border-emerald-700', 'bg-emerald-950/40', 'text-emerald-200', 'border-red-700', 'bg-red-950/40', 'text-red-200');
+        });
+    }
+
+    function fmtSec(s) {
+        if (s == null || isNaN(s)) return '—';
+        var n = Math.floor(Number(s));
+        var h = Math.floor(n / 3600);
+        var m = Math.floor((n % 3600) / 60);
+        var sec = n % 60;
+        if (h > 0) return h + 'h ' + m + 'm ' + sec + 's';
+        if (m > 0) return m + 'm ' + sec + 's';
+        return sec + 's';
+    }
+
+    function setButtonsDisabled(dis) {
+        ['btn-periodo', 'btn-lista', 'btn-limpar-periodo', 'btn-deletar'].forEach(function (id) {
+            var b = document.getElementById(id);
+            if (b) b.disabled = dis;
+        });
+    }
+
+    function actualizarLimparPeriodoModo() {
+        var modo = document.getElementById('lp-modo').value;
+        document.getElementById('lp-grupo-dia').classList.toggle('hidden', modo !== 'dia');
+        document.getElementById('lp-grupo-intervalo').classList.toggle('hidden', modo !== 'intervalo');
+    }
+
+    document.getElementById('lp-modo').addEventListener('change', actualizarLimparPeriodoModo);
+    actualizarLimparPeriodoModo();
+
+    document.getElementById('btn-st-fechar').onclick = function () {
+        stopPoll();
+        _stopClock(null);
+        jobId = null;
+        jobTipoPendente = null;
+        pendingDeletarBackups = false;
+        var tb = document.getElementById('st-passos-tbody');
+        if (tb) tb.removeAttribute('data-builtJob');
+        var box = document.getElementById('status-box');
+        if (box) {
+            box.classList.add('hidden');
+            box.classList.remove('pipeline-status--running');
+        }
+        fecharModalAndamento();
+        hideMsg();
+        setButtonsDisabled(false);
+    };
+
+    document.getElementById('btn-limpar-periodo').onclick = function () {
+        var modo = document.getElementById('lp-modo').value;
+        var pres = document.getElementById('lp-preservar-threads').checked;
+        var body = {
+            tipo: 'limpar_periodo',
+            preservar_threads_painel: pres
+        };
+        if (modo === 'dia') {
+            body.data = document.getElementById('lp-data').value.trim();
+            if (!body.data) {
+                showMsg('Indique uma data.', 'err');
+                return;
+            }
+        } else {
+            body.data_de = document.getElementById('lp-de').value.trim();
+            body.data_ate = document.getElementById('lp-ate').value.trim();
+            if (!body.data_de || !body.data_ate) {
+                showMsg('Preencha data início e data fim.', 'err');
+                return;
+            }
+        }
+        var linhas = [
+            'Serão apagadas, nesta máquina, as informações de processamento relativas ao período escolhido (e-mails classificados / integração ligada a essas datas). Isto não é o botão vermelho «zerar tudo».',
+        ];
+        linhas.push('Se preferir não apagar, clique em "Cancelar" e permanece nesta página.');
+        confirmarEliminacaoPorModal('Apagar dados deste período?', linhas, 'amber').then(function (sim) {
+            if (sim) startRun(body);
+        });
+    };
+
+    function stopPoll() {
+        if (pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+        }
+    }
+
+    function aplicarModoCorrer(running) {
+        var box = document.getElementById('status-box');
+        if (!box) return;
+        box.classList.toggle('pipeline-status--running', !!running);
+    }
+
+    function definirPillEstado(st) {
+        var pill = document.getElementById('st-status-pill');
+        if (!pill) return;
+        var base = 'shrink-0 inline-flex items-center rounded-full px-3 py-1 text-xs font-bold border ';
+        if (st === 'running') {
+            pill.textContent = 'Em execução';
+            pill.className = base + 'border-blue-500/60 bg-blue-950/50 text-blue-300';
+        } else if (st === 'done') {
+            pill.textContent = 'Concluído';
+            pill.className = base + 'border-emerald-600/50 bg-emerald-950/35 text-emerald-300';
+        } else if (st === 'failed') {
+            pill.textContent = 'Falhou';
+            pill.className = base + 'border-red-600/50 bg-red-950/35 text-red-300';
+        } else {
+            pill.textContent = typeof st === 'string' && st ? st : '—';
+            pill.className = base + 'border-slate-600 bg-slate-800/80 text-slate-200';
+        }
+    }
+
+    function scrollLogParaBaixo() {
+        var wrap = document.getElementById('st-log-wrap');
+        if (!wrap) return;
+        wrap.scrollTop = wrap.scrollHeight;
+    }
+
+    // Relógio client-side: continua contando entre polls para não congelar
+    var _clockBase = 0;      // elapsed_s recebido do servidor na última poll
+    var _clockRef = 0;       // performance.now() no momento da última poll
+    var _clockTimer = null;  // intervalo client-side
+
+    function _startClock(elapsedS) {
+        _clockBase = elapsedS || 0;
+        _clockRef = performance.now();
+        if (_clockTimer) return; // já rodando
+        _clockTimer = setInterval(function () {
+            var live = _clockBase + (performance.now() - _clockRef) / 1000;
+            document.getElementById('st-elapsed').textContent = fmtSec(live);
+        }, 500);
+    }
+
+    function _stopClock(finalS) {
+        if (_clockTimer) { clearInterval(_clockTimer); _clockTimer = null; }
+        if (finalS != null) document.getElementById('st-elapsed').textContent = fmtSec(finalS);
+    }
+
+    function renderState(data) {
+        var box = document.getElementById('status-box');
+        box.classList.remove('hidden');
+        var st = data.status || '';
+        var stLabel = st === 'running' ? 'Em execução'
+            : (st === 'done' ? '✓ Concluído' : (st === 'failed' ? '✗ Falhou' : (st || '—')));
+        var stEl = document.getElementById('st-status');
+        stEl.textContent = stLabel;
+        stEl.className = st === 'done'
+            ? 'text-lg font-bold text-emerald-400'
+            : (st === 'failed' ? 'text-lg font-bold text-red-400' : 'text-lg font-bold text-[var(--text-main)] truncate');
+        definirPillEstado(st || '—');
+        aplicarModoCorrer(st === 'running');
+        document.getElementById('st-step').textContent = data.step_label || '';
+        var dp = document.getElementById('st-dias');
+        if (data.dia_progresso_txt) {
+            dp.textContent = data.dia_progresso_txt;
+            dp.classList.remove('hidden');
+        } else {
+            dp.classList.add('hidden');
+        }
+        // Relógio: sincroniza base com servidor e mantém contagem client-side
+        if (st === 'running') {
+            _startClock(data.elapsed_s);
+        } else {
+            _stopClock(data.elapsed_s);
+        }
+        // ETA
+        var etaEl = document.getElementById('st-eta');
+        if (st === 'running') {
+            etaEl.textContent = (data.eta_s_aprox > 0) ? ('~' + fmtSec(data.eta_s_aprox)) : 'calculando…';
+        } else if (st === 'done') {
+            etaEl.textContent = 'Total: ' + fmtSec(data.elapsed_s);
+        } else {
+            etaEl.textContent = '—';
+        }
+        // Indicador de última atividade
+        var atEl = document.getElementById('st-atividade');
+        var atAviso = document.getElementById('st-atividade-aviso');
+        if (st === 'running' && data.silencio_s != null) {
+            var sil = Math.round(data.silencio_s);
+            if (sil < 60) {
+                atEl.textContent = 'agora mesmo';
+                atEl.style.color = '#4ade80';
+            } else if (sil < 120) {
+                atEl.textContent = 'há ' + sil + 's';
+                atEl.style.color = '#fbbf24';
+            } else {
+                var min = Math.floor(sil / 60);
+                atEl.textContent = 'há ' + min + 'min ' + (sil % 60) + 's';
+                atEl.style.color = '#f87171';
+            }
+            if (sil >= 120) {
+                atAviso.classList.remove('hidden');
+            } else {
+                atAviso.classList.add('hidden');
+            }
+        } else if (st === 'done' || st === 'failed') {
+            atEl.textContent = '—';
+            atEl.style.color = '';
+            atAviso.classList.add('hidden');
+        } else {
+            atEl.textContent = 'aguardando…';
+            atEl.style.color = '';
+            atAviso.classList.add('hidden');
+        }
+        var llmEl = document.getElementById('st-llm');
+        if (data.llm_progresso_txt && data.status === 'running') {
+            llmEl.textContent = '⏳ ' + data.llm_progresso_txt;
+            llmEl.classList.remove('hidden');
+        } else {
+            llmEl.classList.add('hidden');
+        }
+        var tail = (data.log_tail || []).join('\n');
+        var logEl = document.getElementById('st-log');
+        logEl.textContent = tail || '(sem linhas ainda)';
+        if (data.error) {
+            logEl.textContent = (tail ? tail + '\n\n' : '') + 'Erro: ' + data.error;
+        }
+        requestAnimationFrame(scrollLogParaBaixo);
+        actualizarGrelhaPassos(data);
+    }
+
+    function poll() {
+        if (!jobId) return;
+        fetch('/api/admin/pipeline/job/' + encodeURIComponent(jobId), { credentials: 'same-origin' })
+            .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+            .then(function (x) {
+                if (!x.ok) {
+                    showMsg(x.j.error || 'Falha ao ler estado', 'err');
+                    stopPoll();
+                    setButtonsDisabled(false);
+                    return;
+                }
+                _pollErros = 0;
+                renderState(x.j);
+                if (x.j.status !== 'running') {
+                    stopPoll();
+                    setButtonsDisabled(false);
+                    if (x.j.status === 'done') showMsg('Trabalho concluído.', 'ok');
+                    else showMsg('Trabalho terminou com erro.', 'err');
+                }
+            })
+            .catch(function () {
+                _pollErros = (_pollErros || 0) + 1;
+                if (_pollErros >= 5) {
+                    showMsg('Rede ou servidor indisponível.', 'err');
+                    stopPoll();
+                    setButtonsDisabled(false);
+                }
+                // Se < 5 erros consecutivos, continua tentando silenciosamente
+            });
+    }
+
+    function preencherEstadoInicialJob() {
+        document.getElementById('st-status').textContent = 'Em execução';
+        definirPillEstado('running');
+        aplicarModoCorrer(true);
+        document.getElementById('st-step').textContent = 'Conectando ao trabalho no servidor…';
+        document.getElementById('st-elapsed').textContent = '0s';
+        document.getElementById('st-eta').textContent = '…';
+        document.getElementById('st-log').textContent = 'Aguardando saída do programa…';
+        document.getElementById('st-dias').classList.add('hidden');
+        requestAnimationFrame(scrollLogParaBaixo);
+        actualizarGrelhaPassos({
+            kind: jobTipoPendente,
+            incluir_backups: pendingDeletarBackups,
+            status: 'running',
+            steps_done: 0,
+            total_steps_est: (jobTipoPendente === 'deletar_carga' || jobTipoPendente === 'limpar_periodo') ? 1 : N_ETAPAS,
+            etapa_atual_ord: null,
+            dia_progresso_txt: null
+        });
+    }
+
+    function focarPainelEstado() {
+        var sheet = document.querySelector('.pipeline-progress-sheet');
+        if (sheet) {
+            sheet.scrollTop = 0;
+            sheet.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    function startRun(body) {
+        hideMsg();
+        stopPoll();
+        jobId = null;
+        jobTipoPendente = body && body.tipo ? body.tipo : null;
+        if (jobTipoPendente === 'deletar') {
+            pendingDeletarBackups = !!body.backups;
+            jobTipoPendente = 'deletar_carga';
+        } else {
+            pendingDeletarBackups = false;
+        }
+        setButtonsDisabled(true);
+        fetch('/api/admin/pipeline/run', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        })
+            .then(function (r) {
+                return r.text().then(function (txt) {
+                    var j = {};
+                    try {
+                        j = txt ? JSON.parse(txt) : {};
+                    } catch (e1) {
+                        j = { error: 'Resposta inválida do servidor (' + r.status + '). Está na página de login?' };
+                    }
+                    return { ok: r.ok, j: j };
+                });
+            })
+            .then(function (x) {
+                if (!x.ok) {
+                    showMsg(x.j.error || 'Pedido recusado', 'err');
+                    setButtonsDisabled(false);
+                    return;
+                }
+                if (!x.j.job_id) {
+                    showMsg('Não foi possível iniciar — saia e volte a entrar ou peça ajuda à TI.', 'err');
+                    setButtonsDisabled(false);
+                    return;
+                }
+                jobId = x.j.job_id;
+                abrirModalAndamento();
+                document.getElementById('status-box').classList.remove('hidden');
+                preencherEstadoInicialJob();
+                showMsg('Começou — acompanhe nesta janela até terminar; os botões do formulário ficam desativados enquanto o trabalho roda.', 'info');
+                focarPainelEstado();
+                poll();
+                pollTimer = setInterval(poll, 2000);
+            })
+            .catch(function () {
+                showMsg('Falha ao iniciar (rede ou sessão expirada).', 'err');
+                setButtonsDisabled(false);
+            });
+    }
+
+    document.getElementById('btn-periodo').onclick = function () {
+        startRun({
+            tipo: 'periodo_unico',
+            data_ini: document.getElementById('pu-ini').value.trim(),
+            data_fim: document.getElementById('pu-fim').value.trim()
+        });
+    };
+
+    document.getElementById('btn-lista').onclick = function () {
+        var modo = document.getElementById('lista-modo').value;
+        startRun({
+            tipo: 'lista_dias',
+            datas: document.getElementById('lista-datas').value,
+            modo: modo,
+            incremental: document.getElementById('lista-inc').checked,
+            triagem_todo_o_03: document.getElementById('lista-tri').checked
+        });
+    };
+
+    document.getElementById('btn-deletar').onclick = function () {
+        var b = document.getElementById('del-backups').checked;
+        var linhas = [
+            'Isto vai apagar TUDO o que esta máquina já processou em relação a e-mails e integração nos arquivos de trabalho (todas as datas).',
+            b ? 'Também serão removidas cópias de segurança antigas guardadas aqui neste servidor.' : 'Os respaldos antigos ficam preservados porque não marcou «apagar cópias de segurança».',
+            'Se só queria tirar um ou alguns dias, use antes o bloco laranja "Apagar dados de um dia…". Para desistir, clique em "Cancelar".',
+        ];
+        confirmarEliminacaoPorModal('Zerar todos os dados de processamento?', linhas, 'red').then(function (sim) {
+            if (sim) startRun({ tipo: 'deletar', backups: b });
+        });
+    };
+})();
+</script>
+{% endblock %}

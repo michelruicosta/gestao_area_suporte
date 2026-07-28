@@ -1,0 +1,215 @@
+[
+  {
+    "threadId": "GMTHRID_1866436622083994705",
+    "tipo": "RESOLVIDA",
+    "origem_triagem_auto": true,
+    "alvo_triagem_auto": "DDR4111",
+    "qtd_mensagens_no_fechamento": 7,
+    "data_conclusao": "2026-06-03 18:00:00",
+    "motivo_triagem_auto": "Re: Documentos para implantação do sistema de riscos (Risk D (Michele Quadros) — transmitido ao BACEN em 29/05/2026",
+    "aprendizado_ia": {
+      "resumo_desfecho": "GMTHRID_1866436622083994705 → Concluído (§3.1 transmitido no BACEN)",
+      "cadoc_real": "DDR_2011",
+      "maior_tempo_espera": "Indeterminado",
+      "tipo_demanda": "DDR_2011",
+      "cliente_identificado": "Nixfin",
+      "prazo_cumprido": "não se aplica",
+      "prazo_tipo": null,
+      "gerou_fog": false,
+      "resolucao_final": "GMTHRID_1866436622083994705 → Concluído (§3.1 transmitido no BACEN)"
+    },
+    "motivo_triagem_auto_tecnico": "GMTHRID_1866436622083994705 → Concluído (§3.1 transmitido no BACEN)"
+  },
+  {
+    "threadId": "GMTHRID_1866810987437854624",
+    "tipo": "RESOLVIDA",
+    "origem_triagem_auto": true,
+    "alvo_triagem_auto": "RETORNO_BACEN",
+    "qtd_mensagens_no_fechamento": 2,
+    "data_conclusao": "2026-06-03 18:00:00",
+    "motivo_triagem_auto": "Lucas Vellani enviou RETORNO_BACEN ao Enio Almeida — BANCO CENTRAL - INDÍCIO DE PROBLEMA DE QUALIDADE IDENTIFICAD em 03/06/2026",
+    "aprendizado_ia": {
+      "resumo_desfecho": "GMTHRID_1866810987437854624 → Concluído (§5 remessa Finaud → cliente)",
+      "cadoc_real": "RETORNO_BACEN",
+      "maior_tempo_espera": "Indeterminado",
+      "tipo_demanda": "RETORNO_BACEN",
+      "cliente_identificado": "Wise",
+      "prazo_cumprido": "não se aplica",
+      "prazo_tipo": null,
+      "gerou_fog": false,
+      "resolucao_final": "GMTHRID_1866810987437854624 → Concluído (§5 remessa Finaud → cliente)"
+    },
+    "cadoc": "RETORNO_BACEN",
+    "empresa": "Wise",
+    "assunto": "",
+    "motivo_triagem_auto_tecnico": "GMTHRID_1866810987437854624 → Concluído (§5 remessa Finaud → cliente)"
+  },
+  {
+    "threadId": "GMTHRID_1853479360646909442",
+    "tipo": "RESOLVIDA",
+    "origem_triagem_auto": true,
+    "alvo_triagem_auto": "DLI",
+    "qtd_mensagens_no_fechamento": 2,
+    "data_conclusao": "2026-06-05 22:21:15",
+    "motivo_triagem_auto": "Lucas Vellani enviou arquivo ao Paulo Henrique Barbosa Silveira — RE: DLI NOVEMBRO 2062 em 04/03/2026",
+    "aprendizado_ia": {
+      "resumo_desfecho": "GMTHRID_1853479360646909442 → Concluído (§5 remessa Finaud → cliente)",
+      "cadoc_real": "DLI_2062",
+      "maior_tempo_espera": "Indeterminado",
+      "tipo_demanda": "DLI_2062",
+      "cliente_identificado": "Planner",
+      "prazo_cumprido": "não se aplica",
+      "prazo_tipo": null,
+      "gerou_fog": false,
+      "resolucao_final": "GMTHRID_1853479360646909442 → Concluído (§5 remessa Finaud → cliente)"
+    },
+    "motivo_triagem_auto_tecnico": "GMTHRID_1853479360646909442 → Concluído (§5 remessa Finaud → cliente)"
+  },
+  {
+    "threadId": "GMTHRID_1856022755137828211",
+    "tipo": "RESOLVIDA",
+    "origem_triagem_auto": true,
+    "alvo_triagem_auto": "DLO",
+    "qtd_mensagens_no_fechamento": 1,
+    "data_conclusao": "2026-06-05 22:21:23",
+    "motivo_triagem_auto": "Thread espelho — Tc — Re: TRADERS - 4060 E 4066 12/2025. Encaminhar a planilha LEC — encerrada por duplicidade com thread principal",
+    "aprendizado_ia": {
+      "resumo_desfecho": "GMTHRID_1856022755137828211 → Concluído (§6 espelho cluster empresa='tc')",
+      "cadoc_real": "DLO_2061",
+      "maior_tempo_espera": "Indeterminado",
+      "tipo_demanda": "DLO_2061",
+      "cliente_identificado": "TC",
+      "prazo_cumprido": "não se aplica",
+      "prazo_tipo": null,
+      "gerou_fog": false,
+      "resolucao_final": "GMTHRID_1856022755137828211 → Concluído (§6 espelho cluster empresa='tc')"
+    },
+    "motivo_triagem_auto_tecnico": "GMTHRID_1856022755137828211 → Concluído (§6 espelho cluster empresa='tc')"
+  },
+  {
+    "threadId": "GMTHRID_1856749033520691503",
+    "tipo": "RESOLVIDA",
+    "origem_triagem_auto": true,
+    "alvo_triagem_auto": "S5",
+    "qtd_mensagens_no_fechamento": 5,
+    "data_conclusao": "2026-06-05 22:21:33",
+    "motivo_triagem_auto": "Finaud enviou arquivo ao Contrato — Risk Driver  S5 - Renovação de Senha de Acesso ao Sistema em 10/02/2026",
+    "aprendizado_ia": {
+      "resumo_desfecho": "GMTHRID_1856749033520691503 → Concluído (§4d cliente agradece após remessa Finaud → cliente)",
+      "cadoc_real": "S5",
+      "maior_tempo_espera": "Indeterminado",
+      "tipo_demanda": "S5",
+      "cliente_identificado": "Direcaosa",
+      "prazo_cumprido": "não se aplica",
+      "prazo_tipo": null,
+      "gerou_fog": false,
+      "resolucao_final": "GMTHRID_1856749033520691503 → Concluído (§4d cliente agradece após remessa Finaud → cliente)"
+    },
+    "motivo_triagem_auto_tecnico": "GMTHRID_1856749033520691503 → Concluído (§4d cliente agradece após remessa Finaud → cliente)"
+  },
+  {
+    "threadId": "GMTHRID_1853581069415965871",
+    "tipo": "RESOLVIDA",
+    "origem_triagem_auto": true,
+    "alvo_triagem_auto": "SUPORTE",
+    "qtd_mensagens_no_fechamento": 2,
+    "data_conclusao": "2026-06-05 22:21:42",
+    "motivo_triagem_auto": "Finaud enviou arquivo ao Eduardo Galasini — Fwd: Risk Driver - ACTIVTRADES CORRETORA DE CÂMBIO, TÍTULOS  em 05/02/2026",
+    "aprendizado_ia": {
+      "resumo_desfecho": "GMTHRID_1853581069415965871 → Concluído (§4d cliente agradece após remessa Finaud → cliente)",
+      "cadoc_real": "SUPORTE",
+      "maior_tempo_espera": "Indeterminado",
+      "tipo_demanda": "SUPORTE",
+      "cliente_identificado": "Finaud",
+      "prazo_cumprido": "não se aplica",
+      "prazo_tipo": null,
+      "gerou_fog": false,
+      "resolucao_final": "GMTHRID_1853581069415965871 → Concluído (§4d cliente agradece após remessa Finaud → cliente)"
+    },
+    "motivo_triagem_auto_tecnico": "GMTHRID_1853581069415965871 → Concluído (§4d cliente agradece após remessa Finaud → cliente)"
+  },
+  {
+    "threadId": "GMTHRID_1858032546602033166",
+    "tipo": "RESOLVIDA",
+    "origem_triagem_auto": true,
+    "alvo_triagem_auto": "DRSAC",
+    "qtd_mensagens_no_fechamento": 2,
+    "data_conclusao": "2026-06-05 22:21:52",
+    "motivo_triagem_auto": "Finaud enviou arquivo ao Leandro Alves — Re: [Traders] DRSAC em 24/02/2026",
+    "aprendizado_ia": {
+      "resumo_desfecho": "GMTHRID_1858032546602033166 → Concluído (§4d cliente agradece após remessa Finaud → cliente)",
+      "cadoc_real": "DRSAC",
+      "maior_tempo_espera": "Indeterminado",
+      "tipo_demanda": "DRSAC",
+      "cliente_identificado": "TC",
+      "prazo_cumprido": "não se aplica",
+      "prazo_tipo": null,
+      "gerou_fog": false,
+      "resolucao_final": "GMTHRID_1858032546602033166 → Concluído (§4d cliente agradece após remessa Finaud → cliente)"
+    },
+    "motivo_triagem_auto_tecnico": "GMTHRID_1858032546602033166 → Concluído (§4d cliente agradece após remessa Finaud → cliente)"
+  },
+  {
+    "threadId": "GMTHRID_1856739715895126783",
+    "tipo": "RESOLVIDA",
+    "origem_triagem_auto": true,
+    "alvo_triagem_auto": "FORCAPITAL",
+    "qtd_mensagens_no_fechamento": 1,
+    "data_conclusao": "2026-06-05 22:21:58",
+    "motivo_triagem_auto": "Rodrigo Tiberio enviou arquivo ao Juliana Meirelles | AGK — Envio de Projeção de Capital Referente a DEZ/25 a DEZ/28 - C em 10/02/2026",
+    "aprendizado_ia": {
+      "resumo_desfecho": "GMTHRID_1856739715895126783 → Concluído (§5 remessa Finaud → cliente)",
+      "cadoc_real": "FORCAPITAL",
+      "maior_tempo_espera": "Indeterminado",
+      "tipo_demanda": "FORCAPITAL",
+      "cliente_identificado": "Agkcorretora",
+      "prazo_cumprido": "não se aplica",
+      "prazo_tipo": null,
+      "gerou_fog": false,
+      "resolucao_final": "GMTHRID_1856739715895126783 → Concluído (§5 remessa Finaud → cliente)"
+    },
+    "motivo_triagem_auto_tecnico": "GMTHRID_1856739715895126783 → Concluído (§5 remessa Finaud → cliente)"
+  },
+  {
+    "threadId": "GMTHRID_1856387499281540746",
+    "tipo": "RESOLVIDA",
+    "origem_triagem_auto": true,
+    "alvo_triagem_auto": "DRM_2060",
+    "qtd_mensagens_no_fechamento": 2,
+    "data_conclusao": "2026-06-05 22:22:05",
+    "motivo_triagem_auto": "Thread espelho — Mirae Invest — Segue a remessa DRM (2060) 30/01/2026. MIRAE — encerrada por duplicidade com thread principal",
+    "aprendizado_ia": {
+      "resumo_desfecho": "GMTHRID_1856387499281540746 → Concluído (§6 espelho cluster empresa='mirae invest')",
+      "cadoc_real": "DRM_2060",
+      "maior_tempo_espera": "Indeterminado",
+      "tipo_demanda": "DRM_2060",
+      "cliente_identificado": "Mirae Invest",
+      "prazo_cumprido": "não se aplica",
+      "prazo_tipo": null,
+      "gerou_fog": false,
+      "resolucao_final": "GMTHRID_1856387499281540746 → Concluído (§6 espelho cluster empresa='mirae invest')"
+    },
+    "motivo_triagem_auto_tecnico": "GMTHRID_1856387499281540746 → Concluído (§6 espelho cluster empresa='mirae invest')"
+  },
+  {
+    "threadId": "GMTHRID_1867188695525237275",
+    "tipo": "RESOLVIDA",
+    "origem_triagem_auto": true,
+    "alvo_triagem_auto": "RISK_DRIVER_ALERTA",
+    "qtd_mensagens_no_fechamento": 1,
+    "data_conclusao": "2026-06-05 00:00:00",
+    "motivo_triagem_auto": "GMTHRID_1867188695525237275 -> Concluido (automatico — sem acao humana necessaria)",
+    "aprendizado_ia": {
+      "resumo_desfecho": "GMTHRID_1867188695525237275 -> Concluido (automatico — sem acao humana necessaria)",
+      "cadoc_real": "RISK_DRIVER_ALERTA",
+      "maior_tempo_espera": "nao se aplica",
+      "tipo_demanda": "RISK_DRIVER_ALERTA",
+      "cliente_identificado": "Finaud",
+      "prazo_cumprido": "nao se aplica",
+      "prazo_tipo": null,
+      "gerou_fog": false,
+      "resolucao_final": "GMTHRID_1867188695525237275 -> Concluido (automatico — sem acao humana necessaria)"
+    },
+    "assunto": "Risk Driver - ATUAL CORRETORA DE CÂMBIO LTDA  DLO - Situação  - 04/2026"
+  }
+]
