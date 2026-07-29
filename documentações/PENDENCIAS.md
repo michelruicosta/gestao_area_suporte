@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Oráculo 360 Finaud
 
-**Atualizado:** 2026-07-28
+**Atualizado:** 2026-07-29
 **Regra:** este arquivo lista **só o que ainda falta** (aberto / aguardando decisão / backlog).
 Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada no
 `REGISTRO_CORRECOES.md` — nesta ordem: primeiro grava no REGISTRO, depois remove daqui (nunca o
@@ -42,6 +42,8 @@ Antes de definir como o Campo 6 funciona, Michel quer ver as mensagens de verdad
 ---
 
 ## 🔴 URGENTE — Campos 6, 7 e 8 da especificação (aguardam simulações) (registrado 28/07/2026)
+
+> **Contexto 29/07:** §14 (regras de classificação R1–R5 para todas as 12 categorias) foi concluído hoje. Os Campos 6, 7, 8 (§10) continuam pendentes — dependem das simulações abaixo.
 
 **Bloqueado por:** simulações de threads reais (itens ☐ 2–4 do bloco "EM CURSO" acima)
 

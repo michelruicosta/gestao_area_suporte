@@ -492,6 +492,17 @@ O caso foi encerrado. As regras abaixo são as mesmas para todos os tipos de e-m
 **Veto universal (impede o Concluído mesmo com as regras acima):**
 Se após a ação da Finaud o cliente mandou algo com conteúdo real — uma pergunta, um dado novo, uma reclamação — o caso **não fecha**. A bola voltou para a Finaud.
 
+**Regra universal — frases de cortesia após entrega = Concluído (confirmado por Michel, 29/07/2026):**
+Se o arquivo foi entregue e a mensagem seguinte — de qualquer colaborador da Finaud ou do cliente — contém apenas frase de cortesia, agradecimento ou assinatura padrão sem novo pedido, a thread é **Concluída**.
+
+| Frases que NÃO reabrem nem bloqueiam o Concluído | Porque |
+|---|---|
+| "Desde já agradeço e permaneço à disposição" (assinatura do colaborador Finaud) | Encerramento cortês após entrega — não é pedido |
+| "Obrigada", "Obrigado", "Valeu", "Perfeito", "Ok", "Recebido" do cliente | Confirmação de recebimento sem conteúdo novo |
+| Qualquer frase de fechamento padrão sem pedido explícito | A cortesia não cria pendência |
+
+> Aplica a: todas as 12 categorias.
+
 **Regra adicional exclusiva do RETORNO_BACEN:**
 
 | Situação |
@@ -614,6 +625,26 @@ Esta seção alimenta diretamente o prompt da IA. Para cada categoria, a IA rece
 
 **Prazo:** D+3 úteis após a data de referência
 
+**Regras de classificação — Aguardando ou Concluído:**
+
+As mesmas 5 regras do DDR_2011. Sinais específicos do SCD_4111:
+
+| Regra | Situação | Status | Responsável |
+|---|---|---|---|
+| R1 | Finaud entregou o arquivo 4111 ao cliente — OU cliente respondeu com agradecimento sem novo pedido | Concluído | — |
+| R2 | Cliente enviou dados, retificação, fez pergunta ou trouxe nova demanda — e Finaud ainda não respondeu | Aguardando | Finaud |
+| R3 | Finaud fez pedido ao cliente ou cobra dado/confirmação e aguarda resposta | Aguardando | Cliente |
+| R4 | Finaud acusou recebimento mas ainda não gerou nem entregou o arquivo | Aguardando | Finaud |
+| R5 | Última mensagem foi interna da Finaud (de um colaborador para outro) sem resposta ao cliente | Aguardando | Finaud |
+
+**R1:** "segue arquivo Cadoc 4111", "seguem arquivos Cadoc's 4111", "segue anexo relatório 4111", "para envio ao BC"; anexo `CNPJ_4111_*.zip` pela Finaud; agradecimento puro do cliente ("Obrigada Lucas!", "Ok, recebido")
+
+**R2:** "Segue em anexo arquivos com informações para envio do CADOC 4111"; Excel de saldos ou posições enviado pelo cliente
+
+**R3:** "Por gentileza enviar o anexo", "peço a gentileza de quando tiver a disponibilidade das informações", "encaminhar as posições do 4111"
+
+**R4:** "Ok, obrigada pelo envio", "Obrigada. Administração", "Estamos verificando com a área técnica... Retornaremos em breve"
+
 ---
 
 ### DDR 2011 — Documento Diário de Posições
@@ -657,6 +688,39 @@ Esta seção alimenta diretamente o prompt da IA. Para cada categoria, a IA rece
 
 **Prazo:** D+3 úteis após a data de referência
 
+**Regras de classificação — Aguardando ou Concluído:**
+
+| Regra | Situação | Status | Responsável |
+|---|---|---|---|
+| R1 | Finaud enviou o DDR em anexo, confirmou envio ao BACEN, resolveu ação interna — OU cliente respondeu só com agradecimento sem novo pedido | Concluído | — |
+| R2 | Cliente enviou dados, retificação, fez pergunta ou trouxe nova demanda — e Finaud ainda não respondeu | Aguardando | Finaud |
+| R3 | Finaud fez pedido ao cliente ou cobra dado/confirmação e aguarda resposta | Aguardando | Cliente |
+| R4 | Finaud acusou recebimento mas ainda não processou nada | Aguardando | Finaud |
+| R5 | Última mensagem foi interna da Finaud (de um colaborador para outro) sem resposta ao cliente | Aguardando | Finaud |
+
+**Sinais detalhados de cada regra:**
+
+**R1 — Concluído:**
+- Corpo: "Segue em anexo o DDR", "Segue anexo para envio ao BC", "Enviados ao BACEN", "Disponibilizo os protocolos"
+- Corpo: "O cadastro está disponível", "Já foi preenchido", "Já foi resolvido" (ação interna — sem arquivo)
+- Anexo `DDR_YYYYMM.xlsx` ou `CNPJ_2011_YYYYMMDD.zip` enviado pela Finaud
+- Sub-caso: Finaud transmitiu o DDR ao BACEN diretamente em nome do cliente — protocolo de aceite = R1
+- Última mensagem do cliente é agradecimento puro ("Obrigado", "Recebi", "Perfeito", "Ok") sem novo pedido
+
+**R2 — Aguardando Finaud:**
+- Cliente enviou extratos ou planilhas (prefixo `RD_`, PDF, Excel de saldos)
+- Cliente enviou versão corrigida/retificada dos dados
+- Cliente fez pergunta ou dúvida e aguarda resposta da Finaud
+- Cliente trouxe nova demanda após ciclo anterior concluído
+
+**R3 — Aguardando Cliente:**
+- Corpo Finaud: "Por gentileza enviar", "Poderia confirmar", "Ainda não recebi", cobrança de prazo
+- Finaud entregou o DDR e fez pedido no mesmo e-mail → R3 (o pedido pendente prevalece sobre a entrega)
+- ⚠️ Se o cliente respondeu "obrigado" sem entregar o que foi pedido → ainda é R3 (agradecimento ≠ entrega)
+
+**Armadilha importante:**
+- DDR Concluído nem sempre tem arquivo — confirmação de ação interna ("O cadastro está disponível") também é R1
+
 ---
 
 ### DRM 2060 — Demonstrativo de Risco de Mercado
@@ -688,6 +752,32 @@ Esta seção alimenta diretamente o prompt da IA. Para cada categoria, a IA rece
 4. Cliente transmite ao BACEN — alguns confirmam: "DRM referente a JUNHO/2026 transmitido no BACEN"
 
 **Prazo:** D+5 úteis do mês seguinte à data de referência
+
+**Regras de classificação — Aguardando ou Concluído:**
+
+Validado em 90 threads reais (29/07/2026). Cobertura: 100% (57 F→C + 33 C→F).
+
+| Regra | Situação | Status | Responsável |
+|---|---|---|---|
+| R1 | Finaud entregou o DRM ao cliente ou transmissão ao BACEN confirmada — OU cliente respondeu com agradecimento sem novo pedido | Concluído | — |
+| R2 | Cliente enviou dados mensais, prévia ou retificação — e Finaud ainda não processou | Aguardando | Finaud |
+| R3 | Finaud aguarda extratos, saldos ou arquivo que o cliente ainda não enviou | Aguardando | Cliente |
+| R4 | Finaud enviou análise técnica, explicação ou pergunta (sem entrega de arquivo) — aguarda retorno do cliente | Aguardando | Finaud |
+| R5 | Não se aplica — nenhuma thread F→F identificada no DRM_2060 | — | — |
+
+**R1:** "segue anexo a remessa DRM (2060)", "segue o DRM (2060)", "DRM_2060 para transmissão ao BACEN", "transmitido ao BACEN"; agradecimento puro do cliente após entrega
+
+**R2:** cliente enviou saldos/posições/extratos mensais; cliente enviou "prévia" para validação antes da versão final; cliente enviou retificação
+
+**R3:** "encaminhar os extratos", "aguardo o balancete", Finaud pediu dado que ainda não chegou
+
+**R4:** Finaud respondeu pergunta técnica; Finaud agendou reunião com cliente ou BACEN; Finaud esclareceu erro — aguarda retorno
+
+**Sub-padrão "Prévia":** quando o cliente envia rascunho dos dados para Finaud validar antes da versão oficial → R2 (Aguardando/Finaud) até a entrega do DRM definitivo.
+
+**Sub-padrão convite de reunião** (Teams, calendário): R2 (Aguardando/Finaud) — Finaud precisa participar.
+
+**Sub-padrão cliente transmite ao BACEN por conta própria** e avisa a Finaud via C→F → R1 (Concluído) — informacional, nenhuma ação da Finaud necessária.
 
 ---
 
@@ -724,6 +814,26 @@ Esta seção alimenta diretamente o prompt da IA. Para cada categoria, a IA rece
 
 **Prazo:** Dia 5 do segundo mês seguinte à data de referência
 
+**Regras de classificação — Aguardando ou Concluído:**
+
+Validado em 482 threads reais (29/07/2026). Cobertura: 100%. Mesmas regras R1–R4 dos CADOCs anteriores. R5 não se aplica (nenhum F→F identificado).
+
+| Regra | Situação | Status | Responsável |
+|---|---|---|---|
+| R1 | Finaud entregou o DLO ao cliente ou transmissão ao BACEN confirmada — OU cliente agradeceu sem novo pedido | Concluído | — |
+| R2 | Cliente enviou COSIF, planilha LEC ou ambos — e Finaud ainda não processou | Aguardando | Finaud |
+| R3 | Finaud aguarda COSIF, planilha LEC ou dados adicionais do cliente | Aguardando | Cliente |
+| R4 | Finaud acusou recebimento, prometeu retorno ou está processando internamente — ainda não entregou o arquivo | Aguardando | Finaud |
+| R5 | Não se aplica — nenhum F→F identificado no DLO_2061 | — | — |
+
+**R1:** "Seguem anexos para envio ao Banco Central: DLO2061", "foram aceitos no STA", "segue o protocolo"; agradecimento puro do cliente; cliente avisando transmissão ("Transmitido os DLO e DLI")
+
+**R2:** cliente enviou COSIF (COS4010.xml, COS4016.xml) e/ou planilha LEC; dados corrigidos ou complementares após inconsistência. ⚠️ Cliente pode ter enviado só um dos dois — status AG/Finaud é correto em qualquer caso.
+
+**R3:** "Por gentileza encaminhar o COS4010 e a planilha LEC", "Solicitamos encaminhar o COSIF", "fico aguardando"
+
+**R4:** "Obrigada pelas informações", "Ok, estarei providenciando", "estamos providenciando", atualização de progresso interno, promessa de entrega futura
+
 ---
 
 ### DLI 2062 — Demonstrativo de Limites Operacional Individual
@@ -757,6 +867,30 @@ Esta seção alimenta diretamente o prompt da IA. Para cada categoria, a IA rece
 
 **Prazo:** Dia 5 do segundo mês seguinte à data de referência
 
+**Regras de classificação — Aguardando ou Concluído:**
+
+Validado em 56 threads reais (29/07/2026). Cobertura: 100%. R5 se aplica (3 casos F→F identificados).
+
+| Regra | Situação | Status | Responsável |
+|---|---|---|---|
+| R1 | Finaud entregou o DLI ao cliente, transmitiu ao BACEN ou orientação foi concluída — OU cliente agradeceu sem novo pedido | Concluído | — |
+| R2 | Cliente enviou COSIF, arquivo corrigido ou avisou rejeição do BACEN — e Finaud ainda não processou | Aguardando | Finaud |
+| R3 | Finaud aguarda COSIF ou informação complementar do cliente | Aguardando | Cliente |
+| R4 | Finaud acusou recebimento ou equipe técnica está processando internamente — ainda não entregou o arquivo | Aguardando | Finaud |
+| R5 | Última mensagem foi interna da Finaud (encaminhamento para colega) sem resposta ao cliente | Aguardando | Finaud |
+
+**R1:** "segue anexo a remessa DLI (2062)", "seguem anexos DLIs 2062", "para envio ao BC", "seguem os protocolos dos arquivos enviados e aceitos pelo BACEN"; agradecimento puro do cliente; cliente confirmando envio ao STA
+
+**R2:** cliente enviou COSIF (XML); cliente avisou "deu rejeitado" (Finaud precisa investigar e regenerar); cliente enviou arquivo corrigido
+
+**R3:** "por gentileza enviar os arquivos COS4010.xml", "poderia nos repassar a mensagem da crítica mencionada?"
+
+**R4:** "Ok, ciente", "Obrigada, vamos verificar", "a equipe técnica está providenciando os ajustes, retornaremos em breve", "o cronograma segue conforme planejado"
+
+**R5:** mensagem encaminhada internamente — instrução normativa repassada à equipe, dúvida urgente do cliente encaminhada para colega responsável
+
+**Nota clientes S5:** quando o cliente é segmento S5, o DLI é calculado pelo próprio BACEN com base no COSIF — a Finaud não gera o arquivo. Threads desse tipo são consultivas e não seguem o fluxo padrão acima.
+
 ---
 
 ### DRL 2160 — Demonstrativo de Risco de Liquidez
@@ -789,6 +923,30 @@ Esta seção alimenta diretamente o prompt da IA. Para cada categoria, a IA rece
 4. Cliente transmite ao BACEN — alguns confirmam: "Arquivo submetido ao BACEN na data de hoje"
 
 **Prazo:** D+10 úteis do mês seguinte à data de referência
+
+**Regras de classificação — Aguardando ou Concluído:**
+
+Validado em 143 threads reais (29/07/2026). Cobertura: 100%. R5 se aplica (2 casos F→F identificados).
+
+| Regra | Situação | Status | Responsável |
+|---|---|---|---|
+| R1 | Finaud entregou o DRL ao cliente, cliente confirmou envio ao BACEN — OU agradecimento/confirmação sem novo pedido | Concluído | — |
+| R2 | Cliente enviou a planilha DRL (`.xlsx`) e Finaud ainda não processou — OU cliente fez pergunta que Finaud precisa responder | Aguardando | Finaud |
+| R3 | Finaud aguarda a planilha DRL do cliente — ou solicitou balancete analítico (PDF) complementar | Aguardando | Cliente |
+| R4 | Finaud acusou recebimento com mensagem curta ("Ok, ciente", "Obrigada pela informação") sem entregar o CADOC | Aguardando | Finaud |
+| R5 | Última mensagem foi encaminhamento interno da Finaud (F→F), sem resposta ao cliente | Aguardando | Finaud |
+
+**R1:** "Segue anexo DRL2160 para envio ao Banco Central", "segue o DRL (2160)", "DRL para transmissão ao BACEN", "Arquivo submetido ao BACEN na data de hoje", "Somente para que fiquem cientes, foi enviado"; agradecimento puro do cliente ou da Finaud após entrega
+
+**R2:** cliente enviou planilha DRL (`.xlsx`) — Finaud ainda não processou; cliente fez pergunta (mensagem C→F sem planilha) — bola na Finaud para responder
+
+**R3:** "por gentileza enviar a planilha DRL", "fico aguardando a planilha", "poderia encaminhar o balancete analítico?"
+
+**R4:** "Ok, ciente", "Obrigada pela informação", "Recebido" — acuse curto sem entrega. ⚠️ R4 é estreito: só para acuses curtos. Promessa de entrega futura ou atualização de andamento → R2 (bola na Finaud).
+
+**R5:** encaminhamento interno — relatório ou dúvida do cliente repassada a colega da Finaud sem resposta ao cliente ainda
+
+⚠️ **Atenção:** quando a última mensagem é uma pergunta do cliente (C→F), o status é R2 (Finaud precisa responder), não R3. R3 só se aplica quando a Finaud falou por último pedindo algo ao cliente (F→C).
 
 ---
 
@@ -824,6 +982,30 @@ Esta seção alimenta diretamente o prompt da IA. Para cada categoria, a IA rece
 
 **Prazo:** D+5 úteis após a data de referência
 
+**Regras de classificação — Aguardando ou Concluído:**
+
+Validado em 47 threads reais (29/07/2026). Cobertura: 100%. R5 se aplica (5 casos F→F identificados).
+
+| Regra | Situação | Status | Responsável |
+|---|---|---|---|
+| R1 | Finaud entregou o Resultado Quantitativo S5, concluiu estudo de migração ou enviou acesso — OU cliente agradeceu sem novo pedido | Concluído | — |
+| R2 | Cliente enviou COSIF — Finaud ainda não processou | Aguardando | Finaud |
+| R3 | Finaud aguarda COSIF do cliente — OU aguarda resposta do cliente em consulta de migração ou dúvida técnica | Aguardando | Cliente |
+| R4 | Finaud acusou recebimento do COSIF com mensagem curta — ainda não entregou o relatório | Aguardando | Finaud |
+| R5 | Última mensagem foi encaminhamento interno da Finaud (F→F) sem resposta ao cliente | Aguardando | Finaud |
+
+**R1:** "Segue o Resultado Quantitativo S5", "segue o Demonstrativo S5", "segue a apuração dos requerimentos mínimos S5"; estudo de migração concluído (Finaud respondeu todas as dúvidas); senha/acesso enviados; agradecimento puro do cliente após receber o relatório
+
+**R2:** cliente enviou COS4010.xml / COS4016.xml para geração do relatório mensal — Finaud ainda não processou
+
+**R3:** "Solicitamos por gentileza encaminhar o COS4010", "fico aguardando a planilha", "aguardamos retorno sobre o estudo de migração"; cliente não respondeu consulta da Finaud
+
+**R4:** "Ok, recebido, já vou processar", "Obrigada, vou gerar o relatório" — acuse curto sem entregar ainda
+
+**R5:** encaminhamento interno — ex.: "Andrea, por favor importar o COS4010 da Açoriana para o estudo"; dúvida do cliente repassada a colega
+
+⚠️ **Diferença do S5:** o relatório fica entre Finaud e cliente — não vai ao BACEN. A thread conclui quando a Finaud entrega ao cliente, não quando o cliente transmite ao regulador.
+
 ---
 
 ### SUPORTE — Apoio e comunicação geral
@@ -854,6 +1036,30 @@ Esta seção alimenta diretamente o prompt da IA. Para cada categoria, a IA rece
 3. Resolvido quando o cliente confirma ou agradece — sem prazo regulatório
 
 **Prazo:** sem prazo regulatório fixo — depende da urgência da solicitação
+
+**Regras de classificação — Aguardando ou Concluído:**
+
+Validado em 196 threads reais (29/07/2026). Cobertura: 100%. R5 se aplica.
+
+| Regra | Situação | Status | Responsável |
+|---|---|---|---|
+| R1 | Finaud resolveu a demanda ("usuário criado", "senha enviada", "problema resolvido") — OU agradecimento puro do cliente após resolução | Concluído | — |
+| R2 | Cliente enviou dado, arquivo ou pergunta — Finaud ainda não respondeu | Aguardando | Finaud |
+| R3 | Finaud aguarda insumo, dado ou confirmação do cliente | Aguardando | Cliente |
+| R4 | Finaud está analisando — respondeu mas sem resolução ainda ("estou verificando", "retornaremos") | Aguardando | Finaud |
+| R5 | Última mensagem foi encaminhamento interno da Finaud (F→F) sem resposta ao cliente | Aguardando | Finaud |
+
+**R1:** "O usuário já foi criado", "password foi enviada", "problema resolvido", "arquivo está pronto", "já configuramos"; agradecimento puro do cliente após resolução. ⚠️ Finaud resolver = R1 imediato — não precisa aguardar confirmação do cliente.
+
+**R2:** cliente enviou planilha, arquivo, dados de posição ou fez pergunta — Finaud ainda não processou nem respondeu
+
+**R3:** "por gentileza, poderia retornar com essa informação?", "poderia encaminhar o arquivo?", "precisamos do dado X para continuar"
+
+**R4:** "estou analisando", "vou verificar", "nossa equipe está verificando", "retornaremos em breve"
+
+**R5:** encaminhamento interno para colega da Finaud — ex.: "Márcio, por favor encaminhar o indicador ao cliente"
+
+⚠️ **Filtro obrigatório antes de classificar:** e-mails de spam (Facebook, sistemas automáticos, notificações 3cx) e notificações internas do Risk Driver não entram na triagem SUPORTE — filtrar antes de classificar.
 
 ---
 
@@ -905,6 +1111,28 @@ Esta seção alimenta diretamente o prompt da IA. Para cada categoria, a IA rece
 
 > ⚠️ **Nota de amostra:** o histórico disponível (sistema de teste) tem apenas 6 threads RETORNO_BACEN. Os padrões documentados são reais, mas a variedade de códigos de crítica crescerá à medida que o histórico de produção for integrado.
 
+**Regras de classificação — Aguardando ou Concluído:**
+
+Validado em 303 threads reais (29/07/2026). Cobertura: 100%. R5 se aplica (4 casos F→F).
+
+| Regra | Situação | Status | Responsável |
+|---|---|---|---|
+| R1 | Finaud entregou arquivo corrigido ou orientação conclusiva — OU cliente confirmou BACEN aceitou — OU agradecimento puro após resolução | Concluído | — |
+| R2 | Cliente encaminhou comunicado do BACEN (rejeição, indício, crítica) e Finaud ainda não respondeu | Aguardando | Finaud |
+| R3 | Finaud aguarda insumo do cliente (arquivo, dado, planilha necessária para corrigir) | Aguardando | Cliente |
+| R4 | Finaud está analisando o problema — respondeu mas sem entregar ainda ("estou verificando", "retornaremos em breve") | Aguardando | Finaud |
+| R5 | Última mensagem foi encaminhamento interno da Finaud (F→F) sem resposta ao cliente | Aguardando | Finaud |
+
+**R1:** "Segue em anexo arquivo corrigido", "foi corrigido", "Providenciamos o recálculo", "arquivo aceito pelo BACEN"; cliente: "O BACEN aceitou", "foi aceito", "STA aceitou", "arquivos submetidos ao BACEN hoje"; agradecimento puro do cliente
+
+**R2:** cliente encaminhou o XML de rejeição CRD, o comunicado de indício de qualidade ou aviso de atraso — Finaud ainda não respondeu
+
+**R3:** "Por gentileza envie o arquivo [CADOC] do período X", "Precisamos da planilha original para verificar", "Aguardamos o COS4010 para regenerar"
+
+**R4:** "Estou analisando...", "Vou verificar...", "Nossa equipe está verificando...", "Retornaremos em breve", "Realizando os ajustes". ⚠️ Mesmo que a mensagem tenha tom positivo, se termina com "retornaremos" ou "estou verificando" → R4, não R1
+
+⚠️ **Exclusivo do RETORNO_BACEN:** cliente confirmar que o BACEN aceitou (C→F) = R1 (Concluído). Nos outros CADOCs, C→F de confirmação só é R1 se for agradecimento. Aqui, confirmação de aceite do BACEN também encerra a thread.
+
 ---
 
 ### FORCAPITAL — Ferramenta de projeção de capital
@@ -933,6 +1161,28 @@ Esta seção alimenta diretamente o prompt da IA. Para cada categoria, a IA rece
 
 **Prazo:** D+5 úteis após a data do e-mail
 
+**Regras de classificação — Aguardando ou Concluído:**
+
+Validado em 30 threads reais (29/07/2026). Cobertura: 100%. Mesmas regras que SUPORTE — R5 se aplica (F→F interno de parecer).
+
+| Regra | Situação | Status | Responsável |
+|---|---|---|---|
+| R1 | Finaud entregou a projeção, credenciais de acesso ou respondeu conclusivamente — OU agradecimento puro | Concluído | — |
+| R2 | Cliente pediu projeção, acesso ou enviou dado — Finaud ainda não processou | Aguardando | Finaud |
+| R3 | Finaud aguarda dados do cliente para montar a projeção | Aguardando | Cliente |
+| R4 | Finaud está verificando requisitos ou analisando — sem entrega ainda | Aguardando | Finaud |
+| R5 | Encaminhamento interno F→F — ex.: Finaud pedindo parecer interno sobre a projeção | Aguardando | Finaud |
+
+**R1:** "Encaminhamos projeção de capital para DEZ/25 a DEZ/28", "Acesso ForCapital + credenciais enviados"; agradecimento puro do cliente. ⚠️ Finaud pode enviar projeção atualizada sem o cliente pedir — ainda é R1 (Concluído).
+
+**R2:** "poderia nos enviar a projeção de capital para 36 meses?", "preciso de acesso ao ForCapital" — cliente pediu, Finaud ainda não entregou
+
+**R3:** "precisamos dos dados de capital do período X para montar a projeção", "poderia enviar o balanço para calcularmos?"
+
+**R4:** "estou verificando os requisitos", "vou preparar a projeção", "retornaremos em breve"
+
+**R5:** "poderiam me dar um parecer sobre o apontamento?" — encaminhamento interno
+
 ---
 
 ### DRSAC 2030 — Demonstrativo de Responsabilidade em Soluções de Aplicações em Crédito
@@ -959,6 +1209,28 @@ Esta seção alimenta diretamente o prompt da IA. Para cada categoria, a IA rece
 
 **Cuidado:** um e-mail com "DRSAC rejeitado" + prazo urgente → é **RETORNO_BACEN**, não DRSAC.
 
+**Regras de classificação — Aguardando ou Concluído:**
+
+Validado em 2 threads reais (29/07/2026). Cobertura: 100%. Mesmas regras que SUPORTE — R5 se aplica.
+
+| Regra | Situação | Status | Responsável |
+|---|---|---|---|
+| R1 | Finaud orientou, esclareceu ou entregou análise/correção conclusiva — OU agradecimento puro | Concluído | — |
+| R2 | Cliente enviou o arquivo DRSAC para análise ou correção — Finaud ainda não processou | Aguardando | Finaud |
+| R3 | Finaud aguarda dado, informação ou confirmação do cliente | Aguardando | Cliente |
+| R4 | Finaud está analisando — respondeu mas sem conclusão ainda | Aguardando | Finaud |
+| R5 | Encaminhamento interno F→F sem resposta ao cliente | Aguardando | Finaud |
+
+**R1:** "O BACEN não exige o DRSAC para sua instituição", "segue a análise corrigida", "orientação concluída"; agradecimento puro do cliente
+
+**R2:** cliente enviou o arquivo DRSAC para Finaud verificar e corrigir. ⚠️ Se o cliente encaminhou comunicado de **rejeição do BACEN** → é **RETORNO_BACEN**, não DRSAC.
+
+**R3:** "precisamos saber o período de referência", "poderia confirmar o CNPJ da instituição?"
+
+**R4:** "estou verificando a obrigatoriedade", "vou analisar o arquivo", "retornaremos em breve"
+
+**R5:** dúvida do cliente repassada internamente para colega da Finaud
+
 ---
 
 ### PVCA 6209 — Elaboração e Remessa de Informações Relativas a Pagamentos de Varejo e a Canais de Atendimento
@@ -982,6 +1254,22 @@ Esta seção alimenta diretamente o prompt da IA. Para cada categoria, a IA rece
 **Data de referência:** usa a data do trimestre se mencionada no e-mail; caso contrário usa a data do e-mail para inferir o trimestre.
 
 **Cuidado:** volume histórico muito baixo (1 thread documentada). Tratar como SUPORTE se não houver sinal claro de 6209.
+
+**Regras de classificação — Aguardando ou Concluído:**
+
+Volume histórico irrelevante (1 thread documentada, 29/07/2026). Mesmas regras que SUPORTE e DRSAC — R5 se aplica.
+
+| Regra | Situação | Status | Responsável |
+|---|---|---|---|
+| R1 | Finaud orientou, esclareceu ou entregou análise/correção conclusiva — OU agradecimento puro | Concluído | — |
+| R2 | Cliente enviou o arquivo PVCA para análise ou correção — Finaud ainda não processou | Aguardando | Finaud |
+| R3 | Finaud aguarda dado, informação ou confirmação do cliente | Aguardando | Cliente |
+| R4 | Finaud está analisando — respondeu mas sem conclusão ainda | Aguardando | Finaud |
+| R5 | Encaminhamento interno F→F sem resposta ao cliente | Aguardando | Finaud |
+
+**R2:** cliente enviou o arquivo PVCA para Finaud verificar e corrigir. ⚠️ Se o cliente encaminhou comunicado de **rejeição do BACEN** → é **RETORNO_BACEN**, não PVCA.
+
+⚠️ **Volume baixo:** se o sinal de "6209" não estiver claro no assunto ou corpo, tratar como SUPORTE até confirmar.
 
 ---
 

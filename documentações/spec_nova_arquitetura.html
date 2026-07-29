@@ -514,6 +514,21 @@
           </tbody>
         </table>
       </div>
+
+      <h3 style="margin-top:20px;">11.5 — Regra universal: frases de cortesia após entrega = Concluído</h3>
+      <p style="font-size:13px;">Confirmado por Michel (29/07/2026). Aplica a todas as 12 categorias.</p>
+      <p style="font-size:13px;">Se o arquivo foi entregue e a mensagem seguinte — de qualquer colaborador da Finaud ou do cliente — contém apenas frase de cortesia, agradecimento ou assinatura padrão sem novo pedido, a thread é <strong>Concluída</strong>.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Frase</th><th>Interpretação correta</th></tr></thead>
+          <tbody>
+            <tr><td>"Desde já agradeço e permaneço à disposição" (assinatura do colaborador Finaud)</td><td>Encerramento cortês após entrega — <strong>não é pedido</strong></td></tr>
+            <tr><td>"Obrigada", "Obrigado", "Valeu", "Perfeito", "Ok", "Recebido" do cliente</td><td>Confirmação de recebimento — <strong>não reabre o caso</strong></td></tr>
+            <tr><td>Qualquer frase de fechamento padrão sem pedido explícito</td><td>A cortesia não cria pendência</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-warn" style="font-size:12px; margin-top:8px;">⚠️ O caso só reabre se houver pedido, dado novo, problema ou reclamação explícita na mensagem.</div>
     </section>
 
     <section id="s12">
@@ -621,6 +636,269 @@
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <h3 style="margin-top:24px;">DDR_2011 — Regras de classificação (Aguardando ou Concluído)</h3>
+      <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">Validado em 1.349 threads reais do histórico (29/07/2026). Spec completo: <code>ESPECIFICACAO_NOVA_ARQUITETURA.md §14</code>.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Regra</th><th>Situação</th><th>Status</th><th>Responsável</th></tr></thead>
+          <tbody>
+            <tr><td><strong>R1</strong></td><td>Finaud enviou o DDR em anexo, confirmou envio ao BACEN, resolveu ação interna — OU cliente respondeu só com agradecimento sem novo pedido</td><td>Concluído</td><td>—</td></tr>
+            <tr><td><strong>R2</strong></td><td>Cliente enviou dados, retificação, fez pergunta ou trouxe nova demanda — e Finaud ainda não respondeu</td><td>Aguardando</td><td>Finaud</td></tr>
+            <tr><td><strong>R3</strong></td><td>Finaud fez pedido ao cliente ou cobra dado/confirmação e aguarda resposta</td><td>Aguardando</td><td>Cliente</td></tr>
+            <tr><td><strong>R4</strong></td><td>Finaud acusou recebimento mas ainda não processou nada</td><td>Aguardando</td><td>Finaud</td></tr>
+            <tr><td><strong>R5</strong></td><td>Última mensagem foi interna da Finaud (de um colaborador para outro) sem resposta ao cliente</td><td>Aguardando</td><td>Finaud</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-warn" style="margin-top:8px; font-size:12px;">
+        <strong>R1:</strong> "Segue em anexo o DDR", "Enviados ao BACEN", "O cadastro está disponível", "Já foi resolvido"; anexo <code>CNPJ_2011_*.zip</code> pela Finaud; agradecimento puro do cliente sem novo pedido.<br>
+        <strong>R2:</strong> cliente enviou extratos (<code>RD_*.csv/.xlsx</code>), versão retificada, pergunta ou nova demanda.<br>
+        <strong>R3:</strong> "Por gentileza enviar", "Poderia confirmar", "Ainda não recebi". ⚠️ Finaud entregou E fez pedido → R3 (pedido prevalece). ⚠️ Cliente agradeceu sem entregar o pedido → ainda é R3.<br>
+        <strong>Armadilha:</strong> DDR Concluído nem sempre tem arquivo — confirmação de ação interna ("O cadastro está disponível") também é R1.
+      </div>
+
+      <h3 style="margin-top:24px;">SCD_4111 — Regras de classificação (Aguardando ou Concluído)</h3>
+      <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">Mesmas regras R1–R5 do DDR_2011 — validado em 376 threads reais (29/07/2026). Sinais específicos do 4111:</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Regra</th><th>Situação</th><th>Status</th><th>Responsável</th></tr></thead>
+          <tbody>
+            <tr><td><strong>R1</strong></td><td>Finaud entregou o arquivo 4111 ao cliente — OU cliente respondeu com agradecimento sem novo pedido</td><td>Concluído</td><td>—</td></tr>
+            <tr><td><strong>R2</strong></td><td>Cliente enviou dados, retificação, fez pergunta ou trouxe nova demanda — e Finaud ainda não respondeu</td><td>Aguardando</td><td>Finaud</td></tr>
+            <tr><td><strong>R3</strong></td><td>Finaud fez pedido ao cliente ou cobra dado/confirmação e aguarda resposta</td><td>Aguardando</td><td>Cliente</td></tr>
+            <tr><td><strong>R4</strong></td><td>Finaud acusou recebimento mas ainda não gerou nem entregou o arquivo</td><td>Aguardando</td><td>Finaud</td></tr>
+            <tr><td><strong>R5</strong></td><td>Última mensagem foi interna da Finaud sem resposta ao cliente</td><td>Aguardando</td><td>Finaud</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-warn" style="margin-top:8px; font-size:12px;">
+        <strong>R1:</strong> "segue arquivo Cadoc 4111", "seguem arquivos Cadoc's 4111", "segue anexo relatório 4111", "para envio ao BC"; anexo <code>CNPJ_4111_*.zip</code>; agradecimento puro do cliente.<br>
+        <strong>R2:</strong> "Segue em anexo arquivos com informações para envio do CADOC 4111"; Excel de saldos ou posições.<br>
+        <strong>R3:</strong> "Por gentileza enviar o anexo", "peço a gentileza de quando tiver a disponibilidade das informações", "encaminhar as posições do 4111".<br>
+        <strong>R4:</strong> "Ok, obrigada pelo envio", "Obrigada. Administração", "Estamos verificando com a área técnica... Retornaremos em breve".
+      </div>
+
+      <h3 style="margin-top:24px;">DRM_2060 — Regras de classificação (Aguardando ou Concluído)</h3>
+      <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">Validado em 90 threads reais — 57 F→C + 33 C→F = 100% coberto (29/07/2026).</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Regra</th><th>Situação</th><th>Status</th><th>Responsável</th></tr></thead>
+          <tbody>
+            <tr><td><strong>R1</strong></td><td>Finaud entregou o DRM ao cliente ou transmissão ao BACEN confirmada — OU cliente agradeceu sem novo pedido</td><td>Concluído</td><td>—</td></tr>
+            <tr><td><strong>R2</strong></td><td>Cliente enviou dados mensais, prévia ou retificação — e Finaud ainda não processou</td><td>Aguardando</td><td>Finaud</td></tr>
+            <tr><td><strong>R3</strong></td><td>Finaud aguarda extratos, saldos ou arquivo que o cliente ainda não enviou</td><td>Aguardando</td><td>Cliente</td></tr>
+            <tr><td><strong>R4</strong></td><td>Finaud enviou análise técnica, explicação ou pergunta sem entregar arquivo — aguarda retorno do cliente</td><td>Aguardando</td><td>Finaud</td></tr>
+            <tr><td><strong>R5</strong></td><td>Não se aplica — nenhum F→F identificado no DRM_2060</td><td>—</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-warn" style="margin-top:8px; font-size:12px;">
+        <strong>R1:</strong> "segue anexo a remessa DRM (2060)", "segue o DRM (2060)", "DRM_2060 para transmissão ao BACEN", "transmitido ao BACEN"; agradecimento puro do cliente.<br>
+        <strong>R2:</strong> dados mensais, "prévia" para validação, retificação. Convite de reunião (Teams/calendário) → também R2.<br>
+        <strong>R3:</strong> "encaminhar os extratos", "aguardo o balancete", Finaud pediu dado que não chegou.<br>
+        <strong>R4:</strong> Finaud respondeu pergunta técnica; agendou reunião; esclareceu erro — aguarda retorno.<br>
+        <strong>Sub-padrão:</strong> cliente transmite ao BACEN por conta própria e avisa via C→F → R1 (informacional, sem ação da Finaud).
+      </div>
+
+      <h3 style="margin-top:24px;">DLO_2061 — Regras de classificação (Aguardando ou Concluído)</h3>
+      <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">Validado em 482 threads reais — 100% coberto (29/07/2026). Mesmas regras R1–R4. R5 não se aplica.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Regra</th><th>Situação</th><th>Status</th><th>Responsável</th></tr></thead>
+          <tbody>
+            <tr><td><strong>R1</strong></td><td>Finaud entregou o DLO ao cliente ou transmissão ao BACEN confirmada — OU cliente agradeceu sem novo pedido</td><td>Concluído</td><td>—</td></tr>
+            <tr><td><strong>R2</strong></td><td>Cliente enviou COSIF, planilha LEC ou ambos — e Finaud ainda não processou</td><td>Aguardando</td><td>Finaud</td></tr>
+            <tr><td><strong>R3</strong></td><td>Finaud aguarda COSIF, planilha LEC ou dados adicionais do cliente</td><td>Aguardando</td><td>Cliente</td></tr>
+            <tr><td><strong>R4</strong></td><td>Finaud acusou recebimento, prometeu retorno ou está processando internamente — ainda não entregou o arquivo</td><td>Aguardando</td><td>Finaud</td></tr>
+            <tr><td><strong>R5</strong></td><td>Não se aplica — nenhum F→F identificado no DLO_2061</td><td>—</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-warn" style="margin-top:8px; font-size:12px;">
+        <strong>R1:</strong> "Seguem anexos para envio ao BC: DLO2061", "foram aceitos no STA", "segue o protocolo"; agradecimento puro; cliente avisando transmissão ao BACEN.<br>
+        <strong>R2:</strong> cliente enviou COSIF (<code>COS4010.xml</code>, <code>COS4016.xml</code>) e/ou planilha LEC. ⚠️ Pode ter enviado só um dos dois — status AG/Finaud é correto em qualquer caso.<br>
+        <strong>R3:</strong> "Por gentileza encaminhar o COS4010 e a planilha LEC", "Solicitamos encaminhar o COSIF", "fico aguardando".<br>
+        <strong>R4:</strong> "Obrigada pelas informações", "Ok, estarei providenciando", "estamos providenciando", atualização de progresso interno, promessa de entrega futura.
+      </div>
+
+      <h3 style="margin-top:24px;">DLI_2062 — Regras de classificação (Aguardando ou Concluído)</h3>
+      <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">Validado em 56 threads reais — 100% coberto (29/07/2026). R5 se aplica (3 casos F→F identificados).</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Regra</th><th>Situação</th><th>Status</th><th>Responsável</th></tr></thead>
+          <tbody>
+            <tr><td><strong>R1</strong></td><td>Finaud entregou o DLI, transmitiu ao BACEN ou concluiu orientação — OU cliente agradeceu sem novo pedido</td><td>Concluído</td><td>—</td></tr>
+            <tr><td><strong>R2</strong></td><td>Cliente enviou COSIF, arquivo corrigido ou avisou rejeição do BACEN — e Finaud ainda não processou</td><td>Aguardando</td><td>Finaud</td></tr>
+            <tr><td><strong>R3</strong></td><td>Finaud aguarda COSIF ou informação complementar do cliente</td><td>Aguardando</td><td>Cliente</td></tr>
+            <tr><td><strong>R4</strong></td><td>Finaud acusou recebimento ou equipe técnica está processando internamente — ainda não entregou</td><td>Aguardando</td><td>Finaud</td></tr>
+            <tr><td><strong>R5</strong></td><td>Última mensagem foi interna da Finaud (encaminhamento para colega) sem resposta ao cliente</td><td>Aguardando</td><td>Finaud</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-warn" style="margin-top:8px; font-size:12px;">
+        <strong>R1:</strong> "segue anexo a remessa DLI (2062)", "seguem anexos DLIs 2062", "para envio ao BC", protocolos aceitos pelo BACEN; agradecimento puro; cliente confirmou envio ao STA.<br>
+        <strong>R2:</strong> cliente enviou COSIF (XML); avisou "deu rejeitado"; enviou arquivo corrigido.<br>
+        <strong>R3:</strong> "por gentileza enviar os arquivos COS4010.xml", "poderia nos repassar a mensagem da crítica?"<br>
+        <strong>R4:</strong> "Ok, ciente", "a equipe técnica está providenciando, retornaremos em breve", "cronograma conforme planejado".<br>
+        <strong>R5:</strong> instrução normativa repassada internamente; dúvida urgente do cliente encaminhada para colega.<br>
+        <strong>⚠️ S5:</strong> clientes S5 → DLI calculado pelo BACEN, não pela Finaud. Threads desse tipo são consultivas.
+      </div>
+
+      <h3 style="margin-top:24px;">DRL_2160 — Regras de classificação (Aguardando ou Concluído)</h3>
+      <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">Validado em 143 threads reais — 100% coberto (29/07/2026). R5 se aplica (2 casos F→F identificados).</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Regra</th><th>Situação</th><th>Status</th><th>Responsável</th></tr></thead>
+          <tbody>
+            <tr><td><strong>R1</strong></td><td>Finaud entregou o DRL ao cliente, cliente confirmou transmissão ao BACEN — OU agradecimento/confirmação sem novo pedido</td><td>Concluído</td><td>—</td></tr>
+            <tr><td><strong>R2</strong></td><td>Cliente enviou a planilha DRL (.xlsx) e Finaud ainda não processou — OU cliente fez pergunta que Finaud precisa responder</td><td>Aguardando</td><td>Finaud</td></tr>
+            <tr><td><strong>R3</strong></td><td>Finaud aguarda a planilha DRL do cliente — ou solicitou balancete analítico (PDF) complementar</td><td>Aguardando</td><td>Cliente</td></tr>
+            <tr><td><strong>R4</strong></td><td>Finaud acusou recebimento com mensagem curta ("Ok, ciente", "Obrigada pela informação") sem entregar o CADOC</td><td>Aguardando</td><td>Finaud</td></tr>
+            <tr><td><strong>R5</strong></td><td>Última mensagem foi encaminhamento interno da Finaud (F→F) sem resposta ao cliente</td><td>Aguardando</td><td>Finaud</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-warn" style="margin-top:8px; font-size:12px;">
+        <strong>R1:</strong> "Segue anexo DRL2160 para envio ao Banco Central", "segue o DRL (2160)", "DRL para transmissão ao BACEN", "Arquivo submetido ao BACEN na data de hoje", "Somente para que fiquem cientes, foi enviado"; agradecimento puro do cliente ou da Finaud após entrega.<br>
+        <strong>R2:</strong> cliente enviou planilha DRL (.xlsx) — Finaud ainda não processou; cliente fez pergunta (C→F) — bola na Finaud para responder.<br>
+        <strong>R3:</strong> "por gentileza enviar a planilha DRL", "fico aguardando a planilha", "poderia encaminhar o balancete analítico?"<br>
+        <strong>R4:</strong> "Ok, ciente", "Obrigada pela informação", "Recebido" — acuse curto sem entrega. ⚠️ R4 é estreito: só acuses curtos. Promessa de entrega futura → R2.<br>
+        <strong>R5:</strong> relatório ou dúvida repassada internamente à equipe Finaud sem resposta ao cliente ainda.<br>
+        <strong>⚠️ Atenção:</strong> quando a última mensagem é pergunta do cliente (C→F), status é R2 (Finaud responde), não R3. R3 só se aplica quando Finaud falou por último pedindo algo (F→C).
+      </div>
+
+      <h3 style="margin-top:24px;">S5 — Regras de classificação (Aguardando ou Concluído)</h3>
+      <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">Validado em 47 threads reais — 100% coberto (29/07/2026). R5 se aplica (5 casos F→F identificados).</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Regra</th><th>Situação</th><th>Status</th><th>Responsável</th></tr></thead>
+          <tbody>
+            <tr><td><strong>R1</strong></td><td>Finaud entregou o Resultado Quantitativo S5, concluiu estudo de migração ou enviou acesso ao Risk Driver — OU cliente agradeceu sem novo pedido</td><td>Concluído</td><td>—</td></tr>
+            <tr><td><strong>R2</strong></td><td>Cliente enviou COSIF — Finaud ainda não processou</td><td>Aguardando</td><td>Finaud</td></tr>
+            <tr><td><strong>R3</strong></td><td>Finaud aguarda COSIF do cliente — OU aguarda resposta do cliente em consulta de migração ou dúvida técnica</td><td>Aguardando</td><td>Cliente</td></tr>
+            <tr><td><strong>R4</strong></td><td>Finaud acusou recebimento do COSIF com mensagem curta — ainda não entregou o relatório</td><td>Aguardando</td><td>Finaud</td></tr>
+            <tr><td><strong>R5</strong></td><td>Última mensagem foi encaminhamento interno da Finaud (F→F) sem resposta ao cliente</td><td>Aguardando</td><td>Finaud</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-warn" style="margin-top:8px; font-size:12px;">
+        <strong>R1:</strong> "Segue o Resultado Quantitativo S5", "segue o Demonstrativo S5", "segue a apuração dos requerimentos mínimos S5"; estudo de migração concluído; senha/acesso enviados; agradecimento puro do cliente.<br>
+        <strong>R2:</strong> cliente enviou COS4010.xml / COS4016.xml — Finaud ainda não processou nem entregou.<br>
+        <strong>R3:</strong> "Solicitamos por gentileza encaminhar o COS4010", "aguardamos retorno sobre o estudo"; cliente não respondeu consulta da Finaud.<br>
+        <strong>R4:</strong> "Ok, recebido, já vou processar", "Obrigada, vou gerar o relatório" — acuse curto sem entrega ainda.<br>
+        <strong>R5:</strong> encaminhamento interno — ex.: "Andrea, importar o COS4010 da Açoriana para o estudo".<br>
+        <strong>⚠️ Diferença chave:</strong> o relatório S5 fica entre Finaud e cliente — não vai ao BACEN. A thread conclui quando Finaud entrega ao cliente.
+      </div>
+
+      <h3 style="margin-top:24px;">SUPORTE — Regras de classificação (Aguardando ou Concluído)</h3>
+      <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">Validado em 196 threads reais — 100% coberto (29/07/2026). R5 se aplica.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Regra</th><th>Situação</th><th>Status</th><th>Responsável</th></tr></thead>
+          <tbody>
+            <tr><td><strong>R1</strong></td><td>Finaud resolveu a demanda ("usuário criado", "senha enviada", "problema resolvido") — OU agradecimento puro do cliente após resolução</td><td>Concluído</td><td>—</td></tr>
+            <tr><td><strong>R2</strong></td><td>Cliente enviou dado, arquivo ou pergunta — Finaud ainda não respondeu</td><td>Aguardando</td><td>Finaud</td></tr>
+            <tr><td><strong>R3</strong></td><td>Finaud aguarda insumo, dado ou confirmação do cliente</td><td>Aguardando</td><td>Cliente</td></tr>
+            <tr><td><strong>R4</strong></td><td>Finaud está analisando — respondeu mas sem resolução ainda ("estou verificando", "retornaremos")</td><td>Aguardando</td><td>Finaud</td></tr>
+            <tr><td><strong>R5</strong></td><td>Última mensagem foi encaminhamento interno da Finaud (F→F) sem resposta ao cliente</td><td>Aguardando</td><td>Finaud</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-warn" style="margin-top:8px; font-size:12px;">
+        <strong>R1:</strong> "O usuário já foi criado", "password foi enviada", "problema resolvido", "já configuramos"; agradecimento puro do cliente. ⚠️ Finaud resolver = R1 imediato — não precisa aguardar confirmação do cliente.<br>
+        <strong>R2:</strong> cliente enviou planilha, arquivo, dados ou fez pergunta — Finaud ainda não processou nem respondeu.<br>
+        <strong>R3:</strong> "por gentileza, poderia retornar com essa informação?", "poderia encaminhar o arquivo?", "precisamos do dado X".<br>
+        <strong>R4:</strong> "estou analisando", "vou verificar", "retornaremos em breve" — respondeu mas sem resolução.<br>
+        <strong>R5:</strong> encaminhamento interno — ex.: "Márcio, por favor encaminhar o indicador ao cliente".<br>
+        <strong>⚠️ Filtro:</strong> spam (Facebook, sistemas automáticos, 3cx) e notificações internas do Risk Driver não entram na triagem — filtrar antes de classificar.
+      </div>
+
+      <h3 style="margin-top:24px;">FORCAPITAL — Regras de classificação (Aguardando ou Concluído)</h3>
+      <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">Validado em 30 threads reais — 100% coberto (29/07/2026). Mesmas regras que SUPORTE — R5 se aplica.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Regra</th><th>Situação</th><th>Status</th><th>Responsável</th></tr></thead>
+          <tbody>
+            <tr><td><strong>R1</strong></td><td>Finaud entregou a projeção, credenciais de acesso ou respondeu conclusivamente — OU agradecimento puro</td><td>Concluído</td><td>—</td></tr>
+            <tr><td><strong>R2</strong></td><td>Cliente pediu projeção, acesso ou enviou dado — Finaud ainda não processou</td><td>Aguardando</td><td>Finaud</td></tr>
+            <tr><td><strong>R3</strong></td><td>Finaud aguarda dados do cliente para montar a projeção</td><td>Aguardando</td><td>Cliente</td></tr>
+            <tr><td><strong>R4</strong></td><td>Finaud está verificando requisitos ou analisando — sem entrega ainda</td><td>Aguardando</td><td>Finaud</td></tr>
+            <tr><td><strong>R5</strong></td><td>Encaminhamento interno F→F — ex.: Finaud pedindo parecer interno sobre a projeção</td><td>Aguardando</td><td>Finaud</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-warn" style="margin-top:8px; font-size:12px;">
+        <strong>R1:</strong> "Encaminhamos projeção de capital para DEZ/25 a DEZ/28", "Acesso ForCapital + credenciais enviados"; agradecimento puro. ⚠️ Finaud pode enviar projeção atualizada sem o cliente pedir — ainda é R1.<br>
+        <strong>R2:</strong> "poderia nos enviar a projeção de capital para 36 meses?", "preciso de acesso ao ForCapital" — cliente pediu, Finaud ainda não entregou.<br>
+        <strong>R3:</strong> "precisamos dos dados de capital do período X", "poderia enviar o balanço para calcularmos?"<br>
+        <strong>R4:</strong> "estou verificando os requisitos", "vou preparar a projeção", "retornaremos em breve".<br>
+        <strong>R5:</strong> "poderiam me dar um parecer sobre o apontamento?" — encaminhamento interno para colega.
+      </div>
+
+      <h3 style="margin-top:24px;">RETORNO_BACEN — Regras de classificação (Aguardando ou Concluído)</h3>
+      <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">Validado em 303 threads reais — 100% coberto (29/07/2026). R5 se aplica (4 casos F→F).</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Regra</th><th>Situação</th><th>Status</th><th>Responsável</th></tr></thead>
+          <tbody>
+            <tr><td><strong>R1</strong></td><td>Finaud entregou arquivo corrigido ou orientação conclusiva — OU cliente confirmou BACEN aceitou — OU agradecimento puro após resolução</td><td>Concluído</td><td>—</td></tr>
+            <tr><td><strong>R2</strong></td><td>Cliente encaminhou comunicado do BACEN (rejeição, indício, crítica) e Finaud ainda não respondeu</td><td>Aguardando</td><td>Finaud</td></tr>
+            <tr><td><strong>R3</strong></td><td>Finaud aguarda insumo do cliente (arquivo ou dado necessário para corrigir)</td><td>Aguardando</td><td>Cliente</td></tr>
+            <tr><td><strong>R4</strong></td><td>Finaud está analisando — respondeu mas sem entregar ainda ("estou verificando", "retornaremos em breve")</td><td>Aguardando</td><td>Finaud</td></tr>
+            <tr><td><strong>R5</strong></td><td>Última mensagem foi encaminhamento interno da Finaud (F→F) sem resposta ao cliente</td><td>Aguardando</td><td>Finaud</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-warn" style="margin-top:8px; font-size:12px;">
+        <strong>R1:</strong> "Segue em anexo arquivo corrigido", "foi corrigido", "Providenciamos o recálculo"; cliente: "O BACEN aceitou", "foi aceito", "STA aceitou", "arquivos submetidos ao BACEN hoje"; agradecimento puro.<br>
+        <strong>R2:</strong> cliente encaminhou XML de rejeição CRD, comunicado de indício de qualidade ou aviso de atraso — Finaud ainda não respondeu.<br>
+        <strong>R3:</strong> "Por gentileza envie o arquivo do período X", "Precisamos da planilha original para verificar", "Aguardamos o COS4010 para regenerar".<br>
+        <strong>R4:</strong> "Estou analisando...", "Retornaremos em breve", "Realizando os ajustes". ⚠️ Mesmo tom positivo com "retornaremos" = R4, não R1. Só arquivo entregue conclui.<br>
+        <strong>R5:</strong> encaminhamento interno para colega sem resposta ao cliente.<br>
+        <strong>⚠️ Exclusivo RETORNO_BACEN:</strong> cliente confirmar que BACEN aceitou (C→F) = R1 (Concluído). Nos outros CADOCs, C→F só encerra se for agradecimento. Aqui, confirmação de aceite do BACEN também encerra.
+      </div>
+
+      <h3 style="margin-top:24px;">DRSAC_2030 — Regras de classificação (Aguardando ou Concluído)</h3>
+      <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">Validado em 2 threads reais — 100% coberto (29/07/2026). Mesmas regras que SUPORTE — R5 se aplica.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Regra</th><th>Situação</th><th>Status</th><th>Responsável</th></tr></thead>
+          <tbody>
+            <tr><td><strong>R1</strong></td><td>Finaud orientou, esclareceu ou entregou análise/correção conclusiva — OU agradecimento puro</td><td>Concluído</td><td>—</td></tr>
+            <tr><td><strong>R2</strong></td><td>Cliente enviou o arquivo DRSAC para análise ou correção — Finaud ainda não processou</td><td>Aguardando</td><td>Finaud</td></tr>
+            <tr><td><strong>R3</strong></td><td>Finaud aguarda dado, informação ou confirmação do cliente</td><td>Aguardando</td><td>Cliente</td></tr>
+            <tr><td><strong>R4</strong></td><td>Finaud está analisando — respondeu mas sem conclusão ainda</td><td>Aguardando</td><td>Finaud</td></tr>
+            <tr><td><strong>R5</strong></td><td>Encaminhamento interno F→F sem resposta ao cliente</td><td>Aguardando</td><td>Finaud</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-warn" style="margin-top:8px; font-size:12px;">
+        <strong>R1:</strong> "O BACEN não exige o DRSAC para sua instituição", "segue a análise corrigida"; agradecimento puro.<br>
+        <strong>R2:</strong> cliente enviou arquivo DRSAC para verificar/corrigir. ⚠️ Se encaminhou comunicado de rejeição do BACEN → é <strong>RETORNO_BACEN</strong>, não DRSAC.<br>
+        <strong>R3:</strong> "precisamos confirmar o período de referência", "poderia confirmar o CNPJ?"<br>
+        <strong>R4:</strong> "estou verificando a obrigatoriedade", "vou analisar o arquivo", "retornaremos em breve".<br>
+        <strong>R5:</strong> dúvida repassada internamente para colega da Finaud.
+      </div>
+
+      <h3 style="margin-top:24px;">PVCA_6209 — Regras de classificação (Aguardando ou Concluído)</h3>
+      <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">Volume histórico irrelevante (1 thread, 29/07/2026). Mesmas regras que SUPORTE e DRSAC — R5 se aplica.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Regra</th><th>Situação</th><th>Status</th><th>Responsável</th></tr></thead>
+          <tbody>
+            <tr><td><strong>R1</strong></td><td>Finaud orientou, esclareceu ou entregou análise/correção conclusiva — OU agradecimento puro</td><td>Concluído</td><td>—</td></tr>
+            <tr><td><strong>R2</strong></td><td>Cliente enviou o arquivo PVCA para análise ou correção — Finaud ainda não processou</td><td>Aguardando</td><td>Finaud</td></tr>
+            <tr><td><strong>R3</strong></td><td>Finaud aguarda dado, informação ou confirmação do cliente</td><td>Aguardando</td><td>Cliente</td></tr>
+            <tr><td><strong>R4</strong></td><td>Finaud está analisando — respondeu mas sem conclusão ainda</td><td>Aguardando</td><td>Finaud</td></tr>
+            <tr><td><strong>R5</strong></td><td>Encaminhamento interno F→F sem resposta ao cliente</td><td>Aguardando</td><td>Finaud</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-warn" style="margin-top:8px; font-size:12px;">
+        <strong>R2:</strong> cliente enviou arquivo PVCA para verificar/corrigir. ⚠️ Se encaminhou comunicado de rejeição do BACEN → é <strong>RETORNO_BACEN</strong>, não PVCA.<br>
+        <strong>⚠️ Volume baixo:</strong> se o sinal "6209" não estiver claro no assunto ou corpo, tratar como SUPORTE até confirmar.
       </div>
     </section>
 

@@ -1,4 +1,4 @@
-﻿# SESSAO_ATUAL — Oráculo 360 Finaud
+# SESSAO_ATUAL — Oráculo 360 Finaud
 
 > **BASTÃO ENTRE SESSÕES.** Leia este arquivo antes de tudo — ele traz o estado de agora e o próximo passo.
 > História completa → `documentações/REGISTRO_CORRECOES.md` · Pendências → `documentações/PENDENCIAS.md`
@@ -8,63 +8,59 @@
 
 ---
 
-## 📓 Diário da sessão (2026-07-28) — Especificação consolidada + documentação reorganizada
+## 📓 Diário da sessão (2026-07-29) — Regras de classificação para todas as 12 categorias
 
 ### Resumo do que foi feito
 
-**6. GitHub configurado e primeiro push realizado ✅** *(28/07 — segunda parte da sessão)*
-- Repositório criado por Michel: `github.com/michelruicosta/gestao_area_suporte` (privado)
-- Remote `origin` conectado ao repo local
-- `documentações/indício-qualidade.xlsx` blindado no `.gitignore` (dados sensíveis de clientes)
-- Branch renomeada de `master` para `main` (padrão GitHub)
-- 57 commits do histórico local enviados ao GitHub
-- 98 arquivos novos commitados e enviados (sistema atual + nova arquitetura + testes + infraestrutura CI)
+**Regras de classificação R1–R5 escritas para todas as 12 categorias ✅**
+
+Lemos o histórico validado (`oraculo_360_finaud/documentações/DOCUMENTACAO_TRIAGEM.md`) e
+escrevemos as regras de classificação (Aguardando ou Concluído) para cada categoria de e-mail.
+Para cada uma: varredura de cobertura confirmando 100% dos casos cobertos → aprovação do Michel → gravação.
+
+| Categoria | Threads validadas | Cobertura | R5 |
+|---|---|---|---|
+| DDR_2011 | 1.349 | 100% | ✅ |
+| SCD_4111 | 376 | 100% | ✅ |
+| DRM_2060 | 90 | 100% | N/A |
+| DLO_2061 | 482 | 100% | N/A |
+| DLI_2062 | 56 | 100% | ✅ |
+| DRL_2160 | 143 | 100% | ✅ |
+| S5 | 47 | 100% | ✅ |
+| RETORNO_BACEN | 303 | 100% | ✅ |
+| SUPORTE | 196 | 100% | ✅ |
+| FORCAPITAL | 30 | 100% | ✅ |
+| DRSAC_2030 | 2 | 100% | ✅ |
+| PVCA_6209 | 1 | 100% | ✅ |
+
+**Regras transversais confirmadas hoje:**
+- §11.5 **Regra universal de cortesia** — frase de agradecimento/cortesia após entrega = Concluído, qualquer categoria, qualquer colaborador
+- **DRSAC/PVCA R2** — cliente pode enviar o arquivo para Finaud analisar e corrigir (exceto retorno BACEN → RETORNO_BACEN)
+- **S5 R4** — mesmo significado dos outros CADOCs (acuse curto), não "resposta substantiva" como estava no histórico antigo
+- **Varredura obrigatória** — antes de escrever qualquer categoria, mostrar tabela de cobertura 100%
+
+**Artifact spec publicado como v2.13** — todas as 12 categorias com R1–R5 em:
+- `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` §14
+- `documentações/spec_nova_arquitetura.html` §14
+- URL: `https://claude.ai/code/artifact/4eb2c74e-27d9-41a2-ad7c-6bc5b1d6ab01`
 
 ---
 
-**1. Histórico antigo do SESSAO_ATUAL.md arquivado ✅**
-1.251 linhas de sessões anteriores (sistema antigo, até 17/07) movidas para
-`_archive/sessao_atual_historico/SESSAO_ATUAL_historico_sistema_antigo.md` com CONTEXTO.md.
-Este arquivo ficou com apenas o essencial de 28/07.
-
-**2. ESPECIFICACAO_NOVA_ARQUITETURA.md reescrita como documento único ✅**
-Versão 2.0 (28/07/2026) — §1 a §16 + Apêndice A, com índice numerado.
-Mudanças principais:
-- Terminologia corrigida: "dois fluxos" → "10 categorias", "CADOC" → "categoria regulatória"
-- §3 reescrito: tabela de 10 categorias com seus fluxos
-- §10 Campo 6, 7, 8 marcados como ⚠️ PENDENTE aguardando simulações
-- §14 catálogo completo das 10 categorias com sinais de detecção e fluxos típicos
-- §15 exemplos reais T01–T19 integrados (vindos do catálogo)
-- §16 padrões observados para guiar a IA
-- Apêndice A colaboradores Finaud (incluindo Sarah Sá e Luiz Antonio/FinaudTec)
-
-**3. CATALOGO_TIPOS_EMAIL.md mesclado na spec e arquivado ✅**
-Conteúdo integrado na spec §14, §15 e §16.
-Arquivo movido para `_archive/documentacao_sistema_antigo/CATALOGO_TIPOS_EMAIL.md`.
-
-**4. PENDENCIAS.md atualizado ✅**
-- Item do catálogo removido (resolvido)
-- Novo bloco 🔴 URGENTE adicionado para Campos 6, 7, 8 da spec
-
-**5. Regra vital salva em memória ✅**
-Limite de 32.000 output tokens: nunca gerar arquivo >600 linhas em uma única resposta.
-Estratégia: Write (Parte 1 com placeholder) + Edit (Parte 2).
-Arquivo de memória: `.claude/projects/.../memory/feedback_limite_output_tokens.md`
-
 ### Estado atual
 
-**Especificação:** completa em §1–§12 e §14–§16 + Apêndice A.
-**Aberto:** §10 Campos 6, 7, 8 — dependem de 3 simulações de threads reais ainda pendentes.
-**Padrão de nomes aprovado:** `ação_domínio.py` (ex.: `coletor_gmail.py`, `classificador_ia.py`)
-**GitHub:** `github.com/michelruicosta/gestao_area_suporte` — conectado em 28/07/2026; branch `main`; 57 commits + 98 arquivos enviados.
+**§14 da spec:** ✅ completo — todas as 12 categorias com regras R1–R5 documentadas e validadas
+**§10 Campos 6, 7, 8:** 🔴 ainda pendentes — dependem de simulações de threads reais
+**GitHub:** `github.com/michelruicosta/gestao_area_suporte` — branch `main`
+
+---
 
 ### Próximos passos
 
-1. 🔴 Concluir 3 simulações de threads (RETORNO_BACEN, DLO/DLI, SUPORTE) → escrever Campos 6, 7, 8
+1. 🔴 Concluir 3 simulações de threads (RETORNO_BACEN, DLO/DLI, SUPORTE) → escrever Campos 6, 7, 8 da spec §10
 2. 🟡 Confirmar T04 (Western Union) com Michel: o papel da Finaud neste fluxo
 3. 🟡 Criar novo MAPA_DO_PROJETO.md para a nova arquitetura
 4. 🟡 Fase 1 da nova arquitetura: protótipo do coletor Gmail + classificador IA
 
-Último /fechar: 2026-07-28 — memórias revisadas ✅
+Último /fechar: 2026-07-29 14:43 — memórias revisadas ✅
 
 ---
