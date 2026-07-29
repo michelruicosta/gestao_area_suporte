@@ -66,22 +66,24 @@ A Gmail API direta entrega todos os campos do e-mail (From, To, CC, Reply-To, Su
 
 ---
 
-## 3. As 10 categorias de e-mail e seus fluxos
+## 3. As 12 categorias de e-mail e seus fluxos
 
-O sistema trata 10 categorias distintas de e-mail. Cada categoria tem suas próprias regras, prazo regulatório e fluxo — o que a IA precisa saber sobre cada uma está no §14 (Catálogo de categorias) e os exemplos reais estão no §15.
+O sistema trata 12 categorias distintas de e-mail. Cada categoria tem suas próprias regras, prazo regulatório e fluxo — o que a IA precisa saber sobre cada uma está no §14 (Catálogo de categorias) e os exemplos reais estão no §15.
 
-| Categoria | O que é | Frequência |
-|---|---|---|
-| DDR 2011 | Documento Diário de Posições — posições financeiras do cliente ao final do dia | Diária |
-| 4111 | Saldos Contábeis Diários — lançamentos nas contas COSIF | Diária |
-| DRM 2060 | Demonstrativo de Risco de Mercado | Mensal |
-| DLO 2061 | Demonstrativo de Limites Operacionais | Mensal |
-| DLI 2062 | Demonstrativo de Limites Operacional Individual | Mensal |
-| DRL 2160 | Demonstrativo de Risco de Liquidez ("Colchão de Liquidez") | Mensal |
-| S5 | Resultado Quantitativo de Risco — Segmento 5 (não vai ao BACEN) | Mensal |
-| RETORNO_BACEN | Críticas e rejeições do BACEN a entregas anteriores | Conforme ocorrência |
-| SUPORTE | Apoio, dúvidas, acesso a sistemas, comunicação geral | Conforme ocorrência |
-| FORCAPITAL | Ferramenta de projeção de capital — serviço da Finaud | Conforme ocorrência |
+| Categoria | O que é | Frequência | Prazo | Quem entrega ao BACEN |
+|---|---|---|---|---|
+| DDR 2011 | Documento Diário de Posições — posições financeiras do cliente ao final do dia | Diária | D+3 úteis | Cliente (após Finaud gerar) |
+| SCD 4111 | Saldo Contábil Diário — lançamentos nas contas COSIF | Diária | D+3 úteis | Cliente (após Finaud gerar) |
+| DRM 2060 | Demonstrativo de Risco de Mercado | Mensal | D+5 úteis do mês seguinte | Cliente (após Finaud gerar) |
+| DLO 2061 | Demonstrativo de Limites Operacionais | Mensal | Dia 5 do 2º mês seguinte | Cliente (após Finaud gerar) |
+| DLI 2062 | Demonstrativo de Limites Operacional Individual | Mensal | Dia 5 do 2º mês seguinte | Cliente ou Finaud diretamente |
+| DRL 2160 | Demonstrativo de Risco de Liquidez ("Colchão de Liquidez") | Mensal | D+10 úteis do mês seguinte | Cliente (após Finaud gerar) |
+| S5 | Resultado Quantitativo de Risco — Segmento 5 | Mensal | D+5 úteis | Não vai ao BACEN |
+| RETORNO_BACEN | Críticas e rejeições do BACEN a entregas anteriores | Conforme ocorrência | Urgente — prazo do BACEN | Não se aplica |
+| SUPORTE | Apoio, dúvidas, acesso a sistemas, comunicação geral | Conforme ocorrência | Conforme urgência | Não se aplica |
+| FORCAPITAL | Ferramenta de projeção de capital — serviço da Finaud | Conforme ocorrência | D+5 úteis | Não vai ao BACEN |
+| DRSAC 2030 | Demonstrativo de Responsabilidade em Soluções de Aplicações em Crédito | Semestral (jun e dez) | 10º DU do 2º mês após a data-base | Cliente (Finaud orienta/responde) |
+| PVCA 6209 | Elaboração e Remessa de Informações Relativas a Pagamentos de Varejo e a Canais de Atendimento | Trimestral | Último DU do mês seguinte ao fim do trimestre | Cliente — via STA |
 
 > **Nota:** um e-mail pode conter mais de uma categoria (ex.: "DDR + DRM + DLI de março"). O sistema rastreia cada entrega separadamente — ver §12 (Modelo de rastreamento, duas camadas).
 
@@ -468,7 +470,7 @@ O caso está com o cliente — ele precisa agir.
 
 ### 11.3 Concluída
 
-O caso foi encerrado. As regras abaixo são as mesmas para todos os tipos de e-mail (DDR, DLO, DLI, DRM, S5, SUPORTE, RETORNO_BACEN, FORCAPITAL, CADOC_6209).
+O caso foi encerrado. As regras abaixo são as mesmas para todos os tipos de e-mail (DDR, SCD, DLO, DLI, DRM, S5, SUPORTE, RETORNO_BACEN, FORCAPITAL, DRSAC, PVCA).
 
 **Quando o último e-mail é da Finaud para o cliente:**
 
@@ -933,9 +935,53 @@ Esta seção alimenta diretamente o prompt da IA. Para cada categoria, a IA rece
 
 ---
 
-### CADOC_6209 — Em mapeamento
+### DRSAC 2030 — Demonstrativo de Responsabilidade em Soluções de Aplicações em Crédito
 
-> ⚠️ **Em mapeamento** — esta categoria aparece nas regras de classificação (§11.3) mas ainda não tem exemplos documentados. Será mapeada em sessão futura após confirmação de Michel sobre quais clientes a utilizam e qual o fluxo típico.
+**O que é:** relatório regulatório semestral sobre operações de crédito. A Finaud orienta e responde dúvidas — **não gera o arquivo** (diferente de DDR, DLO, DRM). O cliente entrega diretamente ao BACEN.
+
+**Frequência e prazo:**
+- Datas-base: posições de fechamento de **junho** e **dezembro**
+- Prazo: até o **10º dia útil do 2º mês subsequente** à data-base
+  - Base junho → prazo: 10º DU de agosto
+  - Base dezembro → prazo: 10º DU de fevereiro
+
+**Sinais de detecção:**
+| Sinal | Exemplo | Confiança |
+|---|---|---|
+| Assunto | "DRSAC", "CADOC 2030", "Demonstrativo 2030" | Alta |
+| Corpo | Cliente pergunta se deve enviar / BACEN envia comunicado sobre DRSAC | Alta |
+| Contexto | Volume muito baixo — apenas 2 threads desde jan/2026 | — |
+
+**Fluxo típico:**
+1. Cliente pergunta se precisa entregar o DRSAC (ou BACEN comunica sobre inconsistência)
+2. Finaud analisa e orienta sobre obrigatoriedade e formato
+3. Cliente entrega diretamente ao BACEN (sem passar arquivo pela Finaud)
+
+**Cuidado:** um e-mail com "DRSAC rejeitado" + prazo urgente → é **RETORNO_BACEN**, não DRSAC.
+
+---
+
+### PVCA 6209 — Elaboração e Remessa de Informações Relativas a Pagamentos de Varejo e a Canais de Atendimento
+
+**O que é:** relatório regulatório trimestral sobre pagamentos de varejo e canais de atendimento. O cliente transmite via STA ao BACEN.
+
+**Frequência e prazo:**
+- Trimestral — datas-base: **31/mar, 30/jun, 30/set, 31/dez**
+- Prazo: **último dia útil do mês seguinte ao fim do trimestre**
+  - Base 31/mar → prazo: último DU de abril
+  - Base 30/jun → prazo: último DU de julho
+  - Base 30/set → prazo: último DU de outubro
+  - Base 31/dez → prazo: último DU de janeiro
+
+**Sinais de detecção:**
+| Sinal | Exemplo | Confiança |
+|---|---|---|
+| Assunto ou corpo | "CADOC 6209", "6209", "pagamentos de varejo" | Alta |
+| Assunto ou corpo | "canais de atendimento" + contexto regulatório | Média |
+
+**Data de referência:** usa a data do trimestre se mencionada no e-mail; caso contrário usa a data do e-mail para inferir o trimestre.
+
+**Cuidado:** volume histórico muito baixo (1 thread documentada). Tratar como SUPORTE se não houver sinal claro de 6209.
 
 ---
 
@@ -946,7 +992,7 @@ O nome do arquivo em anexo é um sinal adicional para a IA. Quando o assunto nã
 | Categoria | Alta confiança — identifica a categoria | Baixa confiança — genérico, não identifica |
 |---|---|---|
 | DDR 2011 | `RD_MOEDA.csv`, `RD_LFT.xlsx`, `RD_PREFIXADA.xlsx` (prefixo `RD_`); `DDR_YYYYMM.xlsx` | — |
-| 4111 | `CADOC 4111.xlsx`, `DOC_4111_YYYYMMDD.xlsx`, `CNPJ_4111_DATA_I_1.zip` | — |
+| SCD 4111 | `CADOC 4111.xlsx`, `DOC_4111_YYYYMMDD.xlsx`, `CNPJ_4111_DATA_I_1.zip` | — |
 | DRM 2060 | `Saldos DRM.xlsx`, `DRM_2060_Finaud_YYYYMM.xlsx`, `CNPJ_2060_DATA.zip` | `SALDOS BANCOS.pdf`, `CAIXA.pdf`, `SELIC.xls` |
 | DLO 2061 | `Cos4010.zip`, `Cos4016.zip` | — |
 | DLI 2062 | `CNPJ_2062_YYYYMM_I_1_4010.zip` | — |

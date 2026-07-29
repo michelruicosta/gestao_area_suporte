@@ -176,7 +176,7 @@
     <div class="sidebar-group">Visão Geral</div>
     <a href="#s1" data-sec="s1">§1 O que é este documento</a>
     <a href="#s2" data-sec="s2">§2 Funcionalidades</a>
-    <a href="#s3" data-sec="s3">§3 As 10 categorias</a>
+    <a href="#s3" data-sec="s3">§3 As 12 categorias</a>
     <a href="#s4" data-sec="s4">§4 O que não entra</a>
     <div class="sidebar-group">Técnico</div>
     <a href="#s5" data-sec="s5">§5 Conta BCC</a>
@@ -229,8 +229,8 @@
     </section>
 
     <section id="s3">
-      <h2><span class="sec-num">§3</span> As 10 categorias de e-mail e seus fluxos</h2>
-      <p>Cada e-mail pertence a uma das 10 categorias abaixo. Cada categoria tem seu próprio fluxo, prazo e critério de conclusão.</p>
+      <h2><span class="sec-num">§3</span> As 12 categorias de e-mail e seus fluxos</h2>
+      <p>Cada e-mail pertence a uma das 12 categorias abaixo. Cada categoria tem seu próprio fluxo, prazo e critério de conclusão.</p>
       <div class="tbl-wrap">
         <table>
           <thead><tr><th>Categoria</th><th>O que é</th><th>Prazo</th><th>Quem entrega ao BACEN</th></tr></thead>
@@ -242,8 +242,8 @@
               <td>Cliente (após Finaud gerar)</td>
             </tr>
             <tr>
-              <td><span class="cat cat-4111">CADOC_4111</span></td>
-              <td>Saldos contábeis diários (COSIF)</td>
+              <td><span class="cat cat-4111">SCD_4111</span></td>
+              <td>Saldo Contábil Diário (COSIF)</td>
               <td>D+3 úteis</td>
               <td>Cliente (após Finaud gerar)</td>
             </tr>
@@ -295,11 +295,20 @@
               <td>D+5 úteis</td>
               <td>Não vai ao BACEN</td>
             </tr>
+            <tr>
+              <td><span class="cat cat-bacen" style="background:var(--surface2);color:var(--text);">DRSAC_2030</span></td>
+              <td>Demonstrativo de Responsabilidade em Soluções de Aplicações em Crédito — semestral (base: jun e dez)</td>
+              <td>10º DU do 2º mês após data-base</td>
+              <td>Cliente — Finaud orienta/responde</td>
+            </tr>
+            <tr>
+              <td><span class="cat cat-suporte" style="background:#E0F2FE;color:#0369A1;">PVCA_6209</span></td>
+              <td>Elaboração e Remessa de Informações Relativas a Pagamentos de Varejo e Canais de Atendimento — trimestral (31/mar, 30/jun, 30/set, 31/dez)</td>
+              <td>Último DU do mês seguinte ao fim do trimestre</td>
+              <td>Cliente — via STA</td>
+            </tr>
           </tbody>
         </table>
-      </div>
-      <div class="callout callout-info">
-        <strong>CADOC_6209</strong> — aparece nas regras de classificação (§11.3) mas ainda não tem exemplos documentados. Em mapeamento.
       </div>
     </section>
 
@@ -475,7 +484,7 @@
           <thead><tr><th>Padrão no assunto</th><th>Categoria</th><th>Notas</th></tr></thead>
           <tbody>
             <tr><td><code>DDR</code>, <code>2011</code>, <code>TVM</code>, <code>RD_*</code></td><td><span class="cat cat-ddr">DDR_2011</span></td><td>Prefixo <code>RD_</code> no anexo é sinal de alta confiança</td></tr>
-            <tr><td><code>4111</code>, <code>CADOC 4111</code>, <code>saldos diários</code></td><td><span class="cat cat-4111">CADOC_4111</span></td><td>ZIP <code>CNPJ_4111_DATA.zip</code> = muito alta confiança</td></tr>
+            <tr><td><code>4111</code>, <code>CADOC 4111</code>, <code>saldos diários</code>, <code>SCD</code></td><td><span class="cat cat-4111">SCD_4111</span></td><td>ZIP <code>CNPJ_4111_DATA.zip</code> = muito alta confiança</td></tr>
             <tr><td><code>DRM</code>, <code>2060</code></td><td><span class="cat cat-drm">DRM_2060</span></td><td>"COMUNICACAO DE INCONSISTENCIA no DRM" → RETORNO_BACEN</td></tr>
             <tr><td><code>DLO</code>, <code>2061</code>, <code>COS4010</code> + contexto</td><td><span class="cat cat-dlo">DLO_2061</span></td><td>LEC junto com COSIFs confirma DLO (sem LEC = DLI)</td></tr>
             <tr><td><code>DLI</code>, <code>2062</code></td><td><span class="cat cat-dli">DLI_2062</span></td><td>Mesmos COSIFs que DLO, sem a planilha LEC</td></tr>
@@ -483,7 +492,8 @@
             <tr><td><code>S5</code>, <code>Resultado Quantitativo</code></td><td><span class="cat cat-s5">S5</span></td><td>"S5 para S4" = SUPORTE (mudança prudencial, não entrega)</td></tr>
             <tr><td><code>REJEITADO</code>, <code>INDÍCIO DE PROBLEMA</code>, <code>VCRD</code></td><td><span class="cat cat-bacen">RETORNO_BACEN</span></td><td>Classificação urgente — D+3 para responder ao BACEN</td></tr>
             <tr><td><code>FORCAPITAL</code>, <code>projeção de capital</code></td><td><span class="cat cat-force">FORCAPITAL</span></td><td>"projeção" sem contexto ForCapital = verificar</td></tr>
-            <tr><td><code>CADOC_6209</code></td><td>CADOC_6209</td><td>Em mapeamento — poucos exemplos disponíveis</td></tr>
+            <tr><td><code>DRSAC</code>, <code>2030</code>, <code>Demonstrativo 2030</code></td><td>DRSAC_2030</td><td>Semestral (jun/dez) — 10º DU do 2º mês após data-base. Finaud orienta, cliente entrega ao BACEN</td></tr>
+            <tr><td><code>6209</code>, <code>CADOC 6209</code>, <code>pagamentos de varejo</code></td><td>PVCA_6209</td><td>Trimestral — último DU do mês seguinte ao fim do trimestre. Cliente transmite via STA</td></tr>
             <tr><td>Nenhum código + sem CADOC detectável</td><td><span class="cat cat-suporte">SUPORTE</span></td><td>Por eliminação: dúvida, acesso, boleto, reunião…</td></tr>
           </tbody>
         </table>
@@ -496,7 +506,7 @@
           <thead><tr><th>ZIP</th><th>Categoria</th></tr></thead>
           <tbody>
             <tr><td><code>CNPJ_2011_YYYYMMDD.zip</code></td><td><span class="cat cat-ddr">DDR_2011</span></td></tr>
-            <tr><td><code>CNPJ_4111_DATA_I_1.zip</code></td><td><span class="cat cat-4111">CADOC_4111</span></td></tr>
+            <tr><td><code>CNPJ_4111_DATA_I_1.zip</code></td><td><span class="cat cat-4111">SCD_4111</span></td></tr>
             <tr><td><code>CNPJ_2060_YYYYMMDD.zip</code></td><td><span class="cat cat-drm">DRM_2060</span></td></tr>
             <tr><td><code>CNPJ_2061_YYYYMMDD.zip</code></td><td><span class="cat cat-dlo">DLO_2061</span></td></tr>
             <tr><td><code>CNPJ_2062_YYYYMM_I_1_4010.zip</code></td><td><span class="cat cat-dli">DLI_2062</span></td></tr>
@@ -555,7 +565,7 @@
               <td>Não confundir com 4111 (contábil) ou DLO/DLI (mensais)</td>
             </tr>
             <tr>
-              <td><span class="cat cat-4111">CADOC_4111</span></td>
+              <td><span class="cat cat-4111">SCD_4111</span></td>
               <td>Assunto "4111", "CADOC 4111"; anexo <code>CADOC 4111.xlsx</code>; ZIP <code>CNPJ_4111_*.zip</code></td>
               <td>"Conglomerado" no assunto sozinho não identifica — verificar contexto</td>
             </tr>
@@ -599,6 +609,16 @@
               <td>"FORCAPITAL", "ForCapital", "projeção de capital"; destinatário suporteforcapital@</td>
               <td>"projeção" de Basileia ou prazo = DLO/DLI, não ForCapital</td>
             </tr>
+            <tr>
+              <td><span class="cat cat-bacen" style="background:var(--surface2);color:var(--text);">DRSAC_2030</span></td>
+              <td>"DRSAC", "CADOC 2030", "2030"; cliente perguntando se precisa enviar; BACEN comunicando sobre DRSAC</td>
+              <td>"DRSAC rejeitado" com prazo urgente → é RETORNO_BACEN. Finaud não gera o arquivo — só orienta</td>
+            </tr>
+            <tr>
+              <td><span class="cat cat-suporte" style="background:#E0F2FE;color:#0369A1;">PVCA_6209</span></td>
+              <td>"CADOC 6209", "6209", "pagamentos de varejo", "canais de atendimento" + contexto regulatório</td>
+              <td>Volume muito baixo — se sinal ambíguo, tratar como SUPORTE até ter confirmação</td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -627,7 +647,7 @@
             <tr><td>T14</td><td><span class="cat cat-suporte">SUPORTE</span></td><td>Erro de transmissão ao BACEN → Finaud orienta canal correto</td><td>Finaud orienta; cliente resolve diretamente com BACEN</td></tr>
             <tr><td>T15</td><td><span class="cat cat-suporte">SUPORTE</span></td><td>Ex-cliente solicita arquivos históricos</td><td>Finaud envia os arquivos</td></tr>
             <tr><td>T16</td><td>Multi-CADOC</td><td>BACEN detecta problema no 4016/4010 → multi-partes investigam</td><td>4016 já foi substituído</td></tr>
-            <tr><td>T17</td><td><span class="cat cat-4111">CADOC_4111</span></td><td>BACEN detecta indício no 4111 → Finaud instrui regeneração</td><td>Finaud regenera + protocolo STA</td></tr>
+            <tr><td>T17</td><td><span class="cat cat-4111">SCD_4111</span></td><td>BACEN detecta indício no 4111 → Finaud instrui regeneração</td><td>Finaud regenera + protocolo STA</td></tr>
             <tr><td>T18</td><td>FILTRAR</td><td>Alertas automáticos do sistema Finaud (<code>contato@finaud.com.br</code>)</td><td>Não entra na triagem — filtrar automaticamente</td></tr>
             <tr><td>T19</td><td>FILTRAR</td><td>Notificações FogBugz (desenvolvimento interno)</td><td>Não entra na triagem — filtrar automaticamente</td></tr>
           </tbody>
