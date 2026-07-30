@@ -10,6 +10,68 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-07-30
+
+### 30/07 — Estrutura de documentação do projeto aprovada: 5 documentos com papéis distintos
+
+**🔎 Em miúdos:** definimos como organizar todo o conhecimento do projeto — cada tipo de informação tem um lugar certo, e sabe-se onde olhar sem precisar lembrar.
+
+**Problema:** ao crescer a documentação, ficou difícil decidir onde gravar cada tipo de informação — a spec estava virando um depósito de tudo.
+
+**Decisão (30/07/2026):**
+
+| Documento | Papel |
+|---|---|
+| `ESPECIFICACAO_NOVA_ARQUITETURA.md` | O mapa — decisões e regras ("o que temos" / "o que usaremos") |
+| Artifact visual (claude.ai) | Visual — como ficará na tela e por quê |
+| Lista de tarefas + fases (a criar) | Roteiro do desenvolvimento |
+| `REGISTRO_CORRECOES.md` | Histórico datado do que foi feito |
+| `PENDENCIAS.md` | O que falta — com checklist |
+
+**Estrutura interna de cada campo da spec (3 partes):**
+1. "O que temos" — dados reais da produção analisados
+2. "O que utilizaremos" — decisão tomada
+3. "Regras de negócio" — o que a IA vai seguir
+
+**Validação:** ✅ Aprovado por Michel (30/07/2026). Gravado em memória (`projeto-estrutura-documentacao.md`) e aplicado a partir do Campo 6.
+
+---
+
+### 30/07 — Análise do Campo 6 (corpo do e-mail): DDR_2011 concluída — 8 regras de limpeza estabelecidas
+
+**🔎 Em miúdos:** descobrimos como chegam os e-mails do DDR na produção e definimos as regras de "faxina" que o sistema precisa aplicar antes de entregar o texto para a IA ler. Sem essa faxina, a IA leria assinatura, histórico antigo e logos como se fossem parte da mensagem — e classificaria errado.
+
+**Problema:** Campo 6 (corpo do e-mail) estava pendente. Não sabíamos como os e-mails chegam na produção nem o que a IA receberia se passássemos o texto direto.
+
+**Causa raiz:** o e-mail bruto tem muita "sujeira" misturada ao texto real da mensagem: assinaturas com logos, histórico de respostas citadas (`>`), histórico encaminhado, rodapé automático do Google Groups, imagens decorativas convertidas em texto.
+
+**Análise executada:** todos os 2.350 e-mails DDR_2011 (JSON01 × JSON03 via `x_gm_thrid`).
+
+**Descobertas por regra:**
+
+| Regra | O que afeta | % dos e-mails |
+|---|---|---|
+| L1 — Assinatura (`Att,`, `Atenciosamente`, etc.) | Detectada em 92,8% — corte funcionando | 92,8% |
+| L2 — Histórico com traços (`---`, `___` Outlook) | Detectado em 6,3% | 6,3% |
+| L3 — Histórico com seta `>` (reply citado) | **91% dos e-mails** — regra nova crítica | 91,0% |
+| L4 — Rodapé Google Groups (`To unsubscribe`) | **95,5% dos e-mails** — regra nova crítica | 95,5% |
+| L5 — Imagem decorativa (redes sociais, logos) | Maioria das 562 imagens encontradas | — |
+| L6 — Imagem genérica (`image.png`) antes da assinatura | 249 ocorrências — OCR obrigatório | — |
+| L7 — Imagem genérica depois da assinatura | Descartar (logo de rodapé) | — |
+| L8 — Corpo vazio após limpeza | 4 e-mails (encaminhamento R5 puro) | 0,2% |
+
+**Protocolo de imagens DDR_2011:**
+- Nomes decorativos seguros para descartar: `instagram`, `linkedin`, `facebook`, `youtube`, `whatsapp`, `traders logo`, `esign`, `ícone`, `site mb`, `www.guru.com.vc` e variações de redes sociais/logos
+- Nome genérico `image.png` antes da assinatura: pode ser arquivo de dados (ex.: RD_Moedas enviado como imagem) → **OCR obrigatório** → se OCR falhar → fila de revisão humana
+- Nome genérico depois da assinatura: descartar (rodapé decorativo)
+- Regra de ouro: nenhuma imagem descartada silenciosamente — OCR falhou = e-mail arquivado para revisão
+
+**Artifact visual:** https://claude.ai/code/artifact/f86d271e-b354-49e2-8d2b-b110e68652c6 — 4 casos de imagem (decorativa / OCR / OCR falhou / corpo vazio).
+
+**Validação:** ✅ Confirmado por Michel (30/07/2026). Regras L1–L8 registradas em `documentações/PENDENCIAS.md` como baseline para análise das demais 11 categorias.
+
+---
+
 ## 2026-07-29
 
 ### 29/07 14:43 — Regras de classificação R1–R5 escritas para todas as 12 categorias

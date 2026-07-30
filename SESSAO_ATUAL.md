@@ -8,59 +8,71 @@
 
 ---
 
-## 📓 Diário da sessão (2026-07-29) — Regras de classificação para todas as 12 categorias
+## 📓 Diário da sessão (2026-07-30) — Campo 6: metodologia de limpeza do corpo do e-mail
 
 ### Resumo do que foi feito
 
-**Regras de classificação R1–R5 escritas para todas as 12 categorias ✅**
+**Decisão fundamental (30/07/2026):** a IA nunca recebe o e-mail bruto — existe uma etapa de limpeza obrigatória entre o Gmail e a IA. O Campo 6 da spec define exatamente essa limpeza.
 
-Lemos o histórico validado (`oraculo_360_finaud/documentações/DOCUMENTACAO_TRIAGEM.md`) e
-escrevemos as regras de classificação (Aguardando ou Concluído) para cada categoria de e-mail.
-Para cada uma: varredura de cobertura confirmando 100% dos casos cobertos → aprovação do Michel → gravação.
+**8 Regras de limpeza estabelecidas — DDR_2011 (baseline para todas as categorias):**
 
-| Categoria | Threads validadas | Cobertura | R5 |
-|---|---|---|---|
-| DDR_2011 | 1.349 | 100% | ✅ |
-| SCD_4111 | 376 | 100% | ✅ |
-| DRM_2060 | 90 | 100% | N/A |
-| DLO_2061 | 482 | 100% | N/A |
-| DLI_2062 | 56 | 100% | ✅ |
-| DRL_2160 | 143 | 100% | ✅ |
-| S5 | 47 | 100% | ✅ |
-| RETORNO_BACEN | 303 | 100% | ✅ |
-| SUPORTE | 196 | 100% | ✅ |
-| FORCAPITAL | 30 | 100% | ✅ |
-| DRSAC_2030 | 2 | 100% | ✅ |
-| PVCA_6209 | 1 | 100% | ✅ |
+| # | Regra | O que corta |
+|---|---|---|
+| L1 | Assinatura | `Att,` / `Atenciosamente` / `À disposição` / `Cordialmente` / `Desde já agradeço` / `Antecipadamente grata` |
+| L2 | Histórico com traços | `-----` (Gmail forward) e `___` (Outlook separator) |
+| L3 | Histórico com seta `>` | Linhas de reply citado — afeta 91% dos e-mails DDR_2011 |
+| L4 | Rodapé de lista | `To unsubscribe from this group` (Google Groups) — afeta 95,5% dos e-mails DDR_2011 |
+| L5 | Imagem decorativa | `[image: instagram/linkedin/facebook/logo/ícone...]` — descarta por nome |
+| L6 | Imagem genérica antes da assinatura | `[image: image.png]` → tenta OCR → se OCR falhar → fila de revisão humana |
+| L7 | Imagem genérica depois da assinatura | Descarta (logo de rodapé) |
+| L8 | Corpo vazio após limpeza | Sinaliza como `ENCAMINHAMENTO_INTERNO` (R5) — não classifica sem texto |
 
-**Regras transversais confirmadas hoje:**
-- §11.5 **Regra universal de cortesia** — frase de agradecimento/cortesia após entrega = Concluído, qualquer categoria, qualquer colaborador
-- **DRSAC/PVCA R2** — cliente pode enviar o arquivo para Finaud analisar e corrigir (exceto retorno BACEN → RETORNO_BACEN)
-- **S5 R4** — mesmo significado dos outros CADOCs (acuse curto), não "resposta substantiva" como estava no histórico antigo
-- **Varredura obrigatória** — antes de escrever qualquer categoria, mostrar tabela de cobertura 100%
+**DDR_2011 analisado — todos os 2.350 e-mails:**
 
-**Artifact spec publicado como v2.13** — todas as 12 categorias com R1–R5 em:
-- `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` §14
-- `documentações/spec_nova_arquitetura.html` §14
-- URL: `https://claude.ai/code/artifact/4eb2c74e-27d9-41a2-ad7c-6bc5b1d6ab01`
+| Verificação | Resultado |
+|---|---|
+| HTML (não texto puro) | 99,8% |
+| Seta `>` (reply citado) | 91,0% |
+| Rodapé Google Groups | 95,5% |
+| Separador Outlook | 6,3% |
+| Assinatura detectada | 92,8% |
+| Com `[image: xxx]` no texto | 23,9% |
+| Corpo vazio após limpeza | 0,2% (4 e-mails — todos ENCAMINHAMENTO_INTERNO R5) |
+
+**Artifact visual publicado (4 casos de imagem — Fase 1 e Fase 2):**
+https://claude.ai/code/artifact/f86d271e-b354-49e2-8d2b-b110e68652c6
+
+**Estrutura de documentação aprovada (5 componentes):**
+- Especificação = o mapa (decisões e regras)
+- Artifact = o visual (como ficará na tela)
+- Lista de tarefas = roteiro do desenvolvimento
+- REGISTRO_CORRECOES = histórico do que foi feito
+- PENDENCIAS = o que falta (com checklist)
+
+**Estrutura interna de cada campo da spec (3 partes):**
+"O que temos" → "O que utilizaremos" → "Regras de negócio"
 
 ---
 
 ### Estado atual
 
 **§14 da spec:** ✅ completo — todas as 12 categorias com regras R1–R5 documentadas e validadas
-**§10 Campos 6, 7, 8:** 🔴 ainda pendentes — dependem de simulações de threads reais
+**§10 Campo 6:** 🔴 DDR_2011 analisado ✅ · 11 categorias restantes ☐
+**§10 Campos 7, 8:** 🔴 aguardam Campo 6 concluído
 **GitHub:** `github.com/michelruicosta/gestao_area_suporte` — branch `main`
 
 ---
 
 ### Próximos passos
 
-1. 🔴 Concluir 3 simulações de threads (RETORNO_BACEN, DLO/DLI, SUPORTE) → escrever Campos 6, 7, 8 da spec §10
-2. 🟡 Confirmar T04 (Western Union) com Michel: o papel da Finaud neste fluxo
-3. 🟡 Criar novo MAPA_DO_PROJETO.md para a nova arquitetura
-4. 🟡 Fase 1 da nova arquitetura: protótipo do coletor Gmail + classificador IA
+1. 🔴 **Campo 6 — próxima categoria: SCD_4111** (mesma metodologia do DDR_2011)
+   - Scripts prontos no scratchpad: `simular_limpeza_ddr.py` e `inspecionar_imagens_ddr.py` (adaptar filtro de cadoc)
+   - Demais 10 categorias na sequência
+2. 🔴 Após todas as 12 → escrever Campo 6 na spec §10 (3 partes) + artifact visual completo
+3. 🟡 Confirmar T04 (Western Union) com Michel: o papel da Finaud neste fluxo
+4. 🟡 Criar novo MAPA_DO_PROJETO.md para a nova arquitetura
+5. 🟡 Fase 1 da nova arquitetura: protótipo do coletor Gmail + classificador IA
 
-Último /fechar: 2026-07-29 14:43 — memórias revisadas ✅
+Último /fechar: 2026-07-30 — memórias revisadas ✅
 
 ---
