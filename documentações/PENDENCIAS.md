@@ -8,15 +8,17 @@ contrário, para não perder histórico). Ver regra completa no `CLAUDE.md`.
 
 ---
 
-## 🔴 OCR — Campo 7 e Campo 8: pendentes após conclusão do Campo 6
+## 🔴 URGENTE — Campos 7 e 8: próxima sessão — finalizar a especificação (decidido 30/07/2026)
+
+**Decisão de Michel (30/07/2026):** Campos 7 e 8 são a prioridade da próxima sessão, antes de qualquer outro item. Concluir esses dois campos fecha a especificação completa da nova arquitetura.
 
 **Campo 6 ✅ concluído (30/07/2026)** — análise de 6.989 e-mails em 12 categorias, regras L1–L8 escritas em `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md §10`.
 
-**Próximos campos a documentar (aguardam decisão):**
-- **Campo 7 — Anexos:** tipos de arquivo por categoria, o que a IA extrai, quando OCR acionado para anexos
-- **Campo 8 — Thread ID e Data:** rastreamento de thread, data de referência regulatória vs. data do e-mail
+**O que falta definir:**
 
-**Quando fazer:** após definir o modelo de dados da Fase 1 (coletor Gmail).
+- **Campo 7 — Anexos:** tipos de arquivo por categoria, o que a IA extrai de cada um, quando acionar OCR para anexos, como tratar ZIP dentro de ZIP, quando o nome do anexo já basta para identificar a categoria
+- **Campo 8 — Thread ID e Data:** como o Thread ID do Gmail se relaciona com o rastreamento; data de referência regulatória (data do CADOC) vs. data do e-mail; como tratar threads de canal (mesma thread reutilizada por meses)
+
 **Arquivo:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md §10`
 
 ---

@@ -79,14 +79,15 @@ https://claude.ai/code/artifact/5054a35e-cbae-4beb-af23-df3c0972bcae
 
 ### Próximos passos
 
-1. 🔴 Fase 1 da nova arquitetura: protótipo do coletor Gmail + classificador IA
-   - Campo 6 ✅ concluído — bases prontas para construir o módulo de limpeza
+1. 🔴 **PRÓXIMA SESSÃO — Campos 7 e 8** (decisão de Michel 30/07/2026): finalizar a especificação antes de qualquer outro item
+   - Campo 7 — Anexos: tipos por categoria, OCR para anexos, quando o nome já basta para identificar
+   - Campo 8 — Thread ID e Data: data regulatória vs. data do e-mail, threads de canal
 2. 🔴 OCR para RETORNO_BACEN — implementar antes da Fase 3 (ver PENDENCIAS.md)
-3. 🟡 Resolver pendências identificadas na análise do Campo 6 antes de construir o módulo de limpeza:
+3. 🟡 Resolver pendências do Campo 6 antes de construir o módulo de limpeza:
    - `Abraço` (singular) — adicionar ao PAD_ASSINATURA
    - Convites de calendário — decidir filtro ou categoria NOTIFICACAO_SISTEMA
    - TRUSTEE DTVM — corrigir encoding Windows-1252
-4. 🟡 Confirmar T04 (Western Union) com Michel
+4. 🟡 Fase 1 da nova arquitetura: protótipo do coletor Gmail + classificador IA (aguarda spec completa)
 5. 🟡 Criar novo MAPA_DO_PROJETO.md para a nova arquitetura
 
 Último /fechar: 2026-07-30 18:26 — memórias revisadas ✅ — Campo 6 completo: 6.989 e-mails, 12 categorias, spec §10 atualizada
