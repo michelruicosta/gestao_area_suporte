@@ -8,82 +8,146 @@ contrário, para não perder histórico). Ver regra completa no `CLAUDE.md`.
 
 ---
 
-## 🔴 URGENTE — Campo 6 (Corpo): análise de limpeza por categoria (iniciado 29/07/2026)
+## 🔴 OCR — Campo 7 e Campo 8: pendentes após conclusão do Campo 6
 
-Sem o Campo 6 documentado, a `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` §10 está incompleta
-e o classificador IA não pode ser construído. **Campo 6 é o mais crítico** — é o texto que a IA lê
-para classificar cada e-mail.
+**Campo 6 ✅ concluído (30/07/2026)** — análise de 6.989 e-mails em 12 categorias, regras L1–L8 escritas em `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md §10`.
 
-**Decisão de abordagem (29/07/2026):** a IA nunca recebe o e-mail bruto. Antes de classificar, o
-sistema aplica regras de limpeza. O Campo 6 define exatamente essas regras. Para definir as regras
-com segurança, analisamos **todos** os e-mails de cada categoria nos dados de produção (JSON01 × JSON03).
+**Próximos campos a documentar (aguardam decisão):**
+- **Campo 7 — Anexos:** tipos de arquivo por categoria, o que a IA extrai, quando OCR acionado para anexos
+- **Campo 8 — Thread ID e Data:** rastreamento de thread, data de referência regulatória vs. data do e-mail
 
-### Regras de limpeza estabelecidas na análise do DDR_2011 (baseline para todas as categorias)
+**Quando fazer:** após definir o modelo de dados da Fase 1 (coletor Gmail).
+**Arquivo:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md §10`
 
-| # | Regra | O que faz | Descoberta em |
-|---|---|---|---|
-| L1 | Assinatura | Corta em `Att,` / `Atenciosamente` / `À disposição` / `Cordialmente` / `Desde já agradeço` / `Antecipadamente grata` | DDR_2011 |
-| L2 | Histórico com traços | Corta em `-----` (Gmail forward) e `___` (Outlook separator) | DDR_2011 |
-| L3 | Histórico com seta `>` | Remove linhas que começam com `>` (reply citado) | DDR_2011 |
-| L4 | Rodapé de lista | Corta em `To unsubscribe from this group` (rodapé Google Groups) | DDR_2011 |
-| L5 | Imagem decorativa | Remove `[image: facebook/instagram/linkedin/youtube/whatsapp/logo/ícone/esign]` | DDR_2011 |
-| L6 | Imagem com nome genérico antes da assinatura | Tenta OCR → se lê texto útil: inclui; se não lê: arquiva para revisão humana | DDR_2011 |
-| L7 | Imagem com nome genérico depois da assinatura | Remove (provavelmente logo de rodapé) | DDR_2011 |
-| L8 | Corpo vazio após limpeza | Sinaliza como `ENCAMINHAMENTO_INTERNO` (R5) — não classifica sem texto | DDR_2011 |
+---
 
-> **Regra de ouro — imagens:** nenhuma imagem é descartada silenciosamente. Se não for decorativa
-> e o OCR falhar, o e-mail vai para fila de revisão humana. A IA não classifica até resolver.
+## 🔴 OCR — RETORNO_BACEN depende 100% das imagens para classificação e aprendizado (identificado 30/07/2026)
 
-### Status da análise por categoria
+**O que foi observado:**
+Na análise do RETORNO_BACEN (1.298 e-mails), os elementos `[image:]` (36,3%) e `[cid:]` (41,0%)
+são os mais altos de todas as 12 categorias. Isso não é coincidência: nesta categoria, o cliente
+envia **prints de tela** com as mensagens de erro do BACEN para mostrar o problema que precisa
+ser resolvido.
 
-| # | Categoria | E-mails no JSON01 | Análise L1–L8 | Imagens inspecionadas | Protocolo registrado |
-|---|---|---|---|---|---|
-| 1 | **DDR_2011** | 2.350 | ✅ concluída | ✅ concluída | ✅ (ver REGISTRO_CORRECOES 30/07) |
-| 2 | SCD_4111 | — | ☐ | ☐ | ☐ |
-| 3 | DRM_2060 | — | ☐ | ☐ | ☐ |
-| 4 | DLO_2061 | — | ☐ | ☐ | ☐ |
-| 5 | DLI_2062 | — | ☐ | ☐ | ☐ |
-| 6 | DRL_2160 | — | ☐ | ☐ | ☐ |
-| 7 | S5 | — | ☐ | ☐ | ☐ |
-| 8 | RETORNO_BACEN | — | ☐ | ☐ | ☐ |
-| 9 | SUPORTE | — | ☐ | ☐ | ☐ |
-| 10 | FORCAPITAL | — | ☐ | ☐ | ☐ |
-| 11 | DRSAC_2030 | — | ☐ | ☐ | ☐ |
-| 12 | PVCA_6209 | — | ☐ | ☐ | ☐ |
+**Por que isso é crítico:**
+Ao contrário das outras categorias — onde as imagens são logos e decorações descartáveis — no
+RETORNO_BACEN as imagens **são o conteúdo da mensagem**. O texto do e-mail diz apenas:
 
-### Metodologia por categoria (repetir para cada ☐ acima)
+> *"Prezados, recebemos a seguinte crítica referente ao DLO de dezembro: [image: image.png]"*
 
-Para cada categoria, executar em ordem:
+O que está dentro da imagem é o erro real: código de crítica, conta contábil afetada, valor
+divergente, mensagem do sistema BACEN. Sem ler a imagem, a IA recebe apenas a casca do e-mail
+— não sabe qual é o erro, não consegue classificar corretamente e não aprende nada útil.
 
-1. **Contar e-mails** — cruzar JSON03 (categoria) × JSON01 (corpo) via `x_gm_thrid`
-2. **Simular as 8 regras de limpeza** em todos os e-mails:
-   - Quantos cada regra afeta (%)
-   - Padrões novos não cobertos pelas regras → adicionar à lista se encontrar
-   - Quantos ficam vazios após limpeza
-3. **Inspecionar imagens**:
-   - Quais nomes aparecem (Counter por nome)
-   - Quantas estão antes vs. depois da assinatura
-   - Exemplos de contexto para imagens com nome genérico (`image.png`)
-   - Definir: o que é decorativo (descartar) vs. conteúdo (OCR)
-4. **Registrar protocolo da categoria** no REGISTRO_CORRECOES com:
-   - Regras L1–L8: funcionam? Alguma exceção?
-   - Imagens: lista de nomes decorativos + protocolo OCR para esta categoria
-   - Casos especiais encontrados
+**Impacto no classificador (Fase 3):**
+- Sem OCR: a IA classifica como RETORNO_BACEN genérico, sem entender o problema específico
+- Com OCR: a IA lê o código de erro, a conta, o valor — e pode entender e classificar com precisão
 
-**Scripts prontos no scratchpad:**
-- `simular_limpeza_ddr.py` — adaptar mudando o filtro de cadoc
-- `inspecionar_imagens_ddr.py` — adaptar mudando o filtro de cadoc
+**Impacto no aprendizado da IA (IA Assistente):**
+Esta é a categoria onde o OCR é mais crítico para o aprendizado. Cada caso resolvido tem:
+1. O erro do BACEN (dentro de uma imagem)
+2. A análise da Finaud (às vezes também em imagem)
+3. A solução enviada ao cliente
 
-**Após todas as 12 categorias concluídas:**
-- Consolidar regras universais vs. exceções por categoria
-- Escrever Campo 6 em `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` §10
-- Publicar artifact atualizado
+Sem OCR, o aprendizado da IA sobre RETORNO_BACEN fica cego para o conteúdo mais importante.
 
-**Outros campos pendentes (aguardam Campo 6 estar concluído):**
-- **Campo 7 — Anexos:** tipos de arquivo por categoria, o que a IA extrai
-- **Campo 8 — Thread ID e Data:** rastreamento de thread, data de referência regulatória
+**O que decidir antes da Fase 3:**
+1. Garantir que OCR está implementado antes de qualquer classificação de RETORNO_BACEN
+2. Definir o que fazer se o OCR falhar: fila de revisão humana (como já previsto pela regra L6)
+3. Avaliar se é necessário OCR especializado para prints de sistema BACEN (tipografia e layout
+   diferentes de documentos normais — pode precisar de ajuste ou modelo específico)
 
-**Arquivo:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` §10
+**Quando discutir:** obrigatório antes da Fase 3 (ligar IA). O OCR para esta categoria não é
+opcional — é pré-requisito para o sistema funcionar corretamente.
+**Arquivo de destino:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — seção do Campo 6
+(regra L6) e seção da IA Assistente.
+
+---
+
+## 🟡 CLASSIFICADOR — Convites de calendário chegam na caixa como se fossem e-mails (encontrado 30/07/2026)
+
+**Onde foi encontrado:**
+Durante a análise do DRM_2060, um dos 163 e-mails da categoria era, na verdade, um convite de
+reunião do Google Calendar. O assunto era:
+
+> `Convite: [SANTS] SMM - 2060 - LIM 2061 - LIM 2062 | quinta-feira 9 abr. 2026 ⋅ 4pm – 5pm`
+
+O corpo continha apenas: data/hora da reunião, link do Google Meet e lista de participantes.
+**Não era um e-mail de cliente — era uma notificação automática do Google.**
+
+**Por que isso acontece:**
+Quando alguém agenda uma reunião pelo Google Calendar e inclui o endereço `suporte@finaud.com.br`
+(ou o grupo do Google Groups ligado ao suporte) como participante ou destinatário, o Google envia
+automaticamente um convite para esse endereço. O Gmail recebe e armazena como e-mail normal —
+sem distinguir se é mensagem humana ou notificação de sistema.
+
+**O problema para o classificador:**
+As regras atuais (R1–R5) foram desenhadas para e-mails de clientes com conteúdo regulatório
+(DDR, DRM, DLO, etc.) ou de suporte. Um convite de calendário não se encaixa em nenhuma delas:
+
+- Não é uma entrega de CADOC (não tem arquivo, não tem dados regulatórios)
+- Não é uma pergunta de suporte do cliente
+- Não é um encaminhamento interno com arquivo
+- Não tem assinatura, não tem texto de mensagem — é estrutura de convite
+
+Se o classificador receber esse texto, vai tentar encaixar em alguma categoria e provavelmente
+vai errar ou ficar confuso.
+
+**O que precisa ser decidido:**
+1. **Filtrar antes do classificador?** — detectar convites de calendário pelo padrão do assunto
+   (`Convite:` ou `Invitation:` no início + presença de horário + link Google Meet/Teams/Zoom)
+   e descartar antes de chegar na IA.
+2. **Criar uma categoria para isso?** — ex.: `NOTIFICACAO_SISTEMA` para convites, confirmações
+   automáticas, respostas automáticas ("Estou de férias"), notificações de entrega, etc.
+3. **Marcar para revisão humana?** — o sistema sinaliza "não reconheci este tipo de mensagem"
+   e o gestor decide manualmente o que fazer com ele.
+
+**Outros tipos similares que podem aparecer:**
+Além de convites de calendário, outras notificações automáticas podem chegar:
+- Respostas automáticas de ausência ("Estou em férias, retorno em...")
+- Confirmações automáticas de recebimento de arquivo
+- Notificações de sistemas internos da Finaud
+- E-mails de marketing ou listas de email que entraram no grupo por engano
+
+**Quando discutir:** antes de construir o classificador IA (Fase 3 da nova arquitetura).
+Saber o que fazer com esses casos é pré-requisito para o classificador funcionar corretamente.
+**Arquivo de destino:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — seção do classificador,
+em "Casos que o classificador não reconhece".
+
+---
+
+## 🟡 CLASSIFICADOR — Palavra de fechamento "Abraço" (singular) não está no detector de assinatura (encontrado 30/07/2026)
+
+**Onde foi encontrado:**
+Durante a análise do DLI_2062, um dos e-mails não detectados como "tem assinatura" tinha o
+seguinte fechamento:
+
+> `ABRAÇO,`
+
+**O problema:**
+O padrão atual de detecção de assinatura reconhece `abraços` (plural, com "s"), mas não reconhece
+`abraço` (singular, sem "s"). São a mesma coisa na prática — é o jeito informal de encerrar um
+e-mail em português, como "Att," ou "Atenciosamente" — mas o detector só conhece uma forma.
+
+**Impacto:**
+E-mails que fecham com "Abraço," ou "Abraço!" ou "Abraço." não terão a assinatura removida.
+A IA vai receber o nome, cargo e telefone do remetente junto com o texto da mensagem.
+Isso não impede a classificação, mas é conteúdo desnecessário que a IA vai ter que ignorar.
+
+**O que fazer:**
+Adicionar `abraço[,!.\s]` (singular) ao padrão `PAD_ASSINATURA` no script
+`scripts/consultas/analisar_corpo_emails.py` — e depois também no código de limpeza real
+quando for construído (Fase 1 da nova arquitetura).
+
+**Variações que podem existir e ainda não foram vistas:**
+- `abraço!` — com exclamação
+- `um abraço,` — com artigo antes
+- `grande abraço,` — forma mais formal
+- `abs,` — abreviação (já está no padrão como `abs[,.\s]`) ✅
+
+**Quando corrigir:** antes de construir o módulo de limpeza do corpo (Passo 3) na Fase 1.
+**Arquivo a alterar:** `scripts/consultas/analisar_corpo_emails.py` → `PAD_ASSINATURA`; e depois
+o módulo real de limpeza quando for criado.
 
 ---
 

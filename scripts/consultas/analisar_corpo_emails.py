@@ -23,7 +23,7 @@ Filtros por categoria:
   DLI_2062     → '2062'       DRL_2160  → '2160'
   S5           → 'S5'         SUPORTE   → 'SUPORTE'
   RETORNO_BACEN→ 'RETORNO'    FORCAPITAL→ 'FORCAPITAL'
-  DRSAC_2030   → '2030'       PVCA_6209 → '6209'
+  DRSAC_2030   → 'DRSAC'      PVCA_6209 → '6209'
 """
 
 import json
@@ -35,7 +35,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 # ─── Configurar aqui ──────────────────────────────────────────────────────────
 PROJETO_DADOS = r'D:\02_Finaud\Projetos\ativos\oraculo_360_finaud'
-CADOC_FILTRO  = '2011'   # mudar para cada categoria (ver tabela no topo)
+CADOC_FILTRO  = '6209'   # mudar para cada categoria (ver tabela no topo)
 N_EXEMPLOS    = 3        # quantos exemplos mostrar por elemento (detectados + não detectados)
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -229,8 +229,11 @@ def det_assinatura(texto):
 PAD_CITADO = re.compile(r'(?m)^>', re.MULTILINE)
 
 PAD_ENCAMINHADO = re.compile(
-    r'(?i)(-{5,}|_{5,}|={5,}|forwarded message|mensagem encaminhada'
-    r'|begin forwarded|de:\s+\S+@\S+\s+enviado em:|from:\s+\S+@\S+\s+sent:)',
+    # Traços/underscores/iguais só disparam quando seguidos de cabeçalho de e-mail na próxima linha
+    # (evita falso positivo em separadores decorativos dentro do corpo — encontrado no S5)
+    r'(?:-{5,}|_{5,}|={5,})\s*\n\s*(?:de:|from:|para:|to:|data:|date:|enviado\s*em:|sent:)'
+    r'|forwarded message|mensagem encaminhada'
+    r'|begin forwarded|de:\s+\S+@\S+\s+enviado em:|from:\s+\S+@\S+\s+sent:',
     re.IGNORECASE
 )
 

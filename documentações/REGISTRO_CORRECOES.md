@@ -10,6 +10,62 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-07-30 (continuação de sessão — Campo 6 completo na spec)
+
+### 30/07 — Campo 6: análise das 12 categorias concluída e escrita na spec §10
+
+**🔎 Em miúdos:** após analisar todos os e-mails das 12 categorias, gravamos as regras de limpeza definitivas na especificação — agora qualquer desenvolvedor (ou IA) sabe exatamente o que o sistema vai fazer com o texto de cada e-mail antes de entregar para a IA classificar.
+
+**O que foi feito:**
+- 6.989 e-mails analisados via `scripts/consultas/analisar_corpo_emails.py`
+- 12 categorias validadas individualmente (DDR_2011 até PVCA_6209)
+- Seção "O que temos / O que utilizaremos / Regras de negócio" escrita em `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md §10` (Campo 6)
+- Tabela completa com percentuais de cada elemento por categoria guardada na spec
+
+**Resultados consolidados:**
+
+| Categoria | E-mails | Assinatura | Hist. `>` | Hist. `---` | Rodapé | `[image:]` | `[cid:]` |
+|---|---|---|---|---|---|---|---|
+| DDR_2011 | 2.350 | 96,4% | 37,1% | 22,1% | 95,5% | 23,9% | 18,9% |
+| SCD_4111 | 728 | 97,7% | 38,2% | 25,1% | 92,3% | 19,8% | 22,0% |
+| DRM_2060 | 163 | 96,3% | 35,0% | 16,6% | 98,2% | 22,1% | 27,6% |
+| DLO_2061 | 1.172 | 77,7% | 39,2% | 26,6% | 96,8% | 29,1% | 28,0% |
+| DLI_2062 | 119 | 88,2% | 47,1% | 31,9% | 100,0% | 37,8% | 22,7% |
+| DRL_2160 | 267 | 96,3% | 43,1% | 19,1% | 99,6% | 26,6% | 18,0% |
+| S5 | 122 | 92,6% | 63,9% | 22,1%★ | 100,0% | 30,3% | 18,0% |
+| RETORNO_BACEN | 1.298 | 92,2% | 50,2% | 31,3% | 100,0% | 36,3% | 41,0% |
+| SUPORTE | 678 | 79,8% | 46,2% | 15,9% | 97,3% | 28,5% | 29,4% |
+| FORCAPITAL | 85 | 84,7% | 29,4% | 20,0% | 100,0% | 9,4% | 36,5% |
+| DRSAC_2030 | 3 | 100,0% | 66,7% | 33,3% | 100,0% | 33,3% | 33,3% |
+| PVCA_6209 | 4 | 75,0% | 75,0% | 0,0% | 100,0% | 0,0% | 0,0% |
+| **TOTAL** | **6.989** | | | | | | |
+
+★ Corrigido após fix da regra L2 (ver entrada anterior neste registro).
+
+**Validação:** ✅ Todas as 12 categorias validadas por Michel durante a sessão de 30/07/2026.
+**Sem teste:** script de consulta somente-leitura — não modifica dados de produção.
+
+---
+
+## 2026-07-30 (continuação de sessão — análise Campo 6 categorias)
+
+### 30/07 — Regra L2 corrigida: separador decorativo `---` não é mais confundido com histórico encaminhado
+
+**🔎 Em miúdos:** o sistema aprendeu a diferença entre um traço usado como enfeite visual dentro do texto e um traço que separa o e-mail antigo do novo. Antes, qualquer fileira de traços acionava o corte — agora só aciona quando há dados de e-mail (remetente, data, destinatário) logo depois.
+
+**Problema:** na análise do S5, o padrão `PAD_ENCAMINHADO` detectava `-----` como "histórico encaminhado" mesmo quando os traços eram separadores decorativos dentro do conteúdo real do e-mail. Exemplo encontrado: Rodrigo enviou orientação regulatória formatada com `-----` como título de seção — a regra iria cortar o conteúdo útil achando que era histórico.
+
+**Causa raiz:** o padrão original `-{5,}|_{5,}|={5,}` detectava qualquer sequência de 5+ traços, sem verificar o que vinha depois. Num e-mail encaminhado real, depois dos traços sempre aparecem `De:`, `Para:`, `Data:` — os campos do e-mail original. Num separador decorativo, aparecem emojis ou texto normal.
+
+**Correção:** `scripts/consultas/analisar_corpo_emails.py` — `PAD_ENCAMINHADO` atualizado:
+- Antes: `-{5,}|_{5,}|={5,}` (qualquer traço de 5+)
+- Depois: `(?:-{5,}|_{5,}|={5,})\s*\n\s*(?:de:|from:|para:|to:|data:|date:|enviado\s*em:|sent:)` (traço de 5+ **somente** se seguido de cabeçalho de e-mail na linha seguinte)
+
+**Validação:** ✅ S5 re-rodado — Histórico encaminhado caiu de 39,3% (48 e-mails, com falsos positivos) para 22,1% (27 e-mails, só histórico real). Agora alinhado com as demais categorias (DDR: 22,1%, DRM: 16,6%, DRL: 19,1%).
+**Sem teste:** script de consulta somente-leitura — não modifica dados de produção.
+
+---
+
 ## 2026-07-30 (continuação de sessão)
 
 ### 30/07 — Campo 6 DDR_2011: Passo 3 validado por Michel — todos os 6 elementos ✅

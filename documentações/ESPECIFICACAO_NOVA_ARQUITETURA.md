@@ -437,11 +437,67 @@ Formatos de marcador identificados até agora:
 
 ---
 
-#### O que utilizaremos e Regras de negócio
+#### O que temos — Análise das 12 categorias (30/07/2026)
 
-> ⚠️ **Pendente — a definir após análise das 12 categorias (Fase 2, iniciada 30/07/2026)**
->
-> A Fase 2 identificará, por categoria, quais elementos do Passo 3 aparecem e com que frequência, e definirá as regras de limpeza: o que remover, o que manter, o que encaminhar para revisão humana.
+**6.989 e-mails analisados** via `scripts/consultas/analisar_corpo_emails.py` (30/07/2026).  
+Fonte: `oraculo_360_finaud` — histórico completo de produção.
+
+| # | Categoria | E-mails | Assinatura | Hist. `>` | Hist. `---` | Rodapé | `[image:]` | `[cid:]` |
+|---|---|---|---|---|---|---|---|---|
+| 1 | DDR_2011 | 2.350 | 96,4% | 37,1% | 22,1% | 95,5% | 23,9% | 18,9% |
+| 2 | SCD_4111 | 728 | 97,7% | 38,2% | 25,1% | 92,3% | 19,8% | 22,0% |
+| 3 | DRM_2060 | 163 | 96,3% | 35,0% | 16,6% | 98,2% | 22,1% | 27,6% |
+| 4 | DLO_2061 | 1.172 | 77,7% | 39,2% | 26,6% | 96,8% | 29,1% | 28,0% |
+| 5 | DLI_2062 | 119 | 88,2% | 47,1% | 31,9% | 100,0% | 37,8% | 22,7% |
+| 6 | DRL_2160 | 267 | 96,3% | 43,1% | 19,1% | 99,6% | 26,6% | 18,0% |
+| 7 | S5 | 122 | 92,6% | 63,9% | 22,1%★ | 100,0% | 30,3% | 18,0% |
+| 8 | RETORNO_BACEN | 1.298 | 92,2% | 50,2% | 31,3% | 100,0% | 36,3% | 41,0% |
+| 9 | SUPORTE | 678 | 79,8% | 46,2% | 15,9% | 97,3% | 28,5% | 29,4% |
+| 10 | FORCAPITAL | 85 | 84,7% | 29,4% | 20,0% | 100,0% | 9,4% | 36,5% |
+| 11 | DRSAC_2030 | 3 | 100,0% | 66,7% | 33,3% | 100,0% | 33,3% | 33,3% |
+| 12 | PVCA_6209 | 4 | 75,0% | 75,0% | 0,0% | 100,0% | 0,0% | 0,0% |
+| | **TOTAL** | **6.989** | | | | | | |
+
+★ Corrigido após fix da regra L2 (era 39,3% antes — separadores decorativos eram confundidos com histórico encaminhado). Ver REGISTRO_CORRECOES 30/07.
+
+**O que os dados mostram:**
+- **Rodapé automático** aparece em quase todos os e-mails: 92–100% em todas as categorias — remoção obrigatória
+- **Assinatura** detectada em 75–100%; categorias com e-mails automáticos têm taxa menor (DLO_2061: 77,7%, SUPORTE: 79,8%) — comportamento correto, não é erro do detector
+- **Histórico citado (`>`)** presente em 29–75% — varia conforme o volume de respostas de cada categoria
+- **Imagens** presentes em todas as categorias; RETORNO_BACEN tem os maiores índices (36,3% `[image:]` e 41,0% `[cid:]`) porque os clientes enviam prints de tela com erros do BACEN — essas imagens são conteúdo, não decoração
+
+---
+
+#### O que utilizaremos
+
+**Decisão (30/07/2026, validada por Michel):**  
+Antes de passar qualquer texto para a IA classificadora, o sistema aplica as 8 regras de limpeza (L1–L8) em todos os e-mails de todas as categorias. As regras são **universais** — funcionam para as 12 categorias sem exceção por categoria.
+
+A IA recebe apenas o **texto novo** de cada e-mail — sem assinatura, sem histórico antigo, sem rodapé, sem imagens decorativas.
+
+---
+
+#### Regras de negócio — L1 a L8
+
+| Regra | Nome | O que remove | Quando aciona |
+|---|---|---|---|
+| L1 | Assinatura | Tudo a partir da linha de fechamento | Detecta `Att,` / `Atenciosamente` / `À disposição` / `Cordialmente` / `Desde já agradeço` / `Antecipadamente grata` / `Regards` / `Best Regards` / `Kind Regards` / `Sincerely` / `Obrigado` / `Grata` / `Grato` / `Abraços` |
+| L2 | Histórico com traços | Tudo a partir da linha de traços | Detecta `-----` ou `_____` ou `=====` (5 ou mais caracteres) **somente** quando a linha seguinte contém cabeçalho de e-mail (`De:`, `Para:`, `Data:`, `From:`, `To:`, `Sent:`) — evita cortar separadores decorativos no corpo da mensagem |
+| L3 | Histórico com seta | Remove linhas de reply citado | Remove linhas que começam com `>` (convenção de reply citado) |
+| L4 | Rodapé de lista | Tudo a partir do rodapé | Detecta `To unsubscribe from this group` / `Para cancelar a inscrição` / `Você está recebendo este e-mail porque se inscreveu` |
+| L5 | Imagem decorativa | Remove o marcador | Nome da imagem contém: `instagram`, `linkedin`, `facebook`, `youtube`, `whatsapp`, `traders logo`, `esign`, `ícone`, `site mb`, `logo` ou variações de redes sociais |
+| L6 | Imagem genérica antes da assinatura | Tenta ler com OCR | Nome genérico (`image.png`, `imagem.jpg`) localizado antes do ponto de corte L1 → aciona OCR → se texto útil: inclui no texto; se OCR falhar: e-mail vai para fila de revisão humana (não classifica) |
+| L7 | Imagem genérica depois da assinatura | Remove o marcador | Nome genérico localizado após o ponto de corte L1 → descarta (provável logo de rodapé) |
+| L8 | Corpo vazio após limpeza | Sinaliza sem classificar | Se após L1–L7 o texto ficar vazio → marca como `ENCAMINHAMENTO_INTERNO` (R5) e aguarda revisão |
+
+**Regra de ouro — imagens:**  
+Nenhuma imagem é descartada silenciosamente. Se não for decorativa (L5) e o OCR falhar (L6), o e-mail entra em fila de revisão humana. A IA não classifica até o revisor confirmar o conteúdo.
+
+**Atenção — RETORNO_BACEN:**  
+Nesta categoria as imagens não são decorativas — são prints de tela com erros do BACEN e são o conteúdo principal do e-mail. O OCR é obrigatório e pré-requisito para o classificador funcionar. Ver pendência "OCR — RETORNO_BACEN" em `documentações/PENDENCIAS.md`.
+
+**Pendência L1 — variação de assinatura:**  
+A palavra `Abraço` (singular, sem "s") não está no detector atual. Identificada na categoria DLI_2062. Adicionar antes de construir o módulo de limpeza. Ver `documentações/PENDENCIAS.md`.
 
 ---
 

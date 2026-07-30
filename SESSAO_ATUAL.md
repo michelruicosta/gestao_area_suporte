@@ -71,23 +71,24 @@ https://claude.ai/code/artifact/5054a35e-cbae-4beb-af23-df3c0972bcae
 ### Estado atual
 
 **§14 da spec:** ✅ completo — todas as 12 categorias com regras R1–R5 documentadas e validadas
-**§10 Campo 6 — Passo 3:** ✅ DDR_2011 analisado e validado · 11 categorias restantes ☐
-**§10 Campos 7, 8:** 🔴 aguardam Campo 6 concluído
+**§10 Campo 6 — Passo 3:** ✅ **CONCLUÍDO** — 6.989 e-mails em 12 categorias analisados; regras L1–L8 escritas na spec
+**§10 Campos 7, 8:** 🔴 aguardam definição do modelo de dados da Fase 1
 **GitHub:** `github.com/michelruicosta/gestao_area_suporte` — branch `main`
 
 ---
 
 ### Próximos passos
 
-1. 🔴 **Campo 6 — próxima categoria: SCD_4111** — mesmo fluxo do DDR_2011:
-   - Rodar `scripts/consultas/analisar_corpo_emails.py` com `CADOC_FILTRO = '4111'`
-   - Validar os 6 elementos no artifact de validação (ou criar novo artifact para SCD_4111)
-   - Demais 10 categorias na sequência
-2. 🔴 Após todas as 12 → escrever Campo 6 na spec §10 (3 partes: "O que temos" / "O que utilizaremos" / "Regras de negócio") + artifact visual completo
-3. 🟡 Confirmar T04 (Western Union) com Michel: o papel da Finaud neste fluxo
-4. 🟡 Criar novo MAPA_DO_PROJETO.md para a nova arquitetura
-5. 🟡 Fase 1 da nova arquitetura: protótipo do coletor Gmail + classificador IA
+1. 🔴 Fase 1 da nova arquitetura: protótipo do coletor Gmail + classificador IA
+   - Campo 6 ✅ concluído — bases prontas para construir o módulo de limpeza
+2. 🔴 OCR para RETORNO_BACEN — implementar antes da Fase 3 (ver PENDENCIAS.md)
+3. 🟡 Resolver pendências identificadas na análise do Campo 6 antes de construir o módulo de limpeza:
+   - `Abraço` (singular) — adicionar ao PAD_ASSINATURA
+   - Convites de calendário — decidir filtro ou categoria NOTIFICACAO_SISTEMA
+   - TRUSTEE DTVM — corrigir encoding Windows-1252
+4. 🟡 Confirmar T04 (Western Union) com Michel
+5. 🟡 Criar novo MAPA_DO_PROJETO.md para a nova arquitetura
 
-Último /fechar: 2026-07-30 18:XX — memórias revisadas ✅ — Campo 6 DDR_2011 Passo 3 validado e commitado
+Último /fechar: 2026-07-30 18:26 — memórias revisadas ✅ — Campo 6 completo: 6.989 e-mails, 12 categorias, spec §10 atualizada
 
 ---
