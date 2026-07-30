@@ -168,7 +168,8 @@
   <div class="logo">ORÁCULO 360</div>
   <div class="title">Especificação da Nova Arquitetura</div>
   <span class="badge badge-v">v2.0 · 28/07/2026</span>
-  <span class="badge badge-warn">⚠ Campos 6-8 PENDENTES</span>
+  <span class="badge badge-ok">✅ Campo 6 concluído</span>
+  <span class="badge badge-pend" style="margin-left:4px;">⚠ Campos 7-8 pendentes</span>
 </div>
 
 <div class="layout">
@@ -208,8 +209,11 @@
       <h2><span class="sec-num">§1</span> O que é este documento</h2>
       <p>Este documento é a especificação da <strong>nova arquitetura do Oráculo 360</strong> — a que substituirá os 16 scripts do pipeline atual por um sistema mais direto: leitura do Gmail via API + IA classificadora.</p>
       <p>Ele é a <strong>fonte da verdade</strong> do novo projeto. Toda regra, decisão, campo, categoria e exemplo documentado aqui foi validado com Michel ou anotado como pendente de validação.</p>
+      <div class="callout callout-ok">
+        ✅ <strong>Campo 6</strong> (§10) concluído em 30/07/2026 — 6.989 e-mails em 12 categorias analisados; 8 regras de limpeza L1–L8 definidas.
+      </div>
       <div class="callout callout-warn">
-        ⚠️ <strong>Campos 6, 7 e 8</strong> (em §10) estão marcados como PENDENTE — aguardam simulações de threads reais antes de serem definidos.
+        ⚠️ <strong>Campos 7 e 8</strong> (§10) aguardam definição do modelo de dados da Fase 1.
       </div>
     </section>
 
@@ -444,10 +448,13 @@
         <div class="field-name">Campo 5 — Assunto</div>
         <div class="field-desc">O título do e-mail. Principal sinal de categoria para a IA. Padrões: código CADOC direto (<code>DDR 2011</code>, <code>DRM (2060)</code>), nome do documento (<code>Balancete de Câmbio</code>), tipo de situação (<code>REJEITADO</code>, <code>INDÍCIO DE PROBLEMA</code>).</div>
       </div>
-      <div class="field-card" style="border-color: var(--warning-border);">
-        <div class="field-name" style="color: var(--warning-text);">Campo 6 — Corpo ⚠️ PENDENTE</div>
-        <div class="field-desc">O texto da mensagem que a IA vai ler. Aguarda definição: como pré-processar, o que a IA recebe de cada tipo, como tratar histórico acumulado e mensagens curtas demais.</div>
-        <div class="callout callout-warn" style="margin-top:8px; font-size:12px;">Bloqueado por: simulações de threads reais (RETORNO_BACEN, DLO/DLI, SUPORTE)</div>
+      <div class="field-card" style="border-color: var(--ok-border);">
+        <div class="field-name" style="color: var(--ok-text);">Campo 6 — Corpo ✅ Concluído (30/07/2026)</div>
+        <div class="field-desc">O texto limpo que a IA lê para classificar. Antes de chegar na IA, o sistema aplica <strong>8 regras de limpeza (L1–L8)</strong> em todos os e-mails de todas as 12 categorias — removendo assinatura, histórico antigo, rodapé e imagens decorativas.</div>
+        <div class="callout callout-ok" style="margin-top:8px; font-size:12px;">
+          <strong>6.989 e-mails · 12 categorias · regras escritas em §10</strong><br>
+          L1 Assinatura · L2 Histórico traços · L3 Histórico <code>&gt;</code> · L4 Rodapé automático · L5 Imagem decorativa · L6 Imagem genérica (OCR) · L7 Imagem pós-assinatura · L8 Corpo vazio
+        </div>
       </div>
       <div class="field-card" style="border-color: var(--warning-border);">
         <div class="field-name" style="color: var(--warning-text);">Campo 7 — Anexos ⚠️ PENDENTE</div>
