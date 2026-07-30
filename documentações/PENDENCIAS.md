@@ -87,6 +87,112 @@ Para cada categoria, executar em ordem:
 
 ---
 
+## 🟡 IA ASSISTENTE — Como preservar o histórico completo para aprendizado (registrado 30/07/2026)
+
+**Contexto da conversa (30/07/2026):**
+Enquanto validávamos o Campo 6 (Passo 3 — limpeza do corpo do e-mail), Michel levantou uma questão
+arquitetural importante: o Passo 3 **remove** todo o histórico citado (`>`) e encaminhado (`---`)
+antes de passar o texto para a IA classificadora. Isso é correto para **classificação** — a IA
+precisa só do texto novo de cada e-mail, não do histórico repetido.
+
+Mas há um segundo uso futuro do sistema: a **IA Assistente de Aprendizado** (registrada em memória
+como `projeto-ia-assistente-aprendizado.md`) — uma IA que aprende com os e-mails resolvidos para
+ajudar o gestor e novos colaboradores a entender como cada tipo de caso foi resolvido.
+
+**O problema:**
+Para aprendizado, o histórico completo da thread IMPORTA. A IA assistente precisa ver:
+- O e-mail original (como o caso chegou)
+- Todas as respostas (como foi tratado)
+- A resolução final (como foi encerrado)
+
+Se removermos o histórico para classificação, perdemos esse conteúdo para o aprendizado.
+
+**Agravante — threads com histórico anterior ao início da coleta:**
+A conta oraculo@finaud.com.br foi criada em julho de 2026. As primeiras threads coletadas já
+chegaram com histórico de conversas anteriores (de junho, maio, etc.) apenas disponíveis como
+conteúdo citado (`>`) no primeiro e-mail coletado. Se esse `>` for removido para classificação,
+esse histórico pré-coleta se perde para sempre.
+
+**O que precisa ser decidido:**
+1. Como separar as duas necessidades: texto limpo para classificação vs. thread completa para aprendizado?
+2. Guardar o `corpo_texto` original (com todo o histórico) em campo separado antes de aplicar o Passo 3?
+3. Para a IA assistente: reconstruir a thread completa via Gmail API (que tem acesso a todo o histórico da thread)?
+4. O que fazer com threads que têm histórico anterior a julho/2026 — descartamos esse passado ou tentamos recuperar?
+
+**Quando discutir:** após concluir o Campo 6 e antes de construir o módulo da IA Assistente.
+**Arquivo de destino:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — nova seção sobre IA Assistente.
+
+---
+
+## 🟡 PAINEL DO GESTOR — Design para threads com múltiplos CADOCs (registrado 30/07/2026)
+
+**Contexto da conversa (30/07/2026):**
+Michel levantou a questão do painel de acompanhamento para o gestor. O problema tem duas camadas:
+
+**Camada 1 — o problema do sistema antigo (já decidido):**
+O sistema antigo carimbava **toda a thread** com um único CADOC — se a thread falava de DDR e DRM
+ao mesmo tempo, ela ficava registrada só como DDR (o primeiro encontrado). Isso era um problema
+porque o gestor não sabia que aquela thread também tinha um DDR pendente, por exemplo.
+
+Já foi decidido (27/07/2026, ver pendência "simular modelo de duas camadas") que na nova
+arquitetura cada ocorrência de CADOC numa thread é rastreada **separadamente**, com status próprio.
+Uma thread pode gerar múltiplos registros: um para DDR, um para DRM, etc.
+
+**Camada 2 — o problema aberto (não decidido): como mostrar isso no painel?**
+Se uma thread agora pode gerar múltiplos registros, o painel do gestor precisa ser redesenhado.
+Michel quer algo **amigável, rápido e fácil** para acompanhar o que está pendente e concluído.
+
+As perguntas em aberto:
+1. O painel agrupa por **thread** (conversa) ou por **CADOC** (obrigação regulatória)?
+   - Por thread: o gestor vê conversas, mas pode ter vários CADOCs misturados numa linha
+   - Por CADOC: o gestor vê cada obrigação separada, mas a thread pode aparecer várias vezes
+2. Como mostrar claramente "thread X tem DDR pendente e DRM concluído"?
+3. Quais **status** existem para cada CADOC? (ex.: Aguardando → Em análise → Concluído → Vencido?)
+4. O que o gestor mais precisa ver de relance? (o que está atrasado? o que chegou hoje? o que está quase vencendo?)
+5. Filtros: por cliente? por tipo de CADOC? por data de vencimento?
+
+**O que Michel quer:** visualização rápida, clara, sem precisar abrir cada e-mail para saber o status.
+
+**Quando discutir:** após definir o modelo de dados da nova arquitetura (campos, status, regras).
+Pode ser durante ou após a simulação do modelo de duas camadas (ver pendência acima).
+**Arquivo de destino:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — seção do Painel do Gestor.
+
+---
+
+## 🟡 ENCODING — Corrigir codificação quebrada nos e-mails da TRUSTEE DTVM (registrado 30/07/2026)
+
+Durante a validação do Campo 6 (artifact), os exemplos dos e-mails da TRUSTEE DTVM apareceram com
+caracteres quebrados: `movimenta??o`, `?cone`, `Descri??o`, `confian?a`. O texto original deveria
+ser `movimentação`, `ícone`, `Descrição`, `confiança`.
+
+**Causa provável:** os e-mails da TRUSTEE foram enviados originalmente em codificação Windows-1252
+(padrão antigo de e-mail) e, ao serem processados pelo pipeline como UTF-8, os caracteres especiais
+(ç, ã, ê, ô, etc.) viraram caracteres de substituição (U+FFFD → exibido como `?`).
+
+**Impacto:** a IA classificadora vai receber texto com `??` no lugar de palavras reais — pode
+prejudicar a leitura e a classificação. Ocorre em todos os e-mails da TRUSTEE DTVM presentes no
+JSON01.
+
+**Quando corrigir:** antes de construir o classificador IA. Pode ser na fase de pré-processamento
+(etapa de limpeza do corpo — Passo 3), detectando encoding e convertendo corretamente.
+
+**O que fazer:**
+1. Identificar quantos e-mails no JSON01 têm esse problema (buscar por U+FFFD no campo `corpo_texto`)
+2. Verificar se o problema é só TRUSTEE ou há outros remetentes afetados
+3. Implementar detecção e reconversão de encoding no coletor Gmail
+
+---
+
+## 🟡 SPEC — Revisar formato dos Campos 1 a 5 (registrado 30/07/2026)
+
+O Campo 6 foi escrito com um formato mais rico e estruturado (Para que serve / O que o Gmail entrega / Passos / O que utilizaremos / Regras de negócio). Os Campos 1 a 5 foram escritos antes deste padrão e têm formato diferente.
+
+**Quando fazer:** após a Fase 2 estar concluída (análise das 12 categorias) e os Campos 6, 7 e 8 estarem completos — ou seja, quando a spec estiver completa em conteúdo.
+**O que fazer:** revisar Campos 1 a 5 e adaptar para o mesmo formato do Campo 6.
+**Arquivo:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` §10 (Campos 1 a 5)
+
+---
+
 ## 🟡 NOVA ARQUITETURA — Pós-catálogo: simular modelo de duas camadas (registrado 27/07/2026)
 
 **Para fazer após concluir o Catálogo de Categorias (Seção 15):**

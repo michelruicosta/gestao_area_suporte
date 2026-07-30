@@ -398,19 +398,50 @@ Quando o cliente envia para `suporte@` e não há colaborador identificado no Re
 
 ### Campo 6 — Corpo (texto da mensagem)
 
-> ⚠️ **PENDENTE — aguardando simulações de threads reais**
+**Para que serve:** é o texto que a IA lê para decidir o status de cada thread.
+
+---
+
+#### O que o Gmail entrega
+
+**Passo 1 — Formato de entrega**
+O Gmail entrega o corpo do e-mail no campo `body` em dois formatos:
+- HTML (maioria — e-mails enviados por pessoas)
+- Texto puro (minoria — sistemas automáticos)
+
+**Passo 2 — Conversão**
+O sistema converte o `body` para texto puro:
+- Se veio HTML → converte para texto puro
+- Se veio texto puro → usa direto
+
+Resultado sempre: texto puro.
+
+**Passo 3 — O que o texto puro contém**
+Junto com a mensagem real, podem aparecer os seguintes elementos:
+
+| Elemento | O que é |
+|---|---|
+| Assinatura | Texto do remetente ao final da mensagem ("Att, Lucas / Finaud") |
+| Histórico citado (`>`) | Replies anteriores da thread copiados no corpo |
+| Histórico encaminhado (`---`) | Conteúdo de e-mails anteriores colado ao encaminhar |
+| Rodapé automático | Texto gerado automaticamente por sistemas (ex: Google Groups) |
+| Marcador de imagem | Referência no lugar onde havia uma imagem |
+
+**Sobre imagens:**
+O Gmail não coloca o conteúdo visual da imagem no texto — coloca um marcador. O arquivo da imagem existe separado, acessível se necessário.
+
+Formatos de marcador identificados até agora:
+- `[image: nome_do_arquivo]`
+- `[cid:identificador]`
+- Outros formatos possíveis — a confirmar na Fase 2
+
+---
+
+#### O que utilizaremos e Regras de negócio
+
+> ⚠️ **Pendente — a definir após análise das 12 categorias (Fase 2, iniciada 30/07/2026)**
 >
-> Este campo será mapeado após simular as threads das categorias principais (DDR_2011, RETORNO_BACEN, DLO/DLI, SUPORTE) para entender o que a IA precisa ler e como extrair a informação relevante.
->
-> **O que já sabemos (análise de 500 amostras de produção, 28/07/2026):**
-> - 81% texto puro · 19% HTML (sistemas automáticos) · 23% tem `[cid:]` (imagens inline) · 15% tem "encaminhado colado" (mensagens anteriores copiadas no corpo)
-> - CSS VML: 0% na produção normal — só aparece com uso indevido de configuração específica do sistema antigo
-> - 99,7% das threads são de evento único (uma mensagem ou um ciclo curto); 0,3% (13 threads) são de canal (mesma thread reutilizada por meses)
->
-> **Questões a responder nas simulações:**
-> - Como tratar o "fio colado" (mensagens anteriores copiadas no corpo)?
-> - Como separar assinatura de e-mail do conteúdo relevante?
-> - O que do corpo é necessário para a IA classificar vs. o que é ruído?
+> A Fase 2 identificará, por categoria, quais elementos do Passo 3 aparecem e com que frequência, e definirá as regras de limpeza: o que remover, o que manter, o que encaminhar para revisão humana.
 
 ---
 

@@ -10,6 +10,40 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-07-30 (continuação de sessão)
+
+### 30/07 — Campo 6 DDR_2011: Passo 3 validado por Michel — todos os 6 elementos ✅
+
+**🔎 Em miúdos:** Michel olhou exemplos reais do que o sistema detecta (e não detecta) em cada elemento de "sujeira" no corpo dos e-mails, e confirmou que está correto para todos os 6 tipos.
+
+**O que foi feito:**
+1. Criado script permanente `scripts/consultas/analisar_corpo_emails.py` — analisa qualquer categoria com os padrões do Passo 3; parametrizado por projeto e CADOC.
+2. Padrão de assinatura iterado até 96,4% (3 rodadas de melhoria): adicionados fechamentos em inglês (`Kind Regards`, `Sincerely`, etc.) e `Grata/Grato`; corrigido problema do rodapé Google Groups que empurrava assinatura para fora da janela de busca.
+3. Artifact de validação publicado: https://claude.ai/code/artifact/5054a35e-cbae-4beb-af23-df3c0972bcae
+4. Michel validou os 6 elementos via artifact — exemplos detectados e não detectados conferidos.
+
+**Resultados validados:**
+
+| Elemento | Detectado em | Decisão |
+|---|---|---|
+| Assinatura | 96,4% (2.266/2.350) | ✅ 84 casos top-post aceitos — não prejudica a IA |
+| Histórico citado (`>`) | 37,1% (873/2.350) | ✅ |
+| Histórico encaminhado (`---`) | 22,1% (519/2.350) | ✅ |
+| Rodapé automático | 95,5% (2.244/2.350) | ✅ |
+| `[image:]` | 23,9% (562/2.350) | ✅ |
+| `[cid:]` | 18,9% (445/2.350) | ✅ |
+
+**Conceitos entendidos e confirmados por Michel (30/07/2026):**
+- O Passo 3 resolve deduplicação automaticamente: cada e-mail fica só com o texto novo
+- `>` = resposta (reply); `---` = encaminhamento (forward) — dois formatos, mesmo propósito: remover conteúdo antigo
+- Para classificação: remover tudo é suficiente. Para IA Assistente de aprendizado: precisa do histórico completo → pendência registrada
+- Threads com múltiplos CADOCs no painel do gestor → pendência registrada
+
+**Validação:** ✅ Todos os 6 elementos aprovados por Michel (30/07/2026).
+**Sem teste:** script de consulta — não modifica dados, não tem lógica de produção que precise de cobertura de teste.
+
+---
+
 ## 2026-07-30
 
 ### 30/07 — Estrutura de documentação do projeto aprovada: 5 documentos com papéis distintos

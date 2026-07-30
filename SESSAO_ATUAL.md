@@ -32,15 +32,29 @@
 | Verificação | Resultado |
 |---|---|
 | HTML (não texto puro) | 99,8% |
-| Seta `>` (reply citado) | 91,0% |
-| Rodapé Google Groups | 95,5% |
-| Separador Outlook | 6,3% |
-| Assinatura detectada | 92,8% |
-| Com `[image: xxx]` no texto | 23,9% |
+| Seta `>` (reply citado) | 37,1% têm histórico citado |
+| Rodapé Google Groups | 95,5% têm rodapé automático |
+| Separador encaminhado (`---`) | 22,1% têm histórico encaminhado |
+| Assinatura detectada | **96,4%** (após 3 rodadas de melhoria do padrão) |
+| Com `[image:]` no texto | 23,9% |
+| Com `[cid:]` no texto | 18,9% |
 | Corpo vazio após limpeza | 0,2% (4 e-mails — todos ENCAMINHAMENTO_INTERNO R5) |
 
 **Artifact visual publicado (4 casos de imagem — Fase 1 e Fase 2):**
 https://claude.ai/code/artifact/f86d271e-b354-49e2-8d2b-b110e68652c6
+
+**Artifact de validação Campo 6 — Passo 3 (6 elementos, DDR_2011):**
+https://claude.ai/code/artifact/5054a35e-cbae-4beb-af23-df3c0972bcae
+✅ **Todos os 6 elementos validados por Michel (30/07/2026):**
+- Assinatura: 96,4% — 84 casos top-post aceitos como limitação conhecida
+- Histórico citado (`>`): 37,1% ✅
+- Histórico encaminhado (`---`): 22,1% ✅
+- Rodapé automático: 95,5% ✅
+- `[image:]`: 23,9% ✅
+- `[cid:]`: 18,9% ✅
+
+**Script permanente criado:** `scripts/consultas/analisar_corpo_emails.py`
+(parametrizado por projeto e categoria — reutilizável para todas as 12 categorias)
 
 **Estrutura de documentação aprovada (5 componentes):**
 - Especificação = o mapa (decisões e regras)
@@ -57,7 +71,7 @@ https://claude.ai/code/artifact/f86d271e-b354-49e2-8d2b-b110e68652c6
 ### Estado atual
 
 **§14 da spec:** ✅ completo — todas as 12 categorias com regras R1–R5 documentadas e validadas
-**§10 Campo 6:** 🔴 DDR_2011 analisado ✅ · 11 categorias restantes ☐
+**§10 Campo 6 — Passo 3:** ✅ DDR_2011 analisado e validado · 11 categorias restantes ☐
 **§10 Campos 7, 8:** 🔴 aguardam Campo 6 concluído
 **GitHub:** `github.com/michelruicosta/gestao_area_suporte` — branch `main`
 
@@ -65,10 +79,11 @@ https://claude.ai/code/artifact/f86d271e-b354-49e2-8d2b-b110e68652c6
 
 ### Próximos passos
 
-1. 🔴 **Campo 6 — próxima categoria: SCD_4111** (mesma metodologia do DDR_2011)
-   - Scripts prontos no scratchpad: `simular_limpeza_ddr.py` e `inspecionar_imagens_ddr.py` (adaptar filtro de cadoc)
+1. 🔴 **Campo 6 — próxima categoria: SCD_4111** — mesmo fluxo do DDR_2011:
+   - Rodar `scripts/consultas/analisar_corpo_emails.py` com `CADOC_FILTRO = '4111'`
+   - Validar os 6 elementos no artifact de validação (ou criar novo artifact para SCD_4111)
    - Demais 10 categorias na sequência
-2. 🔴 Após todas as 12 → escrever Campo 6 na spec §10 (3 partes) + artifact visual completo
+2. 🔴 Após todas as 12 → escrever Campo 6 na spec §10 (3 partes: "O que temos" / "O que utilizaremos" / "Regras de negócio") + artifact visual completo
 3. 🟡 Confirmar T04 (Western Union) com Michel: o papel da Finaud neste fluxo
 4. 🟡 Criar novo MAPA_DO_PROJETO.md para a nova arquitetura
 5. 🟡 Fase 1 da nova arquitetura: protótipo do coletor Gmail + classificador IA
