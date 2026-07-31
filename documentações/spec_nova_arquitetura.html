@@ -117,31 +117,9 @@
   .callout-ok { background: var(--ok-bg); border-color: var(--ok-border); color: var(--ok-text); }
   .callout-info { background: var(--accent-soft); border-color: var(--accent); color: var(--text); }
 
-  /* Category pills */
-  .cat { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px; font-family: "SF Mono", Consolas, monospace; }
-  .cat-ddr { background: #DBEAFE; color: #1E40AF; }
-  .cat-4111 { background: #EDE9FE; color: #5B21B6; }
-  .cat-drm { background: #FCE7F3; color: #9D174D; }
-  .cat-dlo { background: #D1FAE5; color: #065F46; }
-  .cat-dli { background: #CCFBF1; color: #134E4A; }
-  .cat-drl { background: #FEF3C7; color: #78350F; }
-  .cat-s5 { background: #F3F4F6; color: #374151; }
-  .cat-suporte { background: #F5F3FF; color: #4C1D95; }
-  .cat-bacen { background: #FEE2E2; color: #7F1D1D; }
-  .cat-force { background: #FFF7ED; color: #7C2D12; }
+  /* Category labels — plain monospace, sem cor */
+  .cat { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px; font-family: "SF Mono", Consolas, monospace; background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
 
-  @media (prefers-color-scheme: dark) {
-    .cat-ddr { background: #1E3A5F; color: #93C5FD; }
-    .cat-4111 { background: #2E1A5C; color: #C4B5FD; }
-    .cat-drm { background: #3D0A24; color: #FBCFE8; }
-    .cat-dlo { background: #0A2D1C; color: #6EE7B7; }
-    .cat-dli { background: #0A2424; color: #5EEAD4; }
-    .cat-drl { background: #2D1C08; color: #FDE68A; }
-    .cat-s5 { background: #1F2937; color: #9CA3AF; }
-    .cat-suporte { background: #1E1040; color: #DDD6FE; }
-    .cat-bacen { background: #3D0A0A; color: #FCA5A5; }
-    .cat-force { background: #2D1408; color: #FED7AA; }
-  }
 
   /* Chips */
   .chip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; }
@@ -167,9 +145,8 @@
 <div class="top-bar">
   <div class="logo">ORÁCULO 360</div>
   <div class="title">Especificação da Nova Arquitetura</div>
-  <span class="badge badge-v">v2.0 · 28/07/2026</span>
-  <span class="badge badge-ok">✅ Campo 6 concluído</span>
-  <span class="badge badge-pend" style="margin-left:4px;">⚠ Campos 7-8 pendentes</span>
+  <span class="badge badge-v">v2.0 · 31/07/2026</span>
+  <span class="badge badge-ok">✅ §10 completo — Campos 1–8 concluídos</span>
 </div>
 
 <div class="layout">
@@ -180,7 +157,7 @@
     <a href="#s3" data-sec="s3">§3 As 12 categorias</a>
     <a href="#s4" data-sec="s4">§4 O que não entra</a>
     <div class="sidebar-group">Técnico</div>
-    <a href="#s5" data-sec="s5">§5 Conta BCC</a>
+    <a href="#s5" data-sec="s5">§5 Como os e-mails chegam</a>
     <a href="#s6" data-sec="s6">§6 Onde roda</a>
     <a href="#s7" data-sec="s7">§7 Segurança</a>
     <a href="#s8" data-sec="s8">§8 Plano de implantação</a>
@@ -201,151 +178,118 @@
     <h1>Especificação da Nova Arquitetura</h1>
     <div class="meta">
       <span>Versão 2.0</span>
-      <span>28/07/2026</span>
+      <span>31/07/2026</span>
       <span>Gmail API + IA Classificadora</span>
     </div>
 
     <section id="s1">
-      <h2><span class="sec-num">§1</span> O que é este documento</h2>
-      <p>Este documento é a especificação da <strong>nova arquitetura do Oráculo 360</strong> — a que substituirá os 16 scripts do pipeline atual por um sistema mais direto: leitura do Gmail via API + IA classificadora.</p>
-      <p>Ele é a <strong>fonte da verdade</strong> do novo projeto. Toda regra, decisão, campo, categoria e exemplo documentado aqui foi validado com Michel ou anotado como pendente de validação.</p>
+      <h2><span class="sec-num">§1</span> O que é o Oráculo 360</h2>
+      <p>O Oráculo 360 monitora os e-mails trocados entre a Finaud e seus clientes. O sistema tem quatro peças:</p>
+      <ol style="margin: 12px 0 12px 20px; line-height: 2;">
+        <li><strong>Leitura do Gmail</strong> — acessa a caixa de e-mail diretamente via Gmail API e lê todas as conversas</li>
+        <li><strong>IA classificadora</strong> — entende cada e-mail e identifica a qual categoria ele pertence — obrigações regulatórias (como DDR, DRM, DLO) ou suporte — sendo que um mesmo e-mail pode envolver mais de uma categoria ao mesmo tempo</li>
+        <li><strong>Painel operacional</strong> — mostra ao gestor o que está aguardando ação (da Finaud ou do cliente) e o que já foi concluído, por categoria</li>
+        <li><strong>IA assistente</strong> <em>(2ª fase)</em> — aprende com os casos já resolvidos para ajudar a equipe a entender como tratar situações parecidas no futuro</li>
+      </ol>
       <div class="callout callout-ok">
-        ✅ <strong>Campo 6</strong> (§10) concluído em 30/07/2026 — 6.989 e-mails em 12 categorias analisados; 8 regras de limpeza L1–L8 definidas.
-      </div>
-      <div class="callout callout-warn">
-        ⚠️ <strong>Campos 7 e 8</strong> (§10) aguardam definição do modelo de dados da Fase 1.
+        ✅ <strong>Decisão confirmada por Michel (22/07/2026):</strong> o sistema usará Gmail API direta para leitura dos e-mails em produção. O Gmail MCP continua disponível como ferramenta de análise durante o desenvolvimento.
       </div>
     </section>
 
     <section id="s2">
-      <h2><span class="sec-num">§2</span> Funcionalidades do sistema</h2>
-      <p>O sistema tem <strong>três peças</strong>:</p>
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr><th>#</th><th>Peça</th><th>O que faz</th></tr></thead>
-          <tbody>
-            <tr><td><strong>F1</strong></td><td>Leitor do Gmail</td><td>Lê a caixa <code>oraculo@finaud.com.br</code> via Gmail API. Coleta threads novas e atualiza as existentes.</td></tr>
-            <tr><td><strong>F2</strong></td><td>Classificador IA</td><td>Para cada thread, identifica a categoria regulatória, o cliente, o lado responsável (Finaud ou cliente) e o prazo.</td></tr>
-            <tr><td><strong>F3</strong></td><td>Painel operacional</td><td>Exibe threads ativas organizadas por prazo, com destaque visual de urgência. Permite filtrar por responsável e categoria.</td></tr>
-          </tbody>
-        </table>
-      </div>
+      <h2><span class="sec-num">§2</span> O que o sistema faz</h2>
+      <ul style="margin: 12px 0 12px 20px; line-height: 2;">
+        <li>Monitora todas as conversas na caixa <code>oraculo@finaud.com.br</code></li>
+        <li>Identifica automaticamente a qual categoria cada e-mail pertence (pode ser mais de uma)</li>
+        <li>Define o status de cada conversa — <strong>aguardando</strong> ou <strong>concluído</strong></li>
+        <li>Monitora prazos regulatórios</li>
+      </ul>
+      <p>O sistema ficará em execução permanente, atualizando automaticamente quando chegarem threads novas ou quando threads existentes receberem novos e-mails.</p>
+      <h3 style="margin-top: 20px;">O que o sistema não faz</h3>
+      <ul style="margin: 8px 0 0 20px; line-height: 2; color: var(--text-muted);">
+        <li>Não gera os CADOCs — só monitora a entrega</li>
+        <li>Não integra com o sistema interno da Finaud</li>
+        <li>Não cobre WhatsApp, telefone ou outros canais</li>
+      </ul>
     </section>
 
     <section id="s3">
-      <h2><span class="sec-num">§3</span> As 12 categorias de e-mail e seus fluxos</h2>
-      <p>Cada e-mail pertence a uma das 12 categorias abaixo. Cada categoria tem seu próprio fluxo, prazo e critério de conclusão.</p>
+      <h2><span class="sec-num">§3</span> As 12 categorias</h2>
+      <p>O sistema monitora 12 categorias de e-mail. O detalhamento completo de cada uma — como a IA reconhece, regras de status e exemplos reais — está no §14.</p>
       <div class="tbl-wrap">
         <table>
-          <thead><tr><th>Categoria</th><th>O que é</th><th>Prazo</th><th>Quem entrega ao BACEN</th></tr></thead>
+          <thead><tr><th>Categoria</th><th>O que é</th></tr></thead>
           <tbody>
-            <tr>
-              <td><span class="cat cat-ddr">DDR_2011</span></td>
-              <td>Posições financeiras diárias (TVM, câmbio, compromissadas…)</td>
-              <td>D+3 úteis</td>
-              <td>Cliente (após Finaud gerar)</td>
-            </tr>
-            <tr>
-              <td><span class="cat cat-4111">SCD_4111</span></td>
-              <td>Saldo Contábil Diário (COSIF)</td>
-              <td>D+3 úteis</td>
-              <td>Cliente (após Finaud gerar)</td>
-            </tr>
-            <tr>
-              <td><span class="cat cat-drm">DRM_2060</span></td>
-              <td>Risco de mercado — mensal</td>
-              <td>D+5 úteis do mês seguinte</td>
-              <td>Cliente (após Finaud gerar)</td>
-            </tr>
-            <tr>
-              <td><span class="cat cat-dlo">DLO_2061</span></td>
-              <td>Limites operacionais — mensal (conglomerado)</td>
-              <td>Dia 5 do 2º mês seguinte</td>
-              <td>Cliente (após Finaud gerar)</td>
-            </tr>
-            <tr>
-              <td><span class="cat cat-dli">DLI_2062</span></td>
-              <td>Limites operacionais individuais — mensal</td>
-              <td>Dia 5 do 2º mês seguinte</td>
-              <td>Cliente ou Finaud diretamente</td>
-            </tr>
-            <tr>
-              <td><span class="cat cat-drl">DRL_2160</span></td>
-              <td>Risco de liquidez / colchão de liquidez — mensal</td>
-              <td>D+10 úteis do mês seguinte</td>
-              <td>Cliente (após Finaud gerar)</td>
-            </tr>
-            <tr>
-              <td><span class="cat cat-s5">S5</span></td>
-              <td>Resultado Quantitativo de Risco (Segmento 5)</td>
-              <td>D+5 úteis</td>
-              <td><strong>Não vai ao BACEN</strong> — fica entre Finaud e cliente</td>
-            </tr>
-            <tr>
-              <td><span class="cat cat-suporte">SUPORTE</span></td>
-              <td>Apoio geral, dúvidas, acessos, cobranças, onboarding</td>
-              <td>Conforme urgência</td>
-              <td>Não se aplica</td>
-            </tr>
-            <tr>
-              <td><span class="cat cat-bacen">RETORNO_BACEN</span></td>
-              <td>Rejeição ou crítica do BACEN a uma entrega anterior</td>
-              <td>Urgente — prazo do BACEN</td>
-              <td>Não se aplica (é resposta ao BACEN)</td>
-            </tr>
-            <tr>
-              <td><span class="cat cat-force">FORCAPITAL</span></td>
-              <td>Projeção de capital — ferramenta Finaud</td>
-              <td>D+5 úteis</td>
-              <td>Não vai ao BACEN</td>
-            </tr>
-            <tr>
-              <td><span class="cat cat-bacen" style="background:var(--surface2);color:var(--text);">DRSAC_2030</span></td>
-              <td>Demonstrativo de Responsabilidade em Soluções de Aplicações em Crédito — semestral (base: jun e dez)</td>
-              <td>10º DU do 2º mês após data-base</td>
-              <td>Cliente — Finaud orienta/responde</td>
-            </tr>
-            <tr>
-              <td><span class="cat cat-suporte" style="background:#E0F2FE;color:#0369A1;">PVCA_6209</span></td>
-              <td>Elaboração e Remessa de Informações Relativas a Pagamentos de Varejo e Canais de Atendimento — trimestral (31/mar, 30/jun, 30/set, 31/dez)</td>
-              <td>Último DU do mês seguinte ao fim do trimestre</td>
-              <td>Cliente — via STA</td>
-            </tr>
+            <tr><td><span class="cat cat-ddr">DDR 2011</span></td><td>Relatório diário das posições financeiras do cliente — títulos, câmbio, compromissadas. O cliente envia à Finaud todo dia útil para gerar o CADOC.</td></tr>
+            <tr><td><span class="cat cat-4111">SCD 4111</span></td><td>Saldo diário das contas contábeis do cliente no padrão COSIF do BACEN. Enviado todo dia útil.</td></tr>
+            <tr><td><span class="cat cat-drm">DRM 2060</span></td><td>Relatório mensal que mede a exposição da instituição a riscos de mercado — juros, câmbio e preços de ativos.</td></tr>
+            <tr><td><span class="cat cat-dlo">DLO 2061</span></td><td>Relatório mensal sobre os limites regulatórios do conglomerado — adequação de capital (Basileia) e concentração de riscos.</td></tr>
+            <tr><td><span class="cat cat-dli">DLI 2062</span></td><td>Mesmo que o DLO, mas individual — foca nos limites de cada instituição separadamente.</td></tr>
+            <tr><td><span class="cat cat-drl">DRL 2160</span></td><td>Relatório mensal do "colchão de liquidez" — quanto de ativos líquidos a instituição mantém para cobrir saídas em situações de estresse.</td></tr>
+            <tr><td><span class="cat cat-s5">S5</span></td><td>Relatório de risco para instituições de menor porte (Segmento 5 do BACEN). Fica entre Finaud e cliente — não é enviado ao BACEN.</td></tr>
+            <tr><td><span class="cat cat-bacen">RETORNO_BACEN</span></td><td>Comunicado do BACEN rejeitando ou criticando uma entrega anterior. O cliente repassa à Finaud para investigar e corrigir.</td></tr>
+            <tr><td><span class="cat cat-suporte">SUPORTE</span></td><td>Dúvidas, suporte técnico, acesso a sistemas, onboarding de clientes novos, reuniões e comunicação geral — tudo que não é entrega de CADOC.</td></tr>
+            <tr><td><span class="cat cat-force">FORCAPITAL</span></td><td>Serviço da Finaud para projeção de capital do cliente. Não é regulatório — não vai ao BACEN.</td></tr>
+            <tr><td><span class="cat">DRSAC 2030</span></td><td>Relatório semestral sobre operações de crédito. A Finaud orienta, mas quem gera e entrega ao BACEN é o próprio cliente.</td></tr>
+            <tr><td><span class="cat">PVCA 6209</span></td><td>Relatório trimestral sobre pagamentos de varejo e canais de atendimento. O cliente transmite diretamente ao BACEN via sistema STA.</td></tr>
           </tbody>
         </table>
       </div>
     </section>
 
     <section id="s4">
-      <h2><span class="sec-num">§4</span> O que não entra</h2>
+      <h2><span class="sec-num">§4</span> E-mails que não entram na triagem</h2>
+      <p>O sistema descarta automaticamente estes remetentes antes de classificar. A lista é configurável na tela de filtros — sem mexer no código.</p>
+
+      <h3>Por endereço exato</h3>
       <div class="tbl-wrap">
         <table>
-          <thead><tr><th>O que é</th><th>Por que não entra</th></tr></thead>
+          <thead><tr><th>Remetente</th><th>Motivo</th></tr></thead>
           <tbody>
-            <tr><td>E-mails internos da Finaud (entre colaboradores)</td><td>Remetente e destinatário são ambos <code>@finaud.com.br</code> — thread interna, sem cliente</td></tr>
-            <tr><td>Alertas automáticos do sistema Finaud</td><td>Remetente <code>contato@finaud.com.br</code> com assunto "📢" — notificação, não cliente</td></tr>
-            <tr><td>Notificações FogBugz</td><td>Assunto contém "FogBugz" ou "Caso NNNN" — bug interno de desenvolvimento</td></tr>
-            <tr><td>E-mails sem BCC para oraculo@finaud.com.br</td><td>Fora da caixa de captura — a conta BCC só recebe o que foi copiado</td></tr>
+            <tr><td><code>riskdriver@finaud.com.br</code></td><td>Sistema automático Risk Driver</td></tr>
+            <tr><td><code>contato@finaud.com.br</code></td><td>Sistema automático de alertas</td></tr>
+            <tr><td><code>coleta.oraculo@finaud.com.br</code></td><td>Conta de coleta do próprio sistema</td></tr>
+            <tr><td><code>do-not-reply@finaud.fogbugz.com</code></td><td>Sistema de tickets FogBugz</td></tr>
+            <tr><td><code>comunicacao@comunicacao.bcb.gov.br</code></td><td>Comunicados automáticos do BACEN</td></tr>
           </tbody>
         </table>
+      </div>
+
+      <h3>Por padrão no endereço (qualquer domínio)</h3>
+      <p style="font-family: 'SF Mono', Consolas, monospace; font-size: 13px; line-height: 2;">
+        <code>noreply</code> · <code>no-reply</code> · <code>donotreply</code> · <code>mailer-daemon</code> · <code>newsletter</code> · <code>notification</code> · <code>bounce</code> · <code>autorespond</code>
+      </p>
+
+      <h3>Por texto no assunto</h3>
+      <p style="font-family: 'SF Mono', Consolas, monospace; font-size: 13px; line-height: 2;">
+        <code>FogBugz</code> · <code>Risk Driver -</code> · <code>Atualização Bacen</code>
+      </p>
+
+      <div class="callout callout-ok">
+        ✅ <strong>Tela de filtros:</strong> remetente (obrigatório) + assunto (opcional). Permite adicionar novos remetentes a bloquear sem intervenção técnica. Quando um remetente precisar de mais de um filtro, o campo assunto refina a regra.
       </div>
     </section>
 
     <section id="s5">
-      <h2><span class="sec-num">§5</span> Conta BCC — <code>oraculo@finaud.com.br</code></h2>
-      <p>Criada em <strong>03/07/2026</strong>. Todos os colaboradores da Finaud foram instruídos a colocar esta conta em BCC (cópia oculta) em toda comunicação com clientes relacionada a regulatórios.</p>
+      <h2><span class="sec-num">§5</span> Como os e-mails chegam ao sistema</h2>
+      <p>A conta <code>oraculo@finaud.com.br</code> recebe os e-mails por dois caminhos independentes:</p>
       <div class="tbl-wrap">
         <table>
-          <thead><tr><th>Atributo</th><th>Valor</th></tr></thead>
+          <thead><tr><th>Caminho</th><th>Como funciona</th></tr></thead>
           <tbody>
-            <tr><td>E-mail</td><td><code>oraculo@finaud.com.br</code></td></tr>
-            <tr><td>Tipo</td><td>Conta Google Workspace — caixa compartilhada de captura</td></tr>
-            <tr><td>Quem usa</td><td>Todos os colaboradores da Finaud colocam em BCC automaticamente</td></tr>
-            <tr><td>Dados disponíveis em 28/07/2026</td><td>8.825 e-mails · 4.786 threads (conta de produção)</td></tr>
-            <tr><td>O sistema lê esta conta</td><td>Via Gmail API — não via MCP (MCP é só para análise/desenvolvimento)</td></tr>
+            <tr>
+              <td><strong>1 — Grupo de suporte</strong></td>
+              <td>A conta oraculo@ é membro do grupo <code>suporte@finaud.com.br</code>. Todo e-mail enviado para suporte@ chega automaticamente também na caixa do oraculo@, da mesma forma que chega para qualquer outro membro do grupo.</td>
+            </tr>
+            <tr>
+              <td><strong>2 — Cópia automática (Workspace)</strong></td>
+              <td>O Google Workspace está configurado para enviar uma cópia silenciosa de todo e-mail recebido por qualquer endereço @finaud.com.br para a conta oraculo@. Essa configuração fica no painel de administração (Gmail → Roteamento padrão) e é transparente: os colaboradores não fazem nada, os clientes não veem.</td>
+            </tr>
           </tbody>
         </table>
       </div>
+      <p style="margin-top:12px"><strong>Resultado:</strong> mesmo quando um cliente escreve diretamente para rodrigo.tiberio@finaud.com.br ou andrea.inacio@finaud.com.br — sem copiar o suporte@ — o oraculo@ ainda recebe o e-mail pelo Caminho 2.</p>
+      <div class="callout ok" style="margin-top:12px">✅ <strong>Verificação feita em 31/07/2026:</strong> encontramos e-mails de clientes externos na caixa do oraculo@ enviados diretamente para colaboradores, sem nenhum campo (Para, CC ou BCC) com suporte@finaud.com.br. O Caminho 2 está ativo e funcionando.</div>
     </section>
 
     <section id="s6">

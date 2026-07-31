@@ -156,6 +156,11 @@ o comportamento do sistema é bloqueador para a fase correspondente.
 código sem registro — e a spec perde o valor de ser o documento mestre. (Regra aprovada
 por Michel em 31/07/2026.)
 
+**Telas vêm por último:** o design de telas (§13 da spec) só começa depois que todas as
+seções funcionais da spec estiverem completas — comportamento, regras, filas, ciclo de
+vida. Telas dependem de tudo isso; definir tela antes de definir comportamento inverte
+a ordem e cria inconsistência. (Confirmado por Michel em 31/07/2026.)
+
 ## Regra obrigatória: backup antes de qualquer operação que modifique dados
 
 Antes de executar qualquer rotina que grave ou altere arquivos de dados, fazer backup organizado

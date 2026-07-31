@@ -1,7 +1,7 @@
 # Especificação — Nova Arquitetura do Oráculo 360
 **Versão:** 2.0  
-**Data:** 28/07/2026  
-**Status:** Em desenvolvimento ativo — Fase 0 concluída (19 tipos documentados); Fase 1 aguarda conclusão dos campos 6, 7 e 8
+**Data:** 31/07/2026  
+**Status:** Em desenvolvimento ativo — Spec §7 completa (campos 1–8); revisão sequencial em andamento — próxima seção: §8 Regras de classificação das threads
 
 ---
 
@@ -9,38 +9,33 @@
 
 | § | Seção |
 |---|---|
-| 1 | Por que estamos fazendo isso |
+| 1 | O que é o Oráculo 360 |
 | 2 | O que o sistema faz |
 | 3 | As 10 categorias de e-mail e seus fluxos |
 | 4 | Quem usa e para quê |
-| 5 | Como o sistema é construído (as 3 peças) |
+| 5 | Como os e-mails chegam ao sistema |
 | 6 | Onde roda |
-| 7 | Ganho principal e risco principal |
-| 8 | Plano de implantação por fases |
-| 9 | Decisões tomadas e justificativas |
-| 10 | Mapeamento de campos do e-mail (Campos 1–8) |
-| 11 | Regras de classificação das threads |
-| 12 | Modelo de rastreamento — duas camadas |
-| 13 | Telas do sistema |
-| 14 | Catálogo de categorias — o que a IA precisa saber |
-| 15 | Exemplos reais de threads (T01–T19) |
-| 16 | Padrões observados para guiar a IA |
+| 7 | Mapeamento de campos do e-mail (Campos 1–8) |
+| 8 | Regras de classificação das threads |
+| 9 | Modelo de rastreamento — duas camadas |
+| 10 | Telas do sistema |
+| 11 | Catálogo de categorias — o que a IA precisa saber |
+| 12 | Exemplos reais de threads (T01–T19) |
+| 13 | Padrões observados para guiar a IA |
+| 14 | Decisões tomadas e justificativas |
+| 15 | Plano de implantação por fases |
 | A | Apêndice A — Colaboradores Finaud identificados |
 
 ---
 
-## 1. Por que estamos fazendo isso
+## 1. O que é o Oráculo 360
 
-O sistema atual funciona, mas é difícil de manter — são 16 scripts que dependem uns dos outros, rodam só na máquina do Michel, e qualquer mudança exige cuidado para não quebrar outra coisa. A nova arquitetura resolve isso: lê os e-mails direto do Gmail, usa IA para entender e classificar, e roda em servidor permanente acessível pela equipe.
+O Oráculo 360 monitora os e-mails trocados entre a Finaud e seus clientes. O sistema tem quatro peças:
 
-### Como os e-mails são lidos
-
-Via **Gmail API direta** — o protocolo oficial do Google para sistemas acessarem caixas de e-mail. Não via Gmail MCP.
-
-**Por que API e não MCP:**  
-O Gmail MCP é uma ferramenta que o Claude usa durante o desenvolvimento para consultar e-mails no chat (construir o catálogo, verificar casos reais). Ele entrega campos limitados — por exemplo, não expõe o campo Reply-To, que é necessário para identificar o remetente real quando o e-mail passa pelo grupo `suporte@finaud.com.br`.
-
-A Gmail API direta entrega todos os campos do e-mail (From, To, CC, Reply-To, Subject, corpo, anexos, Thread ID etc.) e já está funcionando no projeto — o `coletor_teste.py` usa exatamente essa abordagem.
+1. **Leitura do Gmail** — acessa a caixa de e-mail diretamente via Gmail API e lê todas as conversas
+2. **IA classificadora** — entende cada e-mail e identifica a qual categoria ele pertence — obrigações regulatórias (como DDR, DRM, DLO) ou suporte — sendo que um mesmo e-mail pode envolver mais de uma categoria ao mesmo tempo
+3. **Painel operacional** — mostra ao gestor o que está aguardando ação (da Finaud ou do cliente) e o que já foi concluído, por categoria
+4. **IA assistente** *(2ª fase)* — aprende com os casos já resolvidos para ajudar a equipe a entender como tratar situações parecidas no futuro
 
 > **Decisão confirmada por Michel (22/07/2026):** o sistema usará Gmail API direta para leitura dos e-mails em produção. O Gmail MCP continua disponível como ferramenta de análise durante o desenvolvimento.
 
@@ -48,79 +43,85 @@ A Gmail API direta entrega todos os campos do e-mail (From, To, CC, Reply-To, Su
 
 ## 2. O que o sistema faz
 
-### Funcionalidades obrigatórias
+### O que o sistema faz
 
-| # | O que faz | Detalhes |
-|---|---|---|
-| F1 | Lê todas as threads do Gmail | Conecta direto na caixa, sem coleta dia a dia |
-| F2 | Classifica por categoria regulatória | DDR, DLI, DRM, DLO, S5, etc. — automático via IA |
-| F3 | Detecta de qual lado está a thread | Aguardando ação da Finaud ou do cliente |
-| F4 | Rastreia prazos | Regras do calendário regulatório (reutilizar as que já existem) |
-| F5 | Lê texto de imagens (OCR) | Para entender prints de tela e documentos enviados como imagem |
-| F6 | IA que aprende dos casos | Após a thread ser resolvida, vira conhecimento consultável |
+- Monitora todas as conversas na caixa oraculo@finaud.com.br
+- Identifica automaticamente a qual categoria cada e-mail pertence (pode ser mais de uma)
+- Define o status de cada conversa — aguardando ou concluído
+- Monitora prazos regulatórios
 
-### O que está fora do escopo
-- Integração com sistema interno da Finaud (cálculo, geração de CADOC)
-- Anotações manuais — tudo que importa está no e-mail
-- Comunicação por outros canais (WhatsApp, telefone)
+O sistema ficará em execução permanente, atualizando automaticamente quando chegarem threads novas ou quando threads existentes receberem novos e-mails.
+
+### O que o sistema não faz
+
+- Não gera os CADOCs (só monitora a entrega)
+- Não integra com o sistema interno da Finaud
+- Não cobre WhatsApp, telefone ou outros canais
 
 ---
 
 ## 3. As 12 categorias de e-mail e seus fluxos
 
-O sistema trata 12 categorias distintas de e-mail. Cada categoria tem suas próprias regras, prazo regulatório e fluxo — o que a IA precisa saber sobre cada uma está no §14 (Catálogo de categorias) e os exemplos reais estão no §15.
+O sistema trata 12 categorias distintas de e-mail. Cada categoria tem suas próprias regras, prazo regulatório e fluxo — o que a IA precisa saber sobre cada uma está no §11 (Catálogo de categorias) e os exemplos reais estão no §12.
 
-| Categoria | O que é | Frequência | Prazo | Quem entrega ao BACEN |
-|---|---|---|---|---|
-| DDR 2011 | Documento Diário de Posições — posições financeiras do cliente ao final do dia | Diária | D+3 úteis | Cliente (após Finaud gerar) |
-| SCD 4111 | Saldo Contábil Diário — lançamentos nas contas COSIF | Diária | D+3 úteis | Cliente (após Finaud gerar) |
-| DRM 2060 | Demonstrativo de Risco de Mercado | Mensal | D+5 úteis do mês seguinte | Cliente (após Finaud gerar) |
-| DLO 2061 | Demonstrativo de Limites Operacionais | Mensal | Dia 5 do 2º mês seguinte | Cliente (após Finaud gerar) |
-| DLI 2062 | Demonstrativo de Limites Operacional Individual | Mensal | Dia 5 do 2º mês seguinte | Cliente ou Finaud diretamente |
-| DRL 2160 | Demonstrativo de Risco de Liquidez ("Colchão de Liquidez") | Mensal | D+10 úteis do mês seguinte | Cliente (após Finaud gerar) |
-| S5 | Resultado Quantitativo de Risco — Segmento 5 | Mensal | D+5 úteis | Não vai ao BACEN |
-| RETORNO_BACEN | Críticas e rejeições do BACEN a entregas anteriores | Conforme ocorrência | Urgente — prazo do BACEN | Não se aplica |
-| SUPORTE | Apoio, dúvidas, acesso a sistemas, comunicação geral | Conforme ocorrência | Conforme urgência | Não se aplica |
-| FORCAPITAL | Ferramenta de projeção de capital — serviço da Finaud | Conforme ocorrência | D+5 úteis | Não vai ao BACEN |
-| DRSAC 2030 | Demonstrativo de Responsabilidade em Soluções de Aplicações em Crédito | Semestral (jun e dez) | 10º DU do 2º mês após a data-base | Cliente (Finaud orienta/responde) |
-| PVCA 6209 | Elaboração e Remessa de Informações Relativas a Pagamentos de Varejo e a Canais de Atendimento | Trimestral | Último DU do mês seguinte ao fim do trimestre | Cliente — via STA |
+| Categoria | O que é |
+|---|---|
+| DDR 2011 | Relatório diário das posições financeiras do cliente — títulos, câmbio, compromissadas. O cliente envia à Finaud todo dia útil para gerar o CADOC. |
+| SCD 4111 | Saldo diário das contas contábeis do cliente no padrão COSIF do BACEN. Enviado todo dia útil. |
+| DRM 2060 | Relatório mensal que mede a exposição da instituição a riscos de mercado — juros, câmbio e preços de ativos. |
+| DLO 2061 | Relatório mensal sobre os limites regulatórios do conglomerado — adequação de capital (Basileia) e concentração de riscos. |
+| DLI 2062 | Mesmo que o DLO, mas individual — foca nos limites de cada instituição separadamente. |
+| DRL 2160 | Relatório mensal do "colchão de liquidez" — quanto de ativos líquidos a instituição mantém para cobrir saídas em situações de estresse. |
+| S5 | Relatório de risco para instituições de menor porte (Segmento 5 do BACEN). Fica entre Finaud e cliente — não é enviado ao BACEN. |
+| RETORNO_BACEN | Comunicado do BACEN rejeitando ou criticando uma entrega anterior. O cliente repassa à Finaud para investigar e corrigir. |
+| SUPORTE | Dúvidas, suporte técnico, acesso a sistemas, onboarding de clientes novos, reuniões e comunicação geral — tudo que não é entrega de CADOC. |
+| FORCAPITAL | Serviço da Finaud para projeção de capital do cliente. Não é regulatório — não vai ao BACEN. |
+| DRSAC 2030 | Relatório semestral sobre operações de crédito. A Finaud orienta, mas quem gera e entrega ao BACEN é o próprio cliente. |
+| PVCA 6209 | Relatório trimestral sobre pagamentos de varejo e canais de atendimento. O cliente transmite diretamente ao BACEN via sistema STA. |
 
-> **Nota:** um e-mail pode conter mais de uma categoria (ex.: "DDR + DRM + DLI de março"). O sistema rastreia cada entrega separadamente — ver §12 (Modelo de rastreamento, duas camadas).
-
----
-
-## 4. Quem usa e para quê
-
-| Usuário | O que usa | Para quê |
-|---|---|---|
-| Michel | Painel principal | Acompanhar prazos, ver o que está aguardando ação |
-| Equipe (futuro) | Painel + IA assistente | Ver threads por cliente, consultar histórico |
-| Novo colaborador | IA assistente | Aprender o que foi feito em cada cliente sem depender de quem saiu |
-
-**Escala:** ~50 threads/semana, ~100 clientes ativos
+> **Nota:** um e-mail pode conter mais de uma categoria (ex.: "DDR + DRM + DLI de março"). O sistema rastreia cada entrega separadamente — ver §9 (Modelo de rastreamento, duas camadas).
 
 ---
 
-## 5. Como o sistema é construído (as 3 peças)
+## 4. E-mails que não entram na triagem
 
-Em vez de 16 scripts, três peças:
+O sistema descarta automaticamente estes remetentes antes de classificar. A lista é configurável na tela de filtros — sem mexer no código.
 
-### Peça 1 — Leitor de e-mails
-Conecta no Gmail da Finaud e lê todas as threads relevantes. **Processa continuamente** — quando chega um e-mail novo, o sistema o processa automaticamente, sem Michel precisar passar uma data ou acionar o sistema manualmente. Substitui os Scripts 01 a 09 do pipeline atual.
+### Por endereço exato
 
-> **Decisão confirmada por Michel (22/07/2026):** o sistema deve monitorar o Gmail continuamente e processar cada e-mail novo à medida que chega — diferente do sistema atual onde Michel passava uma data e o sistema coletava só daquele dia.
+| Remetente | Motivo |
+|---|---|
+| `riskdriver@finaud.com.br` | Sistema automático Risk Driver |
+| `contato@finaud.com.br` | Sistema automático de alertas |
+| `coleta.oraculo@finaud.com.br` | Conta de coleta do próprio sistema |
+| `do-not-reply@finaud.fogbugz.com` | Sistema de tickets FogBugz |
+| `comunicacao@comunicacao.bcb.gov.br` | Comunicados automáticos do BACEN |
 
-### Peça 2 — Classificador (IA)
-Para cada thread, a IA entende: qual categoria, de qual lado está, qual é o prazo, se há imagens com contexto importante. Usa as regras de prazo que já existem no sistema atual. Substitui os 10 supervisores de triagem com regras escritas à mão.
+### Por padrão no endereço (qualquer domínio)
 
-### Peça 3 — Painel + IA assistente
-Tela web acessível por qualquer membro da equipe. A IA assistente responde perguntas como *"como resolvemos o erro VCRD0007 com a Banvox em maio?"*. Evolui o painel atual (Flask).
+`noreply` · `no-reply` · `donotreply` · `mailer-daemon` · `newsletter` · `notification` · `bounce` · `autorespond`
 
-### OCR de imagens
-Continua existindo — necessário porque muitos erros do BACEN chegam como print de tela. Roda quando a thread é aberta (não em lote como hoje).
+### Por texto no assunto
 
-### Prazos
-As regras de prazo já existem no sistema atual (arquivo JSON). Serão reutilizadas — nada precisa ser reescrito.
+`FogBugz` · `Risk Driver -` · `Atualização Bacen`
+
+**Tela de filtros:** remetente (obrigatório) + assunto (opcional). Permite adicionar novos remetentes a bloquear sem intervenção técnica. Quando um remetente precisar de mais de um filtro, o campo assunto refina a regra.
+
+---
+
+## 5. Como os e-mails chegam ao sistema
+
+A conta `oraculo@finaud.com.br` recebe os e-mails por dois caminhos independentes:
+
+**Caminho 1 — Grupo de suporte**
+A conta oraculo@ é membro do grupo `suporte@finaud.com.br`. Isso significa que todo e-mail enviado para suporte@finaud.com.br chega automaticamente também na caixa do oraculo@, da mesma forma que chega para qualquer outro membro do grupo.
+
+**Caminho 2 — Cópia automática configurada no Google Workspace**
+O Google Workspace (a plataforma de e-mail da Finaud) está configurado para enviar uma cópia silenciosa de todo e-mail recebido por qualquer endereço @finaud.com.br para a conta oraculo@. Essa configuração fica no painel de administração do Workspace (Gmail → Roteamento padrão) e é transparente: os colaboradores não fazem nada, os clientes não veem, a cópia simplesmente acontece.
+
+Resultado: mesmo quando um cliente escreve diretamente para rodrigo.tiberio@finaud.com.br ou andrea.inacio@finaud.com.br — sem copiar o suporte@ — o oraculo@ ainda recebe o e-mail pelo Caminho 2.
+
+**Verificação feita em 31/07/2026:** encontramos e-mails de clientes externos na caixa do oraculo@ que foram enviados diretamente para colaboradores, sem nenhum campo (Para, CC ou BCC) com suporte@finaud.com.br. Isso confirma que o Caminho 2 está ativo e funcionando.
 
 ---
 
@@ -130,72 +131,7 @@ Servidor em produção — acessível pela equipe a qualquer hora, sem depender 
 
 ---
 
-## 7. Ganho principal e risco principal
-
-**Ganho:** em vez de manter 10 supervisores com regras escritas à mão (que quebram quando aparece caso novo), a IA classifica — e se aparecer um caso nunca visto, ela ainda consegue entender.
-
-**Risco:** IA pode errar em casos ambíguos.  
-**Solução:** ela classifica, mas Michel (ou a equipe) pode corrigir com um clique — e a correção vira aprendizado para casos futuros.
-
----
-
-## 8. Plano de implantação por fases
-
-| Fase | Nome | O que acontece | Status |
-|---|---|---|---|
-| **0** | Catálogo de tipos | Olhar Gmail real e mapear todos os tipos de e-mail que aparecem | **Em validação** — 19 tipos documentados em §15; T04 aguarda confirmação de Michel |
-| **1** | Protótipo | Construir as 3 peças com dados reais, sem IA ainda | Aguardando |
-| **2** | Validação | Michel testa: o que o sistema classificou está certo? | Aguardando |
-| **3** | IA | Ligar a IA assistente com os casos validados | Aguardando |
-| **4** | Histórico | Importar casos anteriores do sistema atual para a IA aprender | Aguardando |
-| **5** | Produção | Publicar em servidor, liberar para a equipe | Aguardando |
-
-### Como a Fase 0 foi feita
-
-**Método:** leitura direta de 25+ threads reais da caixa `oraculo@finaud.com.br` via Gmail MCP (ferramenta de análise e desenvolvimento). Cada thread foi documentada com 8 dimensões:
-
-| Dimensão | O que foi registrado |
-|---|---|
-| **Categoria** | Tipo exato — DDR_2011, DLO_2061, DRM_2060, DLI_2062, S5, RETORNO_BACEN, SUPORTE, FORCAPITAL, etc. |
-| **Iniciador** | Quem abriu a thread: nome, e-mail e empresa |
-| **Fluxo completo** | Cada mensagem em ordem: data/hora · quem enviou · ação concreta |
-| **O que a Finaud fez** | Ações concretas: qual colaborador, o que fez, em que momento |
-| **Como está resolvido** | Sinal concreto de encerramento (protocolo STA, agradecimento, entrega de arquivo) |
-| **Timing total** | Duração da thread — da primeira à última mensagem |
-| **Timing por lado** | Quanto tempo ficou aguardando a Finaud · aguardando o cliente |
-| **Participantes** | Cliente: nome + e-mail + empresa · Colaborador Finaud: nome + e-mail |
-
-**Resultado:** 19 tipos documentados (T01–T19). Os tipos T18 e T19 são filtrados automaticamente pelo sistema — não chegam à triagem. T04 (Western Union) aguarda confirmação de Michel sobre o papel exato da Finaud no fluxo.
-
-**O que esta base permite depois:**
-- Identificar quais clientes enviam mais e-mails (por empresa e por contato individual)
-- Ver qual colaborador Finaud é mais solicitado
-- Entender onde o tempo fica represado (Finaud ou cliente)
-- Calcular tempo médio por categoria de resolução
-- Usar como base de exemplos para treinar e guiar a IA classificadora
-
-Este catálogo é o guia de todas as fases seguintes — não avançar para a Fase 1 sem T04 confirmado.
-
----
-
-## 9. Decisões tomadas e justificativas
-
-| Decisão | Justificativa |
-|---|---|
-| Leitura direta do Gmail (sem pipeline) | Elimina 16 scripts e a complexidade de orquestração |
-| IA classifica em vez de regras à mão | Mais robusto a casos novos; menos manutenção |
-| OCR mantido | Muitos erros do BACEN chegam como imagem |
-| Prazos reutilizados do JSON atual | Já testados e corretos; não precisa reescrever |
-| Servidor em produção | Equipe precisa de acesso independente da máquina do Michel |
-| Histórico só depois dos testes | Não contaminar o aprendizado da IA com dados não validados |
-| Fora do escopo: sistema interno e anotações | Foco no rastreamento de comunicação — o resto é separado |
-| Gmail API direta (não Gmail MCP) | MCP não expõe Reply-To — necessário para identificar remetente real quando e-mail passa pelo grupo suporte@ |
-| Processamento contínuo | Sistema monitora o Gmail e processa cada e-mail novo automaticamente, sem acionamento manual |
-| CC não utilizado pelo sistema | CC serve só para ciência — não determina quem age; De e Para já cobrem todos os cenários mapeados |
-
----
-
-## 10. Mapeamento de campos do e-mail
+## 7. Mapeamento de campos do e-mail
 
 Como cada campo do e-mail será lido e usado pelo sistema. Campos mapeados um por um com simulação em dados reais antes de documentar.
 
@@ -615,7 +551,7 @@ Balancetes contábeis que o cliente extrai do seu sistema e envia para a Finaud 
 O Thread ID (`thread_root` no histórico atual / `threadId` na Gmail API) é o código que agrupa todos os e-mails de uma mesma conversa. Serve para três coisas:
 
 1. **Manter o caso unido na tela do gestor** — todos os e-mails de uma conversa aparecem como uma única linha no painel, não como itens separados
-2. **Determinar o status atual** — o sistema pega o último e-mail da thread (pelo Thread ID) e aplica as regras do §11
+2. **Determinar o status atual** — o sistema pega o último e-mail da thread (pelo Thread ID) e aplica as regras do §8
 3. **Guardar o histórico completo para a IA aprender (Fase 2)** — o Thread ID é a chave que une toda a história de um caso: primeiro contato, arquivos trocados, erros, resolução
 
 Cada valor único de Thread ID = um caso distinto na tela do gestor.
@@ -662,7 +598,7 @@ O CADOC 4111 é uma posição diária — o cliente envia no mesmo dia da data d
 
 ---
 
-## 11. Regras de classificação das threads
+## 8. Regras de classificação das threads
 
 Como o sistema decide se uma thread está **Aguardando Finaud**, **Aguardando Cliente** ou **Concluída**. Regras confirmadas por Michel (23/07/2026) com base no motor de triagem atual.
 
@@ -670,7 +606,7 @@ A classificação olha sempre o **último e-mail da thread** — não o históri
 
 ---
 
-### 11.1 Aguardando Finaud
+### 8.1 Aguardando Finaud
 
 O caso está com a Finaud — ela precisa agir.
 
@@ -681,7 +617,7 @@ O caso está com a Finaud — ela precisa agir.
 
 ---
 
-### 11.2 Aguardando Cliente
+### 8.2 Aguardando Cliente
 
 O caso está com o cliente — ele precisa agir.
 
@@ -692,7 +628,7 @@ O caso está com o cliente — ele precisa agir.
 
 ---
 
-### 11.3 Concluída
+### 8.3 Concluída
 
 O caso foi encerrado. As regras abaixo são as mesmas para todos os tipos de e-mail (DDR, SCD, DLO, DLI, DRM, S5, SUPORTE, RETORNO_BACEN, FORCAPITAL, DRSAC, PVCA).
 
@@ -736,7 +672,7 @@ Se o arquivo foi entregue e a mensagem seguinte — de qualquer colaborador da F
 
 ---
 
-### 11.4 Reabertura de caso
+### 8.4 Reabertura de caso
 
 Caso estava Concluído → cliente manda nova mensagem → caso volta automaticamente para **Aguardando Finaud**.
 
@@ -746,7 +682,7 @@ O sistema não precisa "lembrar" que estava concluído — a lógica do último 
 
 ---
 
-## 12. Modelo de Rastreamento — duas camadas
+## 9. Modelo de Rastreamento — duas camadas
 
 **Decisão confirmada por Michel (27/07/2026)**
 
@@ -773,11 +709,11 @@ E-mail: "Segue DDR, DRM e DLI - MIRAE março/2026"
 Um e-mail que entrega DDR + DRM + DLI não pode ser forçado em uma única categoria sem perder rastreabilidade dos outros dois. Com duas camadas, a IA aprende o fluxo completo (entregas, críticas, substituições, suporte) e a Finaud tem controle individual de cada obrigação regulatória.
 
 **Impacto na classificação:**
-A saída da IA deixa de ser "este e-mail É DDR" e passa a ser "este e-mail CONTÉM: DDR_2011 + DRM_2060". O Catálogo de Categorias (§14) continua válido — o que muda é que a saída é uma lista, não um valor único.
+A saída da IA deixa de ser "este e-mail É DDR" e passa a ser "este e-mail CONTÉM: DDR_2011 + DRM_2060". O Catálogo de Categorias (§11) continua válido — o que muda é que a saída é uma lista, não um valor único.
 
 ---
 
-## 13. Telas do sistema
+## 10. Telas do sistema
 
 ### Tela 1 — Painel Operacional
 
@@ -793,13 +729,13 @@ Cada linha mostra: **cliente · categoria · lado (Finaud/cliente) · prazo · �
 
 ### Tela 2 — Gestão de Filtros (Remetente)
 
-Tela de configuração onde Michel (ou a equipe) pode adicionar, editar ou remover endereços e assuntos filtrados sem precisar de intervenção técnica. Ver lista completa de filtros em §10 (Campo 1).
+Tela de configuração onde Michel (ou a equipe) pode adicionar, editar ou remover endereços e assuntos filtrados sem precisar de intervenção técnica. Ver lista completa de filtros em §7 (Campo 1).
 
 > **Decisão confirmada por Michel (23/07/2026).**
 
 ---
 
-## 14. Catálogo de categorias — o que a IA precisa saber
+## 11. Catálogo de categorias — o que a IA precisa saber
 
 Esta seção alimenta diretamente o prompt da IA. Para cada categoria, a IA recebe: o que é, como reconhece no e-mail (assunto + corpo + histórico da thread) e qual prazo aplicar.
 
@@ -967,7 +903,7 @@ As mesmas 5 regras do DDR_2011. Sinais específicos do SCD_4111:
 **O que NÃO é DRM 2060:**
 - "COMUNICACAO DE INCONSISTENCIA NO DRM - 2060" → é **RETORNO_BACEN** (o BACEN rejeitou um DRM anterior)
 - "RELATORIO DRM - Amaril Franklin" → pode ser **DLO** (é a planilha LEC usada para gerar o DLO)
-- DRM + DDR no mesmo assunto → registrar ambos (ver §12 — modelo de duas camadas)
+- DRM + DDR no mesmo assunto → registrar ambos (ver §9 — modelo de duas camadas)
 
 **Fluxo típico:**
 1. Cliente envia dados mensais à Finaud — planilha "Saldos DRM" — "Segue a base de dados para geração do DRM"
@@ -1027,7 +963,7 @@ Validado em 90 threads reais (29/07/2026). Cobertura: 100% (57 F→C + 33 C→F)
 - "ECSA (S5) - COS4010..." → é **S5** (código S5 no assunto prevalece sobre a menção ao COS4010)
 - "Colchão de Liquidez" / "DRL" → é **DRL 2160**, não DLO — podem vir no mesmo e-mail, registrar separado
 - COS4060, COS4066 → pertencem ao **DLI 2062**, não ao DLO
-- DLO + DLI no mesmo e-mail → registrar ambos (§12 — modelo de duas camadas)
+- DLO + DLI no mesmo e-mail → registrar ambos (§9 — modelo de duas camadas)
 
 **Fluxo típico:**
 1. Cliente envia `COS4010.xml` + planilha LEC à Finaud — "Seguem 4010 e planilha LEC, para que seja gerado o DLO"
@@ -1080,7 +1016,7 @@ Validado em 482 threads reais (29/07/2026). Cobertura: 100%. Mesmas regras R1–
 **O que NÃO é DLI 2062:**
 - "Instrução Normativa BCB — Altera o DLI" → alerta regulatório sobre mudança de regra, não é entrega do CADOC — pode caber em SUPORTE
 - "Aviso Bacen - DLI" / "Questionamento BACEN" → pode ser **RETORNO_BACEN** — verificar contexto
-- DLO + DLI no mesmo e-mail → registrar ambos (§12 — modelo de duas camadas)
+- DLO + DLI no mesmo e-mail → registrar ambos (§9 — modelo de duas camadas)
 
 **Fluxo típico:**
 1. Cliente envia arquivos COSIF (XML) à Finaud — sem a planilha LEC (diferença do DLO)
@@ -1138,7 +1074,7 @@ Validado em 56 threads reais (29/07/2026). Cobertura: 100%. R5 se aplica (3 caso
 - "CONGLOMERADO" + DRL → variante do DRL para o conglomerado — ainda é DRL 2160, base de dados maior
 - "Substituição" / "CORREÇÃO" + DRL → reentregas normais — ainda é DRL 2160
 - "VENCIMENTO HOJE" + DRL → alerta de prazo — ainda é DRL 2160 (urgente)
-- DRL + DDR no mesmo e-mail → registrar ambos (§12 — modelo de duas camadas)
+- DRL + DDR no mesmo e-mail → registrar ambos (§9 — modelo de duas camadas)
 
 **Fluxo típico:**
 1. Cliente envia planilha DRL (`.xlsx`) com dados mensais à Finaud
@@ -1528,11 +1464,11 @@ O padrão `CNPJ_CADOC_DATA.zip` é universal — aparece em todos os CADOCs. O n
 
 ---
 
-## 15. Exemplos reais de threads (T01–T19)
+## 12. Exemplos reais de threads (T01–T19)
 
 Exemplos coletados durante a Fase 0 (22/07/2026) com leitura direta de 25+ threads reais da caixa `oraculo@finaud.com.br`. Cada exemplo documenta um tipo de fluxo com mensagens reais, participantes identificados e critério de conclusão.
 
-> **Nota de desenvolvimento:** estes exemplos foram coletados via Gmail MCP (ferramenta de análise, não produção). O campo `sender` da ferramenta de busca pode mostrar `suporte@finaud.com.br` mesmo quando o remetente real é outro — em todos os casos abaixo o corpo do e-mail foi lido para confirmar o remetente real. Em produção, a Gmail API direta (Campo 1 e Campo 4 em §10) resolve isso automaticamente.
+> **Nota de desenvolvimento:** estes exemplos foram coletados via Gmail MCP (ferramenta de análise, não produção). O campo `sender` da ferramenta de busca pode mostrar `suporte@finaud.com.br` mesmo quando o remetente real é outro — em todos os casos abaixo o corpo do e-mail foi lido para confirmar o remetente real. Em produção, a Gmail API direta (Campo 1 e Campo 4 em §7) resolve isso automaticamente.
 
 > **Sobre os anexos nos exemplos:** os anexos revelam o que está sendo trocado e em qual direção. Arquivo de dados brutos (Excel, CSV, XML) = cliente enviando dados para a Finaud processar. ZIP com remessa BACEN = entrega do CADOC. PDF de comunicação = notificação do BACEN. Sem anexo = dúvida, orientação ou confirmação textual.
 
@@ -1981,7 +1917,7 @@ Exemplos coletados durante a Fase 0 (22/07/2026) com leitura direta de 25+ threa
 
 ---
 
-## 16. Padrões observados para guiar a IA
+## 13. Padrões observados para guiar a IA
 
 ### Padrão de conclusão por tipo
 
@@ -2035,6 +1971,62 @@ Exemplos coletados durante a Fase 0 (22/07/2026) com leitura direta de 25+ threa
 | Planner | T07, T11 (DLO demanda + DLI substituição) |
 | Western Union | T04 (câmbio diário) |
 | Oliveira Trust | T05 (DRM inconsistência) |
+
+---
+
+## 14. Decisões tomadas e justificativas
+
+| Decisão | Justificativa |
+|---|---|
+| Leitura direta do Gmail (sem pipeline) | Elimina 16 scripts e a complexidade de orquestração |
+| IA classifica em vez de regras à mão | Mais robusto a casos novos; menos manutenção |
+| OCR mantido | Muitos erros do BACEN chegam como imagem |
+| Prazos reutilizados do JSON atual | Já testados e corretos; não precisa reescrever |
+| Servidor em produção | Equipe precisa de acesso independente da máquina do Michel |
+| Histórico só depois dos testes | Não contaminar o aprendizado da IA com dados não validados |
+| Fora do escopo: sistema interno e anotações | Foco no rastreamento de comunicação — o resto é separado |
+| Gmail API direta (não Gmail MCP) | MCP não expõe Reply-To — necessário para identificar remetente real quando e-mail passa pelo grupo suporte@ |
+| Processamento contínuo | Sistema monitora o Gmail e processa cada e-mail novo automaticamente, sem acionamento manual |
+| CC não utilizado pelo sistema | CC serve só para ciência — não determina quem age; De e Para já cobrem todos os cenários mapeados |
+
+---
+
+## 15. Plano de implantação por fases
+
+| Fase | Nome | O que acontece | Status |
+|---|---|---|---|
+| **0** | Catálogo de tipos | Olhar Gmail real e mapear todos os tipos de e-mail que aparecem | **Em validação** — 19 tipos documentados em §12; T04 aguarda confirmação de Michel |
+| **1** | Protótipo | Construir as 3 peças com dados reais, sem IA ainda | Aguardando |
+| **2** | Validação | Michel testa: o que o sistema classificou está certo? | Aguardando |
+| **3** | IA | Ligar a IA assistente com os casos validados | Aguardando |
+| **4** | Histórico | Importar casos anteriores do sistema atual para a IA aprender | Aguardando |
+| **5** | Produção | Publicar em servidor, liberar para a equipe | Aguardando |
+
+### Como a Fase 0 foi feita
+
+**Método:** leitura direta de 25+ threads reais da caixa `oraculo@finaud.com.br` via Gmail MCP (ferramenta de análise e desenvolvimento). Cada thread foi documentada com 8 dimensões:
+
+| Dimensão | O que foi registrado |
+|---|---|
+| **Categoria** | Tipo exato — DDR_2011, DLO_2061, DRM_2060, DLI_2062, S5, RETORNO_BACEN, SUPORTE, FORCAPITAL, etc. |
+| **Iniciador** | Quem abriu a thread: nome, e-mail e empresa |
+| **Fluxo completo** | Cada mensagem em ordem: data/hora · quem enviou · ação concreta |
+| **O que a Finaud fez** | Ações concretas: qual colaborador, o que fez, em que momento |
+| **Como está resolvido** | Sinal concreto de encerramento (protocolo STA, agradecimento, entrega de arquivo) |
+| **Timing total** | Duração da thread — da primeira à última mensagem |
+| **Timing por lado** | Quanto tempo ficou aguardando a Finaud · aguardando o cliente |
+| **Participantes** | Cliente: nome + e-mail + empresa · Colaborador Finaud: nome + e-mail |
+
+**Resultado:** 19 tipos documentados (T01–T19). Os tipos T18 e T19 são filtrados automaticamente pelo sistema — não chegam à triagem. T04 (Western Union) aguarda confirmação de Michel sobre o papel exato da Finaud no fluxo.
+
+**O que esta base permite depois:**
+- Identificar quais clientes enviam mais e-mails (por empresa e por contato individual)
+- Ver qual colaborador Finaud é mais solicitado
+- Entender onde o tempo fica represado (Finaud ou cliente)
+- Calcular tempo médio por categoria de resolução
+- Usar como base de exemplos para treinar e guiar a IA classificadora
+
+Este catálogo é o guia de todas as fases seguintes — não avançar para a Fase 1 sem T04 confirmado.
 
 ---
 

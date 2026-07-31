@@ -16,6 +16,25 @@ contrário, para não perder histórico). Ver regra completa no `CLAUDE.md`.
 
 ---
 
+## 🔴 §7 — Adicionar "Como o sistema processa" em cada campo (identificado 31/07/2026)
+
+**O que falta:**
+O §7 (Mapeamento de campos do e-mail) documenta o **que é** cada campo, mas não o **como** o sistema processa. Falta um bloco "passo a passo" para cada um dos 8 campos — sequência exata de decisões que o sistema executa ao ler aquele campo.
+
+**Por que é importante:**
+- Quando houver dúvida sobre o que o sistema fez em um caso real, o passo a passo responde
+- Quando um novo recurso for adicionado, o desenvolvedor sabe exatamente onde encaixar
+- Sem isso, decisões de implementação ficam à cargo do desenvolvedor, sem registro na spec
+
+**Inclui especificamente:**
+- Campo 1: passo a passo de filtragem — o sistema verifica endereço contra lista exata → verifica contra padrões (`noreply`, `newsletter`, etc.) → verifica assunto → se qualquer match: descarta antes de classificar
+- Campos 2 a 8: mesma lógica — descrever a sequência de decisões que o sistema toma ao processar cada campo
+
+**Quando resolver:** obrigatório antes do desenvolvimento das telas (§10 da spec).
+**Arquivo de destino:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — §7, em cada campo.
+
+---
+
 ## 🔴 OCR — RETORNO_BACEN depende 100% das imagens para classificação e aprendizado (identificado 30/07/2026)
 
 **O que foi observado:**
@@ -280,6 +299,33 @@ criar um novo `documentações/MAPA_DO_PROJETO.md` descrevendo:
 
 **Quando fazer:** após a estrutura do novo código estar definida (ainda em andamento).
 **Por que é importante:** sem o mapa, uma IA nova que abrir o projeto não sabe por onde começar.
+
+---
+
+## 🟡 PAINEL — Ideias para amadurecer no painel lateral de categoria (registrado 31/07/2026)
+
+Michel gostou do painel lateral que abre ao clicar numa categoria. Ideias para evolução futura:
+
+**1. Fora do prazo**
+Antes da lista de threads em cada seção (Aguardando Finaud / Aguardando Cliente), mostrar
+a quantidade que está fora do prazo. Exemplo:
+> AGUARDANDO FINAUD (54)
+> ⚠ 12 fora do prazo
+> [lista de threads]
+
+**2. Linguagem do status no cartão de thread**
+No cartão de cada thread, não exibir apenas o código técnico (ex.: R2) — exibir o significado
+em linguagem simples para o usuário leigo entender sem precisar decorar os códigos.
+Exemplo: em vez de "R2", mostrar "Aguardando a Finaud processar o material do cliente".
+
+**3. Concluídas com regra de triagem**
+Na seção "Concluídas", manter o mesmo padrão visual dos outros cartões e adicionar qual
+regra de triagem foi usada para marcar como concluído (ex.: "Encerrado pela regra R1 — sem
+pendência identificada").
+
+**Quando amadurecer:** durante a especificação do painel do gestor (§13 da spec), depois
+que toda a parte funcional estiver completa. Ver também pendência "PAINEL DO GESTOR —
+Design para threads com múltiplos CADOCs".
 
 ---
 

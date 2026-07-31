@@ -10,6 +10,40 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-07-31 — Reorganização estrutural da spec + início da revisão sequencial
+
+### 31/07 — Spec: três mudanças estruturais aprovadas por Michel
+
+**🔎 Em miúdos:** reorganizamos a especificação para ter uma ordem mais lógica de leitura — o que o sistema é e como funciona primeiro, as decisões e o plano de implantação por último.
+
+**O que foi mudado:**
+
+1. **Seção "Ganho principal e risco principal" — excluída.** A seção era desnecessária: a regra de que a IA só classifica quando todos os campos obrigatórios estão preenchidos (e o que não estiver vai para fila de revisão humana) já trata o risco por design — não precisava de seção separada. Decisão de Michel.
+
+2. **"Plano de implantação por fases" — movido de posição intermediária para §15 (final).** Motivação: seções de planejamento de execução não pertencem no meio da spec técnica. Foram feitas três rodadas completas de renumeração e atualização de todas as referências cruzadas no documento.
+
+3. **"Decisões tomadas e justificativas" — movido para §14 (penúltimo).** Mesmo critério: será preenchido gradualmente conforme a spec avança; deve ficar no final para não interromper a leitura técnica.
+
+**Arquivo alterado:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — estrutura e numeração de seções
+
+**Validação:** estrutura final verificada; todas as referências cruzadas (§X) atualizadas nas três rodadas de renumeração. ✅ VALIDADO
+
+---
+
+### 31/07 — Spec §7 (Mapeamento de campos): passagem rápida de revisão — duas lacunas identificadas
+
+**🔎 Em miúdos:** fizemos uma passagem rápida pela seção que mapeia os 8 campos do e-mail. O conteúdo está correto, mas identificamos que cada campo documenta só O QUE é — falta descrever COMO o sistema processa cada campo passo a passo.
+
+**Lacunas identificadas:**
+- Campo 1: descreve o que filtra mas não o passo a passo de filtragem (verificar endereço → padrões → assunto → descartar)
+- Campos 1 a 8: não têm bloco "Como o sistema processa" — sequência de decisões que o sistema executa
+
+**Ação tomada:** registrado como 🔴 BLOQUEADOR em `documentações/PENDENCIAS.md`. Obrigatório resolver antes do desenvolvimento das telas (§10 da spec). Nada alterado na spec — espera resolução em sessão dedicada.
+
+**Correção do status:** linha de status da spec atualizada de "§9 completa" para "§7 completa" (o mapeamento migrou de §9 para §7 após as renumerações).
+
+---
+
 ## 2026-07-31 — Campo 8 completo na spec §10
 
 ### 31/07 — Campo 8 (Thread ID e Data): regras definidas com base no histórico de 8.825 e-mails

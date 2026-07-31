@@ -8,11 +8,11 @@
 
 ---
 
-## 📓 Diário da sessão (2026-07-31) — Campos 7 e 8: especificação §10 completa
+## 📓 Diário da sessão (2026-07-31) — Spec §10 completa + reorganização estrutural + início da revisão sequencial
 
 ### Resumo do que foi feito
 
-A sessão de hoje fechou os dois últimos campos da especificação §10 — o mapa de regras que a nova arquitetura vai seguir.
+A sessão de hoje teve duas partes: primeiro, fechou os dois últimos campos da especificação (§10); depois, iniciou a revisão sequencial da spec com reorganização estrutural importante.
 
 ---
 
@@ -61,13 +61,31 @@ Três temas discutidos um por vez e consolidados em sequência:
 
 ---
 
+**Reorganização estrutural da spec (31/07/2026):**
+
+Após concluir os Campos 7 e 8, a sessão continuou com uma revisão da estrutura da especificação. Três mudanças aprovadas por Michel:
+
+1. **§7 "Ganho principal e risco principal" — excluído.** Decisão de Michel: o item era desnecessário porque a regra de que a IA só classifica quando todos os campos obrigatórios estão preenchidos (e o que não estiver vai para revisão humana) já trata o risco implicitamente — não precisava de seção separada.
+
+2. **"Plano de implantação por fases" — movido para §15 (final).** Motivação: seções de implementação não pertencem no meio da especificação técnica; devem ficar no final, após tudo estar validado.
+
+3. **"Decisões tomadas e justificativas" — movido para §14 (penúltimo).** Mesmo critério: será completado gradualmente conforme a spec avança; fica no final para não interromper a leitura da spec técnica.
+
+Após a reorganização, revisão rápida (passagem A) do §7 "Mapeamento de campos do e-mail". Michel identificou duas lacunas:
+- Campo 1: não descreve o passo a passo de filtragem (como vai filtrar, não só o que filtra)
+- Campos 1 a 8: não têm bloco "Como o sistema processa" — só dizem o que cada campo é, não como o sistema decide o que fazer com ele
+
+Ambas as lacunas foram registradas como 🔴 BLOQUEADOR no PENDENCIAS.md — obrigatório resolver antes do desenvolvimento das telas.
+
+---
+
 ### Estado atual
 
-**§14 da spec:** ✅ completo — todas as 12 categorias com regras R1–R5 documentadas e validadas
-**§10 Campo 6 — Limpeza do corpo:** ✅ **CONCLUÍDO (30/07/2026)** — 6.989 e-mails, 12 categorias, regras L1–L8
-**§10 Campo 7 — Anexos:** ✅ **CONCLUÍDO (31/07/2026)** — 78.087 arquivos, 6 cenários novos, regras escritas
-**§10 Campo 8 — Thread ID e Data:** ✅ **CONCLUÍDO (31/07/2026)** — Thread ID, datas, inferência de ano, 3 tipos de threads de canal
-**Especificação §10 completa:** ✅ — todos os 8 campos fechados
+**Mapeamento de campos (§7 da spec):** ✅ completo em conteúdo — 🔴 pendência de "Como processa" em cada campo
+**§7 Campo 6 — Limpeza do corpo:** ✅ **CONCLUÍDO (30/07/2026)** — 6.989 e-mails, 12 categorias, regras L1–L8
+**§7 Campo 7 — Anexos:** ✅ **CONCLUÍDO (31/07/2026)** — 78.087 arquivos, 6 cenários novos, regras escritas
+**§7 Campo 8 — Thread ID e Data:** ✅ **CONCLUÍDO (31/07/2026)** — Thread ID, datas, inferência de ano, 3 tipos de threads de canal
+**Especificação §7 (Mapeamento) completa:** ✅ — todos os 8 campos fechados
 **GitHub:** `github.com/michelruicosta/gestao_area_suporte` — branch `main`
 
 ---
@@ -77,20 +95,36 @@ Três temas discutidos um por vez e consolidados em sequência:
 > **Regra (aprovada por Michel, 31/07/2026):** a spec responde tudo antes de qualquer implementação começar.
 > Nenhum código de produção é escrito enquanto houver perguntas sem resposta no documento mestre.
 
-**Pendências que bloqueiam a implementação — spec ainda precisa responder:**
+**🔴 BLOQUEADORES (antes do desenvolvimento das telas):**
 
-1. 🔴 **OCR RETORNO_BACEN** — como o sistema lida quando a imagem É o conteúdo (não decoração)? Regra L6 existe mas OCR não está especificado na íntegra
-2. 🟡 **Convites de calendário e notificações automáticas** — o que o classificador faz com e-mails que não são de cliente? (filtrar antes / categoria nova / revisão humana)
-3. 🟡 **IA Assistente — histórico completo** — como preservar o `>` (histórico citado) para aprendizado se a limpeza L3 o remove para classificação? Decisão arquitetural
-4. 🟡 **Painel do gestor** — como mostrar threads com múltiplos CADOCs? Por thread ou por CADOC? Quais status?
-5. 🟡 **Encoding TRUSTEE DTVM** — como tratar e-mails com Windows-1252 no pré-processamento?
-6. 🟡 **`Abraço` (singular)** — adicionar ao detector de assinatura na spec
-7. 🟡 **Campos 1 a 5** — revisar formato para alinhar com o padrão do Campo 6
+1. 🔴 **§7 — "Como o sistema processa"** (passo a passo) em cada um dos 8 campos — Campo 1 inclui passo a passo de filtragem
+2. 🔴 **OCR RETORNO_BACEN** — como o sistema lida quando a imagem É o conteúdo (não decoração)? Regra L6 existe mas OCR não está especificado na íntegra
+
+**Revisão sequencial da spec — próxima seção:**
+
+3. 🟡 **§8 — Regras de classificação das threads** ← PRÓXIMA SESSÃO (segunda-feira)
+
+**Demais seções pendentes de revisão:**
+- §9 Modelo de rastreamento — duas camadas
+- §10 Telas do sistema
+- §11 Catálogo de categorias
+- §12 Exemplos reais de threads
+- §13 Padrões observados
+- §14 Decisões tomadas e justificativas
+- §15 Plano de implantação
+
+**Outras pendências ativas:**
+- 🟡 Convites de calendário e notificações automáticas — definir antes da Fase 3
+- 🟡 IA Assistente — histórico completo vs. limpeza para classificação
+- 🟡 Painel do gestor — design para threads com múltiplos CADOCs
+- 🟡 Encoding TRUSTEE DTVM — corrigir no pré-processamento
+- 🟡 `Abraço` (singular) — adicionar ao detector de assinatura
+- 🟡 Campos 1 a 5 — revisar formato para alinhar com padrão do Campo 6
 
 **Após spec completa:**
 - 🟡 **Fase 1** — protótipo `coletor_gmail.py` + `classificador_ia.py`
 - 🟡 **MAPA_DO_PROJETO.md** — criar para a nova arquitetura
 
-Último /fechar: 2026-07-31 — memórias revisadas ✅ — Campos 7 e 8 concluídos; spec §10 completa
+Último /fechar: 2026-07-31 — memórias revisadas ✅ — Spec §10 completa; reorganização estrutural; próximo: §8
 
 ---
