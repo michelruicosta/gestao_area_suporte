@@ -8,88 +8,80 @@
 
 ---
 
-## 📓 Diário da sessão (2026-07-30) — Campo 6: metodologia de limpeza do corpo do e-mail
+## 📓 Diário da sessão (2026-07-31) — Campos 7 e 8: especificação §10 completa
 
 ### Resumo do que foi feito
 
-**Decisão fundamental (30/07/2026):** a IA nunca recebe o e-mail bruto — existe uma etapa de limpeza obrigatória entre o Gmail e a IA. O Campo 6 da spec define exatamente essa limpeza.
+A sessão de hoje fechou os dois últimos campos da especificação §10 — o mapa de regras que a nova arquitetura vai seguir.
 
-**8 Regras de limpeza estabelecidas — DDR_2011 (baseline para todas as categorias):**
+---
 
-| # | Regra | O que corta |
+**Campo 7 — Anexos (concluído 31/07/2026):**
+
+Script `scripts/consultas/analisar_anexos_emails.py` criado e executado — varreu 78.087 arquivos em disco cruzando com os 8.825 e-mails do histórico. Resultado: além dos formatos esperados (ZIP do CADOC, COSIF), foram identificados 6 cenários que não estavam no plano original.
+
+| Tipo de arquivo | Qtde | Tratamento definido |
 |---|---|---|
-| L1 | Assinatura | `Att,` / `Atenciosamente` / `À disposição` / `Cordialmente` / `Desde já agradeço` / `Antecipadamente grata` |
-| L2 | Histórico com traços | `-----` (Gmail forward) e `___` (Outlook separator) |
-| L3 | Histórico com seta `>` | Linhas de reply citado — afeta 91% dos e-mails DDR_2011 |
-| L4 | Rodapé de lista | `To unsubscribe from this group` (Google Groups) — afeta 95,5% dos e-mails DDR_2011 |
-| L5 | Imagem decorativa | `[image: instagram/linkedin/facebook/logo/ícone...]` — descarta por nome |
-| L6 | Imagem genérica antes da assinatura | `[image: image.png]` → tenta OCR → se OCR falhar → fila de revisão humana |
-| L7 | Imagem genérica depois da assinatura | Descarta (logo de rodapé) |
-| L8 | Corpo vazio após limpeza | Sinaliza como `ENCAMINHAMENTO_INTERNO` (R5) — não classifica sem texto |
+| ZIP padrão `CNPJ_CADOC_DATA.zip` | maioria | Sinal forte de categoria — extrair e analisar internos |
+| Sufixo `_S_N` (substituição BACEN) | 351 | Marcar como substituição solicitada |
+| COSIF `.xml` direto | 642 | Processar diretamente |
+| COSIF `.bc` (formato antigo) | 123 | Mesma lógica do .xml — histórico retroativo exige suporte |
+| `.rar` | 6 | Tentar abrir; se falhar → revisão humana |
+| `.eml` (e-mail encaminhado) | 8 | Extrair assunto + anexos internos e reclassificar |
+| Sem extensão — nome embaralhado | ~200 | Classificar pelo assunto; marcar como VERIFICAR_NOME |
+| Sem extensão — código protocolo BACEN | ~30 | `ADRM060-...` = DRM; `ALIM262-...` = DLI — sinal forte |
 
-**DDR_2011 analisado — todos os 2.350 e-mails:**
+Decisão adicional do Michel: para as categorias 2061, 2062, S5 e FORCAPITAL, os balancetes COSIF 4010/4060 são obrigatórios todo mês; nos meses de junho e dezembro também chegam o 4016 ou 4066. Isso **não diferencia a triagem** — é só contexto de conhecimento.
 
-| Verificação | Resultado |
-|---|---|
-| HTML (não texto puro) | 99,8% |
-| Seta `>` (reply citado) | 37,1% têm histórico citado |
-| Rodapé Google Groups | 95,5% têm rodapé automático |
-| Separador encaminhado (`---`) | 22,1% têm histórico encaminhado |
-| Assinatura detectada | **96,4%** (após 3 rodadas de melhoria do padrão) |
-| Com `[image:]` no texto | 23,9% |
-| Com `[cid:]` no texto | 18,9% |
-| Corpo vazio após limpeza | 0,2% (4 e-mails — todos ENCAMINHAMENTO_INTERNO R5) |
+---
 
-**Artifact visual publicado (4 casos de imagem — Fase 1 e Fase 2):**
-https://claude.ai/code/artifact/f86d271e-b354-49e2-8d2b-b110e68652c6
+**Campo 8 — Thread ID e Data (concluído 31/07/2026):**
 
-**Artifact de validação Campo 6 — Passo 3 (6 elementos, DDR_2011):**
-https://claude.ai/code/artifact/5054a35e-cbae-4beb-af23-df3c0972bcae
-✅ **Todos os 6 elementos validados por Michel (30/07/2026):**
-- Assinatura: 96,4% — 84 casos top-post aceitos como limitação conhecida
-- Histórico citado (`>`): 37,1% ✅
-- Histórico encaminhado (`---`): 22,1% ✅
-- Rodapé automático: 95,5% ✅
-- `[image:]`: 23,9% ✅
-- `[cid:]`: 18,9% ✅
+Três temas discutidos um por vez e consolidados em sequência:
 
-**Script permanente criado:** `scripts/consultas/analisar_corpo_emails.py`
-(parametrizado por projeto e categoria — reutilizável para todas as 12 categorias)
+**Tema 1 — Thread ID:**
+- `thread_root` (histórico) / `threadId` (Gmail API) = chave que agrupa toda a conversa
+- Três funções: unir o caso na tela do gestor · determinar o status atual · guardar histórico para a IA aprender
+- 100% preenchido no histórico de 8.825 e-mails
 
-**Estrutura de documentação aprovada (5 componentes):**
-- Especificação = o mapa (decisões e regras)
-- Artifact = o visual (como ficará na tela)
-- Lista de tarefas = roteiro do desenvolvimento
-- REGISTRO_CORRECOES = histórico do que foi feito
-- PENDENCIAS = o que falta (com checklist)
+**Tema 2 — Campos de data:**
+- `data_email` (sempre preenchida, vem do Gmail) vs. `data_competencia` (extraída pela IA do assunto/anexo)
+- A data de competência é o mês do CADOC — necessária para calcular o prazo regulatório
+- Script `scripts/consultas/analisar_mes_sem_ano.py` validou a regra de inferência de ano: 157 casos testados, 100% de acerto nos 5 com ground truth
+- Regra aprovada por Michel: `data_competencia = null` → sistema não monitora prazo
 
-**Estrutura interna de cada campo da spec (3 partes):**
-"O que temos" → "O que utilizaremos" → "Regras de negócio"
+**Tema 3 — Threads de canal:**
+- 59 threads (1,8%) com 10+ e-mails ou abrangendo 3+ meses
+- 3 tipos identificados com exemplos reais do histórico:
+  - **Entrega recorrente** (SSG/4111): cada e-mail com anexo = nova entrega na Camada 2; `data_competencia` = `data_email`
+  - **Coordenação** (UNICRED/DDR): zero anexos = zero itens na Camada 2
+  - **Caso complexo** (EQI CTVM/RETORNO_BACEN): um único caso que levou meses para resolver
+
+**Script permanente criado:** `scripts/consultas/analisar_threads_datas.py`
 
 ---
 
 ### Estado atual
 
 **§14 da spec:** ✅ completo — todas as 12 categorias com regras R1–R5 documentadas e validadas
-**§10 Campo 6 — Passo 3:** ✅ **CONCLUÍDO** — 6.989 e-mails em 12 categorias analisados; regras L1–L8 escritas na spec
-**§10 Campos 7, 8:** 🔴 aguardam definição do modelo de dados da Fase 1
+**§10 Campo 6 — Limpeza do corpo:** ✅ **CONCLUÍDO (30/07/2026)** — 6.989 e-mails, 12 categorias, regras L1–L8
+**§10 Campo 7 — Anexos:** ✅ **CONCLUÍDO (31/07/2026)** — 78.087 arquivos, 6 cenários novos, regras escritas
+**§10 Campo 8 — Thread ID e Data:** ✅ **CONCLUÍDO (31/07/2026)** — Thread ID, datas, inferência de ano, 3 tipos de threads de canal
+**Especificação §10 completa:** ✅ — todos os 8 campos fechados
 **GitHub:** `github.com/michelruicosta/gestao_area_suporte` — branch `main`
 
 ---
 
 ### Próximos passos
 
-1. 🔴 **PRÓXIMA SESSÃO — Campos 7 e 8** (decisão de Michel 30/07/2026): finalizar a especificação antes de qualquer outro item
-   - Campo 7 — Anexos: tipos por categoria, OCR para anexos, quando o nome já basta para identificar
-   - Campo 8 — Thread ID e Data: data regulatória vs. data do e-mail, threads de canal
-2. 🔴 OCR para RETORNO_BACEN — implementar antes da Fase 3 (ver PENDENCIAS.md)
-3. 🟡 Resolver pendências do Campo 6 antes de construir o módulo de limpeza:
+1. 🟡 **Fase 1 — protótipo** (próxima sessão): spec §10 completa remove o bloqueio — agora é possível começar o `coletor_gmail.py` + `classificador_ia.py`
+2. 🔴 **OCR para RETORNO_BACEN** — obrigatório antes da Fase 3; imagens são o conteúdo real nessa categoria (ver PENDENCIAS.md)
+3. 🟡 **Pendências do Campo 6** — resolver antes de construir o módulo de limpeza:
    - `Abraço` (singular) — adicionar ao PAD_ASSINATURA
-   - Convites de calendário — decidir filtro ou categoria NOTIFICACAO_SISTEMA
+   - Convites de calendário — decidir: filtro ou categoria NOTIFICACAO_SISTEMA
    - TRUSTEE DTVM — corrigir encoding Windows-1252
-4. 🟡 Fase 1 da nova arquitetura: protótipo do coletor Gmail + classificador IA (aguarda spec completa)
-5. 🟡 Criar novo MAPA_DO_PROJETO.md para a nova arquitetura
+4. 🟡 **MAPA_DO_PROJETO.md** — criar para a nova arquitetura (substituir o do pipeline antigo)
 
-Último /fechar: 2026-07-30 18:26 — memórias revisadas ✅ — Campo 6 completo: 6.989 e-mails, 12 categorias, spec §10 atualizada
+Último /fechar: 2026-07-31 — memórias revisadas ✅ — Campos 7 e 8 concluídos; spec §10 completa
 
 ---

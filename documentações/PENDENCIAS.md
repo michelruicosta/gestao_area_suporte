@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Oráculo 360 Finaud
 
-**Atualizado:** 2026-07-30
+**Atualizado:** 2026-07-31
 **Regra:** este arquivo lista **só o que ainda falta** (aberto / aguardando decisão / backlog).
 Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada no
 `REGISTRO_CORRECOES.md` — nesta ordem: primeiro grava no REGISTRO, depois remove daqui (nunca o
@@ -8,18 +8,11 @@ contrário, para não perder histórico). Ver regra completa no `CLAUDE.md`.
 
 ---
 
-## 🔴 URGENTE — Campos 7 e 8: próxima sessão — finalizar a especificação (decidido 30/07/2026)
-
-**Decisão de Michel (30/07/2026):** Campos 7 e 8 são a prioridade da próxima sessão, antes de qualquer outro item. Concluir esses dois campos fecha a especificação completa da nova arquitetura.
+## ✅ Especificação §10 completa (31/07/2026)
 
 **Campo 6 ✅ concluído (30/07/2026)** — análise de 6.989 e-mails em 12 categorias, regras L1–L8 escritas em `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md §10`.
-
-**O que falta definir:**
-
-- **Campo 7 — Anexos:** tipos de arquivo por categoria, o que a IA extrai de cada um, quando acionar OCR para anexos, como tratar ZIP dentro de ZIP, quando o nome do anexo já basta para identificar a categoria
-- **Campo 8 — Thread ID e Data:** como o Thread ID do Gmail se relaciona com o rastreamento; data de referência regulatória (data do CADOC) vs. data do e-mail; como tratar threads de canal (mesma thread reutilizada por meses)
-
-**Arquivo:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md §10`
+**Campo 7 ✅ concluído (31/07/2026)** — 78.087 arquivos analisados, 6 cenários não previstos identificados, regras escritas em `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md §10`.
+**Campo 8 ✅ concluído (31/07/2026)** — Thread ID, campos de data, regra de inferência de ano validada, 3 tipos de threads de canal definidos.
 
 ---
 

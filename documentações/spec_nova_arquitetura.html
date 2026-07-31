@@ -456,13 +456,19 @@
           L1 Assinatura · L2 Histórico traços · L3 Histórico <code>&gt;</code> · L4 Rodapé automático · L5 Imagem decorativa · L6 Imagem genérica (OCR) · L7 Imagem pós-assinatura · L8 Corpo vazio
         </div>
       </div>
-      <div class="field-card" style="border-color: var(--warning-border);">
-        <div class="field-name" style="color: var(--warning-text);">Campo 7 — Anexos ⚠️ PENDENTE</div>
-        <div class="field-desc">Lista de arquivos em anexo. Aguarda definição: tipos relevantes por categoria, padrões de nome, o que a IA extrai de cada um.</div>
+      <div class="field-card" style="border-color: var(--ok-border);">
+        <div class="field-name" style="color: var(--ok-text);">Campo 7 — Anexos ✅ Concluído (31/07/2026)</div>
+        <div class="field-desc">Nome de cada arquivo em anexo. O sistema usa <strong>apenas o nome</strong> para classificar — não abre nem lê o conteúdo, exceto RETORNO_BACEN (OCR). Validado com 8.825 e-mails e 78.087 arquivos em disco.</div>
+        <div class="callout callout-ok" style="margin-top:8px; font-size:12px;">
+          <strong>ZIP do CADOC (altíssima confiança):</strong> padrão <code>CNPJ_CADOC_DATA.zip</code> → identifica categoria imediatamente.<br>
+          <strong>Substituição:</strong> sufixo <code>_S_N</code> no nome = correção solicitada pelo BACEN (351 casos). Regex já captura.<br>
+          <strong>COSIF (DLO 2061 / DLI 2062 / S5 / FORCAPITAL):</strong> chega em 3 formatos — <code>.xml</code> direto (642), <code>.bc</code> antigo (123), ZIP genérico. Com planilha LEC = DLO; sem LEC = DLI.<br>
+          <strong>Formatos especiais:</strong> <code>.rar</code> (6) — mesma lógica do ZIP · <code>.eml</code> (8) — e-mail encaminhado, extrair conteúdo interno · sem extensão (BACEN): <code>ADRM060-...</code>=DRM, <code>ALIM262-...</code>=DLI.
+        </div>
       </div>
-      <div class="field-card" style="border-color: var(--warning-border);">
-        <div class="field-name" style="color: var(--warning-text);">Campo 8 — Thread ID e Data ⚠️ PENDENTE</div>
-        <div class="field-desc">ID único da thread (para rastrear toda a conversa) e data de cada mensagem. Aguarda definição: como a IA usa o thread_id; como extrair a data de referência do CADOC.</div>
+      <div class="field-card" style="border-color: var(--ok-border); background: var(--ok-bg);">
+        <div class="field-name" style="color: var(--ok-text);">Campo 8 — Thread ID e Data ✅ Concluído (31/07/2026)</div>
+        <div class="field-desc">Thread ID = chave de agrupamento da conversa (100% preenchido). Dois campos de data: <code>data_email</code> (sempre) e <code>data_competencia</code> (extraída pela IA; null = sem monitoramento de prazo). Inferência de ano validada em 157 casos. Threads de canal: 3 tipos definidos (entrega recorrente / coordenação / caso complexo).</div>
       </div>
     </section>
 

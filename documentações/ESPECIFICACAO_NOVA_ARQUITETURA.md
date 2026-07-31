@@ -503,25 +503,162 @@ A palavra `Abraço` (singular, sem "s") não está no detector atual. Identifica
 
 ### Campo 7 — Anexos
 
-> ⚠️ **PENDENTE — aguardando simulações de threads reais**
->
-> Os nomes e tipos de anexo por categoria já estão parcialmente mapeados em §14 (Catálogo de categorias). O que falta definir nas simulações:
-> - Como tratar e-mails com muitos anexos ou ZIP dentro de ZIP?
-> - Quando o nome do anexo é suficiente para identificar a categoria sem ler o corpo?
-> - Quais anexos precisam de OCR e quando acioná-lo?
-> - Limite de tamanho para processamento?
+**Para que serve:** o nome do arquivo em anexo é frequentemente o sinal mais forte para identificar a categoria — mais confiável que o assunto quando o cliente não coloca o código CADOC no título. O sistema extrai o nome de cada anexo e aplica as regras abaixo.
+
+**Decisão (Fase 1 — triagem):** o sistema usa apenas o **nome do arquivo** para classificar. Não abre nem lê o conteúdo do anexo — exceto no RETORNO_BACEN, onde o OCR é necessário (ver Campo 6, regra L6, e PENDENCIAS.md).
+
+---
+
+#### Regra universal — ZIP do CADOC gerado (altíssima confiança)
+
+Quando a Finaud entrega o CADOC ao cliente, o arquivo ZIP segue o padrão `CNPJ_CADOC_DATA.zip`. O número do CADOC está no próprio nome — identificação imediata, sem verificar assunto nem corpo.
+
+| Categoria | Padrão do ZIP | Exemplo real |
+|---|---|---|
+| DDR 2011 | `CNPJ_2011_YYYYMMDD.zip` | `12345678_2011_20260630.zip` |
+| SCD 4111 | `CNPJ_4111_YYYYMMDD_I_1.zip` | `32648370_4111_20260219_I_1.zip` |
+| DRM 2060 | `CNPJ_2060_YYYYMMDD.zip` | `32648370_2060_20260130.zip` |
+| DLO 2061 | `CNPJ_2061_YYYYMMDD.zip` | `12345678_2061_20260630.zip` |
+| DLI 2062 | `CNPJ_2062_YYYYMM_I_1_4010.zip` | `62280490_2062_202602_I_1_4010.zip` |
+| DRL 2160 | `CNPJ_2160_YYYYMMDD.zip` | `12345678_2160_20260630.zip` |
+
+**Sufixo de substituição `_S_N`:** quando o BACEN detecta erro num CADOC já entregue e solicita correção, o cliente envia um novo ZIP com `_S_1`, `_S_2`, ... no nome (ex.: `32648370_2011_20241129_S_2.zip` = segunda substituição do DDR de novembro/2024). O sistema reconhece automaticamente como CADOC do mesmo tipo — o padrão de busca captura o sufixo via `.*`. 351 casos no histórico.
+
+---
+
+#### Arquivos que o cliente envia para a Finaud (alta confiança)
+
+| Categoria | O que o cliente envia |
+|---|---|
+| DDR 2011 | Prefixo `RD_` — ex.: `RD_MOEDA.csv`, `RD_LFT.xlsx`, `RD_PREFIXADA.xlsx`; ou `DDR_YYYYMM.xlsx` |
+| SCD 4111 | `CADOC 4111.xlsx`, `DOC_4111_YYYYMMDD.xlsx`, `Saldos 4111.xlsx` |
+| DRM 2060 | `Saldos DRM.xlsx`, `DRM_2060_Finaud_YYYYMM.xlsx` |
+| DLO 2061 | Arquivos COSIF + planilha LEC — ver regra COSIF abaixo |
+| DLI 2062 | Arquivos COSIF **sem** planilha LEC — ver regra COSIF abaixo |
+| DRL 2160 | Planilha DRL `.xlsx` |
+| S5 | Arquivos COSIF — ver regra COSIF abaixo |
+
+---
+
+#### Regra COSIF — DLO 2061, DLI 2062, S5 e FORCAPITAL
+
+Balancetes contábeis que o cliente extrai do seu sistema e envia para a Finaud processar. Existem dois tipos, conforme a estrutura da empresa:
+
+| Arquivo | Empresa | Quando é enviado |
+|---|---|---|
+| `COS4010.xml` | Individual | Todo mês |
+| `COS4016.xml` | Individual | Somente **junho e dezembro** |
+| `COS4060.xml` | Conglomerado (grupo de empresas) | Todo mês |
+| `COS4066.xml` | Conglomerado (grupo de empresas) | Somente **junho e dezembro** |
+
+**Regra de envio:** todo mês o cliente manda o arquivo mensal (4010 ou 4060). Em **junho e dezembro** manda também o semestral (4016 ou 4066) — resultado: dois arquivos COSIF no mesmo e-mail.
+
+**Para a triagem:** qualquer arquivo COSIF indica uma dessas quatro categorias. O que diferencia:
+
+| Sinal adicional | Categoria |
+|---|---|
+| COSIF + planilha LEC (`LEC_*.xlsx`) | DLO 2061 |
+| COSIF sem planilha LEC | DLI 2062 (confirmar pelo assunto) |
+| COSIF + "S5" no assunto ou corpo | S5 |
+| COSIF + "FORCAPITAL" no assunto ou corpo | FORCAPITAL |
+
+**Formatos em que o COSIF chega:** o cliente pode enviar o arquivo COSIF de três formas — o sistema precisa reconhecer todas:
+
+| Formato | Extensão | Casos no histórico | Observação |
+|---|---|---|---|
+| XML direto como anexo | `.xml` | 642 | Padrão atual — `COS4010.xml`, `40602412.XML`, `4060 NomeCliente MM.AAAA.xml` |
+| BC formato antigo | `.bc` | 123 | Usado até ~2023; dados retroativos ainda chegam com essa extensão |
+| Dentro de ZIP com nome genérico | `.zip` | Varia | ZIP sem padrão CADOC no nome — precisa ser aberto para identificar o XML/BC interno |
+
+---
+
+#### Categorias sem padrão de nome de anexo
+
+| Categoria | Situação |
+|---|---|
+| RETORNO_BACEN | XMLs de rejeição CRD e PDFs de prints de erro — nomes genéricos, sem padrão. OCR necessário (PENDENCIAS.md) |
+| SUPORTE | Qualquer arquivo ou nenhum — o anexo não identifica a categoria |
+| FORCAPITAL | Planilha ou PDF de projeção — sem padrão de nome específico |
+| DRSAC 2030 | Arquivo DRSAC para análise — sem padrão específico |
+| PVCA 6209 | Arquivo PVCA para análise — sem padrão específico |
+
+---
+
+#### Decisões sobre casos difíceis — validadas com histórico de 8.825 e-mails
+
+| Questão | Decisão |
+|---|---|
+| ZIP dentro de ZIP | 0 casos no histórico (300 ZIPs verificados em disco). Regra: se o nome externo for genérico, abrir um nível e ler nomes internos; nunca recursivo além disso |
+| E-mail com muitos anexos | Verificar TODOS os nomes — máximo encontrado foi 37 (DDR com vários dias), mediana ≤ 4 |
+| Nome genérico sem pista (`image.png`, `documento.pdf`) | Ignorar para classificação — 39,4% são genéricos mas quase todos são `image.png` / `image001.png`, tratados em Campo 6 (L5–L7) |
+| Tamanho do arquivo | Sem limite na triagem (lê só o nome). Para leitura de conteúdo (OCR, fase futura): limite sugerido de 25 MB — maior arquivo encontrado foi 18,26 MB |
+
+#### Formatos especiais e casos de borda
+
+| Formato | Casos no histórico | Regra |
+|---|---|---|
+| `.RAR` | 6 | Mesma lógica do ZIP — tentar abrir e ler nomes internos. Se não conseguir: flag para revisão humana |
+| `.EML` (e-mail encaminhado como anexo) | 8 | Extrair assunto e anexos do e-mail interno e aplicar as regras de classificação normais. Prioritário para RETORNO_BACEN |
+| Sem extensão — nome embaralhado | ~200 | Encoding quebrado no parser (`=_utf-8_B_...`). Classificar pelo assunto e corpo; marcar como VERIFICAR_NOME para registro |
+| Sem extensão — código de protocolo BACEN | ~30 | `ADRM060-...` = DRM 2060 · `ALIM262-...` = DLI 2062 — sinal forte de categoria, usar direto |
 
 ---
 
 ### Campo 8 — Thread ID e Data
 
-> ⚠️ **PENDENTE — aguardando simulações de threads reais**
->
-> **Questões a responder:**
-> - Como o Thread ID do Gmail se relaciona com o histórico de aprendizado da IA?
-> - Como tratar threads de canal (0,3% do total — mesma thread reutilizada por meses)?
-> - Data de referência regulatória: usar a data do e-mail ou a data mencionada no corpo/assunto?
-> - Como registrar a data de competência (referência do CADOC) separada da data do e-mail?
+> ✅ **Concluído — 31/07/2026**
+
+---
+
+#### Thread ID
+
+O Thread ID (`thread_root` no histórico atual / `threadId` na Gmail API) é o código que agrupa todos os e-mails de uma mesma conversa. Serve para três coisas:
+
+1. **Manter o caso unido na tela do gestor** — todos os e-mails de uma conversa aparecem como uma única linha no painel, não como itens separados
+2. **Determinar o status atual** — o sistema pega o último e-mail da thread (pelo Thread ID) e aplica as regras do §11
+3. **Guardar o histórico completo para a IA aprender (Fase 2)** — o Thread ID é a chave que une toda a história de um caso: primeiro contato, arquivos trocados, erros, resolução
+
+Cada valor único de Thread ID = um caso distinto na tela do gestor.
+
+---
+
+#### Campos de data
+
+O sistema armazena dois campos de data por e-mail:
+
+| Campo | O que é | Como obtém | Sempre preenchido? |
+|---|---|---|---|
+| `data_email` | Quando o e-mail chegou na caixa | Extraído diretamente do Gmail | Sim |
+| `data_competencia` | O mês/ano a que o CADOC se refere | Extraído do assunto ou nome do anexo pela IA | Não — pode ser `null` |
+
+**Por que os dois são necessários:** o prazo regulatório é calculado a partir da competência, não da data do e-mail. Um DDR de janeiro entregue em fevereiro tem prazo calculado sobre 31/01 — se o sistema usasse só a data do e-mail, nunca saberia se estava atrasado.
+
+**Como a IA extrai a `data_competencia`:**
+- Data explícita no assunto ou anexo (`01/2026`, `jan/2026`, `DRM 12.2025`, `YYYYMMDD` no nome do ZIP) → extrai diretamente
+- Só o mês por extenso sem ano (`DLI DEZEMBRO`, `DRM JANEIRO`) → infere o ano pela data do e-mail como âncora: se o mês mencionado ≤ mês do e-mail, usa o mesmo ano; se maior, usa o ano anterior. Validado com 157 casos do histórico — 100% de acerto nos 5 casos com confirmação via anexo
+- Dois meses no assunto (`Fevereiro e Março`) → registra ambos como competências separadas
+- Nenhum mês detectável → registra `null`
+
+**Regra de monitoramento de prazo (decidida por Michel, 31/07/2026):**
+> `data_competencia` preenchida → o sistema calcula e monitora o prazo regulatório normalmente.  
+> `data_competencia = null` → o sistema **não monitora prazo** para esse caso. Não há como calcular sem a data de referência.
+
+---
+
+#### Threads de canal
+
+Threads com 10 ou mais e-mails **ou** abrangendo 3 ou mais meses calendário são chamadas de "threads de canal". Representam 1,8% do total (59 threads no histórico de 8.825 e-mails). O tratamento depende do conteúdo:
+
+| Tipo | Exemplo real | Como identificar | Tratamento na Camada 2 |
+|---|---|---|---|
+| **Entrega recorrente** | SSG / 4111 (97 e-mails, 5 meses) | Mesmo assunto; novos anexos chegam periodicamente; nome do arquivo não traz data | Cada e-mail com anexo válido = novo item independente na Camada 2 |
+| **Coordenação** | UNICRED / DDR (40 e-mails, 0 anexos) | Zero anexos regulatórios em toda a thread | Nenhum item na Camada 2 — apenas comunicação operacional |
+| **Caso complexo** | EQI CTVM / RETORNO_BACEN (37 e-mails, 1 competência) | Um único CADOC; muitas rodadas de correção; competência fixa no assunto | Um único item na Camada 2 — status em aberto até o BACEN aceitar a correção |
+
+**Regra especial para 4111 (entrega recorrente diária):**
+O CADOC 4111 é uma posição diária — o cliente envia no mesmo dia da data de referência. O arquivo se chama sempre `CADOC 4111.xlsx` sem data no nome. Por isso: `data_competencia` = `data_email`.
+
+> Validado com os dados históricos — 31/07/2026.
 
 ---
 

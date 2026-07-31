@@ -10,6 +10,55 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-07-31 — Campo 8 completo na spec §10
+
+### 31/07 — Campo 8 (Thread ID e Data): regras definidas com base no histórico de 8.825 e-mails
+
+**🔎 Em miúdos:** definimos como o sistema vai identificar cada conversa (Thread ID), quais datas vai usar, como vai descobrir o mês do CADOC quando não está escrito explicitamente no assunto, e o que vai fazer quando a mesma conversa de e-mail é usada por meses para entregas diferentes.
+
+**O que foi feito:**
+- Scripts de análise criados e executados: `analisar_threads_datas.py` e `analisar_mes_sem_ano.py`
+- 3.270 threads analisadas; 59 identificadas como "threads de canal" (1,8% do total)
+- 118 threads mistas (categorias diferentes na mesma thread) identificadas e regra definida
+- 157 casos com mês por extenso sem ano testados — regra de inferência validada (100% nos 5 com ground truth)
+- Decisões gravadas na spec `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md §10 Campo 8`
+- Artifact visual atualizado: https://claude.ai/code/artifact/4eb2c74e-27d9-41a2-ad7c-6bc5b1d6ab01
+
+**Regras escritas:**
+- Thread ID (`thread_root`) = chave de agrupamento de toda a thread; 100% preenchido no histórico
+- `data_email` (sempre preenchida) vs. `data_competencia` (extraída pela IA, pode ser null)
+- Inferência de ano quando assunto tem só o mês: se mês ≤ mês do e-mail → mesmo ano; se maior → ano anterior
+- `data_competencia = null` → sistema não monitora prazo (decisão Michel, 31/07/2026)
+- Threads de canal: 3 tipos definidos (entrega recorrente / coordenação / caso complexo)
+- 4111 (diário): `data_competencia` = `data_email` pois o arquivo nunca traz data no nome
+
+**Validação:** regras derivadas do histórico real de 8.825 e-mails. ✅ VALIDADO
+
+---
+
+## 2026-07-31 — Campo 7 completo na spec §10
+
+### 31/07 — Campo 7 (Anexos): regras definidas com base no histórico completo de 8.825 e-mails
+
+**🔎 Em miúdos:** sabemos agora exatamente o que o sistema vai fazer com cada tipo de arquivo em anexo — desde o ZIP padrão do CADOC até formatos que não estavam previstos, como COSIF em formato antigo `.bc`, e-mails encaminhados como anexo e arquivos com nome embaralhado.
+
+**O que foi feito:**
+- Script `scripts/consultas/analisar_anexos_emails.py` criado e executado — varreu 78.087 arquivos em disco
+- 6 cenários não previstos identificados e documentados: `.bc`, `.xml` direto, sem extensão (2 tipos), `.rar`, `.eml`
+- 4 questões pendentes resolvidas com dados reais: ZIP dentro de ZIP (0 casos), muitos anexos (máx. 37), nomes genéricos (39,4% — quase todos images), tamanho (máx. 18 MB, sem limite para triagem)
+- Decisões gravadas na spec `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md §10 Campo 7`
+- Artifact visual atualizado: https://claude.ai/code/artifact/4eb2c74e-27d9-41a2-ad7c-6bc5b1d6ab01
+
+**Regras escritas:**
+- ZIP do CADOC padrão `CNPJ_CADOC_DATA.zip` — 6 categorias, confiança altíssima
+- Sufixo `_S_N` = substituição solicitada pelo BACEN (351 casos no histórico)
+- COSIF em 3 formatos: `.xml` direto (642), `.bc` antigo (123), ZIP genérico
+- Formatos especiais: `.rar` (6), `.eml` (8), sem extensão BACEN (30), encoding quebrado (200)
+
+**Validação:** ✅ VALIDADO — regras derivadas do histórico completo de 8.825 e-mails · 78.087 arquivos
+
+---
+
 ## 2026-07-30 (continuação de sessão — Campo 6 completo na spec)
 
 ### 30/07 — Campo 6: análise das 12 categorias concluída e escrita na spec §10
