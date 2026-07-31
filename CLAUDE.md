@@ -139,6 +139,23 @@ Antes de trabalhar com qualquer parte do sistema (dados, código, regras):
 
 Isso vale para estrutura de dados, regras de negócio, fluxos do sistema — qualquer coisa. O ciclo garante que o conhecimento acumula na documentação e não fica preso numa sessão.
 
+### Regra: spec é o documento mestre — nenhuma implementação antes de ela estar completa
+
+Antes de iniciar qualquer fase de implementação (código de produção, protótipo ou módulo),
+a especificação em `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` precisa responder
+**todas** as perguntas sobre o projeto — inclusive as que surgirão durante correções futuras.
+
+**O critério de "completa":** qualquer pergunta sobre como o sistema deve se comportar
+(um tipo de e-mail, um anexo, um erro, uma regra de negócio) deve ter resposta na spec.
+Se a pergunta não tem resposta lá, a spec ainda não está pronta.
+
+**Pendências que bloqueiam:** qualquer item em `documentações/PENDENCIAS.md` que afete
+o comportamento do sistema é bloqueador para a fase correspondente.
+
+**Por que existe:** implementar antes de a spec responder tudo cria decisões ad-hoc no
+código sem registro — e a spec perde o valor de ser o documento mestre. (Regra aprovada
+por Michel em 31/07/2026.)
+
 ## Regra obrigatória: backup antes de qualquer operação que modifique dados
 
 Antes de executar qualquer rotina que grave ou altere arquivos de dados, fazer backup organizado

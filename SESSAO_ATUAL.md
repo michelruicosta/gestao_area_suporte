@@ -74,13 +74,22 @@ Três temas discutidos um por vez e consolidados em sequência:
 
 ### Próximos passos
 
-1. 🟡 **Fase 1 — protótipo** (próxima sessão): spec §10 completa remove o bloqueio — agora é possível começar o `coletor_gmail.py` + `classificador_ia.py`
-2. 🔴 **OCR para RETORNO_BACEN** — obrigatório antes da Fase 3; imagens são o conteúdo real nessa categoria (ver PENDENCIAS.md)
-3. 🟡 **Pendências do Campo 6** — resolver antes de construir o módulo de limpeza:
-   - `Abraço` (singular) — adicionar ao PAD_ASSINATURA
-   - Convites de calendário — decidir: filtro ou categoria NOTIFICACAO_SISTEMA
-   - TRUSTEE DTVM — corrigir encoding Windows-1252
-4. 🟡 **MAPA_DO_PROJETO.md** — criar para a nova arquitetura (substituir o do pipeline antigo)
+> **Regra (aprovada por Michel, 31/07/2026):** a spec responde tudo antes de qualquer implementação começar.
+> Nenhum código de produção é escrito enquanto houver perguntas sem resposta no documento mestre.
+
+**Pendências que bloqueiam a implementação — spec ainda precisa responder:**
+
+1. 🔴 **OCR RETORNO_BACEN** — como o sistema lida quando a imagem É o conteúdo (não decoração)? Regra L6 existe mas OCR não está especificado na íntegra
+2. 🟡 **Convites de calendário e notificações automáticas** — o que o classificador faz com e-mails que não são de cliente? (filtrar antes / categoria nova / revisão humana)
+3. 🟡 **IA Assistente — histórico completo** — como preservar o `>` (histórico citado) para aprendizado se a limpeza L3 o remove para classificação? Decisão arquitetural
+4. 🟡 **Painel do gestor** — como mostrar threads com múltiplos CADOCs? Por thread ou por CADOC? Quais status?
+5. 🟡 **Encoding TRUSTEE DTVM** — como tratar e-mails com Windows-1252 no pré-processamento?
+6. 🟡 **`Abraço` (singular)** — adicionar ao detector de assinatura na spec
+7. 🟡 **Campos 1 a 5** — revisar formato para alinhar com o padrão do Campo 6
+
+**Após spec completa:**
+- 🟡 **Fase 1** — protótipo `coletor_gmail.py` + `classificador_ia.py`
+- 🟡 **MAPA_DO_PROJETO.md** — criar para a nova arquitetura
 
 Último /fechar: 2026-07-31 — memórias revisadas ✅ — Campos 7 e 8 concluídos; spec §10 completa
 
