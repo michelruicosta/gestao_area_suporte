@@ -8,84 +8,51 @@
 
 ---
 
-## 📓 Diário da sessão (2026-07-31) — Spec §10 completa + reorganização estrutural + início da revisão sequencial
+## 📓 Diário da sessão (2026-08-03) — Revisão sequencial §8–§11 + "entregue" por categoria (§9 atualizado)
 
 ### Resumo do que foi feito
 
-A sessão de hoje teve duas partes: primeiro, fechou os dois últimos campos da especificação (§10); depois, iniciou a revisão sequencial da spec com reorganização estrutural importante.
+Sessão longa em dois blocos: o primeiro cobriu §8 (regras de classificação), §9–§11 (catálogo, exemplos), e outras decisões pontuais. O segundo foi inteiramente dedicado a responder uma pergunta fundamental da spec: **o que significa "entregue" para cada categoria?**
 
 ---
 
-**Campo 7 — Anexos (concluído 31/07/2026):**
+**Bloco 1 — Revisão sequencial §8 a §11 (detalhes no REGISTRO_CORRECOES.md, 03/08):**
 
-Script `scripts/consultas/analisar_anexos_emails.py` criado e executado — varreu 78.087 arquivos em disco cruzando com os 8.825 e-mails do histórico. Resultado: além dos formatos esperados (ZIP do CADOC, COSIF), foram identificados 6 cenários que não estavam no plano original.
-
-| Tipo de arquivo | Qtde | Tratamento definido |
-|---|---|---|
-| ZIP padrão `CNPJ_CADOC_DATA.zip` | maioria | Sinal forte de categoria — extrair e analisar internos |
-| Sufixo `_S_N` (substituição BACEN) | 351 | Marcar como substituição solicitada |
-| COSIF `.xml` direto | 642 | Processar diretamente |
-| COSIF `.bc` (formato antigo) | 123 | Mesma lógica do .xml — histórico retroativo exige suporte |
-| `.rar` | 6 | Tentar abrir; se falhar → revisão humana |
-| `.eml` (e-mail encaminhado) | 8 | Extrair assunto + anexos internos e reclassificar |
-| Sem extensão — nome embaralhado | ~200 | Classificar pelo assunto; marcar como VERIFICAR_NOME |
-| Sem extensão — código protocolo BACEN | ~30 | `ADRM060-...` = DRM; `ALIM262-...` = DLI — sinal forte |
-
-Decisão adicional do Michel: para as categorias 2061, 2062, S5 e FORCAPITAL, os balancetes COSIF 4010/4060 são obrigatórios todo mês; nos meses de junho e dezembro também chegam o 4016 ou 4066. Isso **não diferencia a triagem** — é só contexto de conhecimento.
+- **§8 Regras de classificação:** 3 lacunas identificadas e corrigidas (escopo do texto analisado, veto + pergunta no mesmo e-mail, "transmitido no BACEN" pelo cliente).
+- **T04 Western Union:** papel da Finaud confirmado — CAM0050 + Balancete de Câmbio = insumo para o DDR (subcategoria cambial).
+- **§9 Modelo de rastreamento / §10 Catálogo / §11 Exemplos (T01–T19):** aprovados por Michel.
+- **Campo CC revisado:** CC usado condicionalmente (35% dos e-mails têm Finaud só no CC).
+- **"Threads irmãs":** Michel decidiu deixar para a Fase 2 — na Fase 1 a regra do último e-mail cobre todos os casos normais.
 
 ---
 
-**Campo 8 — Thread ID e Data (concluído 31/07/2026):**
+**Bloco 2 — "Entregue" por categoria: varredura histórica + spec atualizada:**
 
-Três temas discutidos um por vez e consolidados em sequência:
+Investigação item a item com scripts contra o histórico real (oraculo_360_finaud). Resultados confirmados:
 
-**Tema 1 — Thread ID:**
-- `thread_root` (histórico) / `threadId` (Gmail API) = chave que agrupa toda a conversa
-- Três funções: unir o caso na tela do gestor · determinar o status atual · guardar histórico para a IA aprender
-- 100% preenchido no histórico de 8.825 e-mails
+| Categoria | O que a Finaud entrega |
+|---|---|
+| DDR 2011, DRM 2060, DRL 2160, DLO 2061, DLI 2062, CADOC 4111 | ZIP `CNPJ_CATEGORIA_DATA.zip` (substituição: sufixo `_S_N`) |
+| S5 | PDF (`Resultado Quantitativo - S5.pdf`) — não vai ao BACEN |
+| FORCAPITAL | Varia: e-mail texto, XLSX ou PDF — não vai ao BACEN |
+| PVCA 6209 | `BACEN.ZIP` com 8 TXT na raiz (CONGLOME, USUREMOT, ESTATCRT, ESTATATM, TRANSOPA, OPEINTRA, CONTATOS, DATABASE) — cliente transmite via STA |
+| DRSAC 2030 | XML (`DocumentoDRSAC`, CNPJ 8 dígitos, data AAAA-MM) |
+| RETORNO_BACEN | Não é entrega — é a etapa de crítica do BACEN |
 
-**Tema 2 — Campos de data:**
-- `data_email` (sempre preenchida, vem do Gmail) vs. `data_competencia` (extraída pela IA do assunto/anexo)
-- A data de competência é o mês do CADOC — necessária para calcular o prazo regulatório
-- Script `scripts/consultas/analisar_mes_sem_ano.py` validou a regra de inferência de ano: 157 casos testados, 100% de acerto nos 5 com ground truth
-- Regra aprovada por Michel: `data_competencia = null` → sistema não monitora prazo
+**DDR — problema multi-thread descoberto:** 99% das entregas de CADOC DDR acontecem em thread SEPARADA da thread onde o cliente enviou os dados brutos. Chave de ligação: CNPJ + data\_competencia extraída do nome do ZIP (padrão 100% padronizado). Registrado na spec. Fase 2 definirá a ligação automática.
 
-**Tema 3 — Threads de canal:**
-- 59 threads (1,8%) com 10+ e-mails ou abrangendo 3+ meses
-- 3 tipos identificados com exemplos reais do histórico:
-  - **Entrega recorrente** (SSG/4111): cada e-mail com anexo = nova entrega na Camada 2; `data_competencia` = `data_email`
-  - **Coordenação** (UNICRED/DDR): zero anexos = zero itens na Camada 2
-  - **Caso complexo** (EQI CTVM/RETORNO_BACEN): um único caso que levou meses para resolver
+**RETORNO\_BACEN — requisito de leitura de imagem:** 1.061 PNG/JPGs detectados no histórico — a crítica do BACEN está embutida em prints de tela do sistema do BACEN. O classificador usará a visão nativa do Claude (multimodal) para extrair o texto. Confirmado por Michel e gravado na spec.
 
-**Script permanente criado:** `scripts/consultas/analisar_threads_datas.py`
-
----
-
-**Reorganização estrutural da spec (31/07/2026):**
-
-Após concluir os Campos 7 e 8, a sessão continuou com uma revisão da estrutura da especificação. Três mudanças aprovadas por Michel:
-
-1. **§7 "Ganho principal e risco principal" — excluído.** Decisão de Michel: o item era desnecessário porque a regra de que a IA só classifica quando todos os campos obrigatórios estão preenchidos (e o que não estiver vai para revisão humana) já trata o risco implicitamente — não precisava de seção separada.
-
-2. **"Plano de implantação por fases" — movido para §15 (final).** Motivação: seções de implementação não pertencem no meio da especificação técnica; devem ficar no final, após tudo estar validado.
-
-3. **"Decisões tomadas e justificativas" — movido para §14 (penúltimo).** Mesmo critério: será completado gradualmente conforme a spec avança; fica no final para não interromper a leitura da spec técnica.
-
-Após a reorganização, revisão rápida (passagem A) do §7 "Mapeamento de campos do e-mail". Michel identificou duas lacunas:
-- Campo 1: não descreve o passo a passo de filtragem (como vai filtrar, não só o que filtra)
-- Campos 1 a 8: não têm bloco "Como o sistema processa" — só dizem o que cada campo é, não como o sistema decide o que fazer com ele
-
-Ambas as lacunas foram registradas como 🔴 BLOQUEADOR no PENDENCIAS.md — obrigatório resolver antes do desenvolvimento das telas.
+**§9 atualizado** em `ESPECIFICACAO_NOVA_ARQUITETURA.md` e `spec_nova_arquitetura.html` (artifact republicado com mesmo link).
 
 ---
 
 ### Estado atual
 
-**Mapeamento de campos (§7 da spec):** ✅ completo em conteúdo — 🔴 pendência de "Como processa" em cada campo
-**§7 Campo 6 — Limpeza do corpo:** ✅ **CONCLUÍDO (30/07/2026)** — 6.989 e-mails, 12 categorias, regras L1–L8
-**§7 Campo 7 — Anexos:** ✅ **CONCLUÍDO (31/07/2026)** — 78.087 arquivos, 6 cenários novos, regras escritas
-**§7 Campo 8 — Thread ID e Data:** ✅ **CONCLUÍDO (31/07/2026)** — Thread ID, datas, inferência de ano, 3 tipos de threads de canal
-**Especificação §7 (Mapeamento) completa:** ✅ — todos os 8 campos fechados
+**Revisão sequencial da spec:** §8, §9, §10, §11 ✅ concluídos
+**§9 "Entregue" por categoria:** ✅ confirmado e gravado na spec (03/08/2026)
+**RETORNO\_BACEN imagem:** ✅ requisito gravado na spec
+**Spec §10 (Campos 1–8):** ✅ todos concluídos
 **GitHub:** `github.com/michelruicosta/gestao_area_suporte` — branch `main`
 
 ---
@@ -93,38 +60,30 @@ Ambas as lacunas foram registradas como 🔴 BLOQUEADOR no PENDENCIAS.md — obr
 ### Próximos passos
 
 > **Regra (aprovada por Michel, 31/07/2026):** a spec responde tudo antes de qualquer implementação começar.
-> Nenhum código de produção é escrito enquanto houver perguntas sem resposta no documento mestre.
 
 **🔴 BLOQUEADORES (antes do desenvolvimento das telas):**
 
-1. 🔴 **§7 — "Como o sistema processa"** (passo a passo) em cada um dos 8 campos — Campo 1 inclui passo a passo de filtragem
-2. 🔴 **OCR RETORNO_BACEN** — como o sistema lida quando a imagem É o conteúdo (não decoração)? Regra L6 existe mas OCR não está especificado na íntegra
+1. 🔴 **§7 — "Como o sistema processa"** (passo a passo) em cada um dos 8 campos
+2. 🔴 **OCR RETORNO\_BACEN** — requisito gravado na spec; implementação é bloqueador da Fase 3
 
-**Revisão sequencial da spec — próxima seção:**
+**Revisão sequencial — seções restantes:**
 
-3. 🟡 **§8 — Regras de classificação das threads** ← PRÓXIMA SESSÃO (segunda-feira)
-
-**Demais seções pendentes de revisão:**
-- §9 Modelo de rastreamento — duas camadas
-- §10 Telas do sistema
-- §11 Catálogo de categorias
-- §12 Exemplos reais de threads
-- §13 Padrões observados
-- §14 Decisões tomadas e justificativas
-- §15 Plano de implantação
+3. 🟡 **§12 Padrões observados** ← PRÓXIMA SESSÃO
+4. 🟡 **§13 Telas do sistema** (só após seções funcionais completas)
+5. 🟡 **§14 Decisões e justificativas**
+6. 🟡 **§15 Plano de implantação**
 
 **Outras pendências ativas:**
-- 🟡 Convites de calendário e notificações automáticas — definir antes da Fase 3
+- 🟡 Convites de calendário e notificações automáticas — antes da Fase 3
 - 🟡 IA Assistente — histórico completo vs. limpeza para classificação
 - 🟡 Painel do gestor — design para threads com múltiplos CADOCs
 - 🟡 Encoding TRUSTEE DTVM — corrigir no pré-processamento
 - 🟡 `Abraço` (singular) — adicionar ao detector de assinatura
-- 🟡 Campos 1 a 5 — revisar formato para alinhar com padrão do Campo 6
 
 **Após spec completa:**
 - 🟡 **Fase 1** — protótipo `coletor_gmail.py` + `classificador_ia.py`
-- 🟡 **MAPA_DO_PROJETO.md** — criar para a nova arquitetura
+- 🟡 **MAPA\_DO\_PROJETO.md** — criar para a nova arquitetura
 
-Último /fechar: 2026-07-31 — memórias revisadas ✅ — Spec §10 completa; reorganização estrutural; próximo: §8
+Último /fechar: 2026-08-03 — memórias revisadas ✅ — §8–§11 revisados; "entregue" por categoria confirmado; próximo: §12
 
 ---

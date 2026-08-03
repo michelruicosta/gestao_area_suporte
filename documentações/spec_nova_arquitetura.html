@@ -360,11 +360,54 @@
             <tr><td>Thread como unidade</td><td>O sistema rastreia threads (conversas completas), não mensagens individuais</td><td>Um CADOC = uma thread, não um e-mail</td></tr>
             <tr><td>Modelo de 2 camadas</td><td>Camada 1 = e-mail (comunicação); Camada 2 = entregas regulatórias (cada categoria rastreada separado)</td><td>Um e-mail pode ter DDR + DRM + DLI — todos precisam de prazo próprio</td></tr>
             <tr><td>Processamento contínuo</td><td>O leitor roda a cada hora (ou sob demanda), não em lote diário</td><td>Threads de RETORNO_BACEN têm prazo D+3 — precisam aparecer logo</td></tr>
-            <tr><td>CC não utilizado</td><td>O campo CC não é usado para identificar participantes — apenas BCC</td><td>CC é ruído; oraculo@ sempre vem como BCC</td></tr>
+            <tr><td>CC — uso condicional <em>(rev. 03/08/2026)</em></td><td>CC é verificado em dois casos: (1) Finaud não está no Para → busca Finaud no CC; (2) Para vazio → CC como fallback para identificar cliente</td><td>Decisão anterior ("CC não utilizado") corrigida — varredura revelou 35% dos e-mails com Finaud só no CC</td></tr>
             <tr><td>Filtros de remetente</td><td>Endereços filtrados são configurados na Tela 2 — sem código novo</td><td>Michel (ou a equipe) pode ajustar sem TI (decisão 23/07/2026)</td></tr>
             <tr><td>Padrão de nomes</td><td><code>ação_domínio.py</code> — ex.: <code>coletor_gmail.py</code>, <code>classificador_ia.py</code></td><td>Aprovado por Michel em 28/07/2026</td></tr>
+            <tr><td>O que significa "entregue" <em>(03/08/2026)</em></td><td>Definido por categoria — ZIP CADOC, PDF (S5), ZIP c/ 8 TXT (PVCA 6209), XML (DRSAC 2030), varia (FORCAPITAL), imagem Claude (RETORNO_BACEN)</td><td>Sem definição explícita a IA não sabe quando o trabalho da Finaud está concluído</td></tr>
+            <tr><td>RETORNO_BACEN — leitura de imagem <em>(03/08/2026)</em></td><td>O classificador lê os PNG/JPG de threads RETORNO_BACEN usando a visão nativa do Claude — sem OCR externo</td><td>1.061 imagens detectadas no histórico — a crítica do BACEN está embutida em prints de tela do sistema</td></tr>
           </tbody>
         </table>
+      </div>
+
+      <div class="field-card" style="margin-top:20px; padding:0; overflow:hidden;">
+        <div class="field-name" style="padding:12px 16px;">"Entregue" — o que a Finaud entrega ao cliente, por categoria <small style="font-weight:400;font-size:11px;">(confirmado 03/08/2026)</small></div>
+        <div class="tbl-wrap" style="margin:0;">
+          <table>
+            <thead><tr><th>Categoria</th><th>O que é entregue</th><th>Vai ao BACEN?</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="cat cat-ddr">DDR 2011</span> <span class="cat cat-4111">CADOC 4111</span><br><span class="cat cat-drm">DRM 2060</span> <span class="cat cat-dlo">DLO 2061</span><br><span class="cat cat-dli">DLI 2062</span> <span class="cat cat-drl">DRL 2160</span></td>
+                <td>ZIP: <code>CNPJ_CATEGORIA_DATA.zip</code><br><small>Substituição: sufixo <code>_S_N</code> — ex.: <code>32648370_2011_20241129_S_2.zip</code></small></td>
+                <td>✅ Sim — cliente transmite ao BACEN</td>
+              </tr>
+              <tr>
+                <td><span class="cat cat-s5">S5</span></td>
+                <td>PDF — ex.: <em>Resultado Quantitativo - S5.pdf</em></td>
+                <td>Não — fica entre Finaud e cliente</td>
+              </tr>
+              <tr>
+                <td><span class="cat cat-force">FORCAPITAL</span></td>
+                <td>Varia: e-mail só texto, XLSX ou PDF (projeção de capital)</td>
+                <td>Não</td>
+              </tr>
+              <tr>
+                <td>PVCA 6209</td>
+                <td><code>BACEN.ZIP</code> com 8 TXT na raiz:<br><small>CONGLOME · USUREMOT · ESTATCRT · ESTATATM · TRANSOPA · OPEINTRA · CONTATOS · DATABASE</small></td>
+                <td>✅ Sim — cliente transmite via STA</td>
+              </tr>
+              <tr>
+                <td>DRSAC 2030</td>
+                <td>Arquivo XML (<code>DocumentoDRSAC</code>, CNPJ 8 dígitos, data AAAA-MM)</td>
+                <td>✅ Sim — cliente transmite ao BACEN</td>
+              </tr>
+              <tr style="background:var(--warn-soft,#fffbea);">
+                <td><span class="cat cat-bacen">RETORNO_BACEN</span></td>
+                <td>⚠️ Não é uma entrega — é a crítica do BACEN a um CADOC já entregue. O classificador usa a visão do Claude para ler os PNG/JPG (prints do sistema do BACEN) e extrair o texto da inconsistência.</td>
+                <td>—</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
 
@@ -388,9 +431,15 @@
         <div class="field-name">Campo 4 — Reply-To</div>
         <div class="field-desc">Para onde as respostas devem ir — campo presente na Gmail API, ausente no MCP. Importante para identificar caixas compartilhadas como remetente real.</div>
       </div>
-      <div class="field-card">
-        <div class="field-name">Campo 5 — Assunto</div>
-        <div class="field-desc">O título do e-mail. Principal sinal de categoria para a IA. Padrões: código CADOC direto (<code>DDR 2011</code>, <code>DRM (2060)</code>), nome do documento (<code>Balancete de Câmbio</code>), tipo de situação (<code>REJEITADO</code>, <code>INDÍCIO DE PROBLEMA</code>).</div>
+      <div class="field-card" style="border-color: var(--ok-border);">
+        <div class="field-name" style="color: var(--ok-text);">Campo 5 — Assunto ✅ Concluído (03/08/2026)</div>
+        <div class="field-desc">O título do e-mail. Usado para <strong>duas coisas em sequência</strong>: (1) filtrar e-mails automáticos antes de chegar na IA; (2) ajudar a IA a identificar a categoria da thread.</div>
+        <div class="callout callout-ok" style="margin-top:8px; font-size:12px;">
+          <strong>Filtros por assunto:</strong> 1.894 e-mails (21,5%) descartados — Risk Driver (1.227), Relatório do Serviço (309), Atualização Comunicados (211), FINAUD MASTER (155), FogBugz (132).<br>
+          <strong>Com código CADOC explícito:</strong> 4.088 (46,3%) — IA classifica com alta confiança.<br>
+          <strong>Sem código:</strong> 2.843 (32,2%) — IA lê o corpo completo (Campo 6) para classificar.<br>
+          <strong>Regra dos 99%:</strong> se a IA não atingir 99% de confiança → Retenção com notificação imediata para Michel. Nenhum dado vai para a tela abaixo desse limiar. (Aprovado 03/08/2026.)
+        </div>
       </div>
       <div class="field-card" style="border-color: var(--ok-border);">
         <div class="field-name" style="color: var(--ok-text);">Campo 6 — Corpo ✅ Concluído (30/07/2026)</div>
@@ -401,18 +450,23 @@
         </div>
       </div>
       <div class="field-card" style="border-color: var(--ok-border);">
-        <div class="field-name" style="color: var(--ok-text);">Campo 7 — Anexos ✅ Concluído (31/07/2026)</div>
-        <div class="field-desc">Nome de cada arquivo em anexo. O sistema usa <strong>apenas o nome</strong> para classificar — não abre nem lê o conteúdo, exceto RETORNO_BACEN (OCR). Validado com 8.825 e-mails e 78.087 arquivos em disco.</div>
+        <div class="field-name" style="color: var(--ok-text);">Campo 7 — Anexos ✅ Concluído (03/08/2026)</div>
+        <div class="field-desc">Arquivos em anexo. Em <strong>67% dos e-mails não há anexo</strong> — nesses casos o campo não participa da classificação. Quando existe, é o sinal mais forte: ZIP com padrão <code>CNPJ_CADOC_DATA.zip</code> identifica a categoria sem ler assunto ou corpo.</div>
         <div class="callout callout-ok" style="margin-top:8px; font-size:12px;">
-          <strong>ZIP do CADOC (altíssima confiança):</strong> padrão <code>CNPJ_CADOC_DATA.zip</code> → identifica categoria imediatamente.<br>
-          <strong>Substituição:</strong> sufixo <code>_S_N</code> no nome = correção solicitada pelo BACEN (351 casos). Regex já captura.<br>
-          <strong>COSIF (DLO 2061 / DLI 2062 / S5 / FORCAPITAL):</strong> chega em 3 formatos — <code>.xml</code> direto (642), <code>.bc</code> antigo (123), ZIP genérico. Com planilha LEC = DLO; sem LEC = DLI.<br>
-          <strong>Formatos especiais:</strong> <code>.rar</code> (6) — mesma lógica do ZIP · <code>.eml</code> (8) — e-mail encaminhado, extrair conteúdo interno · sem extensão (BACEN): <code>ADRM060-...</code>=DRM, <code>ALIM262-...</code>=DLI.
+          <strong>9 passos em sequência:</strong> sem anexo → ZIP CADOC → sufixo _S_N → COSIF (.xml/.bc/LEC) → RD_ (DDR) → RAR/EML (abrir) → ZIP genérico (abrir) → imagem genérica (OCR) → sem padrão (usa assunto+corpo).<br>
+          <strong>RETORNO_BACEN: 40% sem padrão</strong> — clientes enviam prints de tela (image001.png). OCR obrigatório — bloqueador da Fase 3.<br>
+          <strong>COSIF baixo (0–2%):</strong> maioria chega dentro de ZIPs genéricos → sistema precisa abrir o ZIP para encontrar o .xml/.bc interno.<br>
+          <strong>Validado: 6.989 e-mails · 03/08/2026</strong>
         </div>
       </div>
       <div class="field-card" style="border-color: var(--ok-border); background: var(--ok-bg);">
-        <div class="field-name" style="color: var(--ok-text);">Campo 8 — Thread ID e Data ✅ Concluído (31/07/2026)</div>
-        <div class="field-desc">Thread ID = chave de agrupamento da conversa (100% preenchido). Dois campos de data: <code>data_email</code> (sempre) e <code>data_competencia</code> (extraída pela IA; null = sem monitoramento de prazo). Inferência de ano validada em 157 casos. Threads de canal: 3 tipos definidos (entrega recorrente / coordenação / caso complexo).</div>
+        <div class="field-name" style="color: var(--ok-text);">Campo 8 — Thread ID e Data ✅ Concluído (03/08/2026)</div>
+        <div class="field-desc">Thread ID agrupa toda a conversa (100% preenchido). Três conceitos que se conectam: <code>data_email</code> (quando chegou) + <code>data_competencia</code> (mês do relatório, extraída pela IA) + <code>prazo</code> (calculado: data_competencia + fórmula da categoria). Sem data_competencia → sem monitoramento de prazo.</div>
+        <div class="callout callout-ok" style="margin-top:8px; font-size:12px;">
+          <strong>Fórmulas por categoria:</strong> DDR/SCD = D+3 úteis · DRM = D+5 mês seguinte · DLO/DLI = dia 5 do 2º mês · DRL = D+10 mês seguinte · S5 = D+5 úteis · FORCAPITAL = D+5 da data_email · SUPORTE = sem prazo · RETORNO_BACEN = prazo do BACEN na crítica.<br>
+          <strong>Threads de canal:</strong> 3 tipos — entrega recorrente (novo item por anexo) · coordenação (zero itens) · caso complexo (um item, status em aberto até BACEN aceitar).<br>
+          <strong>Inferência de ano:</strong> validada em 157 casos — 100% de acerto.
+        </div>
       </div>
     </section>
 

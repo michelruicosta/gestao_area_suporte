@@ -68,6 +68,9 @@ _debug_*.py
 tmp*.py
 tmp*.txt
 
+# Resultados de scripts de consulta (arquivos JSON/CSV gerados) — não vão para o repo
+scripts/resultados/
+
 # Backups gerados pelos scripts (nao devem ir para o repo)
 *.backup_*
 *.backup_log_*

@@ -10,6 +10,74 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-08-03 — Revisão sequencial: §8, §9, §10 e §11 aprovados
+
+### 03/08 — T04 (Western Union): papel da Finaud confirmado
+
+**🔎 Em miúdos:** descobrimos o que a Finaud faz com o e-mail diário da Western Union — não é só informação de fundo, ela usa os dados para gerar o DDR (componente de câmbio).
+
+**Problema:** T04 estava documentado como "aguarda confirmação de Michel" — o papel da Finaud no fluxo do CAM0050 e Balancete de Câmbio não estava claro.
+
+**Correção:** Michel confirmou em 03/08/2026: a Finaud recebe o CAM0050 e o Balancete de Câmbio e os utiliza como insumo para compor o DDR (subcategoria cambial). T04 classificado como DDR_2011. Sinal de encerramento: thread de distribuição — Finaud processa internamente, sem resposta por e-mail esperada.
+
+**Arquivos alterados:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — T04, §12 tabela de sinais, §14 Plano (Fase 0 marcada como Concluída).
+
+**Validação:** ✅ Confirmado por Michel.
+
+---
+
+### 03/08 — §8 Regras de classificação: três lacunas identificadas e corrigidas na spec
+
+**🔎 Em miúdos:** cruzamos todas as regras de classificação com o histórico real de 4.786 threads e encontramos três situações que as regras não cobriam — agora estão todas documentadas.
+
+**Lacunas confirmadas e adicionadas à spec:**
+
+1. **Escopo do texto analisado** — as regras se aplicam só ao texto novo, não ao histórico citado (linhas `>` ou separadas por `---`).
+2. **Veto + pergunta no mesmo e-mail** — quando a última mensagem começa com agradecimento mas contém uma pergunta ou pedido novo, o agradecimento não cancela o conteúdo — o caso não fecha.
+3. **"Transmitido no BACEN" pelo cliente** — se o texto novo do último e-mail contiver "transmitido no BACEN" (qualquer variação), o caso é Concluído independente de quem enviou.
+
+**Validação:** ✅ Confirmado por Michel. Script de validação `scripts/consultas/validar_regras_classificacao.py` executado contra 4.786 threads reais — 1.137 divergências restantes são esperadas (classificação histórica do pipeline antigo vs. regras novas).
+
+---
+
+### 03/08 — §9 atualizado: "entregue" por categoria + RETORNO_BACEN leitura de imagem
+
+**🔎 Em miúdos:** descobrimos e gravamos na spec o que a Finaud entrega ao cliente em cada tipo de trabalho — e identificamos que as críticas do BACEN chegam como foto de tela, não como texto.
+
+**Problema:** a spec não definia o que significa "entregue" para cada categoria. Sem isso, a IA não sabe quando o trabalho da Finaud está concluído.
+
+**Investigação:** scripts contra o histórico real (oraculo_360_finaud) para cada categoria. Resultados:
+- DDR 2011, DRM 2060, DRL 2160, DLO 2061, DLI 2062, CADOC 4111 → ZIP `CNPJ_CATEGORIA_DATA.zip`
+- S5 → PDF (`Resultado Quantitativo - S5.pdf`)
+- FORCAPITAL → varia: texto, XLSX ou PDF
+- PVCA 6209 → `BACEN.ZIP` com 8 TXT (inclui CONTATOS.TXT — antes estava como 7 arquivos)
+- DRSAC 2030 → XML (`DocumentoDRSAC`) — confirmado via XSD oficial do BACEN
+- RETORNO\_BACEN → não é entrega — é a crítica do BACEN; 1.061 PNG/JPG detectados (prints de tela)
+
+**Decisão adicional — DDR multi-thread:** 99% dos CADOC DDR chegam em thread SEPARADA dos dados brutos do cliente. Chave de ligação: CNPJ + data_competencia do nome do ZIP (padrão 100% padronizado). Fase 2 resolverá a ligação automática.
+
+**Decisão — RETORNO\_BACEN imagem:** o classificador usa a visão nativa do Claude (multimodal) para ler os PNG/JPG e extrair o texto da crítica. Confirmado por Michel em 03/08/2026.
+
+**Correção:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — §9 (tabela de "entregue" por categoria + requisito de imagem). `documentações/spec_nova_arquitetura.html` — §9 atualizado e publicado como artifact.
+
+**Validação:** ✅ Confirmado por Michel em 03/08/2026.
+
+---
+
+### 03/08 — §9 e §10 Catálogo revisados e aprovados
+
+**🔎 Em miúdos:** passagem rápida pelas 12 categorias e pelos 19 exemplos reais — conteúdo confirmado como correto por Michel.
+
+**§9 Modelo de rastreamento:** aprovado sem alterações.
+
+**§10 Catálogo de categorias:** 12 categorias (4111, DDR_2011, DRM_2060, DLO_2061, DLI_2062, DRL_2160, S5, SUPORTE, RETORNO_BACEN, FORCAPITAL, DRSAC_2030, PVCA_6209) aprovadas — cada uma com sinais de detecção e regras R1–R5.
+
+**§11 Exemplos reais:** T01–T19 aprovados. T04 encerrado (ver entrada acima). Fase 0 marcada como Concluída.
+
+**Validação:** ✅ Confirmado por Michel.
+
+---
+
 ## 2026-07-31 — Reorganização estrutural da spec + início da revisão sequencial
 
 ### 31/07 — Spec: três mudanças estruturais aprovadas por Michel
