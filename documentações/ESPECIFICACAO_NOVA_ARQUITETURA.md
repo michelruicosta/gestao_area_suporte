@@ -1,7 +1,7 @@
 # Especificação — Nova Arquitetura do Oráculo 360
 **Versão:** 2.0  
 **Data:** 31/07/2026  
-**Status:** Em desenvolvimento ativo — revisão sequencial em andamento — §7 a §11 revisados e aprovados; próxima seção: §12 Plano de implantação por fases
+**Status:** Em desenvolvimento ativo — revisão sequencial em andamento — §7 a §11 revisados e aprovados; próxima seção: §12 Decisões tomadas e justificativas
 
 ---
 
@@ -20,10 +20,9 @@
 | 9 | Modelo de rastreamento — duas camadas |
 | 10 | Catálogo de categorias — o que a IA precisa saber |
 | 11 | Exemplos reais de threads (T01–T19) |
-| 12 | Padrões observados para guiar a IA |
-| 13 | Decisões tomadas e justificativas |
-| 14 | Plano de implantação por fases |
-| 15 | Telas do sistema |
+| 12 | Decisões tomadas e justificativas |
+| 13 | Plano de implantação por fases |
+| 14 | Telas do sistema |
 | A | Apêndice A — Colaboradores Finaud identificados |
 
 ---
@@ -1174,7 +1173,7 @@ A saída da IA deixa de ser "este e-mail É DDR" e passa a ser "este e-mail CONT
 
 ---
 
-## 13. Telas do sistema
+## 14. Telas do sistema
 
 ### Tela 1 — Painel Operacional
 
@@ -2380,7 +2379,7 @@ Exemplos coletados durante a Fase 0 (22/07/2026) com leitura direta de 25+ threa
 
 ---
 
-## 12. Plano de implantação por fases
+## 13. Plano de implantação por fases
 
 | Fase | Nome | O que acontece | Status |
 |---|---|---|---|
