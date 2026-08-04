@@ -10,6 +10,57 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-08-04 — Campo 6: regras de imagem completas + §7 bloqueador fechado
+
+### 04/08 — L7 removida: imagem após assinatura não é sinal de decorativo
+
+**🔎 Em miúdos:** a regra que descartava imagens localizadas após a assinatura estava errada — descobrimos (lendo imagens reais) que elas contêm conteúdo crítico do BACEN, não logos de rodapé.
+
+**Problema:** a regra L7 dizia "imagem após assinatura → descartar". Em e-mails de CADOC, o histórico da conversa fica embutido no corpo após a assinatura do reply mais recente. As imagens dentro desse histórico (screenshots do BACEN, STA, boletas) também ficavam "após a assinatura" — e seriam descartadas incorretamente.
+
+**Simulação realizada:** 7 imagens lidas que estavam posicionadas após a assinatura — **0 de 7 eram decorativas**: todas continham STA, CRD, boleta financeira ou erro do BACEN.
+
+**Correção:** L7 removida. L6 reescrita — OCR aciona para qualquer imagem cujo nome não contenha palavra conhecida de decorativo, independente de posição no e-mail. O único critério de descarte sem OCR é o nome do arquivo (L5).
+
+**Validação:** ✅ Simulação com dados reais (7 imagens, `oraculo_360_finaud`).
+
+---
+
+### 04/08 — Campo 6: padrões de imagem catalogados e campo OCR definido
+
+**🔎 Em miúdos:** documentamos quais tipos de imagem chegam em cada categoria, como o sistema decide o que ler, e onde o texto extraído fica guardado.
+
+**Problema:** a spec não descrevia o comportamento do sistema para imagens — apenas dizia "OCR" sem detalhar quando aciona, o que extrai, e onde fica o resultado.
+
+**Correção:** nova seção no Campo 6 com:
+- 51.085 imagens varridas, 171 padrões distintos catalogados
+- 3 grupos: descartar sem ler / ler com OCR (nome identifica) / nome genérico (OCR decide)
+- Regra de contexto: mesmo nome pode ser decorativo em DLO e crítico em RETORNO_BACEN
+- Campo `ocr_imagens` definido — JSON com arquivo, posição, conteúdo e status
+- Formato rotulado para a IA (`[IMAGEM: arquivo]...[FIM DA IMAGEM]`)
+- Justificativa de permanência: IA Assistente de Aprendizado precisa desse conteúdo
+- Campo 7 (anexos): mesmas regras aplicam para `.png`/`.jpg` em anexo
+
+**Validação:** ✅ Imagens reais lidas e resultados confirmados durante a sessão.
+
+---
+
+### 04/08 — §7 bloqueador fechado: passo a passo adicionado aos Campos 2, 3, 4 e 5
+
+**🔎 Em miúdos:** os campos 2 a 5 já descreviam os casos possíveis, mas não tinham a tabela de "o que o sistema faz em cada situação" — agora têm.
+
+**Problema:** Campos 2 (Para), 3 (CC), 4 (Reply-To) e 5 (Assunto) documentavam o "o que é" e os casos, mas não a sequência exata de decisões que o sistema executa. Isso deixava brechas para o desenvolvedor tomar decisões que deveriam estar na spec.
+
+**Correção:** bloco "Como o sistema processa — passo a passo" adicionado em cada campo:
+- Campo 2: 8 passos (Para vazio → interno → descarte → cliente + responsável)
+- Campo 3: 6 passos (quando consultar → Finaud no CC → externo → só Finaud → vazio)
+- Campo 4: 7 passos (quando ignorar → remetente real → filtrado → vazio → assinatura)
+- Campo 5: 6 passos (vazio → filtrar automático → código CADOC → sem código → retenção)
+
+**Validação:** ✅ Sem teste automatizado — mudança de documentação. Conteúdo baseado em casos já validados com dados reais em sessões anteriores.
+
+---
+
 ## 2026-08-03 — Revisão sequencial: §8, §9, §10 e §11 aprovados
 
 ### 03/08 — T04 (Western Union): papel da Finaud confirmado
