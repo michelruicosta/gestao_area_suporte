@@ -59,6 +59,24 @@ O sistema ficará em execução permanente, atualizando automaticamente quando c
 
 ---
 
+### Por que estas escolhas — decisões fundacionais
+
+Quatro escolhas definem toda a arquitetura. Quem for implementar, manter ou evoluir o sistema precisa entendê-las antes de tudo.
+
+**1. Gmail API direta — por que não uma exportação manual ou agendada?**
+Qualquer e-mail novo chega ao sistema em segundos — sem intervenção humana, sem exportação periódica, sem janela de atraso. Obrigações regulatórias têm prazo: um e-mail que chega à tarde e só é visto no dia seguinte pode significar entrega atrasada ao BACEN.
+
+**2. IA classificadora — por que não regras fixas?**
+Os clientes descrevem a mesma situação de dezenas de formas diferentes: "temos uma crítica do BACEN no DRM", "o BACEN rejeitou nossa remessa 2060", "segue retorno da crítica". Regras fixas precisariam cobrir cada variação manualmente — e quebrariam na primeira frase que ninguém previu. A IA generaliza: entende todas essas frases como a mesma coisa sem regra explícita para cada uma.
+
+**3. 99% de confiança mínima — por que um limiar tão alto?**
+Um erro de classificação não é só um dado errado na tela — é uma obrigação regulatória (CADOC) tratada pelo sistema como se fosse outra coisa. O BACEN multa por entrega errada ou fora do prazo. Prefere-se reter para revisão humana do que classificar errado com "90% de certeza".
+
+**4. Duas camadas — por que separar classificação de rastreamento?**
+Um único e-mail pode mencionar DDR, DRM e DLO ao mesmo tempo: "segue o material de março — DDR, DRM e DLI". Se o sistema rastreasse por e-mail, teria que inventar uma categoria "misturada". Com duas camadas, a Camada 1 identifica as categorias presentes no e-mail e a Camada 2 rastreia o ciclo de vida de cada entrega separadamente — cada CADOC tem seu próprio estado, independente dos outros.
+
+---
+
 ## 3. As 12 categorias de e-mail e seus fluxos
 
 O sistema trata 12 categorias distintas de e-mail. Cada categoria tem suas próprias regras, prazo regulatório e fluxo — o que a IA precisa saber sobre cada uma está no §10 (Catálogo de categorias) e os exemplos reais estão no §11.
@@ -2376,6 +2394,32 @@ Exemplos coletados durante a Fase 0 (22/07/2026) com leitura direta de 25+ threa
 **Como identificar:** assunto contém "FogBugz" ou "Caso NNNN"
 
 **Ação:** filtrar automaticamente — não entrar na triagem
+
+---
+
+## 12. Decisões tomadas e justificativas
+
+Índice de referência — todas as decisões relevantes registradas na spec, com localização. Serve para encontrar rapidamente onde uma escolha foi tomada e por quê, sem precisar ler o documento inteiro.
+
+As quatro decisões fundacionais da arquitetura estão explicadas em detalhes no §2 ("Por que estas escolhas"). As demais estão no contexto de cada seção.
+
+| Decisão | Justificativa resumida | Onde está explicada |
+|---|---|---|
+| Gmail API direta | Leitura em tempo real — e-mail novo chega em segundos, sem exportação manual | §2 — Decisões fundacionais |
+| IA classificadora em vez de regras fixas | Clientes descrevem a mesma situação de formas diferentes; IA generaliza, regras fixas quebram | §2 — Decisões fundacionais |
+| 99% de confiança mínima | Erro de classificação = CADOC tratado errado = risco de multa do BACEN; preferir retenção a erro | §2 — Decisões fundacionais; §8 — Regra dos 99% |
+| Duas camadas (classificação + rastreamento) | Um e-mail pode ter múltiplos CADOCs; cada entrega precisa de estado próprio, independente | §2 — Decisões fundacionais; §9 — Modelo de rastreamento |
+| CC ignorado na maior parte dos casos | Consultado só quando Finaud não está no Para — em 65% dos e-mails o Para já identifica tudo | §7 — Campo 3 |
+| Reply-To lido apenas quando De = suporte@ | Só faz sentido quando o grupo enviou — nos outros casos De já identifica o remetente | §7 — Campo 4 |
+| Extrair colaborador do corpo antes de limpar | A limpeza do Campo 6 remove a assinatura — se extrair depois, perde o e-mail do responsável para sempre | §7 — Campo 6, Passo 3 |
+| L7 removida (imagem após assinatura) | Simulação: 7/7 imagens após assinatura continham conteúdo crítico (STA, CRD, boletas) — posição não é sinal de decorativo | §7 — Campo 6, regra L7 |
+| OCR aciona para qualquer imagem não-decorativa | O único critério confiável de decorativo é o nome do arquivo — posição e categoria não bastam sozinhos | §7 — Campo 6, regra L6 |
+| Campo `ocr_imagens` permanente no registro | IA Assistente precisará do conteúdo das imagens para aprender como cada caso foi resolvido | §7 — Campo 6, Campo OCR |
+| Prazo lido da imagem em RETORNO_BACEN | A imagem do CRD/e-mail do BACEN contém o prazo real — substitui qualquer prazo pré-definido | §9 — Entregue por categoria (RETORNO_BACEN) |
+| DDR multi-thread (chave CNPJ + data) | 99% das entregas DDR chegam em thread separada dos dados brutos — ligação por nome do ZIP | §9 — Entregue por categoria (DDR) |
+| Threads irmãs deixadas para Fase 2 | Na Fase 1, regra do último e-mail cobre todos os casos normais — não vale a complexidade agora | §8 — Regras de classificação; PENDENCIAS.md |
+| Convites de calendário deixados para Fase 3 | Frequência baixa; decisão de filtrar ou categorizar depende de observação em produção | PENDENCIAS.md |
+| Telas definidas por último | Design de tela depende de comportamento, regras, filas e ciclo de vida — definir antes inverte a ordem e cria inconsistência | §14 — Telas do sistema |
 
 ---
 
