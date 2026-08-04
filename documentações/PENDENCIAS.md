@@ -14,23 +14,6 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ---
 
-### 🔴 §7 — Adicionar "Como o sistema processa" em cada campo (identificado 31/07/2026)
-
-**O que falta:**
-O §7 (Mapeamento de campos do e-mail) documenta o **que é** cada campo, mas não o **como** o sistema processa. Falta um bloco "passo a passo" para cada um dos 8 campos — sequência exata de decisões que o sistema executa ao ler aquele campo.
-
-**Por que é importante:**
-- Quando houver dúvida sobre o que o sistema fez em um caso real, o passo a passo responde
-- Quando um novo recurso for adicionado, o desenvolvedor sabe exatamente onde encaixar
-- Sem isso, decisões de implementação ficam a cargo do desenvolvedor, sem registro na spec
-
-**Inclui especificamente:**
-- Campo 1: passo a passo de filtragem — o sistema verifica endereço contra lista exata → verifica contra padrões (`noreply`, `newsletter`, etc.) → verifica assunto → se qualquer match: descarta antes de classificar
-- Campos 2 a 8: mesma lógica — descrever a sequência de decisões que o sistema toma ao processar cada campo
-
-**Arquivo de destino:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — §7, em cada campo.
-
----
 
 ### 🟡 ENCODING — Corrigir codificação quebrada nos e-mails da TRUSTEE DTVM (identificado 30/07/2026)
 
