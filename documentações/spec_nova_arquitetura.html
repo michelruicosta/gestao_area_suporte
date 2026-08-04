@@ -211,6 +211,26 @@
         <li>Não integra com o sistema interno da Finaud</li>
         <li>Não cobre WhatsApp, telefone ou outros canais</li>
       </ul>
+      <h3 style="margin-top: 28px;">Por que estas escolhas — decisões fundacionais</h3>
+      <p style="margin-bottom: 14px; color: var(--text-muted); font-size: 13px;">Quatro escolhas definem toda a arquitetura. Quem for implementar, manter ou evoluir o sistema precisa entendê-las antes de tudo.</p>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div class="callout callout-ok">
+          <strong>1. Gmail API direta — por que não exportação manual ou agendada?</strong><br>
+          Qualquer e-mail novo chega ao sistema em segundos — sem intervenção humana, sem janela de atraso. Obrigações regulatórias têm prazo: um e-mail que chega à tarde e só é visto no dia seguinte pode significar entrega atrasada ao BACEN.
+        </div>
+        <div class="callout callout-ok">
+          <strong>2. IA classificadora — por que não regras fixas?</strong><br>
+          Os clientes descrevem a mesma situação de dezenas de formas: "temos uma crítica do BACEN no DRM", "o BACEN rejeitou nossa remessa 2060", "segue retorno da crítica". Regras fixas quebrariam na primeira frase não prevista. A IA generaliza sem regra explícita para cada variação.
+        </div>
+        <div class="callout callout-warning">
+          <strong>3. 99% de confiança mínima — por que um limiar tão alto?</strong><br>
+          Um erro de classificação não é só dado errado na tela — é uma obrigação regulatória tratada como outra coisa. O BACEN multa por entrega errada ou fora do prazo. Prefere-se reter para revisão humana do que classificar errado com "90% de certeza".
+        </div>
+        <div class="callout callout-ok">
+          <strong>4. Duas camadas — por que separar classificação de rastreamento?</strong><br>
+          Um e-mail pode mencionar DDR, DRM e DLO ao mesmo tempo. Com duas camadas, a Camada 1 identifica as categorias presentes e a Camada 2 rastreia o ciclo de vida de cada entrega separadamente — cada CADOC tem seu próprio estado, independente dos outros.
+        </div>
+      </div>
     </section>
 
     <section id="s3">
