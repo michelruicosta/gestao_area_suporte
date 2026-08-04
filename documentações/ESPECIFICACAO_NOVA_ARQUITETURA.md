@@ -286,6 +286,21 @@ E-mails que o sistema descarta automaticamente sem processar. No sistema atual e
 
 > **Regra:** qualquer endereço `@finaud.com.br` ou `@finaudtec.com.br` é tratado como Finaud automaticamente — novos colaboradores não precisam ser cadastrados. *(Decisão confirmada por Michel, 22/07/2026.)*
 
+**Como o sistema processa — passo a passo:**
+
+| Passo | Condição | Ação |
+|---|---|---|
+| 1 | Para está vazio | Ir para Campo 3 (CC) |
+| 2 | Para tem apenas endereços `@finaud.com.br` / `@finaudtec.com.br` | Mensagem interna — entra como contexto da thread, sem identificar cliente externo |
+| 3 | `suporte@finaud.com.br` envia para `suporte@finaud.com.br` (grupo enviando para si mesmo) | **Descarte** |
+| 4 | Para tem Finaud + endereços externos | Cliente = endereço(s) externo(s) — ir para Passo 5 |
+| 5 | Para tem colaborador específico Finaud + grupo `suporte@` | Colaborador específico tem prioridade — é o responsável da thread |
+| 6 | Para tem dois ou mais colaboradores Finaud | Os dois receberam — quem responder primeiro vira responsável |
+| 7 | Para tem dois ou mais clientes externos (domínios diferentes) | IA determina o cliente principal pelo contexto da thread |
+| 8 | Para tem apenas endereços externos (Finaud não está no Para) | Ir para Campo 3 (CC) — verificar se Finaud está sendo copiada |
+
+---
+
 **Todos os casos com exemplos reais:**
 
 **Cliente enviando para o grupo Finaud:**
@@ -339,6 +354,19 @@ E-mails que o sistema descarta automaticamente sem processar. No sistema atual e
 
 > **Confirmado no histórico:** em 3.108 e-mails (35% do total), a Finaud aparece no CC mas não no Para. O CC é importante — não é exceção.
 
+**Como o sistema processa — passo a passo:**
+
+| Passo | Condição | Ação |
+|---|---|---|
+| 1 | Campo 2 (Para) já identificou Finaud e o cliente | CC não é consultado — segue direto para Campo 4 |
+| 2 | Campo 2 não encontrou Finaud (Para vazio ou só externos) | Consultar CC |
+| 3 | CC contém endereço `@finaud.com.br` / `@finaudtec.com.br` | Finaud está monitorando — thread registrada; quem age é o destinatário do Para |
+| 4 | CC contém endereço externo além de Finaud | Cliente = endereço externo identificado no CC |
+| 5 | CC contém só Finaud (sem externo) | Cliente identificado pelo Campo 4 (Reply-To) ou pelo remetente (Campo 1) |
+| 6 | CC vazio | **Retenção** — sistema não consegue identificar nenhum destinatário |
+
+---
+
 **Caso 1 — Finaud não aparece no Para:**
 `victor@miraeinvest.com.br` → `rafael@miraeinvest.com.br` (CC: `oraculo@finaud.com.br`)
 → sistema não encontra Finaud no Para → verifica CC → encontra Finaud → thread monitorada; quem age é o destinatário do Para
@@ -370,6 +398,20 @@ CC vazio:
 
 > **Confirmado no histórico:** em 1.745 e-mails com De = suporte@, o Reply-To revelou o remetente real em 98,1% dos casos.
 
+**Como o sistema processa — passo a passo:**
+
+| Passo | Condição | Ação |
+|---|---|---|
+| 1 | Campo 1 (De) ≠ `suporte@finaud.com.br` | Reply-To ignorado — campo não é consultado |
+| 2 | Campo 1 (De) = `suporte@finaud.com.br` | Verificar Reply-To |
+| 3 | Reply-To tem endereço externo não-filtrado | Remetente real = esse endereço; cliente identificado — segue para classificação |
+| 4 | Reply-To tem endereço filtrado (`noreply@`, notificação automática) | **Descarte** |
+| 5 | Reply-To vazio | Ler assinatura do Campo 6 para identificar o colaborador que enviou |
+| 6 | Assinatura contém e-mail `@finaud.com.br` / `@finaudtec.com.br` | Colaborador identificado como responsável |
+| 7 | Assinatura não contém e-mail Finaud | Registrar como "Finaud via grupo — responsável não identificado" |
+
+---
+
 **Casos com exemplos reais do histórico:**
 
 **Reply-To = cliente externo (98,1% dos casos):**
@@ -398,6 +440,17 @@ CC vazio:
 **O que é:** o título do e-mail — o campo "Assunto:" que aparece na caixa de entrada.
 
 **Para que o sistema usa:** duas coisas, nesta ordem: (1) filtrar e-mails automáticos que não devem ir para a IA; (2) ajudar a IA a identificar a categoria da thread.
+
+**Como o sistema processa — passo a passo:**
+
+| Passo | Condição | Ação |
+|---|---|---|
+| 1 | Assunto está vazio | **Retenção** — sem assunto o sistema não consegue filtrar nem classificar |
+| 2 | Assunto contém termo de e-mail automático (lista de filtros: "Risk Driver -", "Relatório do Serviço", "FINAUD MASTER", "FogBugz" etc.) | **Descarte** — não vai para a IA |
+| 3 | Assunto passou em todos os filtros | Continua processamento — Campo 6 (corpo) será lido |
+| 4 | Assunto contém código CADOC explícito (DDR, DRM, DLO, DLI, DRL, 4111, 2011, 2060, 2061, 2062, 2160) | IA classifica com alta confiança; corpo complementa com detalhes |
+| 5 | Assunto não contém código CADOC | IA lê o corpo completo para determinar a categoria |
+| 6 | IA processa assunto + corpo e não atinge 99% de confiança | **Retenção** com notificação imediata para Michel |
 
 ---
 
