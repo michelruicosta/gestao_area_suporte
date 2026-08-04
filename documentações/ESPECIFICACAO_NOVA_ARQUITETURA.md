@@ -539,18 +539,193 @@ A IA recebe apenas o **texto novo** de cada e-mail — sem assinatura, sem hist�
 | L3 | Histórico com seta | Remove linhas de reply citado | Remove linhas que começam com `>` (convenção de reply citado) |
 | L4 | Rodapé de lista | Tudo a partir do rodapé | Detecta `To unsubscribe from this group` / `Para cancelar a inscrição` / `Você está recebendo este e-mail porque se inscreveu` |
 | L5 | Imagem decorativa | Remove o marcador | Nome da imagem contém: `instagram`, `linkedin`, `facebook`, `youtube`, `whatsapp`, `traders logo`, `esign`, `ícone`, `site mb`, `logo` ou variações de redes sociais |
-| L6 | Imagem genérica antes da assinatura | Tenta ler com OCR | Nome genérico (`image.png`, `imagem.jpg`) localizado antes do ponto de corte L1 → aciona OCR → se texto útil: inclui no texto; se OCR falhar: e-mail vai para fila de revisão humana (não classifica) |
-| L7 | Imagem genérica depois da assinatura | Remove o marcador | Nome genérico localizado após o ponto de corte L1 → descarta (provável logo de rodapé) |
-| L8 | Corpo vazio após limpeza | Sinaliza sem classificar | Se após L1–L7 o texto ficar vazio → marca como `ENCAMINHAMENTO_INTERNO` (R5) e aguarda revisão |
+| L6 | Imagem não-decorativa | Tenta ler com OCR | Qualquer imagem cujo nome **não** contenha palavra conhecida de decorativo (L5) → aciona OCR, independente da posição no e-mail (antes ou depois da assinatura) → se texto útil: inclui no registro rotulado; se OCR falhar: e-mail vai para fila de revisão humana (não classifica) |
+| L7 | ~~Imagem genérica depois da assinatura~~ | **REGRA REMOVIDA** | Removida em 04/08/2026 após simulação com dados reais: 7 de 7 imagens lidas após a assinatura continham conteúdo crítico (STA, CRD, boletas, erros do BACEN). A posição "após assinatura" **não é** sinal confiável de decorativo em e-mails de CADOC — a imagem frequentemente está no histórico citado do e-mail, que aparece depois da assinatura do reply mais recente. |
+| L8 | Corpo vazio após limpeza | Sinaliza sem classificar | Se após L1–L6 o texto e o OCR ficarem vazios → marca como `ENCAMINHAMENTO_INTERNO` (R5) e aguarda revisão |
 
 **Regra de ouro — imagens:**  
-Nenhuma imagem é descartada silenciosamente. Se não for decorativa (L5) e o OCR falhar (L6), o e-mail entra em fila de revisão humana. A IA não classifica até o revisor confirmar o conteúdo.
+Nenhuma imagem é descartada silenciosamente. O único critério de descarte sem OCR é o nome do arquivo conter palavra conhecida de decorativo (L5). Para todo o resto, o sistema tenta OCR. Se o OCR falhar (L6), o e-mail entra em fila de revisão humana — a IA não classifica até o revisor confirmar o conteúdo.
 
 **Atenção — RETORNO_BACEN:**  
 Nesta categoria as imagens não são decorativas — são prints de tela com erros do BACEN e são o conteúdo principal do e-mail. O OCR é obrigatório e pré-requisito para o classificador funcionar. Ver pendência "OCR — RETORNO_BACEN" em `documentações/PENDENCIAS.md`.
 
 **Pendência L1 — variação de assinatura:**  
 A palavra `Abraço` (singular, sem "s") não está no detector atual. Identificada na categoria DLI_2062. Adicionar antes de construir o módulo de limpeza. Ver `documentações/PENDENCIAS.md`.
+
+---
+
+#### Por que a posição no e-mail não decide — entendendo o comportamento real
+
+Em e-mails de CADOC, o histórico da conversa fica embutido no corpo como texto citado (linhas com `>`). As imagens enviadas em replies anteriores aparecem como marcadores `[image:]` dentro desse histórico — **depois** da assinatura do e-mail mais recente. Isso é diferente de e-mails de consumidor, onde imagens após a assinatura são quase sempre logos decorativos do rodapé.
+
+```
+[e-mail mais recente — assinatura de quem está respondendo]
+Att,
+Andrea Inacio
+
+[histórico citado do e-mail anterior — conteúdo real aqui]
+> Ao transmitirmos a remessa DRM (2060), o STA retorna:
+> [image: image.png]   ← BACEN error screenshot. Está APÓS a assinatura, mas é o conteúdo principal
+```
+
+**Simulação realizada em 04/08/2026:** 7 imagens lidas que estavam posicionadas após a assinatura — todas continham conteúdo crítico:
+
+| Arquivo | Categoria | Conteúdo encontrado |
+|---|---|---|
+| `90781_image.png` | RETORNO_BACEN | Screenshot Gmail com erro BACEN VCRD3001, DRM 2060, data-base 31/12/2025 |
+| `90916_image.png` | RETORNO_BACEN | STA: protocolo 364778868, DDR 2011, "Arquivo entregue ao destinatário", 03/02/2026 |
+| `91306_image.png` | DLO_2061 | Screenshot do sistema de arquivos com pastas de clientes com DLO pendente |
+| `91524_image.png` | DRL_2160 | Tela do RiskDriver, módulo DRL > Cálculo, data-base em branco |
+| `91867_image.png` | DDR_2011 | Boleta financeira: NTN-B 760199, R$87,7M, Planner Corretora + BRADESCO |
+| `91864_image.png` | RETORNO_BACEN | STA "Movimentação de arquivos": protocolo 371298848, DRL 2160, entregue 19/02/2026 |
+| `93334_image.png` | RETORNO_BACEN | CRD Indício de qualidade: DLO00116, Planner Corretora, protocolo 357561053, prazo 17/03/2026 |
+
+**Conclusão:** 0 de 7 eram decorativos. A regra L7 foi removida com base nessa evidência.
+
+---
+
+#### Padrões de imagem identificados no histórico (04/08/2026)
+
+**Base:** varredura de 51.085 imagens distribuídas em 171 padrões distintos de nome de arquivo (fonte: `oraculo_360_finaud`, dados históricos completos). Imagens lidas diretamente para confirmar o conteúdo real — o nome do arquivo nem sempre reflete o que está dentro.
+
+**Como o sistema decide — dois momentos em sequência:**
+
+**Momento 1 — Decide se vai tentar ler:**
+
+| O sistema observa | Decisão | Motivo |
+|---|---|---|
+| Nome contém palavra conhecida de decorativo (`logo`, `instagram`, `linkedin`, `facebook`, `youtube`, `whatsapp`, `ícone`, `site mb`, `esign`, `traders logo`, `x`, `app store`, `google play`) | ❌ Descarta sem tentar — regra L5 | Esses nomes identificam decorativo com alta confiabilidade — nunca foram encontrados com conteúdo relevante |
+| Nome é `imagem removida pelo remetente` ou variações | ❌ Descarta sem tentar | O próprio Gmail indica que a imagem não existe mais — não há nada a ler |
+| Nome é gerado pelo Gmail como descrição automática (ex: `fundo preto com letras brancas descrição gerada automaticamente`, `ícone descrição gerada automaticamente`) | ❌ Descarta sem tentar | O Gmail já tentou descrever a imagem — é sempre um logo ou ícone decorativo |
+| Todo o resto — nome genérico, nome descritivo, qualquer posição no e-mail | ✅ Tenta OCR (regra L6) | Simulação mostrou que imagens com qualquer outro tipo de nome podem conter conteúdo crítico |
+
+**Momento 2 — Decide o que fazer com o resultado do OCR:**
+
+| OCR encontrou | Decisão |
+|---|---|
+| Código de CADOC (DDR, DRM, DLO, DLI, DRL, SCD, PVCA, DRSAC), protocolo BACEN, prazo de resposta, data-base, dados financeiros (valor, saldo, taxa, vencimento), mensagem de erro de sistema, texto de sistema regulatório (CRD, STA, RiskDriver) | ✅ Aceita — texto vai para o registro rotulado como origem imagem |
+| Apenas nome de empresa, slogan ou imagem sem texto reconhecível | ❌ Descarta — era decorativo apesar de ter sido lido |
+| OCR falhou (não conseguiu extrair texto) | ⚠️ Fila de revisão humana — IA não classifica o e-mail |
+
+---
+
+##### Padrões catalogados — Grupo 1: Descartar sem ler (nome identifica decorativo)
+
+| Padrão de nome | O que é | Exemplo real encontrado |
+|---|---|---|
+| `Outlook-GUID.png`, `Outlook-GUIDáfico N,.png` | Logo de empresa embutido pelo Outlook — o Outlook automaticamente rotula logos incorporados como "Gráfico N" | `57518_Outlook-Gráfico 4,.png` (DLO) — logo da Executive Corretora de Câmbio |
+| `NOME N anos.png` (ex: `HEBERT 22 anos.png`) | Badge de aniversário do colaborador com foto, cargo e empresa — enviado automaticamente pelo sistema de RH | `65475_HEBERT 22 anos.png` (DLO) — Hebert Dias, Departamento Fiscal, MR Henrique Advogados |
+| `linkedin`, `instagram`, `facebook`, `youtube`, `whatsapp`, `x`, `app store`, `google play`, `traders logo`, `logo eqi`, `www.guru.com.vc`, `site mb`, `esign` | Ícone de rede social ou logo de empresa na assinatura do e-mail — identificados pelo nome no marcador `[image:]` | Encontrados em milhares de e-mails em todas as categorias — regra L5 já os cobre |
+| `imagem removida pelo remetente` e variações | O remetente removeu a imagem antes de encaminhar — não existe arquivo | 594 ocorrências identificadas na varredura — descartar sem tentar |
+| `fundo preto com letras brancas descrição gerada automaticamente com confiança média`, `ícone descrição gerada automaticamente` e similares | O Gmail gerou automaticamente uma descrição de texto alternativo para um logo ou ícone — indica imagem decorativa | 699 ocorrências combinadas identificadas na varredura |
+
+---
+
+##### Padrões catalogados — Grupo 2: Ler com OCR (nome identifica conteúdo relevante)
+
+Estes padrões têm conteúdo relevante com alta confiabilidade. OCR obrigatório; falha no OCR → fila de revisão humana.
+
+| Padrão de nome | O que é | Categorias onde aparece | O que o OCR vai extrair |
+|---|---|---|---|
+| `Inconsistencia N.png`, `Indicio N.png` | E-mail do BACEN ao cliente sobre inconsistência ou indício de qualidade, encaminhado como imagem | RETORNO_BACEN | Tipo do CADOC, código da inconsistência, data-base, protocolo BACEN, prazo de resposta |
+| `pagina_N.png` | Screenshot do Gmail mostrando e-mail do BACEN — o cliente tirou print da tela e enviou | RETORNO_BACEN | Mesmos dados: código de crítica, protocolo, prazo, data-base |
+| `docx_image.png` | Screenshot do navegador aberto no sistema CRD do BACEN (www3.bcb.gov.br/crd2) | RETORNO_BACEN | Inconsistência, razão social do cliente, data-base, protocolo BACEN, prazo |
+| `BACEN LIM N.png` | Print do sistema CRD mostrando indício de qualidade (tipo Aviso ou Alerta) | DLO, DRM | Tipo de indício, identificação do documento (DLO/DRM), protocolo, tolerância concedida |
+| `Critica BACEN.PNG`, `Critica BACEN N.PNG` | Tela do sistema interno RiskDriver mostrando críticas do BACEN para aquele cliente | DRM, DLO, DDR | Código da crítica BACEN, CADOC afetado, ações de substituição disponíveis |
+| `informações adicionais DRL MM.AAAA.png` | Resumo financeiro da carteira compartilhado via Microsoft Teams pelo cliente | DRL | Saldos: Compromissadas, TVM, totais — serve como data de competência se não estiver no assunto ou corpo |
+| `Índice de Basiléia *.png`, `Basileia *.png` | Gráfico do Índice de Basiléia — indicador de solidez financeira regulatório | SUPORTE, FORCAPITAL | Percentual atual, data de referência, mínimo regulatório (8%) |
+| `RWACPAD_erro.png`, `ERRO_PLANILHA LEC.png` e similares com `erro` no nome | Screenshot de erro no sistema RiskDriver, enviado pelo cliente para relatar o problema | SUPORTE, DLO, DDR, DRM | Tipo de erro, módulo afetado, mensagem de erro exata |
+
+**Exemplos reais verificados:**
+- `92241_pagina_01.png` (RETORNO_BACEN) → screenshot do Gmail com e-mail do BACEN: DLO00115, BARU CTVM, data-base 12/2025, prazo 04/03/2026
+- `94928_docx_image.png` (RETORNO_BACEN) → CRD do BACEN: DLO00115, AMARIL FRANKLIN, data-base 02/2026, prazo 17/04/2026
+- `98277_BACEN LIM 2062.png` (DLO) → CRD indício DLI206200007, GURU CORRETORA, tolerância até 06/2026
+- `48707_Critica BACEN.PNG` (DRM) → RiskDriver: críticas 2282/2283 para DRM com ações de substituição
+- `66575_informações adicionais DRL 10.2025.png` (DRL) → Teams: Compromissadas R$67,7M, TVM R$156,3M
+
+---
+
+##### Padrões catalogados — Grupo 3: Nome genérico, OCR decide pelo conteúdo
+
+Estes padrões não identificam o conteúdo pelo nome — o sistema lê e decide com base no que o OCR encontrou.
+
+| Padrão de nome | O que pode conter | Categorias encontradas | Por que OCR é obrigatório |
+|---|---|---|---|
+| `image.png`, `imagem.jpg`, `image001.png` e similares | Erro do BACEN, confirmação STA, tela de sistema regulatório, print de e-mail — OU logo de empresa, rodapé decorativo | Todas as categorias | Em RETORNO_BACEN, `image.png` é quase sempre o print da crítica do BACEN — o único conteúdo relevante do e-mail. Descartá-la por nome seria perder a informação principal. |
+| `{GUID}.png` (ex: `{04D86327-7AFB-46FA-9A35-E937AEE50AC2}.png`) | Tabela financeira com dados de carteira — OU logo de empresa embutido via GUID | SUPORTE (tabela R$39,7B), DLO (logo Executive Corretora) | O mesmo padrão de nome produz conteúdos completamente diferentes dependendo do contexto do e-mail |
+| `NNNNNN.jpg`, `NNNNNN.png` (só números no nome, 6+ dígitos) | Relatório financeiro (ex: NE 17 com Patrimônio de Referência, RWA, breakdown de riscos) | SUPORTE | Nome é um protocolo ou ID interno — o conteúdo real só é conhecido após leitura |
+| `Captura de tela AAAA-MM-DD HHMMNN.png` | Screenshot de qualquer sistema — RiskDriver, planilha, sistema contábil | Qualquer categoria | Captura genérica de tela — pode ser relevante (erro de sistema) ou não (captura acidental) |
+
+**Regra de contexto — mesmo nome, conteúdo diferente por categoria:**
+
+| Padrão de nome | Na categoria... | O conteúdo tende a ser... | Na categoria... | O conteúdo tende a ser... |
+|---|---|---|---|---|
+| `image.png` | DRM, DDR, SCD | Logo da empresa na assinatura ou rodapé | RETORNO_BACEN | Print do erro ou da crítica do BACEN — conteúdo principal |
+| `{GUID}.png` | DLO | Logo de empresa embutido automaticamente | SUPORTE | Tabela financeira com dados de carteira do cliente |
+
+**Como o sistema resolve:** a categoria da thread é determinada pelo classificador antes de qualquer leitura de imagem. O contexto da categoria informa qual interpretação é mais provável — mas o OCR confirma. Se o OCR encontrar texto relevante, aceita; se encontrar apenas nome de empresa ou nada, descarta.
+
+---
+
+#### Campo OCR — estrutura de armazenamento e formato para a IA
+
+Quando o sistema lê uma imagem com OCR, o texto extraído **não é misturado ao corpo do e-mail**. Fica guardado num campo separado no registro do e-mail, com identificação clara de origem. Isso garante que a IA saiba de onde veio cada trecho de informação — evitando confusão entre o que o cliente escreveu e o que estava dentro de uma imagem.
+
+**Estrutura do campo no registro:**
+
+```json
+"ocr_imagens": [
+  {
+    "arquivo": "image.png",
+    "posicao": "corpo",
+    "conteudo": "Protocolo 364778868 - ALIM211 (2011)\nEstado: Arquivo entregue ao destinatário\nData: 03/02/2026\nGURU CTVM LTDA → BANCO CENTRAL DO BRASIL",
+    "status": "lido"
+  },
+  {
+    "arquivo": "logo_linkedin.png",
+    "posicao": "corpo",
+    "conteudo": "",
+    "status": "descartado"
+  },
+  {
+    "arquivo": "critica_bacen.png",
+    "posicao": "anexo",
+    "conteudo": "",
+    "status": "falhou"
+  }
+]
+```
+
+**Valores do campo `status`:**
+- `lido` — OCR extraiu texto com conteúdo útil
+- `descartado` — nome identificado como decorativo (L5) ou OCR não encontrou conteúdo útil
+- `falhou` — OCR tentou mas não conseguiu extrair texto → e-mail vai para fila de revisão humana
+
+**Valores do campo `posicao`:**
+- `corpo` — imagem estava embutida no corpo do e-mail (marcador `[image:]` ou `[cid:]`)
+- `anexo` — imagem chegou como arquivo anexo `.png` / `.jpg` (Campo 7)
+
+> **Nota:** as regras de decisão para imagens em anexo (Campo 7) são as mesmas que para imagens no corpo — Momento 1 (decidir se tenta) e Momento 2 (decidir pelo conteúdo do OCR). A diferença é só a origem física do arquivo. O campo `posicao` registra essa distinção para rastreabilidade.
+
+**Como o texto do OCR chega para a IA classificadora:**
+
+O texto extraído não é inserido diretamente no fluxo do corpo — é enviado separado, rotulado, para que a IA entenda a fonte:
+
+```
+[IMAGEM: image.png]
+Protocolo 364778868 - ALIM211 (2011)
+Origem: GURU CTVM LTDA
+Destino: BANCO CENTRAL DO BRASIL
+Estado: Arquivo entregue ao destinatário
+Data: 03/02/2026
+[FIM DA IMAGEM]
+```
+
+**Por que o rótulo é obrigatório:** sem o rótulo, a IA poderia interpretar o conteúdo da imagem como texto escrito pelo cliente — e fazer inferências incorretas sobre quem disse o quê, ou confundir dados históricos (dentro da imagem) com dados do e-mail atual.
+
+**Por que o campo OCR é guardado no registro permanente — e não só usado na classificação:**
+
+A IA Assistente de Aprendizado precisa do conteúdo das imagens para entender como cada caso foi resolvido. Em categorias como RETORNO_BACEN, a crítica do BACEN (código, protocolo, prazo) está **dentro da imagem** — sem esse texto guardado, o aprendizado fica cego para o problema que a Finaud precisou resolver. O campo `ocr_imagens` é portanto um campo permanente do registro, não um dado temporário de processamento.
 
 ---
 
@@ -571,7 +746,7 @@ A palavra `Abraço` (singular, sem "s") não está no detector atual. Identifica
 | 5 | Prefixo `RD_` | DDR 2011 — arquivo do cliente |
 | 6 | Formatos especiais (`.rar`, `.eml`) | Abrir e ler conteúdo interno |
 | 7 | ZIP genérico (sem padrão CADOC no nome) | Abrir e verificar arquivos internos |
-| 8 | Imagem genérica (`image001.png`) antes da assinatura | OCR (regra L6 do Campo 6) |
+| 8 | Imagem em anexo (`.png`, `.jpg`, `.jpeg`) | Aplicar as mesmas regras de imagem do Campo 6: Momento 1 (nome identifica decorativo? → descarta) + Momento 2 (OCR decide pelo conteúdo). Ver seção "Campo OCR" acima. |
 | 9 | Nenhum padrão reconhecível | Sinal insuficiente — IA usa assunto + corpo |
 
 **Cobertura verificada em 6.989 e-mails (03/08/2026):**
