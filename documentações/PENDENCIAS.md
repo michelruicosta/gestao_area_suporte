@@ -122,6 +122,21 @@ O Passo 3 da limpeza remove o histórico citado (`>` e `---`) antes de passar o 
 
 ## ANTES DAS TELAS — Especificar §13 (Telas do sistema)
 
+### 🟡 PRAZOS — Visualização de itens atrasados e perto de vencer (identificado 04/08/2026)
+
+**Decisão de Michel (04/08/2026):** a tela principal não deve poluir com alertas de prazo — criar tela ou painel separado para isso na Fase 2.
+
+**O que a Fase 2 precisará entregar:**
+- Mostrar itens **atrasados** (prazo vencido) separados dos itens em dia
+- Mostrar itens **perto de vencer** (ex.: menos de X dias) com destaque visual
+- Não exibir esses alertas misturados com a fila normal — painel ou filtro separado
+
+**Arquivo de destino:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — §13 Telas (Fase 2).
+
+---
+
+
+
 > Resolver tudo abaixo antes de definir o design das telas.
 
 ---
