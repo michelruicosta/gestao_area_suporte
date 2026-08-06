@@ -1358,6 +1358,16 @@ As mesmas 5 regras do DDR_2011. Sinais específicos do SCD_4111:
 | Anexo | `RD_MOEDA.csv`, `RD_LFT.xlsx`, `RD_PREFIXADA.xlsx` (prefixo `RD_` — padrão dominante) | Alta |
 | Anexo | `DDR_YYYYMM.xlsx`, `Operacoes compromissadas SCD.xlsx` | Alta |
 | Anexo | `CNPJ_2011_YYYYMMDD.zip` (CADOC gerado — Finaud entrega ao cliente) | Muito alta |
+
+> **Assuntos de dados diários sem "DDR" explícito — sempre DDR_2011:**
+> Os seguintes assuntos identificam envio de componentes do DDR por clientes e devem ser classificados como **DDR_2011 imediatamente**, mesmo que o corpo seja curto ou diga apenas "Seguem os arquivos":
+> - Assunto contém "PI Exposure" → DDR_2011
+> - Assunto contém "EXTRATO COMPROMISSADA" ou "Compromissada" → DDR_2011
+> - Assunto contém "Cadastro de Ações e Opções" → DDR_2011
+> - Assunto contém "PCAM" ou "Posição de Câmbio" → DDR_2011
+>
+> Esses termos não ocorrem em RETORNO_BACEN nem em outras categorias — o sinal do assunto é suficiente, independente do tamanho do corpo.
+
 **O que NÃO é DDR:**
 - Não é DLO — DDR é diário, DLO é mensal (balanço patrimonial)
 - Não é DRM — DRM é sobre risco de mercado, também mensal

@@ -397,6 +397,22 @@ Antes de propor ou aplicar qualquer correção, executar:
 
 Só após as três verificações: propor a correção com o que muda, por quê, o que afeta, o que não afeta.
 
+## Regra obrigatória: varrer dados antes de levantar dúvida — trazer o resultado da busca ao Michel
+
+Antes de perguntar ao Michel se um risco ou conflito existe, buscar a resposta nos dados e no histórico do projeto. Só levantar a dúvida se a resposta não puder ser verificada por varredura.
+
+**Formato obrigatório ao trazer o resultado:**
+> "Michel, varri [o quê] — encontrei / não encontrei [o quê]. Com base nisso, [conclusão ou ajuste proposto]."
+
+**O que varrer antes de propor um ajuste na spec ou no classificador:**
+1. Resultados da última rodada (`.jsonl`) — verificar se o risco proposto já ocorre nos dados reais
+2. `documentações/REGISTRO_CORRECOES.md` — ver se o conflito já foi identificado e tratado antes
+3. `documentações/PENDENCIAS.md` — ver se já está registrado como pendência
+
+Nunca transferir para Michel uma pergunta que os dados já respondem.
+
+> **Por que existe:** em 06/08/2026, antes de adicionar uma regra de suficiência no assunto para DDR_2011, a IA perguntou ao Michel se RETORNO_BACEN poderia ter "DDR" no assunto — sem verificar os dados primeiro. Michel orientou que a varredura deveria ser feita antes de trazer a dúvida.
+
 ## Regra: propor texto antes de gravar conhecimento em documento
 
 Ao detectar que falta informação num documento — seja criar seção nova ou atualizar existente — primeiro propor o texto já no padrão do documento de destino, mostrar ao Michel, aguardar OK, e só então gravar. Vale para criar E atualizar. Não vale para correção trivial de digitação.
