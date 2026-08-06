@@ -1,0 +1,131 @@
+<title>Fluxo de Processamento — Oráculo 360 Finaud</title>
+<style>
+  :root {
+    --bg: #f8fafc;
+    --bg-card: #ffffff;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --accent: #1e3a5f;
+    --badge-bg: #eff6ff;
+    --badge-text: #1e40af;
+    --badge-border: #bfdbfe;
+    --tag-filtrada-bg: #fee2e2; --tag-filtrada-text: #991b1b; --tag-filtrada-dot: #ef4444;
+    --tag-retida-bg: #fffbeb;  --tag-retida-text: #92400e;  --tag-retida-dot: #f59e0b;
+    --tag-class-bg: #dcfce7;   --tag-class-text: #166534;   --tag-class-dot: #22c55e;
+    --tag-campo-bg: #e0f2fe;   --tag-campo-text: #0c4a6e;   --tag-campo-dot: #0ea5e9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f172a; --bg-card: #1e293b; --text: #f1f5f9; --text-muted: #94a3b8;
+      --border: #334155; --accent: #60a5fa; --badge-bg: #1e3a5f;
+      --badge-text: #93c5fd; --badge-border: #1e40af;
+      --tag-filtrada-bg: #450a0a; --tag-filtrada-text: #fca5a5;
+      --tag-retida-bg: #422006;  --tag-retida-text: #fcd34d;
+      --tag-class-bg: #052e16;   --tag-class-text: #86efac;
+      --tag-campo-bg: #0c4a6e;   --tag-campo-text: #7dd3fc;
+    }
+  }
+  :root[data-theme="dark"]  { --bg:#0f172a; --bg-card:#1e293b; --text:#f1f5f9; --text-muted:#94a3b8; --border:#334155; --accent:#60a5fa; --badge-bg:#1e3a5f; --badge-text:#93c5fd; --badge-border:#1e40af; --tag-filtrada-bg:#450a0a; --tag-filtrada-text:#fca5a5; --tag-retida-bg:#422006; --tag-retida-text:#fcd34d; --tag-class-bg:#052e16; --tag-class-text:#86efac; --tag-campo-bg:#0c4a6e; --tag-campo-text:#7dd3fc; }
+  :root[data-theme="light"] { --bg:#f8fafc; --bg-card:#ffffff; --text:#1e293b; --text-muted:#64748b; --border:#e2e8f0; --accent:#1e3a5f; --badge-bg:#eff6ff; --badge-text:#1e40af; --badge-border:#bfdbfe; --tag-filtrada-bg:#fee2e2; --tag-filtrada-text:#991b1b; --tag-retida-bg:#fffbeb; --tag-retida-text:#92400e; --tag-class-bg:#dcfce7; --tag-class-text:#166534; --tag-campo-bg:#e0f2fe; --tag-campo-text:#0c4a6e; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; line-height: 1.5; padding: 20px; }
+  h1 { font-size: 20px; font-weight: 700; color: #fff; }
+  h2 { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.75); margin-top: 4px; }
+  header { background: var(--accent); padding: 18px 24px; border-radius: 10px; margin-bottom: 20px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; padding: 12px 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 20px; align-items: center; }
+  .legend-label { font-size: 11px; font-weight: 600; letter-spacing: .05em; color: var(--text-muted); text-transform: uppercase; margin-right: 4px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid transparent; }
+  .chip-filtrada { background: var(--tag-filtrada-bg); color: var(--tag-filtrada-text); }
+  .chip-retida   { background: var(--tag-retida-bg);   color: var(--tag-retida-text); }
+  .chip-class    { background: var(--tag-class-bg);    color: var(--tag-class-text); }
+  .chip-campo    { background: var(--tag-campo-bg);    color: var(--tag-campo-text); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot-f { background: var(--tag-filtrada-dot,#ef4444); } .dot-r { background: var(--tag-retida-dot,#f59e0b); }
+  .dot-c { background: var(--tag-class-dot,#22c55e); }   .dot-ca { background: var(--tag-campo-dot,#0ea5e9); }
+
+  .diagram-wrap { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; overflow-x: auto; padding: 28px 20px; }
+  .mermaid { min-width: 700px; font-size: 13px !important; }
+
+  .status-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+  .status-item { padding: 8px 14px; border-radius: 8px; font-size: 12px; border: 1px solid var(--border); background: var(--bg-card); }
+  .status-done { border-color: #86efac; background: #f0fdf4; color: #166534; }
+  .status-pend { border-color: #fcd34d; background: #fffbeb; color: #92400e; }
+  @media (prefers-color-scheme: dark) { .status-done { background:#052e16; color:#86efac; } .status-pend { background:#422006; color:#fcd34d; } }
+
+  .note { margin-top: 16px; padding: 12px 16px; background: var(--badge-bg); border: 1px solid var(--badge-border); border-radius: 8px; font-size: 12px; color: var(--badge-text); line-height: 1.6; }
+</style>
+
+<header>
+  <h1>Fluxo de Processamento — Oráculo 360 Finaud</h1>
+  <h2>Como cada e-mail é analisado — do recebimento ao resultado final</h2>
+</header>
+
+<div class="legend">
+  <span class="legend-label">Legenda</span>
+  <span class="chip chip-campo"><span class="dot dot-ca"></span>Campo lido</span>
+  <span class="chip chip-filtrada"><span class="dot dot-f"></span>FILTRADA — descartado</span>
+  <span class="chip chip-retida"><span class="dot dot-r"></span>RETIDA — aguarda revisão</span>
+  <span class="chip chip-class"><span class="dot dot-c"></span>CLASSIFICADA — processado</span>
+</div>
+
+<div class="diagram-wrap">
+<pre class="mermaid">
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#e0f2fe', 'primaryTextColor': '#0c4a6e', 'primaryBorderColor': '#7dd3fc', 'lineColor': '#64748b', 'fontFamily': '-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif', 'fontSize': '13px' }}}%%
+flowchart TD
+    classDef campo     fill:#e0f2fe,color:#0c4a6e,stroke:#7dd3fc,stroke-width:2px
+    classDef filtrada  fill:#fee2e2,color:#991b1b,stroke:#fca5a5,stroke-width:2px,font-weight:bold
+    classDef retida    fill:#fffbeb,color:#92400e,stroke:#fcd34d,stroke-width:2px
+    classDef segue     fill:#f0fdf4,color:#166534,stroke:#86efac,stroke-width:2px
+    classDef class_ok  fill:#dcfce7,color:#166534,stroke:#4ade80,stroke-width:2px,font-weight:bold
+    classDef start_end fill:#1e3a5f,color:#ffffff,stroke:#1e3a5f,stroke-width:2px
+    classDef decision  fill:#f8fafc,color:#1e293b,stroke:#94a3b8
+
+    START(["📧  E-mail recebido\nvia suporte@finaud.com.br\ncópia automática — Caminho 2"]):::start_end
+
+    START --> C1["📋  Campo 1 — De:\nLê o endereço de quem enviou"]:::campo
+
+    C1 --> D1{"De: está\nvazio?"}:::decision
+    D1 -->|"Sim"| R1[/"⚠️ RETIDA\nNão é possível saber\nquem enviou o e-mail"/]:::retida
+
+    D1 -->|"Não"| D2{"Endereço está na lista\nde remetentes automáticos\nconhecidos?"}:::decision
+    D2 -->|"Sim\nex: riskdriver@finaud.com.br"| F1[/"🗑️ FILTRADA\nRemetente automático\nreconhecido — descarta"/]:::filtrada
+
+    D2 -->|"Não"| D3{"Endereço contém\npadrão de automático?\nnoreply · newsletter · bounce..."}:::decision
+    D3 -->|"Sim"| F2[/"🗑️ FILTRADA\nPadrão de envio\nautomático — descarta"/]:::filtrada
+
+    D3 -->|"Não"| D4{"De: é o grupo\nsuporte@finaud.com.br?"}:::decision
+
+    D4 -->|"Não"| D5{"Domínio é\n@finaud.com.br ou\n@finaudtec.com.br?"}:::decision
+    D5 -->|"Sim"| S_COL1["✅ Colaborador Finaud\nidentificado pelo De:"]:::segue
+    D5 -->|"Não"| S_CLI1["✅ Cliente externo\nidentificado pelo De:"]:::segue
+
+    D4 -->|"Sim"| C4["📋  Campo 4 — Reply-To:\nVerifica quem realmente\nenviou via grupo"]:::campo
+
+    C4 --> D6{"Reply-To\nexiste?"}:::decision
+
+    D6 -->|"Não"| C6["📋  Campo 6 — Corpo:\nBusca assinatura do\ncolaborador no texto"]:::campo
+    C6 --> S_COL2["✅ Colaborador Finaud\nidentificado pela assinatura"]:::segue
+
+    D6 -->|"Sim"| D7{"Reply-To é automático\nou bloqueado?"}:::decision
+    D7 -->|"Sim\nex: do-not-reply@finaud.fogbugz.com"| F3[/"🗑️ FILTRADA\nGrupo enviou em nome\nde sistema automático"/]:::filtrada
+    D7 -->|"Não — @finaud..."| S_COL3["✅ Colaborador Finaud\nidentificado pelo Reply-To"]:::segue
+    D7 -->|"Não — externo"| S_CLI2["✅ Cliente externo\nidentificado pelo Reply-To"]:::segue
+
+    S_COL1 & S_COL2 & S_COL3 & S_CLI1 & S_CLI2 --> IA["🤖  IA — Classificação\nLê Campo 5 (Assunto) · Campo 6 (Corpo) · Campo 7 (Anexos)\nIdentifica remetente e destinatário — Campo 2 e Campo 3"]:::campo
+
+    IA --> D8{"Confiança\nda IA ≥ 99%?"}:::decision
+    D8 -->|"Sim"| CL[/"✅ CLASSIFICADA\nCategoria + Status definidos\nRegistrado no painel"/]:::class_ok
+    D8 -->|"Não"| R2[/"⚠️ RETIDA\nIA sem certeza suficiente\nMichel recebe alerta"/]:::retida
+</pre>
+</div>
+
+<div class="status-bar">
+  <div class="status-item status-done">✅ Triagem (Campo 1 + Campo 4) — validado em 05/08/2026 com 943 threads reais</div>
+  <div class="status-item status-pend">⬜ Identificação do remetente/destinatário (Campos 2 e 3) — validação pendente</div>
+  <div class="status-item status-pend">⬜ Classificação pela IA (Campos 5, 6, 7) — validação pendente</div>
+</div>
+
+<div class="note">
+  <strong>Regra em vigor (05/08/2026):</strong> o assunto do e-mail (Campo 5) <strong>nunca descarta</strong> uma mensagem por si só — filtragem é exclusiva dos Campos 1 e 4. Clientes que encaminham e-mails automáticos como "Risk Driver -" chegam com remetente diferente e são processados normalmente pela IA.
+</div>

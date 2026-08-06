@@ -10,6 +10,409 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-08-06 — classificador_ia.py: temperature=0 adicionado
+
+### 06/08 — Correção vital: temperatura do modelo estava indefinida (padrão 1.0)
+
+**🔎 Em miúdos:** o classificador estava usando o padrão de aleatoriedade do OpenAI (temperatura 1.0), o que fazia o modelo dar respostas diferentes a cada rodada com o mesmo e-mail. Adicionamos temperatura 0 para tornar o sistema determinístico — mesma entrada, mesma saída sempre.
+
+**Problema:** sem `temperature=0` na chamada à API, o gpt-4o-mini usava o padrão 1.0. Isso significa que uma thread "RE: CADOC 4111" poderia ser classificada como SCD_4111 numa rodada e INCERTO na próxima, sem nenhuma mudança na spec. Isso tornava impossível diagnosticar se um INCERTO era causado pela spec ou pela aleatoriedade do modelo.
+
+**Causa raiz:** `temperature` não foi definido na criação do script. Rodadas 1 e 2 tiveram bons resultados parcialmente por sorte estatística — o modelo "chutou certo" mais vezes. Com temp=0 o modelo admite incerteza genuína em vez de chutar.
+
+**Correção:** adicionado `temperature=0` na chamada `cliente.chat.completions.create()` em `scripts/classificador_ia.py` (linha 123).
+
+**Impacto:** resultados agora são reproduzíveis e determinísticos. Rodada 5 é o primeiro baseline honesto do sistema.
+
+**Validação:** ✅ VALIDADO — R5 concluída em 06/08/2026 17:45. Resultado: 573 classificados com alta confiança + **195 incertos (25,4%)** — novo baseline determinístico. Os 195 incertos representam lacunas reais da spec (não variação aleatória) e serão corrigidos nas próximas sessões.
+
+---
+
+## 2026-08-06 — Regressão Rodada 3: regra SUPORTE muito ampla → corrigida
+
+### 06/08 — §10 SUPORTE: regra de termos conceituais causou 188 incertos na R3
+
+**🔎 Em miúdos:** uma regra nova que adicionamos fez a IA ficar incerta em 188 dos 768 e-mails (24,5%), quando a R2 tinha apenas 5 incertos. A regra dizia "sem evidência de entrega = SUPORTE" e a IA passou a exigir prova de entrega em TODOS os e-mails, inclusive os com código CADOC explícito no assunto.
+
+**Problema:** regra na seção SUPORTE do §10 era genérica demais — "quando mencionar componente regulatório sem evidência de entrega → SUPORTE". A IA leu como: código DDR no assunto mas sem detalhe de entrega no corpo → INCERTO. Resultado: threads como "DLO - TPF/TVM" foram para INCERTO porque "o assunto menciona DLO, mas não há menção clara no corpo que confirme a entrega".
+
+**Correção:** regra reescrita para deixar explícito que só se aplica a termos conceituais genéricos (PR, COSIF, conta, capital) quando NÃO há código CADOC explícito. Adicionado aviso: código CADOC no assunto é evidência suficiente — não exige prova adicional de entrega.
+
+**Validação:** ⚠️ VALIDAÇÃO PENDENTE — Rodada 4 a ser disparada com a regra corrigida.
+
+---
+
+## 2026-08-06 — Caso F: RE: UNVERIFIED SENDER Re: PR
+
+### 06/08 — Caso F: PR negativo = SUPORTE, não DLO
+
+**🔎 Em miúdos:** e-mail sobre o Patrimônio de Referência (PR) negativo por divergência de arrendamento — a Finaud reportou o problema para a área de tecnologia. Rodada 1 acertou (SUPORTE alta). Rodada 2 também acertou a categoria mas ficou incerta (SUPORTE baixa, incerto=True) porque o texto estava truncado.
+
+**Conclusão de Michel (06/08/2026):** PR é componente do DLO (e do DDR), mas sem evidência de geração de CADOC ou retorno do BACEN, a classificação correta é sempre SUPORTE. Menção a um conceito regulatório sozinha não basta para classificar como CADOC.
+
+**Validação:** ✅ VALIDADO — confirmado por Michel em 06/08/2026. Regra de desambiguação adicionada na spec (SUPORTE §10).
+
+---
+
+## 2026-08-06 — Caso E: DLO - TPF/TVM - Saygo Câmbio
+
+### 06/08 — Caso E: RETORNO_BACEN sobre DLO (Rodada 1 errou, Rodada 2 corrigiu)
+
+**🔎 Em miúdos:** e-mail sobre indício de qualidade do BACEN no DLO de maio/26 — o BACEN criticou a entrega do DLO, o cliente reportou à Finaud, a Finaud orientou a correção e o cliente resubmeteu ao BACEN. Isso é RETORNO_BACEN, não DLO_2061.
+
+**Problema:** Rodada 1 classificou como DLO_2061 [alta]. O e-mail não é de entrega do DLO — é de correção de crítica do BACEN sobre um DLO já entregue.
+
+**Conclusão:** Rodada 2 (RETORNO_BACEN [alta]) está correta. A spec já cobre este caso: "indício de problema de qualidade; cliente encaminha → Finaud orienta → cliente corrige e resubmete ao BACEN." A melhoria na Rodada 2 provavelmente vem das correções na spec (distinção entre entrega e retorno).
+
+**Validação:** ✅ VALIDADO — confirmado por Michel em 06/08/2026. Nenhuma alteração na spec necessária — o caso já está coberto.
+
+---
+
+## 2026-08-06 — §10 RETORNO_BACEN: regras de desambiguação de termos isolados
+
+### 06/08 — §10 RETORNO_BACEN: regras para "retorno", "erro", "envio" e "substituição"
+
+**🔎 Em miúdos:** análise de 768 threads mostrou que certas palavras isoladas enganam a IA — "retorno" aparecia em 6 categorias diferentes, "envio" em 8. Michel aprovou regras claras para cada uma.
+
+**Problema:** termos como "retorno", "erro", "envio" e "substituição" aparecem em múltiplas categorias sem contexto suficiente para a IA decidir com segurança.
+
+**Correção:** adicionada tabela "Regras de desambiguação de termos isolados" no §10 da RETORNO_BACEN:
+- "retorno" isolado → sempre RETORNO_BACEN
+- "erro" + "BACEN"/"Banco Central"/"BC" → RETORNO_BACEN; sem menção ao BACEN → SUPORTE
+- "envio" e "substituição" isolados → ignorar como sinal; a IA olha o objeto do e-mail
+
+**Validação:** ✅ VALIDADO — aprovado por Michel em 06/08/2026. Baseado em análise quantitativa de 768 threads reais.
+
+---
+
+## 2026-08-06 — §10 RETORNO_BACEN: "rejeitado + BACEN" = mandatório
+
+### 06/08 — §10 RETORNO_BACEN: regra de desambiguação "rejeitado + BACEN"
+
+**🔎 Em miúdos:** a spec não deixava claro o que fazer quando o e-mail tem palavras soltas como "retorno", "crítica" ou "rejeição" sem contexto suficiente. Michel aprovou uma regra clara: sempre que aparecer "rejeitado" junto com "BACEN" (ou "BC"), é RETORNO_BACEN — sem exceção.
+
+**Caso:** thread "SUPORTE - FINAUD - INTRA INVESTIMENTOS" — cliente (Intra) avisa que tentou enviar DRM e o arquivo foi rejeitado duas vezes; mensagem diz "arquivo foi rejeitado em duas tentativas" e "BACEN" aparece no contexto. Classificação correta: RETORNO_BACEN.
+
+**Correção:** adicionada linha na tabela "Como a IA reconhece" do RETORNO_BACEN no §10 + nota de desambiguação: "rejeitado" + "BACEN" em qualquer parte do e-mail = RETORNO_BACEN mandatório.
+
+**Validação:** ✅ VALIDADO — aprovado por Michel em 06/08/2026. Confirmado por análise de 768 threads: os 11 e-mails com o termo "rejeitado" foram todos classificados como RETORNO_BACEN (100%).
+
+---
+
+## 2026-08-06 — §10 DDR_2011: cadastro de fundo para geração de DDR
+
+### 06/08 — §10 DDR_2011: solicitação de dados de fundo = DDR_2011, não SUPORTE
+
+**🔎 Em miúdos:** a IA classificava como SUPORTE e-mails em que a Finaud pede ao cliente dados de um fundo (CNPJ, conta COSIF, composição de carteira) para cadastrá-lo no sistema e conseguir gerar o DDR — quando a classificação correta é DDR_2011.
+
+**Problema:** thread "RES: Encaminhar o CNPJ do fundo Mirae Asset APEX fund LP. Composição da carteira." — cliente (William, Mirae Asset) responde à Andrea (Finaud) com conta COSIF (1.3.1.85.60.00.00000) e composição do fundo. A IA tratou como suporte administrativo porque não havia DDR sendo entregue no e-mail. Mas o e-mail faz parte do fluxo DDR: sem o cadastro do fundo, o DDR não pode ser gerado.
+
+**Correção:** adicionada linha na tabela "Como a IA reconhece" do DDR_2011 no §10: Finaud solicitando dados de fundo ao cliente (CNPJ, conta COSIF, composição de carteira) para cadastro e geração do DDR — ou cliente respondendo a essa solicitação — é DDR_2011 mesmo sem entrega do relatório no e-mail.
+
+**Validação:** ✅ VALIDADO — aprovado por Michel em 06/08/2026.
+
+---
+
+## 2026-08-06 — §10 corrigido: regras de desambiguação validadas em 30 threads reais
+
+### 06/08 — §10 RETORNO_BACEN: regra de desambiguação com entregas ao BACEN
+
+**🔎 Em miúdos:** a IA estava marcando como RETORNO_BACEN e-mails em que a Finaud ou o cliente está *enviando* arquivo ao BACEN — quando na verdade deveria marcar só o CADOC da entrega.
+
+**Problema:** thread #10 da amostra de revisão ("Re: Seguem remessas DLO e DLI junho 2026 - Traders") foi classificada como DLO_2061 + DLI_2062 + RETORNO_BACEN. A IA leu "BC" no corpo e inferiu incorretamente que havia uma crítica do BACEN. A spec não deixava claro que "enviar ao BACEN" ≠ "receber retorno do BACEN".
+
+**Correção:** adicionado item no bloco "O que NÃO é RETORNO_BACEN" da §10: quando Finaud ou cliente envia remessa ao BACEN ("Seguem as remessas... a serem transmitidas ao BC"), classificar como o CADOC da entrega — nunca como RETORNO_BACEN.
+
+**Validação:** ⚠️ VALIDAÇÃO PENDENTE — identificado em revisão humana de 30 threads; será confirmado na próxima rodada de validação com IA.
+
+---
+
+### 06/08 — §10 SUPORTE: convites de reunião sempre SUPORTE
+
+**🔎 Em miúdos:** a IA classificava como DLO (ou outro CADOC) e-mails que na verdade eram convites de reunião — porque via o código CADOC no assunto e ignorava que o corpo era um convite de agenda.
+
+**Problema:** thread #28 da amostra ("DLO", remetente barufinanceira) foi classificada como DLO_2061 com confiança média. O corpo era convite do Microsoft Teams (`invite.ics`). A spec não tinha regra explícita para convites de reunião.
+
+**Correção:** adicionada linha na tabela "Como a IA reconhece" do SUPORTE: anexo `invite.ics` ou corpo com link de reunião (Teams, Meet, Zoom, Outlook Calendar) = sempre SUPORTE, mesmo que o assunto mencione um CADOC.
+
+**Validação:** ⚠️ VALIDAÇÃO PENDENTE — identificado em revisão humana de 30 threads; será confirmado na próxima rodada de validação com IA.
+
+---
+
+## 2026-08-05 — §4 revisado: filtro de domínios + quadro único
+
+### 05/08 — §4: filtro revisado com varredura completa de domínios externos
+
+**🔎 Em miúdos:** o filtro de e-mails descartados estava incompleto — newsletters de serviços como Grafana, PwC, Epays e outros passavam sem ser bloqueadas porque o filtro só checava endereços e não domínios.
+
+**Problema:** 22 threads de newsletters/serviços externos (Grafana Labs, PwC Brasil, Epays/Pontofopag, AppSheet, Freshworks, TIEXAMES, Nasajon) chegavam como SUPORTE porque o critério "Domínio do remetente" não existia. Identificado durante análise dos threads SUPORTE sem padrão no Passo 4 da simulação.
+
+**Correção:**
+- Varredura completa de todos os 46 domínios externos presentes nos 943 threads
+- 36 domínios confirmados como clientes legítimos (corretoras, DTVMs, câmbio)
+- 7 domínios adicionados como novo critério "Domínio do remetente" no §4: `employer.com.br`, `content.pwc.com`, `grafana.com`, `eadtiexames.com.br`, `appsheet.com`, `freshworks.com`, `nasajon.com.br`
+- §4 consolidado em quadro único (antes: 4 subseções separadas)
+
+**Impacto nos números:**
+- Filtro antigo: 144 threads · Filtro novo: **166 threads** (+22)
+- Base válida: de 818 → **777 threads**
+- Passo 2 da simulação marcado para recontagem
+
+**Validação:** ✅ Script `verificar_filtro_novo.py` confirmou zero threads suspeitas fora do filtro após a revisão.
+
+---
+
+### 05/08 — Passo 2: recontagem de remetentes com filtro revisado
+
+**🔎 Em miúdos:** os números do Passo 2 estavam baseados em 818 threads, mas o filtro estava incompleto. Com o filtro correto (777 base), os números foram recontados.
+
+**Correção:** Passo 2 recontado com o filtro revisado do §4.
+
+**Resultado correto (base 777):**
+- 280 clientes diretos (36,0%)
+- 127 colaboradores diretos (16,3%)
+- 363 via suporte@ com Reply-To de cliente (46,7%)
+- 7 via suporte@ sem Reply-To (0,9%)
+
+**Validação:** ✅ Script `passo2_recontagem.py` confirmou 777 = soma das categorias.
+
+---
+
+## 2026-08-05 — Simulação Passo 4: DDR keywords + filtros + DRL alias
+
+### 05/08 — Passo 4: "Meta for Developers" adicionado ao filtro de redes sociais
+
+**🔎 Em miúdos:** notificações da Meta (empresa mãe do Facebook) chegavam pelo grupo suporte@ e não eram capturadas porque o filtro tinha "Facebook" mas não "Meta".
+
+**Problema:** falha na rodada anterior do Passo 2 — ao criar o filtro de redes sociais, "Meta" foi omitido da lista. "Meta for Developers" usa o nome "Meta", não "Facebook".
+
+**Correção:** adicionado "Meta" à lista de nomes do filtro de redes sociais (§4 — "Por nome do remetente").
+
+**Validação:** ✅ 2 threads "Meta for Developers" identificadas na análise do SUPORTE (05/08/2026).
+
+---
+
+### 05/08 — Passo 4: DDR keywords estendidos para clientes sem código no assunto
+
+**🔎 Em miúdos:** alguns clientes enviam os dados diários do DDR sem escrever "DDR" no assunto — usam nomes próprios como "Remitly: Movimento", "Monte Bravo: Cadastro de Ações e Opções", "Saldos do dia", "OP. SELIC". Esses padrões não estavam na spec.
+
+**Problema:** 46+ threads DDR reais estavam sendo classificadas como SUPORTE porque as palavras-chave da spec só cobriam "DDR" e "2011" explícitos.
+
+**Correção:** adicionada nova linha na tabela "Como a IA reconhece" do DDR_2011 (§10): "Movimento [data]", "Saldos do dia", "Cadastro de Ações e Opções", "Fluxo de Caixa", "OP. SELIC", "RD MES" → Alta confiança, com nota explicativa.
+
+**Validação:** ✅ Confirmado por Michel em 05/08/2026.
+
+---
+
+### 05/08 — Passo 4: "DLR" adicionado como alias de DRL 2160
+
+**🔎 Em miúdos:** clientes ocasionalmente escrevem "DLR" em vez de "DRL" no assunto. São o mesmo relatório — é erro de digitação.
+
+**Correção:** "DLR" adicionado à linha de keywords do DRL_2160 (§10), com nota "variante com erro de digitação frequente".
+
+**Validação:** ✅ Confirmado por Michel em 05/08/2026 ("cliente deve ter errado, mas é DRL").
+
+---
+
+## 2026-08-05 — Simulação Passo 4: PCAM + FogBugz
+
+### 05/08 — Passo 4: PCAM confirmado como parte do DDR_2011
+
+**🔎 Em miúdos:** o "relatório de posiç��o de câmbio" que os clientes chamam de PCAM (ou CAM0050) é parte do fluxo do DDR — não é uma categoria nova.
+
+**Problema:** 76 threads com assunto "PCAM" ou "Posição de Câmbio" estavam sendo classificadas como SUPORTE porque os keywords "PCAM" e "Posição de Câmbio" não estavam na lista de reconhecimento da IA para DDR_2011.
+
+**Correção:** adicionados "PCAM" e "Posição de Câmbio" à tabela "Como a IA reconhece" do DDR_2011 (§10), coluna Assunto, nível de confiança Alta. Decisão confirmada por Michel: PCAM é parte do fluxo DDR.
+
+**Arquivos alterados:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — §10 DDR_2011.
+
+**Validação:** ✅ 76 threads PCAM/CAM0050 identificadas na simulação real (05/08/2026).
+
+---
+
+### 05/08 — Passo 4: filtro FogBugz adicionado (nome FINAUDTEC + assunto FogBugz)
+
+**🔎 Em miúdos:** notificações automáticas do FogBugz (sistema interno de tickets) chegavam pelo grupo suporte@ com o nome "FINAUDTEC" e passavam pelos filtros porque "FINAUDTEC" é uma empresa legítima — não podia ser bloqueado só pelo nome.
+
+**Correção:** adicionado filtro combinado na spec: nome no From = "FINAUDTEC" + assunto contém "FogBugz" → Descarte. Seção nova "Por nome do remetente + assunto (filtro combinado)" criada no §4.
+
+**Arquivos alterados:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — §4 filtros.
+
+**Validação:** ✅ Decisão de Michel em 05/08/2026.
+
+---
+
+## 2026-08-05 — Simulação Passo 1 e Passo 2: 3 correções na spec
+
+### 05/08 — Passo 1: contagem corrigida de 139 para 121 filtradas
+
+**🔎 Em miúdos:** a contagem do Passo 1 estava errada porque incluía filtros de assunto que foram removidos no Gap #1. O número correto, usando só filtros de remetente, é 121 filtradas / 822 seguem.
+
+**Problema:** o script original do Passo 1 aplicava filtros de assunto (FogBugz, Risk Driver, Atualização Bacen) além dos filtros de remetente. Após o Gap #1 remover os filtros de assunto, a contagem ficou desatualizada.
+
+**Correção:** SIMULACAO_SPEC.md atualizado — Passo 1 agora mostra 121 filtradas (12,8%) / 822 seguem (87,2%).
+
+**Validação:** ✅ Recontagem com script passo2_remetente.py aplicando só Campo 1 (remetente).
+
+---
+
+### 05/08 — Passo 2: filtro de redes sociais adicionado ao Campo 1
+
+**🔎 Em miúdos:** notificações do Facebook chegavam pelo grupo suporte@ e passavam por todos os filtros porque o endereço de e-mail era suporte@finaud.com.br. O nome "Facebook" estava visível no campo remetente mas o sistema não olhava para o nome.
+
+**Problema:** 3 threads com notificações do Facebook (sugestões de amizade, páginas) chegaram como `"'Facebook' via Suporte" <suporte@finaud.com.br>` — endereço = suporte@, não bloqueado pelo filtro de endereço.
+
+**Correção:** novo filtro adicionado à spec (§4 "Por nome do remetente") — quando o nome no campo From contiver Facebook, Instagram, LinkedIn, Twitter, YouTube, Telegram ou WhatsApp → Descarte. Passo 4 adicionado na tabela de processamento do Campo 1 (renumerando os passos 4–6 para 5–7).
+
+**Arquivos alterados:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — §4 e §7 Campo 1.
+
+**Validação:** ✅ Confirmado por Michel em 05/08/2026. 3 threads identificadas na simulação real.
+
+---
+
+### 05/08 — Passo 2: suporte@ sem Reply-To sem nome aceito sem responsável
+
+**🔎 Em miúdos:** quando alguém responde pelo grupo suporte@ sem identificação (nome aparece só como "suporte"), o sistema não bloqueia — classifica normalmente e deixa o campo "responsável" em branco.
+
+**Problema:** spec dizia "colaborador não identificado" sem dizer o que fazer em seguida.
+
+**Correção:** Campo 1 tabela atualizada — caso (4) vazio + sem nome → classifica normalmente, campo responsável fica em branco. Decisão de Michel (05/08/2026).
+
+**Arquivos alterados:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — §7 Campo 1 tabela de cenários.
+
+**Validação:** ✅ Decisão de Michel em 05/08/2026. 4 threads com esse padrão na simulação real.
+
+---
+
+## 2026-08-05 — §8: RETORNO_BACEN corrigido + regra de fechamento via ZIP adicionada
+
+### 05/08 — §8.3 RETORNO_BACEN: regra adicional estava incompleta
+
+**🔎 Em miúdos:** a regra do RETORNO_BACEN no §8 listava duas situações mas não dizia o resultado — ficou como rascunho pela metade. Corrigido com o fluxo completo.
+
+**Problema:** a "Regra adicional exclusiva do RETORNO_BACEN" tinha uma tabela com só uma coluna ("Situação") sem indicar o que acontecia em cada caso — nenhum leitor conseguiria entender o que o sistema deveria fazer.
+
+**Dado novo (confirmado por Michel em 05/08):** o RETORNO_BACEN tem dois caminhos distintos — em alguns casos a Finaud corrige e reenvia o CADOC ela mesma; em outros, ela orienta o cliente a corrigir e transmitir ao BACEN. Isso determina qual é o sinal de fechamento.
+
+**Correção:** regra reescrita com dois caminhos explícitos:
+- Finaud corrige e envia ZIP → Concluída (mesma regra dos CADOCs)
+- Finaud orienta cliente → thread só fecha quando cliente confirma transmissão ao BACEN ("transmiti", "BACEN aceitou", "protocolo gerado"). "Ok, vou corrigir" sem confirmação = Aguardando Cliente.
+
+**Arquivos alterados:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — §8.3, bloco "Regra adicional exclusiva do RETORNO_BACEN".
+
+**Validação:** ✅ Confirmado por Michel em 05/08/2026. Threads reais varridos: 4 threads RETORNO_BACEN na caixa oraculo@finaud.com.br.
+
+---
+
+### 05/08 — §8.5 adicionado: fechamento automático via ZIP para CADOCs
+
+**🔎 Em miúdos:** quando a Finaud envia o arquivo CADOC por um e-mail separado (não como resposta no thread do cliente), o sistema precisa detectar esse ZIP e fechar o thread correspondente. Essa regra estava aprovada mas não estava escrita.
+
+**Problema:** o §8 tinha as regras gerais de fechamento dentro do thread, mas não documentava o caso em que o ZIP chega por um e-mail diferente — via Caminho 2 (roteamento automático do Google Workspace que copia todos os @finaud.com.br para o oraculo@).
+
+**Regra aprovada por Michel (05/08/2026):** ZIP enviado pela Finaud = thread Concluída. Independente de o ZIP ter ido para o BACEN ou para o cliente.
+
+**Correção:** nova subseção §8.5 adicionada com o mecanismo completo:
+1. Sistema detecta ZIP chegando em oraculo@ via Caminho 2
+2. Extrai CNPJ e tipo de CADOC do nome do arquivo (padrão `CNPJ_CADOC_AAAAMMDD*.zip`)
+3. Localiza o thread aberto correspondente
+4. Fecha como Concluída
+
+Se ZIP chegar sem thread aberto correspondente → alerta para revisão manual.
+
+**Aplica a:** DDR 2011, SCD 4111, DRM 2060, DLO 2061, DLI 2062, DRL 2160.
+
+**Arquivos alterados:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — nova subseção §8.5.
+
+**Validação:** ✅ Confirmado por Michel em 05/08/2026. Mecanismo baseado no Caminho 2 confirmado em sessão anterior.
+
+---
+
+### 05/08 — §9 atualizado: dupla função do classificador + decisão de threads irmãs
+
+**🔎 Em miúdos:** o classificador de IA tem dois trabalhos ao ler cada e-mail — descobrir o tipo de CADOC E decidir se o thread deve fechar. Isso não estava escrito. Também decidimos como o painel vai mostrar clientes com mais de um thread aberto ao mesmo tempo.
+
+**Problema 1 — dupla função implícita, não documentada:** a spec descrevia o classificador como responsável por identificar categorias, mas não dizia explicitamente que ele também detecta sinais de encerramento (§8.3) e muda o status do thread para Concluída. Sem isso escrito, quem implementar pode criar dois módulos separados ou deixar a detecção de encerramento sem responsável claro.
+
+**Correção 1:** adicionado ao §9 o bloco "Dupla função do classificador": (1) classificar categorias, (2) detectar encerramento. Para CADOCs com ZIP, o encerramento é pelo nome do arquivo (§8.5), não pelo classificador de linguagem.
+
+**Problema 2 — threads irmãs sem decisão registrada:** durante simulação do §9 com dados reais identificamos que um mesmo cliente pode ter dois threads abertos ao mesmo tempo para CADOCs diferentes compartilhando o mesmo arquivo base. A spec não dizia como o painel trataria esse cenário.
+
+**Decisão aprovada por Michel (05/08/2026) — Opção B:** o painel agrupa automaticamente todos os threads abertos do mesmo cliente em um bloco lado a lado. Cada thread fecha pelo seu próprio sinal, de forma independente. Sistema não cria vínculo automático. Thread some do painel imediatamente ao Concluída, sem período de carência. O grupo some quando todos os threads do cliente fecharem.
+
+**Arquivos alterados:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — §9 (dupla função) + §14 Painel Operacional (agrupamento por cliente).
+
+**Validação:** ✅ Confirmado por Michel em 05/08/2026. Sem teste automatizado — decisão de design do sistema.
+
+---
+
+### 05/08 — §10 DLO_2061: "Balancete" sozinho adicionado com regra de desambiguação
+
+**🔎 Em miúdos:** "Balancete" no assunto sem mês/ano não estava coberto — a spec exigia "Balancete + mês/ano". Agora cobre qualquer "Balancete", com regra de desambiguação para DLI e S5.
+
+**Decisão confirmada por Michel (05/08/2026):** "Balancete" no assunto → DLO por padrão. Se o corpo indicar DLI → DLI_2062. Se indicar S5 → S5. Padrão quando sem contexto suficiente: DLO.
+
+**Correção:** linha "Balancete" do DLO_2061 atualizada — removido o requisito de mês/ano, adicionada nota de desambiguação para DLI e S5.
+
+**Arquivos alterados:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — §10 DLO_2061.
+
+**Validação:** ✅ Confirmado por Michel em 05/08/2026.
+
+---
+
+### 05/08 — §10 DLO_2061: "Basileia" e "PRE" adicionados como sinais Média
+
+**🔎 Em miúdos:** e-mails com "Basileia" no assunto (sem "Indicadores de") e e-mails com "PRE" (Patrimônio de Referência Exigido) não eram reconhecidos como DLO — ficavam em SUPORTE.
+
+**Problema:** a spec tinha "Indicadores de Basiléia" como Alta, mas clientes enviam e-mails com apenas "Basileia" no assunto — ex.: "MIRAE ASSET - BASILEIA - JUNHO DE 2026". "PRE" é o indicador central calculado no DLO mas não estava listado como sinal.
+
+**Decisão confirmada por Michel (05/08/2026):** "Basileia" e "PRE" no assunto → DLO (não FORCAPITAL).
+
+**Correção:** duas linhas adicionadas à tabela "Como a IA reconhece" do DLO_2061 (§10):
+- `Assunto` | `"Basileia"` (sem "Indicadores de") | Média
+- `Assunto` | `"PRE"` | Média — Patrimônio de Referência Exigido
+
+**Arquivos alterados:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — §10 DLO_2061.
+
+**Validação:** ✅ Confirmado por Michel em 05/08/2026.
+
+---
+
+### 05/08 — §10 RETORNO_BACEN: "AVISO DE ATRASO" adicionado como sinal Alta
+
+**🔎 Em miúdos:** o BACEN envia um "Aviso de Atraso" quando a entrega de um CADOC está atrasada. Esse comunicado exige ação da Finaud mas não estava listado na tabela "Como a IA reconhece" do RETORNO_BACEN.
+
+**Problema:** threads com assunto "AVISO DE ATRASO" não eram reconhecidas como RETORNO_BACEN porque o sinal não estava na spec. O corpo do thread confirma o contexto regulatório (comunicado formal do BACEN).
+
+**Correção:** nova linha adicionada à tabela "Como a IA reconhece" do RETORNO_BACEN (§10):
+- `Assunto` | `"AVISO DE ATRASO"` | Alta — comunicado formal do BACEN sobre entrega em atraso
+
+**Arquivos alterados:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — §10 RETORNO_BACEN.
+
+**Validação:** ✅ Confirmado por Michel em 05/08/2026.
+
+---
+
+### 05/08 — §4: Grupo 2 — 4 filtros adicionados (3CX, IT Service Desk, Finaud Confirmação, Aceito:)
+
+**🔎 Em miúdos:** notificações de telefone (3CX), sistema de TI interno (IT Service Desk), confirmações de conta e aceites de calendário chegavam via suporte@finaud.com.br e não eram descartadas porque o endereço é o mesmo da caixa de suporte legítima. O identificador único estava no nome do remetente ou no assunto.
+
+**Problema:** 8 threads de notificações internas automáticas passavam pelos filtros e entravam na triagem como SUPORTE: 3 chamadas perdidas (3CX), 2 IT Service Desk, 2 Finaud Confirmação, 1 aceite de calendário. Identificadas durante análise dos threads SUPORTE restantes na simulação.
+
+**Correção:** 4 novas linhas adicionadas ao quadro único do §4:
+- `Nome do remetente` = `3CX Communications System` → notificações de chamada perdida
+- `Nome + assunto` = Nome contém `Finaud Equipe` e assunto contém `Confirmação` → confirmação de conta
+- `Padrão no assunto` = `IT Service Desk` → notificações do sistema de TI interno
+- `Padrão no assunto` = `Aceito:` (início do assunto) → aceites de convite de calendário
+
+**Regra atualizada:** a nota do §4 foi revista — "Padrão no assunto" é permitido apenas para padrões exclusivos de sistemas automáticos que nunca aparecem em e-mail legítimo de cliente.
+
+**Impacto nos números:** filtradas: 166 → **174**. Base válida: 777 → **769**.
+
+**Validação:** ✅ Confirmado por Michel em 05/08/2026. 8 threads identificadas na simulação real.
+
+---
+
 ## 2026-08-04 — Campo 6: regras de imagem completas + §7 bloqueador fechado
 
 ### 04/08 — L7 removida: imagem após assinatura não é sinal de decorativo
@@ -45,6 +448,56 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+### 04/08 — Campos 3 e 5: dois casos de Retenção corrigidos
+
+**🔎 Em miúdos:** dois casos que a spec mandava para Retenção foram revisados — um não fazia sentido de negócio, outro era desnecessariamente restritivo.
+
+**Correção 1 — Campo 3, CC vazio:**
+A spec dizia "CC vazio → Retenção" sem contexto. Michel identificou que se Finaud não está em nenhum campo (Para nem CC), o e-mail simplesmente não chega ao oraculo@ — então o caso "CC vazio + Para só externos" é impossível. Corrigido: CC vazio → Retenção só quando chegamos aqui porque o Para também estava vazio (anomalia técnica de roteamento — relay perdeu o cabeçalho).
+
+**Correção 2 — Campo 5, Assunto vazio:**
+A spec dizia "Assunto vazio → Retenção imediata". Michel identificou que a IA consegue classificar pelo corpo e pelos anexos mesmo sem assunto. Corrigido: Assunto vazio → IA tenta pelo corpo e anexos; só vai para Retenção se não atingir 99% de confiança.
+
+**Arquivos alterados:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — Campo 3 Passo 6 e exemplo, Campo 5 Passo 1.
+
+**Validação:** ✅ Confirmado por Michel em 04/08/2026.
+
+---
+
+### 04/08 — Regra universal: nada entra no painel sem identificação completa
+
+**🔎 Em miúdos:** corrigimos a regra do Campo 4 que dizia "registra como responsável não identificado" — isso violava a premissa básica do sistema.
+
+**Problema:** Campo 4, Passo 7 dizia: "assinatura sem @finaud → registrar como 'Finaud via grupo — responsável não identificado'". Isso permitia que um e-mail chegasse ao painel sem saber quem é o responsável Finaud.
+
+**Correção:** qualquer e-mail que não tiver cliente E colaborador responsável identificados → **Retenção com alerta para Michel**.
+
+**Exceção confirmada por Michel (04/08/2026):** thread nova onde o cliente é identificado mas nenhum colaborador Finaud respondeu ainda — entra no painel como "Aguardando Finaud — sem responsável". Não vai para Retenção. Quando um colaborador responder, a IA o identifica e o registra automaticamente como responsável.
+
+**Arquivos alterados:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — Campo 4, Passo 7 e exemplo "Reply-To vazio". Adicionada nota de regra universal com data de confirmação.
+
+**Validação:** ✅ Confirmado por Michel em 04/08/2026.
+
+---
+
+### 04/08 — Campo 2: propósito, mensagem interna e status quando Finaud está no CC
+
+**🔎 Em miúdos:** durante a revisão sequencial da spec, Michel corrigiu três pontos do Campo 2 que estavam incompletos ou imprecisos.
+
+**Problema / Correção:**
+
+1. **Propósito do Campo 2 estava incompleto:** a descrição dizia apenas "identificar o cliente e a direção da conversa". Correto: o Campo 2 identifica *com quem está a bola* (Finaud ou cliente), *quem é o colaborador responsável pelo lado Finaud* e *quem é o contato responsável pelo lado do cliente* — ambos alimentarão o painel de atividade na Fase 2.
+
+2. **Mensagem interna não é descartada:** a spec dizia "mensagem interna — entra como contexto da thread, sem identificar cliente externo". Corrigido: mensagem interna segue o fluxo normalmente. Pode ser puramente Finaud↔Finaud, ou uma thread que em algum momento envolveu o cliente e passou a ser troca interna. Em ambos os casos todas as regras se aplicam — o que muda é com quem está a bola.
+
+3. **Status quando Finaud está só no CC:** o exemplo não indicava o status resultante. Adicionado: quando Para = só externos e Finaud está no CC → **status: Aguardando Cliente** (a bola está com o cliente).
+
+**Arquivos alterados:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — Campo 2 ("Para que o sistema usa", Passo 2 da tabela, exemplo "Mensagem interna" e exemplo "Finaud só no CC").
+
+**Validação:** ✅ Confirmado por Michel em 04/08/2026.
+
+---
+
 ### 04/08 — §7 bloqueador fechado: passo a passo adicionado aos Campos 2, 3, 4 e 5
 
 **🔎 Em miúdos:** os campos 2 a 5 já descreviam os casos possíveis, mas não tinham a tabela de "o que o sistema faz em cada situação" — agora têm.
@@ -58,6 +511,28 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 - Campo 5: 6 passos (vazio → filtrar automático → código CADOC → sem código → retenção)
 
 **Validação:** ✅ Sem teste automatizado — mudança de documentação. Conteúdo baseado em casos já validados com dados reais em sessões anteriores.
+
+---
+
+### 04/08 — Campo 6: regra L8 (corpo vazio) e conceito de cópia limpa corrigidos
+
+**🔎 Em miúdos:** a regra para e-mails onde o corpo fica vazio após a limpeza estava errada (usava um rótulo de encaminhamento interno que não existe). Também aclaramos que a "limpeza" cria uma cópia — não apaga o original.
+
+**Problema 1 — L8 rotulava como ENCAMINHAMENTO_INTERNO:** a regra dizia "marca como `ENCAMINHAMENTO_INTERNO` e aguarda revisão". Esse label não existia no vocabulário do sistema e misturava dois cenários completamente diferentes: thread existente (onde o CADOC já é conhecido) e thread nova (onde não há nada para classificar).
+
+**Problema 2 — "Para que o sistema usa" do Campo 6 dizia "limpar o texto":** essa descrição sugeria que o original era apagado, causando confusão sobre como o §8 (que precisa do texto original) funcionaria em paralelo.
+
+**Correção 1 — regra L8 agora tem dois casos:**
+- **(a) Thread existente** → mantém a classificação já registrada; §8 lê o texto original para atualizar o status.
+- **(b) Thread nova** → Retenção — corpo insuficiente para classificar.
+
+**Correção 2 — "Para que o sistema usa" atualizado:** agora diz explicitamente que o sistema cria uma **cópia limpa** para a IA, e que o e-mail original é sempre preservado intacto. §8 e Campo 4 leem o original diretamente.
+
+**Dado real (varredura 04/08/2026):** 94 e-mails (1,1% do histórico) ficaram com corpo vazio — todos eram respostas de cortesia ("Obrigado!", "Obrigada!") em threads existentes. Nenhum era thread nova.
+
+**Arquivos alterados:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — Campo 6: "Para que o sistema usa", Passo 5 da tabela, e regra L8 na tabela de regras.
+
+**Validação:** ✅ Confirmado por Michel em 04/08/2026. Varredura com 8.825 e-mails.
 
 ---
 

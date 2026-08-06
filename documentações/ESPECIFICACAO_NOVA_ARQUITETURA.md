@@ -24,6 +24,7 @@
 | 13 | Plano de implantação por fases |
 | 14 | Telas do sistema |
 | A | Apêndice A — Colaboradores Finaud identificados |
+| B | Apêndice B — Terminologia |
 
 ---
 
@@ -104,25 +105,31 @@ O sistema trata 12 categorias distintas de e-mail. Cada categoria tem suas próp
 
 O sistema descarta automaticamente estes remetentes antes de classificar. A lista é configurável na tela de filtros — sem mexer no código.
 
-### Por endereço exato
+| Critério | Valor | Motivo |
+|---|---|---|
+| **Endereço exato** | `riskdriver@finaud.com.br` | Sistema automático Risk Driver |
+| **Endereço exato** | `contato@finaud.com.br` | Sistema automático de alertas |
+| **Endereço exato** | `coleta.oraculo@finaud.com.br` | Conta de coleta do próprio sistema |
+| **Endereço exato** | `do-not-reply@finaud.fogbugz.com` | Sistema de tickets FogBugz |
+| **Endereço exato** | `comunicacao@comunicacao.bcb.gov.br` | Comunicados automáticos do BACEN |
+| **Padrão no endereço** | `noreply` · `no-reply` · `mailer-daemon` · `newsletter` · `notification` · `bounce` | Endereços automáticos genéricos |
+| **Domínio do remetente** | `employer.com.br` | Sistema de RH (Epays, Pontofopag) |
+| **Domínio do remetente** | `content.pwc.com` | Newsletter PwC |
+| **Domínio do remetente** | `grafana.com` | Ferramenta de monitoramento |
+| **Domínio do remetente** | `eadtiexames.com.br` | Plataforma de cursos online |
+| **Domínio do remetente** | `appsheet.com` | Ferramenta de apps Google |
+| **Domínio do remetente** | `freshworks.com` | Sistema de suporte externo |
+| **Domínio do remetente** | `nasajon.com.br` | Software contábil (newsletter) |
+| **Nome do remetente** | `Facebook` · `Meta` · `Instagram` · `LinkedIn` · `Twitter` · `YouTube` · `Telegram` · `WhatsApp` | Redes sociais |
+| **Nome do remetente** | `3CX Communications System` | Sistema de telefonia (notificações de chamada perdida) |
+| **Nome + assunto** | Nome contém `FINAUDTEC` e assunto contém `FogBugz` | Ticket interno do sistema de tickets |
+| **Nome + assunto** | Nome contém `Finaud Equipe` e assunto contém `Confirmação` | Confirmação de conta do sistema Finaud |
+| **Padrão no assunto** | `IT Service Desk` | Notificações do sistema de TI interno |
+| **Padrão no assunto** | `Aceito:` (início do assunto) | Aceite de convite de calendário (Google Agenda, Outlook) |
 
-| Remetente | Motivo |
-|---|---|
-| `riskdriver@finaud.com.br` | Sistema automático Risk Driver |
-| `contato@finaud.com.br` | Sistema automático de alertas |
-| `coleta.oraculo@finaud.com.br` | Conta de coleta do próprio sistema |
-| `do-not-reply@finaud.fogbugz.com` | Sistema de tickets FogBugz |
-| `comunicacao@comunicacao.bcb.gov.br` | Comunicados automáticos do BACEN |
+> **Origem:** simulação completa com 943 threads reais (05/08/2026). Varredura de todos os domínios confirmou cobertura total: **174 threads filtradas, zero threads suspeitas fora do filtro.** Base válida: **769 threads**. A lista de domínios é configurável — novos serviços externos podem ser adicionados na tela de filtros sem intervenção técnica.
 
-### Por padrão no endereço (qualquer domínio)
-
-`noreply` · `no-reply` · `donotreply` · `mailer-daemon` · `newsletter` · `notification` · `bounce` · `autorespond`
-
-### Por texto no assunto
-
-`FogBugz` · `Risk Driver -` · `Atualização Bacen`
-
-**Tela de filtros:** remetente (obrigatório) + assunto (opcional). Permite adicionar novos remetentes a bloquear sem intervenção técnica. Quando um remetente precisar de mais de um filtro, o campo assunto refina a regra.
+> **Regra (05/08/2026):** filtros por assunto sozinho só são permitidos quando o padrão é exclusivo de sistemas automáticos — nunca aparece em e-mail legítimo de cliente. Exemplos válidos: `IT Service Desk`, `Aceito:` (calendário). O assunto combinado com o remetente também é permitido (ex.: FogBugz, Finaud Equipe).
 
 ---
 
@@ -184,7 +191,7 @@ O campo `From` não é sempre o remetente real. Quando o e-mail passa pelo grupo
 |---|---|---|---|
 | `*@finaud.com.br` | `andrea.inacio@finaud.com.br` | Colaborador Finaud | Usar direto — cobre automaticamente novos colaboradores, sem cadastrar |
 | `*@finaudtec.com.br` | `luiz.antonio@finaudtec.com.br` | Colaborador Finaud (segunda empresa) | Usar direto |
-| `suporte@finaud.com.br` | `suporte@finaud.com.br` | Grupo compartilhado | Verificar Reply-To: (1) fora da Finaud → cliente é o remetente real; (2) dentro da Finaud → colaborador Finaud é o remetente real; (3) vazio → Finaud via grupo, colaborador não identificado |
+| `suporte@finaud.com.br` | `suporte@finaud.com.br` | Grupo compartilhado | Verificar Reply-To: (1) fora da Finaud → cliente é o remetente real; (2) dentro da Finaud → colaborador Finaud é o remetente real; (3) vazio + nome no From → usar nome como colaborador (ex.: `"Pedro Silva" <suporte@...>`); (4) vazio + sem nome → classifica normalmente, campo responsável fica em branco |
 | `riskdriver@finaud.com.br` | `riskdriver@finaud.com.br` | Sistema automático (Risk Driver) | Filtrar |
 | `contato@finaud.com.br` | `contato@finaud.com.br` | Sistema automático (alertas BACEN) | Filtrar |
 | `coleta.oraculo@finaud.com.br` | `coleta.oraculo@finaud.com.br` | Conta de coleta | Ignorar |
@@ -228,10 +235,11 @@ O sistema percorre os passos abaixo em ordem. Para cada e-mail recebido, aplica 
 |---|---|---|---|
 | 1 | From vazio | **Retenção** — o sistema precisa deste campo | *(teórico — não ocorreu nos 8.825 e-mails do histórico)* |
 | 2 | From na lista de filtros por endereço exato | **Descarte** — remetente automático conhecido | `riskdriver@finaud.com.br` — Risk Driver |
-| 3 | From contém padrão bloqueado | **Descarte** — remetente automático de qualquer domínio | `noreply@`, `mailer-daemon@`, `newsletter@`, etc. |
-| 4 | From = `suporte@finaud.com.br` | Ir ao Campo 4 (Reply-To) | `"'FINAUDTEC' via Suporte" <suporte@finaud.com.br>` — 132 e-mails FogBugz chegam com esse remetente |
-| 5 | From termina em `@finaud.com.br` ou `@finaudtec.com.br` | Identificado como Finaud | `andrea.inacio@finaud.com.br`, `luiz.antonio@finaudtec.com.br` |
-| 6 | Qualquer outro domínio | Identificado como cliente | `risco@brazabank.com.br`, `jessica.silva@banvox.com.br` |
+| 3 | From contém padrão bloqueado no endereço | **Descarte** — remetente automático de qualquer domínio | `noreply@`, `mailer-daemon@`, `newsletter@`, etc. |
+| 4 | Nome no From contém rede social | **Descarte** — notificação social chegando via grupo | `"'Facebook' via Suporte" <suporte@finaud.com.br>` |
+| 5 | From = `suporte@finaud.com.br` | Ir ao Campo 4 (Reply-To) | `"'FINAUDTEC' via Suporte" <suporte@finaud.com.br>` |
+| 6 | From termina em `@finaud.com.br` ou `@finaudtec.com.br` | Identificado como Finaud | `andrea.inacio@finaud.com.br`, `luiz.antonio@finaudtec.com.br` |
+| 7 | Qualquer outro domínio | Identificado como cliente | `risco@brazabank.com.br`, `jessica.silva@banvox.com.br` |
 
 > **Nota — FogBugz:** os 132 e-mails de notificação do FogBugz chegam com remetente `suporte@finaud.com.br` (Passo 4 → vai ao Campo 4). O Campo 1 **não** os descarta aqui. Eles são descartados mais adiante, no **Campo 5**, pelo assunto ("FogBugz" no assunto). O endereço `do-not-reply@finaud.fogbugz.com` na lista de filtros exatos (Passo 2) é uma rede de segurança teórica — nos 8.825 e-mails do histórico, nenhum chegou com esse remetente.
 
@@ -299,7 +307,7 @@ E-mails que o sistema descarta automaticamente sem processar. No sistema atual e
 
 **O que é:** lista de quem recebeu o e-mail no campo "Para:".
 
-**Para que o sistema usa:** identificar o cliente e a direção da conversa. Se a Finaud não estiver no Para, o sistema verifica o CC para saber se está sendo copiada.
+**Para que o sistema usa:** identificar com quem está o assunto no momento (se a bola está com a Finaud ou com o cliente), quem é o colaborador responsável pelo lado Finaud e quem é o contato responsável pelo lado do cliente. Ambos alimentarão o painel de atividade na Fase 2 — para visualizar quem está com mais casos em aberto em cada lado. Se a Finaud não estiver no Para, o sistema verifica o CC para saber se está sendo copiada.
 
 > **Regra:** qualquer endereço `@finaud.com.br` ou `@finaudtec.com.br` é tratado como Finaud automaticamente — novos colaboradores não precisam ser cadastrados. *(Decisão confirmada por Michel, 22/07/2026.)*
 
@@ -308,7 +316,7 @@ E-mails que o sistema descarta automaticamente sem processar. No sistema atual e
 | Passo | Condição | Ação |
 |---|---|---|
 | 1 | Para está vazio | Ir para Campo 3 (CC) |
-| 2 | Para tem apenas endereços `@finaud.com.br` / `@finaudtec.com.br` | Mensagem interna — entra como contexto da thread, sem identificar cliente externo |
+| 2 | Para tem apenas endereços `@finaud.com.br` / `@finaudtec.com.br` | Mensagem interna — segue o fluxo normalmente. Pode ser puramente Finaud↔Finaud, ou uma thread que em algum momento envolveu o cliente e passou a ser troca interna. Em ambos os casos todas as regras se aplicam — o que muda é com quem está a bola. |
 | 3 | `suporte@finaud.com.br` envia para `suporte@finaud.com.br` (grupo enviando para si mesmo) | **Descarte** |
 | 4 | Para tem Finaud + endereços externos | Cliente = endereço(s) externo(s) — ir para Passo 5 |
 | 5 | Para tem colaborador específico Finaud + grupo `suporte@` | Colaborador específico tem prioridade — é o responsável da thread |
@@ -346,7 +354,7 @@ E-mails que o sistema descarta automaticamente sem processar. No sistema atual e
 
 **Mensagem interna:**
 `sarah.sa@finaud.com.br` → `suporte@finaud.com.br` + `miguel.santos@finaud.com.br`
-→ só Finaud no Para → mensagem interna, entra como contexto da thread
+→ só Finaud no Para → mensagem interna — segue o fluxo normalmente; todas as regras se aplicam, o que muda é com quem está a bola
 
 **E-mail enviado para o próprio grupo (suporte para si mesmo):**
 `suporte@finaud.com.br` → `suporte@finaud.com.br`
@@ -354,7 +362,7 @@ E-mails que o sistema descarta automaticamente sem processar. No sistema atual e
 
 **Finaud está só no CC (não está no Para):**
 `victor@miraeinvest.com.br` → `rafael@miraeinvest.com.br` (Finaud no CC)
-→ Para não tem Finaud → sistema verifica CC → encontra Finaud → thread monitorada; quem age é o destinatário do Para
+→ Para não tem Finaud → sistema verifica CC → encontra Finaud → thread monitorada → **status: Aguardando Cliente** (a bola está com o cliente — ele está falando com a própria equipe; a Finaud monitora)
 
 **Para vazio:**
 → sistema verifica CC; se CC também vazio → **Retenção**
@@ -380,7 +388,7 @@ E-mails que o sistema descarta automaticamente sem processar. No sistema atual e
 | 3 | CC contém endereço `@finaud.com.br` / `@finaudtec.com.br` | Finaud está monitorando — thread registrada; quem age é o destinatário do Para |
 | 4 | CC contém endereço externo além de Finaud | Cliente = endereço externo identificado no CC |
 | 5 | CC contém só Finaud (sem externo) | Cliente identificado pelo Campo 4 (Reply-To) ou pelo remetente (Campo 1) |
-| 6 | CC vazio | **Retenção** — sistema não consegue identificar nenhum destinatário |
+| 6 | CC vazio (chegamos aqui porque Para também estava vazio — relay perdeu o cabeçalho) | **Retenção** — anomalia técnica de roteamento; sistema não consegue identificar destinatário por nenhum campo |
 
 ---
 
@@ -400,8 +408,8 @@ CC tem endereço externo (além de Finaud):
 CC tem só Finaud (como no DRM 2060 acima):
 → Finaud é o destinatário; cliente já identificado pelo Campo 4 (Reply-To)
 
-CC vazio:
-→ **Retenção** — sistema não consegue identificar nenhum destinatário
+CC vazio (e Para também estava vazio):
+→ anomalia técnica de roteamento — relay perdeu todos os cabeçalhos de destinatário → **Retenção** com alerta para Michel
 
 ---
 
@@ -413,7 +421,13 @@ CC vazio:
 
 > **Por que a Finaud usa o suporte@:** ao responder via grupo, todos os colaboradores do grupo recebem uma cópia automaticamente — sem precisar copiar cada um manualmente. É intencional.
 
-> **Confirmado no histórico:** em 1.745 e-mails com De = suporte@, o Reply-To revelou o remetente real em 98,1% dos casos.
+> **Confirmado no histórico (varredura 04/08/2026 — 1.745 e-mails com De = suporte@):**
+> - Reply-To = cliente externo: **1.711 (98,1%)**
+> - Reply-To = filtrado (noreply@...): **26 (1,5%)** → Descarte
+> - Reply-To = vazio: **8 (0,5%)** → ler assinatura
+> - Reply-To = @finaud.com.br (colaborador): **0 (0,0%)** — nunca ocorreu no histórico real; caso teórico ignorado
+>
+> Os três cenários reais estão cobertos pelos Passos 3, 4 e 5–7 abaixo.
 
 **Como o sistema processa — passo a passo:**
 
@@ -425,7 +439,7 @@ CC vazio:
 | 4 | Reply-To tem endereço filtrado (`noreply@`, notificação automática) | **Descarte** |
 | 5 | Reply-To vazio | Ler assinatura do Campo 6 para identificar o colaborador que enviou |
 | 6 | Assinatura contém e-mail `@finaud.com.br` / `@finaudtec.com.br` | Colaborador identificado como responsável |
-| 7 | Assinatura não contém e-mail Finaud | Registrar como "Finaud via grupo — responsável não identificado" |
+| 7 | Assinatura não contém e-mail Finaud | **Retenção** com alerta para Michel — nada entra no painel sem identificação do responsável |
 
 ---
 
@@ -444,11 +458,16 @@ CC vazio:
 → um colaborador Finaud enviou via suporte@ mas sem Reply-To preenchido
 → o sistema lê a **assinatura do corpo do e-mail** (Campo 6) para identificar o colaborador responsável
 → se encontrar assinatura com e-mail Finaud → colaborador identificado
-→ se não encontrar → "Finaud via grupo — responsável não identificado"
+→ se não encontrar → **Retenção** com alerta para Michel — nada entra no painel sem identificação do responsável
+
+> **Regra universal (confirmada por Michel, 04/08/2026):** nenhum e-mail entra no painel sem identificação completa — cliente e colaborador responsável. Se qualquer um dos dois não puder ser identificado por nenhum meio disponível → Retenção com alerta.
+>
+> **Exceção — thread nova sem responsável (confirmada por Michel, 04/08/2026):** quando o cliente é identificado mas ainda não há colaborador Finaud designado (ninguém respondeu ainda), a thread entra no painel como "Aguardando Finaud — sem responsável". Não vai para Retenção. Quando um colaborador responder, a IA o identifica automaticamente e o registra como responsável da thread.
 
 **Thread nova sem responsável (cliente enviou para suporte@ pela primeira vez):**
-→ entra como "Aguardando Finaud — sem responsável"
-→ responsável é registrado quando um colaborador responde ou reivindica a thread
+→ entra no painel como "Aguardando Finaud — sem responsável"
+→ quando um colaborador da Finaud responder, a IA o identifica e o registra como responsável
+→ enquanto ninguém responde: visível no painel, sem nome de responsável
 
 ---
 
@@ -456,41 +475,23 @@ CC vazio:
 
 **O que é:** o título do e-mail — o campo "Assunto:" que aparece na caixa de entrada.
 
-**Para que o sistema usa:** duas coisas, nesta ordem: (1) filtrar e-mails automáticos que não devem ir para a IA; (2) ajudar a IA a identificar a categoria da thread.
+**Para que o sistema usa:** ajudar a IA a identificar a categoria da thread. O assunto **não** é usado para descartar e-mails — filtragem é responsabilidade exclusiva do Campo 1 (remetente) e Campo 4 (Reply-To).
+
+> **Regra (05/08/2026):** o assunto sozinho nunca descarta um e-mail. Os e-mails automáticos ("Risk Driver -", "Relatório do Serviço", "FogBugz" etc.) são descartados pelo remetente que os gera — `riskdriver@finaud.com.br`, `contato@finaud.com.br`, `do-not-reply@finaud.fogbugz.com`, `comunicacao@comunicacao.bcb.gov.br`. Um cliente que encaminha ou responde um desses e-mails chega com um remetente diferente e **não é descartado** — segue normalmente para a IA.
 
 **Como o sistema processa — passo a passo:**
 
 | Passo | Condição | Ação |
 |---|---|---|
-| 1 | Assunto está vazio | **Retenção** — sem assunto o sistema não consegue filtrar nem classificar |
-| 2 | Assunto contém termo de e-mail automático (lista de filtros: "Risk Driver -", "Relatório do Serviço", "FINAUD MASTER", "FogBugz" etc.) | **Descarte** — não vai para a IA |
-| 3 | Assunto passou em todos os filtros | Continua processamento — Campo 6 (corpo) será lido |
-| 4 | Assunto contém código CADOC explícito (DDR, DRM, DLO, DLI, DRL, 4111, 2011, 2060, 2061, 2062, 2160) | IA classifica com alta confiança; corpo complementa com detalhes |
-| 5 | Assunto não contém código CADOC | IA lê o corpo completo para determinar a categoria |
-| 6 | IA processa assunto + corpo e não atinge 99% de confiança | **Retenção** com notificação imediata para Michel |
+| 1 | Assunto está vazio | IA usa corpo e anexos para tentar classificar — se atingir 99% de confiança, classifica normalmente; se não atingir → **Retenção** com alerta para Michel |
+| 2 | Assunto passou nos filtros de remetente (Campo 1 + Campo 4) | Continua processamento — Campo 6 (corpo) será lido |
+| 3 | Assunto contém código CADOC explícito (DDR, DRM, DLO, DLI, DRL, 4111, 2011, 2060, 2061, 2062, 2160) | IA classifica com alta confiança; corpo complementa com detalhes |
+| 4 | Assunto não contém código CADOC | IA lê o corpo completo para determinar a categoria |
+| 5 | IA processa assunto + corpo e não atinge 99% de confiança | **Retenção** com notificação imediata para Michel |
 
 ---
 
-#### Uso 1 — Filtrar e-mails automáticos (Descarte)
-
-O sistema verifica se o assunto contém termos de e-mails automáticos conhecidos. Se contiver → Descarte, sem ir para a IA.
-
-| Filtro no assunto | E-mails no histórico | Exemplo real |
-|---|---|---|
-| "Risk Driver -" | 1.227 | "Risk Driver - Carteira de Câmbio - 20/02/2026" |
-| "Relatório do Serviço - Finaud" | 309 | "Relatório do Serviço - Finaud Tec - 01/03/2026" |
-| "Atualização de Comunicados e Normativos" | 211 | "Atualização de Comunicados e Normativos BCB" |
-| "FINAUD MASTER" | 155 | "FINAUD MASTER - Relatório diário 03/07/2026" |
-| "FogBugz" | 132 | "FogBugz: Ticket #4521 - Erro de importação" |
-| "Atualização na página de Leiautes do Bacen" | 113 | "Atualização na página de Leiautes do Bacen – março" |
-| *(outros: STAY AHEAD, Atualização Bacen, etc.)* | 104 | — |
-| **Total filtrado** | **1.894 (21,5% do histórico)** | |
-
-> **Nota — FogBugz:** esses e-mails chegam via `suporte@finaud.com.br` (passam no Campo 1), mas são descartados aqui pelo assunto. O endereço `do-not-reply@finaud.fogbugz.com` no filtro de remetentes é redundância de segurança.
-
----
-
-#### Uso 2 — Classificar a categoria (quando passou nos filtros)
+#### Uso 1 — Classificar a categoria
 
 | O assunto tem | Casos no histórico | O que acontece |
 |---|---|---|
@@ -498,9 +499,7 @@ O sistema verifica se o assunto contém termos de e-mails automáticos conhecido
 | Sem código explícito | 2.843 (32,2%) | IA lê o corpo completo (Campo 6) para classificar |
 | IA processa assunto + corpo e não atinge 99% de confiança | Quantificação pendente (produção) | **Retenção** — notificação para Michel |
 
-**Assunto vazio:** não ocorreu em nenhum dos 8.825 e-mails do histórico. Se ocorrer → Retenção (o sistema precisa do assunto para filtrar e classificar).
-
-> **Verificado em 03/08/2026:** varredura completa de 8.825 e-mails do projeto `oraculo_360_finaud`. A lista de filtros está validada contra o histórico real.
+**Assunto vazio:** não ocorreu em nenhum dos 8.825 e-mails do histórico. Se ocorrer → Retenção.
 
 ---
 
@@ -508,7 +507,7 @@ O sistema verifica se o assunto contém termos de e-mails automáticos conhecido
 
 **O que é:** o texto escrito que está dentro do e-mail — o conteúdo que a pessoa digitou, não os anexos nem o assunto.
 
-**Para que o sistema usa:** limpar o texto antes de passar para a IA, removendo tudo que não é conteúdo real (assinatura, histórico antigo, rodapé automático, imagens decorativas). A IA recebe apenas o texto novo de cada e-mail.
+**Para que o sistema usa:** criar uma **cópia limpa** do texto para a IA classificar — o e-mail original é sempre preservado intacto no sistema. A cópia limpa remove tudo que não é conteúdo novo (assinatura, histórico antigo, rodapé automático, imagens decorativas). O §8 (status da thread) e o Campo 4 (identificação do colaborador) leem o e-mail original diretamente — nunca a cópia. A IA recebe apenas a cópia limpa.
 
 **Como o sistema processa — passo a passo:**
 
@@ -518,7 +517,7 @@ O sistema verifica se o assunto contém termos de e-mails automáticos conhecido
 | 2 | Sistema converte HTML → texto puro (se necessário) |
 | 3 | SE `From = suporte@finaud.com.br` E Reply-To vazio: extrai o e-mail do colaborador da assinatura **antes** de limpar (Campo 4 precisa dessa informação — se limpar primeiro, perde para sempre) |
 | 4 | Aplica regras L1–L8 em ordem: remove assinatura, histórico citado, rodapé automático e imagens decorativas |
-| 5 | Se corpo ficar vazio após L1–L8 → regra L8 aciona: marca como `ENCAMINHAMENTO_INTERNO` e aguarda revisão humana — a IA não classifica |
+| 5 | Se corpo ficar vazio após L1–L6 e OCR (texto e imagens ambos vazios) → aplicar regra L8: (a) thread existente — mantém a classificação já registrada; §8 atualiza o status lendo o texto original; (b) thread nova — **Retenção** com alerta para Michel |
 | 6 | Texto limpo vai para a IA |
 
 > **Regra obrigatória — extrair colaborador antes de limpar (Campo 4):** quando De = `suporte@finaud.com.br` e Reply-To está vazio, o sistema extrai o e-mail do colaborador da assinatura do corpo **antes** de aplicar as regras de limpeza. Só então remove a assinatura. Se a extração acontecer depois da limpeza, a informação do responsável se perde para sempre.
@@ -611,7 +610,9 @@ A IA recebe apenas o **texto novo** de cada e-mail — sem assinatura, sem hist�
 | L5 | Imagem decorativa | Remove o marcador | Nome da imagem contém: `instagram`, `linkedin`, `facebook`, `youtube`, `whatsapp`, `traders logo`, `esign`, `ícone`, `site mb`, `logo` ou variações de redes sociais |
 | L6 | Imagem não-decorativa | Tenta ler com OCR | Qualquer imagem cujo nome **não** contenha palavra conhecida de decorativo (L5) → aciona OCR, independente da posição no e-mail (antes ou depois da assinatura) → se texto útil: inclui no registro rotulado; se OCR falhar: e-mail vai para fila de revisão humana (não classifica) |
 | L7 | ~~Imagem genérica depois da assinatura~~ | **REGRA REMOVIDA** | Removida em 04/08/2026 após simulação com dados reais: 7 de 7 imagens lidas após a assinatura continham conteúdo crítico (STA, CRD, boletas, erros do BACEN). A posição "após assinatura" **não é** sinal confiável de decorativo em e-mails de CADOC — a imagem frequentemente está no histórico citado do e-mail, que aparece depois da assinatura do reply mais recente. |
-| L8 | Corpo vazio após limpeza | Sinaliza sem classificar | Se após L1–L6 o texto e o OCR ficarem vazios → marca como `ENCAMINHAMENTO_INTERNO` (R5) e aguarda revisão |
+| L8 | Corpo vazio após limpeza | Decisão por tipo de thread | Se após L1–L6 o texto e o OCR ficarem vazios: **(a) thread existente** → mantém a classificação já registrada; §8 lê o texto original para atualizar o status; **(b) thread nova** → **Retenção** — corpo insuficiente para classificar |
+
+> **Dado real (varredura 04/08/2026 — 8.825 e-mails):** 94 e-mails (1,1%) ficaram com corpo vazio após limpeza — todos eram respostas de cortesia em threads existentes ("Obrigado!", "Obrigada, Andrea!"). 32 tinham anexo, 62 não tinham. Nenhum foi thread nova — a regra "thread nova → Retenção" é teórica, nunca ocorreu no histórico.
 
 **Regra de ouro — imagens:**  
 Nenhuma imagem é descartada silenciosamente. O único critério de descarte sem OCR é o nome do arquivo conter palavra conhecida de decorativo (L5). Para todo o resto, o sistema tenta OCR. Se o OCR falhar (L6), o e-mail entra em fila de revisão humana — a IA não classifica até o revisor confirmar o conteúdo.
@@ -1125,10 +1126,16 @@ Se o arquivo foi entregue e a mensagem seguinte — de qualquer colaborador da F
 
 **Regra adicional exclusiva do RETORNO_BACEN:**
 
-| Situação |
-|---|
-| Finaud orientou o cliente de forma conclusiva (não apenas enviou arquivo) |
-| Cliente confirmou que o BACEN aceitou o protocolo |
+Este tipo de thread tem dois caminhos de encerramento:
+
+| Caminho | Como fecha |
+|---|---|
+| Finaud corrige e reenvia ao BACEN | ZIP enviado pela Finaud → **Concluída** (mesma regra dos CADOCs) |
+| Finaud orienta o cliente a corrigir e reenviar | Cliente confirma que transmitiu ao BACEN ("transmiti", "BACEN aceitou", "protocolo gerado") → **Concluída** |
+
+Se o cliente disser apenas "ok, vou corrigir" sem confirmar a transmissão → thread continua **Aguardando Cliente**.
+
+> **Decisão confirmada por Michel (05/08/2026).**
 
 ---
 
@@ -1139,6 +1146,27 @@ Caso estava Concluído → cliente manda nova mensagem → caso volta automatica
 O sistema não precisa "lembrar" que estava concluído — a lógica do último e-mail já cuida disso: se o último e-mail é do cliente, o caso é Aguardando Finaud.
 
 > **Decisão confirmada por Michel (23/07/2026).**
+
+---
+
+### 8.5 Fechamento automático via ZIP — CADOCs
+
+Aplica a: DDR 2011, SCD 4111, DRM 2060, DLO 2061, DLI 2062, DRL 2160
+
+Quando a Finaud envia o arquivo ZIP do CADOC por um e-mail separado — não como resposta no thread do cliente — esse e-mail chega na caixa oraculo@ pelo Caminho 2 (roteamento automático do Google Workspace). Nesses casos, o sistema faz o cruzamento automático:
+
+| Passo | O que acontece |
+|---|---|
+| 1 | Sistema detecta e-mail com arquivo ZIP chegando no oraculo@ |
+| 2 | Identifica o tipo de CADOC e o CNPJ do cliente pelo nome do arquivo (`CNPJ_CADOC_AAAAMMDD*.zip`) |
+| 3 | Busca o thread aberto daquele cliente para aquele tipo de CADOC |
+| 4 | Fecha o thread como **Concluída** |
+
+**Regra simples:** ZIP enviado pela Finaud = thread Concluída. Não importa se o ZIP foi para o BACEN diretamente ou para o cliente.
+
+Se o ZIP chegar mas não houver thread aberto correspondente → sistema registra alerta para revisão manual.
+
+> **Decisão confirmada por Michel (05/08/2026).**
 
 ---
 
@@ -1189,6 +1217,15 @@ Um e-mail que entrega DDR + DRM + DLI não pode ser forçado em uma única categ
 **Impacto na classificação:**
 A saída da IA deixa de ser "este e-mail É DDR" e passa a ser "este e-mail CONTÉM: DDR_2011 + DRM_2060". O Catálogo de Categorias (§10) continua válido — o que muda é que a saída é uma lista, não um valor único.
 
+**Dupla função do classificador — classificar E detectar encerramento:**
+A cada novo e-mail que chega no oraculo@, o classificador executa duas tarefas em sequência:
+1. **Classificar:** identifica quais categorias o e-mail contém e gera a lista de entregas correspondentes na Camada 2.
+2. **Detectar encerramento:** verifica se o e-mail contém sinais de encerramento (§8.3) e, se sim, muda o status do thread para **Concluída**.
+
+Para CADOCs com ZIP (§8.5), o encerramento é detectado pelo nome do arquivo — não depende do classificador de linguagem.
+
+> **Decisão confirmada por Michel (05/08/2026).**
+
 ---
 
 ## 14. Telas do sistema
@@ -1204,6 +1241,14 @@ Lista de threads ativas, organizada por prazo, com destaque visual:
 | 🟢 Normal | Mais de 7 dias | |
 
 Cada linha mostra: **cliente · categoria · lado (Finaud/cliente) · prazo · última mensagem**
+
+**Threads do mesmo cliente — agrupamento automático (confirmado por Michel, 05/08/2026):**
+Quando um cliente tem mais de um thread aberto ao mesmo tempo, o painel agrupa todos em um bloco único, exibindo-os lado a lado. Regras:
+- Cada thread fecha pelo seu próprio sinal (ZIP ou conversa) — de forma independente.
+- O sistema não cria vínculo automático entre threads do mesmo cliente.
+- O operador vê o contexto completo e decide como agir.
+- O grupo desaparece do painel quando todos os threads do cliente estiverem Concluídos.
+- Thread Concluída some imediatamente do painel (não fica visível por período de carência).
 
 ### Tela 2 — Gestão de Filtros (Remetente)
 
@@ -1306,13 +1351,13 @@ As mesmas 5 regras do DDR_2011. Sinais específicos do SCD_4111:
 | Sinal | O que aparece | Confiança |
 |---|---|---|
 | Assunto | "DDR", "2011" | Alta |
-| Assunto | "TVM", "Dep a Vista", "Compromissada", "Custódia", "Balancete de Câmbio", "CAM0050", "LFT", "PI Exposure" | Alta |
+| Assunto | "PCAM", "Posição de Câmbio", "TVM", "Dep a Vista", "Compromissada", "Custódia", "Balancete de Câmbio", "CAM0050", "LFT", "PI Exposure" | Alta |
+| Assunto | "Movimento [data]", "Saldos do dia", "Cadastro de Ações e Opções", "Fluxo de Caixa", "OP. SELIC", "RD MES" | Alta — clientes que não escrevem "DDR" no assunto mas enviam dados diários do DDR |
 | Assunto | "posição diária", "remessa", nome do cliente + data | Média |
 | Corpo | Posições financeiras do dia anterior, referências a CAM0050, valores em diferentes instrumentos | Média |
 | Anexo | `RD_MOEDA.csv`, `RD_LFT.xlsx`, `RD_PREFIXADA.xlsx` (prefixo `RD_` — padrão dominante) | Alta |
 | Anexo | `DDR_YYYYMM.xlsx`, `Operacoes compromissadas SCD.xlsx` | Alta |
 | Anexo | `CNPJ_2011_YYYYMMDD.zip` (CADOC gerado — Finaud entrega ao cliente) | Muito alta |
-
 **O que NÃO é DDR:**
 - Não é DLO — DDR é diário, DLO é mensal (balanço patrimonial)
 - Não é DRM — DRM é sobre risco de mercado, também mensal
@@ -1431,7 +1476,10 @@ Validado em 90 threads reais (29/07/2026). Cobertura: 100% (57 F→C + 33 C→F)
 |---|---|---|
 | Assunto | "DLO", "DLO 2061", "2061", "DLO/DLI" | Alta |
 | Assunto | "COS 4010", "COS4010", "Planilha LEC", "Indicadores de Basiléia" | Alta |
-| Assunto | "Balancete" + mês/ano, nome do cliente + mês/ano | Média |
+| Assunto | "4010", "4016" (sem prefixo "COS") | Alta — cliente referencia os arquivos COSIF pelo número sem o prefixo |
+| Assunto | "Balancete" (com ou sem mês/ano) | Média — padrão DLO quando o corpo não indica DLI ou S5; se corpo indicar DLI → DLI_2062; se S5 → S5 |
+| Assunto | "Basileia" (sem "Indicadores de") | Média — confirmar com mês/ano ou corpo; "Indicadores de Basiléia" = Alta |
+| Assunto | "PRE" | Média — Patrimônio de Referência Exigido, indicador calculado no DLO |
 | Corpo | Balancete patrimonial, concentração por contraparte, limites de Basileia, planilha LEC | Média |
 | Anexo | `COS4010.xml`, `COS4016.xml`, `COS4060.xml`, `COS4066.xml` + `LEC_MMAAAA.xls/xlsx` (do cliente) | Alta — LEC junto com COSIFs confirma DLO |
 | Anexo | `CNPJ_2061_YYYYMMDD.zip`, `Cos4010.zip`, `Cos4016.zip` (CADOC gerado) | Muito alta |
@@ -1541,7 +1589,7 @@ Validado em 56 threads reais (29/07/2026). Cobertura: 100%. R5 se aplica (3 caso
 
 | Sinal | O que aparece | Confiança |
 |---|---|---|
-| Assunto | "DRL", "DRL 2160", "2160", "DRL2160_MMAAAA" | Alta |
+| Assunto | "DRL", "DLR", "DRL 2160", "2160", "DRL2160_MMAAAA" | Alta — "DLR" é variante com erro de digitação frequente |
 | Assunto | "Colchão de Liquidez", "Encaminhar a planilha DRL", "Geração do arquivo Doc. 2160_DRL" | Alta |
 | Assunto | "Protocolo DRL2160", nome do cliente + mês/ano | Média |
 | Corpo | Colchão de liquidez, risco de liquidez, ativos líquidos, mapeamento COSIF × DRL | Média |
@@ -1662,6 +1710,7 @@ Validado em 47 threads reais (29/07/2026). Cobertura: 100%. R5 se aplica (5 caso
 | Assunto | "Dúvida", "Questionamento", "Informações" | Média — confirmar ausência de CADOC |
 | Assunto | "- Situação -" + nome de CADOC | Alta — status de processo, não entrega |
 | Corpo | Spam / notificações automáticas de sistemas | Baixa — ruído, pode ignorar |
+| Corpo / Anexo | Anexo `invite.ics` ou corpo com link de reunião (Microsoft Teams, Google Meet, Zoom, Outlook Calendar) | Alta — convite de agenda; classificar como SUPORTE mesmo que o assunto mencione um CADOC (ex.: "DLO") |
 
 **O que NÃO é SUPORTE:**
 - E-mail com código CADOC no assunto e anexo correspondente → é entrega do **CADOC específico**
@@ -1720,10 +1769,10 @@ Validado em 196 threads reais (29/07/2026). Cobertura: 100%. R5 se aplica.
 | Assunto | "INDÍCIO DE PROBLEMA DE QUALIDADE IDENTIFICADO NO DOCUMENTO [número]" | Alta — linguagem do próprio BACEN |
 | Assunto | "Erro [CADOC]" (ex.: "Erro DRM") | Alta |
 | Assunto | "Indício de Problema Bacen" | Alta |
+| Assunto | "AVISO DE ATRASO" | Alta — comunicado formal do BACEN sobre entrega em atraso |
 | Corpo | XML com `<respostaCRD>`, `Rejeitado pelo CRD`, número de protocolo CRD | Muito alta |
 | Corpo | Código de erro BACEN: VCRD0007, DLO00020, DLO00024, DLO00075 etc. | Muito alta |
 | Corpo | "recebemos um apontamento", "foi rejeitado", "poderiam nos ajudar" | Média |
-
 **O que o sistema extrai de cada thread:**
 - Código da crítica (VCRD0007, DLO00020…) e qual CADOC foi criticado (2060, 2061, 2062…)
 - Data-base da remessa (MM/AAAA) e número de protocolo CRD
@@ -1744,6 +1793,7 @@ Validado em 196 threads reais (29/07/2026). Cobertura: 100%. R5 se aplica.
 - E-mail perguntando sobre prazo de entrega ao BACEN → é o **CADOC específico** (DDR, DRM, DLO etc.)
 - Comunicado regulatório do BACEN sobre mudança de regra ou normativa → é **SUPORTE**
 - "Protocolo" ou "Resultado" referindo-se à entrega normal já aceita → é o **CADOC da entrega**
+- Finaud ou cliente **enviando** remessa ao BACEN ("Seguem as remessas DLO e DLI a serem transmitidas ao BC", "Segue o arquivo transmitido") → é o **CADOC da entrega** (DLO_2061, DLI_2062, DDR_2011 etc.) — o fato de mencionar "BACEN" ou "BC" no corpo não torna RETORNO_BACEN
 
 **Prazo:** urgente — o BACEN define prazo curto para correção e substituição do documento.
 
@@ -2508,4 +2558,31 @@ Lista dos colaboradores identificados durante a Fase 0. Pode estar incompleta �
 | Planner | T07, T11 (DLO demanda + DLI substituição) |
 | Western Union | T04 (câmbio diário) |
 | Oliveira Trust | T05 (DRM inconsistência) |
+
+---
+
+## Apêndice B — Terminologia
+
+Definições dos termos usados ao longo desta especificação, em linguagem simples.
+
+| Termo | O que significa |
+|---|---|
+| **Mensagem (e-mail)** | Um único e-mail enviado de A para B. Uma caixa com "970 e-mails" tem 970 mensagens individuais. |
+| **Thread (conversa)** | Conjunto de mensagens que o Gmail agrupa como uma mesma conversa (pelo assunto e histórico de respostas). Uma conversa com 10 e-mails de ida e volta = 1 thread, não 10. Uma caixa com 201 threads pode ter quase 1.000 mensagens. |
+| **oraculo@finaud.com.br** | Conta de monitoramento usada exclusivamente pelo Oráculo 360 para leitura e classificação. Os colaboradores não respondem por ela — ela recebe cópias automáticas de tudo que passa pelo suporte@. |
+| **suporte@finaud.com.br** | Caixa operacional da equipe. É onde os clientes escrevem e onde os colaboradores respondem. O Oráculo 360 não lê esta caixa diretamente — lê o oraculo@ que recebe as cópias. |
+| **Caminho 2** | Regra configurada no Google Workspace da Finaud que envia automaticamente uma cópia de cada e-mail do suporte@ para o oraculo@. Acontece em tempo real, sem ação humana. |
+| **Remessa (CADOC)** | O arquivo gerado pela Finaud e entregue ao cliente (ou diretamente ao BACEN). Formato típico: ZIP com o código do CADOC no nome — ex.: `32648370_2011_20260727.zip`. |
+| **Competência** | O período de referência de um relatório — pode ser dia (DDR diário), mês (DRM), semestre (DLO/DLI) ou trimestre (PVCA). Diferente da data de envio: um DDR de competência 27/07 pode ser enviado ao BACEN em 30/07. |
+| **Camada 1 — Comunicação** | O nível de conversa: o thread como um todo, com status único (Aguardando / Concluído). |
+| **Camada 2 — Entregas** | O nível de cada CADOC dentro do thread. Um thread pode conter múltiplas entregas (ex.: DDR + DRM), cada uma com status próprio. |
+| **BACEN** | Banco Central do Brasil — o regulador que recebe os CADOCs e emite críticas ou rejeições quando encontra problemas. |
+| **STA** | Sistema de Transferência de Arquivos do BACEN — por onde os CADOCs são transmitidos. O protocolo de aceite do STA confirma a entrega. |
+| **CRD** | Central de Rejeições e Devoluções do BACEN — sistema que processa críticas de inconsistência e emite protocolo após a substituição do arquivo. |
+| **CNPJ do cliente** | Número de identificação fiscal da instituição regulada. É o identificador principal de cada cliente no sistema. |
+| **Thread irmã** | Quando um mesmo cliente tem duas ou mais threads abertas ao mesmo tempo. O painel as agrupa juntas para o operador ver o contexto completo. |
+| **Remetente** | Quem enviou a mensagem (campo "De:" do e-mail). |
+| **Destinatário** | Quem recebeu a mensagem (campos "Para:", "CC:" ou "CCO:"). |
+
+> Adicionado em 05/08/2026 — originado da dúvida sobre a diferença entre "970 e-mails" (mensagens) e "201 threads" (conversas) ao validar a varredura da caixa oraculo@.
 

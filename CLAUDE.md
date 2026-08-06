@@ -92,6 +92,7 @@ Mesmo sem digitar os atalhos, estes rituais valem em toda sessão.
 - Mensagens no padrão: `fix:`, `feat:`, `test:`, `refactor:`, `docs:` (+ escopo), em português
 - `.gitignore` blinda segredos e dados — nunca forçá-los para dentro
 - **Faxina antes de cada commit:** varrer arquivos temporários soltos (`tmp*`, `_probe_*`, `*.out`, scripts one-off) → mover para `_archive/` na subpasta certa. Script nomeado só após `grep` confirmar que ninguém o importa e OK do Michel
+- **Commitar spec + script após cada rodada aprovada:** após qualquer rodada de validação com resultado satisfatório (novo baseline), commitar imediatamente `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` + `scripts/classificador_ia.py` e criar tag git (`git tag rodada-N-baseline`). Sem esse commit, não há ponto seguro para restaurar se a próxima rodada regredir. *(Lição de 06/08/2026: R2 não foi commitada — quando R3 regrediu, não havia estado limpo para restaurar.)*
 
 ## Permissões
 Este projeto usa `--dangerously-skip-permissions`. Claude pode executar scripts e modificar arquivos sem pedir confirmação individual.
@@ -217,6 +218,85 @@ Recursos EXTERNOS (tarefas agendadas, webhooks, integrações cloud, APIs, etc.)
 **Por quê:** Próxima IA que precisar alterar ou recriar sabe TUDO sem gastar tokens desnecessários. Evita refazer trabalho e reduz risco de erro. Documentação é APRENDIZAGEM da sessão anterior.
 
 **Checklist no `/fechar`:** "Criei/alterei algo externo hoje? ☐ Se sim, está em TAREFAS_AGENDADAS.md? ☐"
+
+---
+
+## Regra obrigatória: nunca tomar posição sobre classificação sem base clara na spec
+
+Ao revisar casos de classificação de e-mails, **nunca concluir qual categoria é a correta** a menos
+que a resposta esteja explicitamente definida no §10 ou documentação equivalente.
+
+Quando o caso for ambíguo: apresentar o conteúdo do e-mail, mostrar o que cada rodada classificou,
+e **perguntar a Michel** qual é o correto — sem emitir opinião sobre qual lado está certo.
+
+Michel tem o conhecimento do negócio; a IA tem o conhecimento da spec. Quando a spec não cobre,
+quem decide é Michel.
+
+> Regra estabelecida por Michel em 06/08/2026, após a IA concluir "SUPORTE" para um e-mail
+> que era DDR_2011 — decisão errada tomada sem consulta.
+
+---
+
+## Regra obrigatória: nenhuma rodada paga sem todos os casos revisados e aprovados por Michel
+
+Toda rodada que envolve custo de API (validação, classificação, reteste) só pode ser disparada
+quando **todos** os casos identificados na análise anterior estiverem:
+
+1. **Corrigidos** — a causa do problema foi tratada (spec, parser, filtro etc.)
+2. **Registrados** — entrada datada no `REGISTRO_CORRECOES.md` ou item em `PENDENCIAS.md`
+3. **Aprovados por Michel** — confirmação explícita de que pode avançar
+
+**Nunca disparar uma rodada com casos pendentes de revisão.** Isso evita processar cenários
+com problemas conhecidos e gerar custos desnecessários — já aconteceu com os 4 casos que
+regrediram na Rodada 2: a rodada foi disparada sem revisão completa dos casos anteriores.
+
+> Regra estabelecida por Michel em 06/08/2026.
+
+---
+
+## Regra obrigatória: testar amostra antes de rodar validação completa
+
+Sempre que a spec for atualizada com regras novas, **antes de disparar a validação completa (768 threads)**, rodar um teste em amostra de 20 threads para verificar que as novas regras não causam regressão.
+
+**Critério de aprovação da amostra:**
+- Incertos na amostra ≤ 1 (proporcional ao histórico — R2 tinha 0,7%)
+- Nenhuma thread que antes tinha categoria certa voltando para INCERTO
+
+**Se a amostra mostrar incertos inesperados:** corrigir a spec antes de gastar os tokens da rodada completa.
+
+> **Por que existe:** na Rodada 3 (06/08/2026), uma regra de desambiguação mal formulada no §10 SUPORTE causou 188 incertos (24,5%) — de 5 na R2 para 188 na R3. Uma amostra de 20 threads teria detectado o problema com custo de 20 chamadas em vez de 768.
+
+> Regra estabelecida por Michel em 06/08/2026.
+
+---
+
+## Regra obrigatória: uma mudança por vez na spec — testar amostra após cada adição
+
+Ao adicionar regras ao §10 (ou qualquer seção que o classificador lê), **nunca adicionar mais de uma regra por ciclo de teste**. O ciclo obrigatório é:
+
+1. Adicionar **uma** regra
+2. Rodar a amostra de 20 threads (com `temperature=0`)
+3. Se aprovada (≤ 1 incerto): commitar e seguir para a próxima regra
+4. Se reprovada: remover e entender o motivo antes de tentar nova abordagem
+
+> **Por que existe:** em 06/08/2026, adicionamos 4 regras de uma vez. Quando a R3 colapsou (188 incertos), não sabíamos qual das 4 causou o problema — e passamos horas removendo regras sem certeza. Uma mudança por vez isola o problema imediatamente.
+
+> Regra estabelecida por Michel em 06/08/2026.
+
+---
+
+## Regra obrigatória: todo parâmetro de API deve ser explícito — nunca confiar no padrão
+
+Ao chamar qualquer API externa (OpenAI, Anthropic, Gmail, etc.), definir **explicitamente** todos os parâmetros que afetam o comportamento — nunca depender do valor padrão do SDK.
+
+**Para o classificador OpenAI (gpt-4o-mini):**
+- `temperature=0` — obrigatório para resultados determinísticos (sem variação entre rodadas)
+- `max_tokens` — sempre definido
+- `response_format` — sempre definido
+
+> **Por que existe:** em 06/08/2026, o classificador rodou sem `temperature` definido por semanas. O padrão do OpenAI (1.0) causava respostas aleatórias — a mesma thread podia ser classificada como SCD_4111 numa rodada e INCERTO na próxima. As Rodadas 1 e 2 tiveram bons resultados parcialmente por sorte. O problema foi descoberto ao comparar duas rodadas com spec idêntica e obter resultados diferentes.
+
+> Regra estabelecida por Michel em 06/08/2026.
 
 ---
 

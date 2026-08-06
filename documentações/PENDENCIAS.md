@@ -45,6 +45,60 @@ O padrão atual reconhece `abraços` (plural) mas não `abraço` (singular). Sã
 
 ---
 
+### 🟡 PAINEL — Fluxo de Retenção: como thread revisada por Michel entra no painel (identificado 06/08/2026)
+
+A spec define que e-mails com confiança abaixo de 99% vão para **Retenção com alerta para Michel**. Mas o fluxo após a revisão não está especificado.
+
+**Perguntas em aberto:**
+1. O alerta chega como? (e-mail, notificação no painel, fila separada?)
+2. Michel decide a categoria — onde registra essa decisão?
+3. Quem processa a decisão no sistema?
+4. A thread entra no painel automaticamente ou precisa de ação manual?
+
+**Quando resolver:** ao definir o §13 (Telas do sistema) — é uma decisão de UX que afeta o design do painel.
+
+**Arquivo de destino:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — §13 Telas (Fase 2).
+
+---
+
+### 🟡 FILTRO §4 — E-mails automáticos roteados via suporte@ escapam do filtro (identificado 06/08/2026)
+
+Durante a validação com 768 threads, identificamos que e-mails automáticos que chegam **roteados pelo endereço `suporte@finaud.com.br`** não são barrados pelo filtro §4. O remetente original (ex.: Microsoft) fica escondido no **nome** do campo remetente (`'cvpar.com.br (via Microsoft)' via Suporte`), mas o endereço de e-mail aparece como `suporte@finaud.com.br` — que não está na lista de bloqueios.
+
+**Exemplo confirmado por Michel (06/08/2026):** assunto `Seu código de verificação da conta de cvpar.com.br` — e-mail automático da Microsoft com código de acesso. Conteúdo irrelevante para o projeto. Passou pelo filtro, chegou à IA, que ficou incerta.
+
+**O que fazer:** adicionar à função `eh_automatico()` detecção pelo **nome do remetente** quando contém padrões como `via Microsoft`, `via Google`, `via LinkedIn`, ou quando o nome indica notificação automática (`código de verificação`, `verification code`, etc.).
+
+**Arquivo a alterar:** `scripts/validador_classificacao.py` → função `eh_automatico()`, e futuramente o coletor de produção.
+
+---
+
+### 🟡 DADOS — Respostas de colaboradores via suporte@ não aparecem no dado (identificado 05/08/2026)
+
+Durante a simulação, confirmamos que **Flávio Camargo** (e possivelmente **Pedro Silva**, **Fábio Silva**, **Lucas Vellani**) responderam a threads que estão no dado, mas nenhuma resposta deles foi capturada. Os 113 threads onde Flávio é destinatário têm o seguinte padrão: 87 com apenas 1 mensagem (a do cliente), e 26 com respostas via `suporte@` que têm Reply-To de **clientes externos** (não do Flávio).
+
+**Causa provável:** quando o colaborador responde via o grupo `suporte@finaud.com.br`, a regra de roteamento não captura essa mensagem (o envelope sender é o grupo, não o colaborador), e o Gmail pode não estar entregando cópias dessas respostas na caixa `coleta.oraculo@`.
+
+**O que precisa ser investigado:**
+1. Como esses colaboradores respondem na prática — via grupo, via e-mail direto, ou outro canal (WhatsApp, Teams)?
+2. Se por e-mail: verificar diretamente na caixa `coleta.oraculo@finaud.com.br` no Gmail se existem threads com `From = flavio.camargo@finaud.com.br` que não foram capturadas na extração
+
+**Impacto no sistema:** sem essas respostas, o status de threads atribuídas ao Flávio ficará sempre "Aguardando Finaud" — o sistema nunca verá que ele respondeu.
+
+**Arquivo de destino:** a depender da causa — pode ser ajuste no roteamento do Google Workspace ou no coletor Gmail.
+
+---
+
+### 🟡 ALINHAMENTO — IA e Michel precisam aprofundar entendimento sobre conteúdo e direcionamento dos e-mails (identificado 06/08/2026)
+
+Durante a revisão dos casos da validação, Michel observou que a IA e ele ainda não estão alinhados sobre o conteúdo dos e-mails e seu direcionamento — a IA não tem clareza suficiente sobre o contexto de negócio por trás de cada tipo de interação.
+
+**Exemplo concreto:** e-mail de cadastro de fundo para geração de DDR — a IA classificou como SUPORTE porque não havia DDR sendo entregue; Michel corrigiu explicando que o cadastro faz parte do fluxo DDR.
+
+**O que fazer (posterior):** sessão dedicada para a IA aprender o contexto de negócio de cada categoria — como funciona o processo completo, quais interações fazem parte de cada fluxo regulatório, e o que parece SUPORTE mas é CADOC (e vice-versa). Não precisa ser feito antes da implementação, mas deve anteceder a primeira validação com dados reais em produção.
+
+---
+
 ## ANTES DA FASE 3 — Ligar a IA
 
 > Resolver tudo abaixo antes de conectar a IA classificadora.
