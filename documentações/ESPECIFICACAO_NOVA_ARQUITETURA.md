@@ -1310,6 +1310,8 @@ Esta seção alimenta diretamente o prompt da IA. Para cada categoria, a IA rece
 
 **Regras de classificação — Aguardando ou Concluído:**
 
+Validado em 386 threads reais (29/07/2026). Cobertura: 100%.
+
 As mesmas 5 regras do DDR_2011. Sinais específicos do SCD_4111:
 
 | Regra | Situação | Status | Responsável |
@@ -1327,6 +1329,8 @@ As mesmas 5 regras do DDR_2011. Sinais específicos do SCD_4111:
 **R3:** "Por gentileza enviar o anexo", "peço a gentileza de quando tiver a disponibilidade das informações", "encaminhar as posições do 4111"
 
 **R4:** "Ok, obrigada pelo envio", "Obrigada. Administração", "Estamos verificando com a área técnica... Retornaremos em breve"
+
+**R5:** encaminhamento interno — ex.: "Lucas, por favor verificar esses dados antes de gerar o 4111"; arquivo ou dúvida do cliente repassada a colega da Finaud sem resposta ao cliente ainda
 
 ---
 
@@ -1383,6 +1387,8 @@ As mesmas 5 regras do DDR_2011. Sinais específicos do SCD_4111:
 
 **Regras de classificação — Aguardando ou Concluído:**
 
+Validado em 1.412 threads reais (29/07/2026). Cobertura: 100%.
+
 | Regra | Situação | Status | Responsável |
 |---|---|---|---|
 | R1 | Finaud enviou o DDR em anexo, confirmou envio ao BACEN, resolveu ação interna — OU cliente respondeu só com agradecimento sem novo pedido | Concluído | — |
@@ -1413,6 +1419,8 @@ As mesmas 5 regras do DDR_2011. Sinais específicos do SCD_4111:
 
 **Armadilha importante:**
 - DDR Concluído nem sempre tem arquivo — confirmação de ação interna ("O cadastro está disponível") também é R1
+
+**R5:** encaminhamento interno — ex.: "Monica, pode verificar esse balancete antes de processar?"; arquivo ou dúvida do cliente repassada a colega da Finaud sem resposta ao cliente ainda
 
 ---
 
@@ -1710,6 +1718,8 @@ Validado em 47 threads reais (29/07/2026). Cobertura: 100%. R5 se aplica (5 caso
 
 **O que é:** categoria de apoio que cobre toda comunicação que **não é entrega de CADOC** e **não é resposta do BACEN**. Inclui dúvidas, suporte técnico, gestão de acesso a sistemas, reuniões, auditorias, cobranças e onboarding de novos clientes. Não tem prazo regulatório — o prazo depende da urgência de cada solicitação.
 
+**Frequência:** Reativa — ocorre quando o cliente traz uma demanda. Não tem periodicidade fixa.
+
 **Como a IA reconhece — por eliminação e por sinais:**
 
 | Sinal | O que aparece | Confiança |
@@ -1773,6 +1783,8 @@ Validado em 196 threads reais (29/07/2026). Cobertura: 100%. R5 se aplica.
 | Rejeição CRD | Cliente cola ou encaminha o XML de resposta do BACEN no e-mail | Tags `<respostaCRD>`, `<situacao codigo="2">Rejeitado pelo CRD</situacao>`, código VCRD* |
 | Indício de Qualidade | Cliente encaminha o comunicado formal do BACEN exigindo correção | Código DLO000xx, DLI000xx etc.; texto "Determinamos a correção e substituição do documento" |
 
+**Frequência:** Reativa — ocorre quando o BACEN rejeita ou critica uma entrega. Não tem periodicidade fixa.
+
 **Como a IA reconhece:**
 
 | Sinal | O que aparece | Confiança |
@@ -1831,6 +1843,8 @@ Validado em 303 threads reais (29/07/2026). Cobertura: 100%. R5 se aplica (4 cas
 
 **R4:** "Estou analisando...", "Vou verificar...", "Nossa equipe está verificando...", "Retornaremos em breve", "Realizando os ajustes". ⚠️ Mesmo que a mensagem tenha tom positivo, se termina com "retornaremos" ou "estou verificando" → R4, não R1
 
+**R5:** encaminhamento interno — comunicado do BACEN chegou ao suporte@finaud.com.br e foi repassado ao colaborador responsável sem resposta ao cliente ainda; ex.: "Fwd: BANCO CENTRAL - COMUNICACAO DE INCONSISTENCIA NO DRM - 2060" de suporte@finaud.com.br para monica.macedo@finaud.com.br ou andrea.inacio@finaud.com.br
+
 ⚠️ **Exclusivo do RETORNO_BACEN:** cliente confirmar que o BACEN aceitou (C→F) = R1 (Concluído). Nos outros CADOCs, C→F de confirmação só é R1 se for agradecimento. Aqui, confirmação de aceite do BACEN também encerra a thread.
 
 ---
@@ -1839,10 +1853,7 @@ Validado em 303 threads reais (29/07/2026). Cobertura: 100%. R5 se aplica (4 cas
 
 **O que é:** serviço da Finaud para planejamento financeiro e projeção de capital. Não é um relatório regulatório do BACEN — não tem código CADOC e não é enviado ao BACEN. O cliente solicita uma projeção ou acesso à ferramenta, e a Finaud prepara e entrega.
 
-**Fluxo típico:**
-1. Cliente solicita projeção de capital, acesso à ferramenta, ou tem dúvida
-2. Finaud verifica requisitos e prepara a resposta
-3. Finaud entrega a projeção (planilha ou PDF) ou credenciais de acesso — ou pede dados adicionais ao cliente
+**Frequência:** Sob demanda — ocorre quando o cliente solicita projeção de capital ou acesso à ferramenta.
 
 **Como a IA reconhece:**
 
@@ -1858,6 +1869,11 @@ Validado em 303 threads reais (29/07/2026). Cobertura: 100%. R5 se aplica (4 cas
 - "projeção" referindo-se a dados regulatórios de Basileia, DLO ou DLI → é **DLO 2061** ou **DLI 2062**
 - "projeção" de calendário, prazo ou cronograma → é **SUPORTE**
 - Acesso a sistemas regulatórios (Risk Driver, CRD do BACEN) → é **SUPORTE**
+
+**Fluxo típico:**
+1. Cliente solicita projeção de capital, acesso à ferramenta, ou tem dúvida
+2. Finaud verifica requisitos e prepara a resposta
+3. Finaud entrega a projeção (planilha ou PDF) ou credenciais de acesso — ou pede dados adicionais ao cliente
 
 **Prazo:** D+5 úteis após a data do e-mail
 
@@ -1889,25 +1905,27 @@ Validado em 30 threads reais (29/07/2026). Cobertura: 100%. Mesmas regras que SU
 
 **O que é:** relatório regulatório semestral sobre operações de crédito. A Finaud orienta e responde dúvidas — **não gera o arquivo** (diferente de DDR, DLO, DRM). O cliente entrega diretamente ao BACEN.
 
-**Frequência e prazo:**
-- Datas-base: posições de fechamento de **junho** e **dezembro**
-- Prazo: até o **10º dia útil do 2º mês subsequente** à data-base
-  - Base junho → prazo: 10º DU de agosto
-  - Base dezembro → prazo: 10º DU de fevereiro
+**Frequência:** Semestral — datas-base: posições de fechamento de **junho** e **dezembro**.
 
-**Sinais de detecção:**
+**Como a IA reconhece:**
+
 | Sinal | Exemplo | Confiança |
 |---|---|---|
 | Assunto | "DRSAC", "CADOC 2030", "Demonstrativo 2030" | Alta |
 | Corpo | Cliente pergunta se deve enviar / BACEN envia comunicado sobre DRSAC | Alta |
 | Contexto | Volume muito baixo — apenas 2 threads desde jan/2026 | — |
 
+**O que NÃO é DRSAC_2030:**
+- Um e-mail com "DRSAC rejeitado" + prazo urgente → é **RETORNO_BACEN**, não DRSAC.
+
 **Fluxo típico:**
 1. Cliente pergunta se precisa entregar o DRSAC (ou BACEN comunica sobre inconsistência)
 2. Finaud analisa e orienta sobre obrigatoriedade e formato
 3. Cliente entrega diretamente ao BACEN (sem passar arquivo pela Finaud)
 
-**Cuidado:** um e-mail com "DRSAC rejeitado" + prazo urgente → é **RETORNO_BACEN**, não DRSAC.
+**Prazo:** até o **10º dia útil do 2º mês subsequente** à data-base
+- Base junho → 10º DU de agosto
+- Base dezembro → 10º DU de fevereiro
 
 **Regras de classificação — Aguardando ou Concluído:**
 
@@ -1937,15 +1955,10 @@ Validado em 2 threads reais (29/07/2026). Cobertura: 100%. Mesmas regras que SUP
 
 **O que é:** relatório regulatório trimestral sobre pagamentos de varejo e canais de atendimento. O cliente transmite via STA ao BACEN.
 
-**Frequência e prazo:**
-- Trimestral — datas-base: **31/mar, 30/jun, 30/set, 31/dez**
-- Prazo: **último dia útil do mês seguinte ao fim do trimestre**
-  - Base 31/mar → prazo: último DU de abril
-  - Base 30/jun → prazo: último DU de julho
-  - Base 30/set → prazo: último DU de outubro
-  - Base 31/dez → prazo: último DU de janeiro
+**Frequência:** Trimestral — datas-base: **31/mar, 30/jun, 30/set, 31/dez**.
 
-**Sinais de detecção:**
+**Como a IA reconhece:**
+
 | Sinal | Exemplo | Confiança |
 |---|---|---|
 | Assunto ou corpo | "CADOC 6209", "6209", "pagamentos de varejo" | Alta |
@@ -1953,7 +1966,19 @@ Validado em 2 threads reais (29/07/2026). Cobertura: 100%. Mesmas regras que SUP
 
 **Data de referência:** usa a data do trimestre se mencionada no e-mail; caso contrário usa a data do e-mail para inferir o trimestre.
 
-**Cuidado:** volume histórico muito baixo (1 thread documentada). Tratar como SUPORTE se não houver sinal claro de 6209.
+**O que NÃO é PVCA_6209:**
+- Volume histórico muito baixo (1 thread documentada). Tratar como SUPORTE se não houver sinal claro de 6209.
+
+**Fluxo típico:**
+1. Cliente pergunta sobre obrigatoriedade, prazo ou como preencher o PVCA
+2. Finaud analisa e orienta
+3. Cliente prepara o arquivo e entrega diretamente ao BACEN via STA — sem passar arquivo pela Finaud
+
+**Prazo:** **último dia útil do mês seguinte ao fim do trimestre**
+- Base 31/mar → último DU de abril
+- Base 30/jun → último DU de julho
+- Base 30/set → último DU de outubro
+- Base 31/dez → último DU de janeiro
 
 **Regras de classificação — Aguardando ou Concluído:**
 
@@ -1967,7 +1992,15 @@ Volume histórico irrelevante (1 thread documentada, 29/07/2026). Mesmas regras 
 | R4 | Finaud está analisando — respondeu mas sem conclusão ainda | Aguardando | Finaud |
 | R5 | Encaminhamento interno F→F sem resposta ao cliente | Aguardando | Finaud |
 
-**R2:** cliente enviou o arquivo PVCA para Finaud verificar e corrigir. ⚠️ Se o cliente encaminhou comunicado de **rejeição do BACEN** → é **RETORNO_BACEN**, não PVCA.
+**R1:** "o preenchimento está correto", "não há obrigatoriedade para sua instituição", orientação concluída sem pendência; agradecimento puro do cliente após resposta da Finaud
+
+**R2:** cliente enviou o arquivo PVCA para Finaud verificar antes de transmitir; cliente fez pergunta que Finaud ainda não respondeu. ⚠️ Se o cliente encaminhou comunicado de rejeição do BACEN → é **RETORNO_BACEN**, não PVCA.
+
+**R3:** "precisamos saber o período de referência", "poderia confirmar o CNPJ da instituição?"; Finaud pediu dado ou confirmação e aguarda retorno do cliente
+
+**R4:** "estou verificando a obrigatoriedade", "vou analisar", "retornaremos em breve"
+
+**R5:** dúvida do cliente repassada internamente para colega da Finaud sem resposta ao cliente ainda
 
 ⚠️ **Volume baixo:** se o sinal de "6209" não estiver claro no assunto ou corpo, tratar como SUPORTE até confirmar.
 
