@@ -8,47 +8,48 @@
 
 ---
 
-## 📓 Diário da sessão (2026-08-06/07) — Rodada 6 + mapa dos 134 incertos
+## 📓 Diário da sessão (2026-08-07) — Investigação LEC + descoberta de hierarquia de regras
 
-### Resumo do que foi feito
+### Resumo do que foi feito (sessão de continuação — 07/08/2026)
 
-Sessão de validação: Rodada 5 → Rodada 6. O trabalho girou em torno de entender e reduzir os incertos do classificador.
+Sessão focada em investigar o LEC e na descoberta de um problema estrutural na spec.
 
 **O que fizemos:**
 
-- **R5 commitada** com tag `rodada-5-baseline` — 195 incertos (25,4%), primeiro baseline determinístico com `temperature=0`.
-- **Regra DDR específica adicionada à spec §10:** 4 padrões de assunto sem "DDR" explícito → DDR_2011 imediato (PI Exposure, PCAM, Compromissada, Cadastro de Ações e Opções).
-- **Regra geral de desambiguação testada e rejeitada:** instrução no `classificador_ia.py` para usar assunto quando incerto causou regressão (PI Exposure → S5). Revertida via `git restore`.
-- **R6 rodada:** 768 threads → 634 corretas + **134 incertos (17,4%)**. Melhora de 61 casos.
-- **Mapa dos 134 incertos concluído:**
-  - 97 têm sinal no assunto → fallback por keyword é possível
-  - ~25 são SUPORTE sem nenhum sinal de CADOC
-  - 14 genuinamente ambíguos → Michel classificou todos: 6 DDR, 6 SUPORTE, 2 DLO/LEC, 1 precisa do corpo
-- **Descoberta crítica:** "Planilha LEC" JÁ está na spec como sinal de Alta para DLO_2061 — mas a IA ainda retornou INCERTO para 2 threads com esse assunto. Causa não investigada.
-- **Decisão de abordagem:** em vez de regras de keyword, ensinar o **significado dos termos** (VMTM, POSICAO, LEC etc.) para que a IA raciocine corretamente.
-- **R6 tagueada** como `rodada-6-baseline`. Commit: `cdfaf01`.
+- **Investigação LEC completa:** 4 threads com "LEC" no assunto eram INCERTO no R6. Causas identificadas:
+  - Spec não explicava que LEC é **exclusiva** do DLO 2061 — só dizia que era um sinal de Alta
+  - Script lia só `mensagens[0]`, perdendo anexos de mensagens posteriores
+- **Parágrafo LEC adicionado à spec §10 DLO_2061:** explicação de que LEC = DLO_2061 sempre, mesmo sem COSIF
+- **Script atualizado** para ler até 5 mensagens (últimas) e coletar anexos de todas as mensagens
+- **Validador: argumento `--filtrar-ids` adicionado** — permite rodar só um subconjunto de threads por arquivo de IDs
+- **Teste das 88 threads** (4 LEC + 84 DLO/DLI corretos do R6):
+  - Com ambas as mudanças (spec + script): 2 regressões
+  - Com só spec (script revertido): 3 incertos, sendo 2 regressões
+  - **Conclusão: a mudança na spec causou regressões** — AI ficou mais exigente sobre anexos em DLO genérico
+- **Script revertido** para estabilidade (volta ao comportamento do R6)
+- **LEC congelado em PENDENCIAS** — retomar após hierarquia do §10 estar resolvida
+- **Descoberta estrutural:** a spec §10 não tem hierarquia de regras — regras amplas conflitam com específicas e a IA não sabe qual aplicar. Isso é a causa raiz das regressões.
+- **Decisão de abordagem:** próximo passo é revisar o §10 completo com hierarquia explícita (mais específico → mais geral)
 
 ---
 
 ### Estado atual
 
-**Classificador R6:** `rodada-6-baseline` — 134 incertos (17,4%) — estado salvo e rastreável
-**Mapa dos incertos:** ✅ concluído — 97 solucionáveis, ~25 SUPORTE, 14 analisados com Michel
-**Abordagem decidida:** ensinar significado dos termos na spec (uma mudança por vez + amostra de 20)
-**GitHub:** `github.com/michelruicosta/gestao_area_suporte` — branch `main` (10 commits à frente do origin)
+**Classificador:** `rodada-6-baseline` — 134 incertos (17,4%) — estado preservado, sem regressão commitada
+**Spec:** parágrafo LEC adicionado (não commitado ainda — aguarda resolução das regressões)
+**Script classificador:** revertido para comportamento R6 (mensagens[0])
+**Validador:** `--filtrar-ids` adicionado — funcional
+**GitHub:** `github.com/michelruicosta/gestao_area_suporte` — branch `main`
 
 ---
 
 ### Próximos passos
 
-**🔴 PRIMEIRO — investigar por que "Planilha LEC" é INCERTO:**
-A spec já tem a regra (DLO_2061, sinal Alta). A IA ignorou. Antes de adicionar novas regras, entender o motivo — senão corremos o risco de R3 novamente.
+**🔴 PRIMEIRO — Revisar §10 da spec com hierarquia de regras:**
+Ler cada categoria, reescrever do mais específico para o mais geral, adicionar instrução explícita de prioridade. Testar amostra de 20 após cada categoria. Só rodar 768 se amostra não regredir. Meta: < 134 incertos sem regressão.
 
-**Depois (uma mudança por vez, amostra de 20 após cada):**
-1. Fechar os 6 DDR sem sinal (VMTM, POSICAO, Cadastro Operações, Criação COSIF, CNPJ fundo, Doc. 2011-LIM) — significado dos termos no §10 DDR_2011
-2. Verificar os 3 keywords DDR que faltaram (Posição de Câmbio, FLUXO DE CAIXA) — já estão ou faltam na spec?
-3. Decidir o que fazer com "ARQUIVOS" (Fair Corretora) — precisa do corpo
+**Depois:** retomar LEC (congelado) — 1 thread ainda INCERTO (WNT DTVM), 2 regressões a resolver.
 
-Último /fechar: 2026-08-07 — memórias revisadas ✅ — R6 baseline + mapa dos 134 incertos concluído; próximo: investigar LEC
+Último /fechar: 2026-08-07 — memórias revisadas ✅ — investigação LEC concluída; descoberta: spec sem hierarquia de regras é a causa raiz das regressões
 
 ---

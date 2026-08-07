@@ -10,6 +10,53 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-08-07 (continuação) — Investigação LEC + descoberta de problema estrutural na spec
+
+### 07/08 11:00 — Validador: argumento `--filtrar-ids` adicionado
+
+**🔎 Em miúdos:** o validador agora aceita um arquivo com IDs de threads específicas e processa só elas — sem precisar rodar as 768 inteiras.
+
+**Problema:** não havia como testar um subconjunto específico de threads sem rodar tudo.
+
+**Correção:** adicionado `--filtrar-ids ARQUIVO.txt` ao `scripts/validador_classificacao.py`. Sem o argumento, comportamento idêntico ao anterior.
+
+**Validação:** ✅ VALIDADO — rodou amostra de 88 threads corretamente.
+
+---
+
+### 07/08 11:10 — LEC: parágrafo adicionado à spec + script multi-mensagem (REVERTIDOS)
+
+**🔎 Em miúdos:** tentamos corrigir 4 threads LEC INCERTO adicionando explicação na spec e fazendo o script ler mais mensagens de cada thread. Os testes mostraram que as mudanças causaram regressões em threads que já estavam corretas.
+
+**Problema:** 4 threads com "LEC" no assunto eram INCERTO no R6. Causas reais: (1) spec não explicava que LEC = DLO_2061 exclusivo; (2) script lia só `mensagens[0]`, perdendo anexos de respostas posteriores.
+
+**O que foi feito:**
+- Parágrafo LEC adicionado ao §10 DLO_2061 da spec
+- Script atualizado para coletar anexos de todas as mensagens e ler as 5 últimas (300 chars cada)
+
+**Resultado do teste (88 threads — 4 LEC + 84 DLO/DLI corretos):**
+- Com ambas as mudanças: 2 regressões ("DLO maio/26", "Re: DLO TRUSTEE")
+- Com só a spec (script revertido): 2 regressões ("DLO maio/26", "DTVM Patrimônio")
+- Causa: parágrafo LEC fez a IA exigir anexos/sinais explícitos em DLO genérico → threads DLO sem anexo viraram INCERTO
+
+**Decisão:** script revertido para `mensagens[0]` (R6 baseline). Parágrafo LEC permanece na spec mas não foi commitado. Item congelado em PENDENCIAS até hierarquia do §10 ser resolvida.
+
+**Validação:** ⚠️ VALIDAÇÃO PENDENTE — 3 de 4 LEC corrigidos, 1 ainda INCERTO (WNT DTVM). Retomar após hierarquia do §10.
+
+---
+
+### 07/08 12:00 — Descoberta: spec §10 não tem hierarquia de regras
+
+**🔎 Em miúdos:** identificamos que a causa raiz das regressões é estrutural — a spec não diz para a IA qual regra tem prioridade quando duas se encaixam ao mesmo tempo. A IA fica indecisa e vira INCERTO.
+
+**Problema:** regras amplas ("DLO no assunto = Alta") e regras específicas ("DLO + mês = Alta") coexistem sem hierarquia. A IA não sabe qual usar, o que causa conflito e INCERTO.
+
+**Decisão:** próxima sessão revisa o §10 inteiro, reescreve as regras do mais específico para o mais geral, e adiciona instrução explícita: "regra mais específica prevalece".
+
+**Validação:** ⚠️ VALIDAÇÃO PENDENTE — será validada na próxima sessão com amostra de 20 threads por categoria revisada, depois rodada completa das 768.
+
+---
+
 ## 2026-08-07 — Rodada 6: 134 incertos + mapa completo dos casos
 
 ### 07/08 — R6: 195 → 134 incertos com regra DDR por assunto

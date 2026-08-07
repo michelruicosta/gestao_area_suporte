@@ -1494,6 +1494,8 @@ Validado em 90 threads reais (29/07/2026). Cobertura: 100% (57 F→C + 33 C→F)
 | Anexo | `COS4010.xml`, `COS4016.xml`, `COS4060.xml`, `COS4066.xml` + `LEC_MMAAAA.xls/xlsx` (do cliente) | Alta — LEC junto com COSIFs confirma DLO |
 | Anexo | `CNPJ_2061_YYYYMMDD.zip`, `Cos4010.zip`, `Cos4016.zip` (CADOC gerado) | Muito alta |
 
+> **LEC (Limite de Exposição por Contraparte):** planilha exclusiva do DLO 2061 que lista as exposições da instituição por contraparte. O DLI 2062 usa os mesmos arquivos COSIF mas **nunca** usa LEC — ela não existe no fluxo do DLI. Consequência direta: qualquer e-mail que mencione LEC no assunto, no corpo ou no nome do anexo — seja entrega da planilha, solicitação ao cliente para enviá-la, erro de importação, ajuste de dados ou dúvida técnica sobre o preenchimento — é DLO_2061, mesmo sem COSIFs anexados. O arquivo `Importacao_LEC*.xls/xlsx` no anexo identifica a thread como DLO_2061 com Alta confiança.
+
 **O que NÃO é DLO 2061:**
 - "RELATORIO DRM - AMARIL FRANKLIN" → pode ser DLO (esse cliente envia a LEC junto com e-mails de DRM — verificar anexo para confirmar)
 - "ECSA (S5) - COS4010..." → é **S5** (código S5 no assunto prevalece sobre a menção ao COS4010)

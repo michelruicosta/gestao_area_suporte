@@ -104,8 +104,10 @@ def classificar_thread(thread: dict, cliente: OpenAI = None) -> dict:
     if cliente is None:
         cliente = OpenAI()
 
-    msg0      = thread['mensagens'][0]
+    mensagens = thread.get('mensagens', [])
     assunto   = thread.get('assunto', '')
+
+    msg0      = mensagens[0] if mensagens else {}
     remetente = msg0.get('remetente', '')
     corpo     = msg0.get('corpo_texto', '')[:600]
     anexos    = msg0.get('nomes_anexos', [])

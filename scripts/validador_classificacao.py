@@ -144,6 +144,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--resumir', metavar='ARQUIVO.jsonl',
                         help='Retoma de um arquivo parcial — pula threads já processadas')
+    parser.add_argument('--filtrar-ids', metavar='ARQUIVO.txt',
+                        help='Processa só as threads cujos IDs estão no arquivo (um por linha)')
     args = parser.parse_args()
 
     DIR_SAIDA.mkdir(parents=True, exist_ok=True)
@@ -173,13 +175,18 @@ def main():
     arq_relatorio  = DIR_SAIDA / f'{ts}_relatorio.txt'
     arq_concluido  = DIR_SAIDA / f'{ts}_concluido.txt'
 
+    ids_alvo = None
+    if args.filtrar_ids:
+        ids_alvo = set(Path(args.filtrar_ids).read_text(encoding='utf-8').split())
+        print(f'Modo filtrado: {len(ids_alvo)} threads-alvo de {args.filtrar_ids}')
+
     try:
-      _executar(ts, arq_resultados, arq_relatorio, arq_concluido, ja_feitos, resultados_anteriores)
+      _executar(ts, arq_resultados, arq_relatorio, arq_concluido, ja_feitos, resultados_anteriores, ids_alvo)
     finally:
       _liberar_lock()  # Camada 1 — sempre libera, mesmo com erro
 
 
-def _executar(ts, arq_resultados, arq_relatorio, arq_concluido, ja_feitos, resultados_anteriores):
+def _executar(ts, arq_resultados, arq_relatorio, arq_concluido, ja_feitos, resultados_anteriores, ids_alvo=None):
     print(f'Carregando threads de:\n  {CAMINHO_THREADS}\n')
     with open(CAMINHO_THREADS, encoding='utf-8') as f:
         todos = json.load(f)
@@ -193,6 +200,10 @@ def _executar(ts, arq_resultados, arq_relatorio, arq_concluido, ja_feitos, resul
             filtrados.append((t, motivo))
         else:
             validos.append(t)
+
+    if ids_alvo is not None:
+        validos = [t for t in validos if t.get('thread_id', '') in ids_alvo]
+        print(f'Filtro de IDs aplicado: {len(validos)} threads no subconjunto')
 
     print(f'Filtrados (§4): {len(filtrados)} | Válidos para IA: {len(validos)}\n')
 

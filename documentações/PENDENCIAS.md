@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Oráculo 360 Finaud
 
-**Atualizado:** 2026-08-03
+**Atualizado:** 2026-08-07
 **Organização:** por etapa que bloqueia — reorganizado em 03/08/2026 para seguir as fases sem brechas.
 **Regra:** este arquivo lista **só o que ainda falta** (aberto / aguardando decisão / backlog).
 Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada no
@@ -11,6 +11,36 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 ## ⏭ ETAPA ATUAL — Reduzir os 134 incertos do classificador (R6 baseline)
 
 > Estado atual: 134 incertos (17,4%). Meta: aproximar de zero antes de implementar fallback.
+
+---
+
+### 🔴 CLASSIFICADOR — Revisar o §10 da spec com hierarquia de regras (identificado 07/08/2026)
+
+**Contexto:** R6 tem 134 incertos (17,4%). Tentativas de adicionar regras causaram regressões porque a spec não tem hierarquia — regras amplas conflitam com regras específicas e a IA não sabe qual usar.
+
+**O que fazer:**
+1. Ler cada categoria do §10
+2. Reescrever as regras do mais específico para o mais geral
+3. Adicionar instrução explícita: "aplique sempre a regra mais específica que se encaixar; regra geral só entra se nenhuma específica bater"
+4. Testar amostra de 20 threads após cada categoria revisada (usar `--filtrar-ids` no validador)
+5. Só rodar as 768 threads se a amostra não regredir
+
+**Critério de sucesso:** resultado < 134 incertos sem regressão nas threads já corretas (baseline R6 = `rodada-6-baseline`).
+
+**Arquivo de destino:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — §10 completo.
+
+---
+
+### 🟡 CLASSIFICADOR — LEC: correção congelada — retomar após hierarquia do §10 (identificado 07/08/2026)
+
+**O que foi feito:** parágrafo LEC adicionado ao §10 DLO_2061 + script atualizado para ler múltiplas mensagens. Testes mostraram que a mudança na spec causou 2 regressões em threads que estavam corretas no R6.
+
+**O que ficou pendente:**
+- 1 thread LEC ainda INCERTO: "Relatório 2061 - Ajuda na importação da planilha LEC" (WNT DTVM) — Michel confirmou que é DLO_2061
+- Regressões causadas pela spec: "DLO maio/26" e "DTVM - DLO 2061 CALCULO DO PATRIMÔNIO DE REFERENCIA"
+- Script de leitura multi-mensagem foi revertido para não causar mais instabilidade
+
+**Pré-requisito:** resolver a hierarquia do §10 (item 🔴 acima) antes de retomar o LEC.
 
 ---
 
