@@ -10,6 +10,50 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-08-07 — Rodada 6: 134 incertos + mapa completo dos casos
+
+### 07/08 — R6: 195 → 134 incertos com regra DDR por assunto
+
+**🔎 Em miúdos:** a IA passou a reconhecer e-mails de DDR onde o cliente usa termos específicos no assunto sem escrever "DDR" (PI Exposure, PCAM, Compromissada, Cadastro de Ações e Opções). 61 threads que ficavam incertas passaram a ser classificadas corretamente.
+
+**Problema:** clientes enviavam DDR com assuntos como "PI Exposure - Julho/26" sem a palavra "DDR" — a IA não reconhecia o padrão.
+
+**Correção:** regra adicionada ao §10 DDR_2011 da spec: 4 assuntos específicos = DDR_2011 imediato, mesmo com corpo curto. Commit `cdfaf01`. Tag `rodada-6-baseline`.
+
+**Validação:** ✅ VALIDADO — R6: 634 classificados + 134 INCERTO (17,4%).
+
+---
+
+### 07/08 — Regra geral de desambiguação testada e rejeitada
+
+**🔎 Em miúdos:** tentamos instruir a IA a usar o assunto como apoio quando estivesse incerta — mas isso fez e-mails de PI Exposure serem classificados como S5 em vez de DDR. Voltamos ao estado anterior.
+
+**Problema:** instrução no `classificador_ia.py` era genérica demais — a IA aplicou a todos os casos, causando regressões em threads já corretas.
+
+**Correção:** revertido via `git restore --source=pre-regra-geral`. Tag `pre-regra-geral` preserva o estado antes da tentativa.
+
+**Validação:** ✅ VALIDADO — PI Exposure voltou a classificar como DDR após reversão.
+
+---
+
+### 07/08 — Mapa dos 134 incertos concluído; descoberta sobre LEC
+
+**🔎 Em miúdos:** analisamos todos os 134 e-mails incertos da R6 e classificamos cada um. Michel confirmou a categoria correta dos 14 genuinamente ambíguos.
+
+**Resultado do mapa:**
+- 97 → solucionáveis por regra determinística (sinal no assunto)
+- ~25 → SUPORTE sem sinal de CADOC
+- 6 → DDR sem sinal no assunto (VMTM, POSICAO, Cadastro Operações, COSIF, CNPJ fundo, Doc. 2011-LIM)
+- 6 → SUPORTE (Michel confirmou)
+- 2 → DLO_2061/LEC — já na spec mas a IA retornou INCERTO ⚠️
+- 1 → precisa do corpo para classificar (ARQUIVOS / Fair Corretora)
+
+**Descoberta crítica:** "Planilha LEC" está mapeada na spec §10 DLO_2061 como sinal de Alta confiança — e a IA ainda retornou INCERTO. Causa não investigada. Investigar antes de adicionar qualquer nova regra.
+
+**Validação:** ✅ VALIDADO — mapa aprovado por Michel.
+
+---
+
 ## 2026-08-06 — classificador_ia.py: temperature=0 adicionado
 
 ### 06/08 — Correção vital: temperatura do modelo estava indefinida (padrão 1.0)

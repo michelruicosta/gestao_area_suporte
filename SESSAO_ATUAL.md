@@ -8,82 +8,47 @@
 
 ---
 
-## 📓 Diário da sessão (2026-08-03) — Revisão sequencial §8–§11 + "entregue" por categoria (§9 atualizado)
+## 📓 Diário da sessão (2026-08-06/07) — Rodada 6 + mapa dos 134 incertos
 
 ### Resumo do que foi feito
 
-Sessão longa em dois blocos: o primeiro cobriu §8 (regras de classificação), §9–§11 (catálogo, exemplos), e outras decisões pontuais. O segundo foi inteiramente dedicado a responder uma pergunta fundamental da spec: **o que significa "entregue" para cada categoria?**
+Sessão de validação: Rodada 5 → Rodada 6. O trabalho girou em torno de entender e reduzir os incertos do classificador.
 
----
+**O que fizemos:**
 
-**Bloco 1 — Revisão sequencial §8 a §11 (detalhes no REGISTRO_CORRECOES.md, 03/08):**
-
-- **§8 Regras de classificação:** 3 lacunas identificadas e corrigidas (escopo do texto analisado, veto + pergunta no mesmo e-mail, "transmitido no BACEN" pelo cliente).
-- **T04 Western Union:** papel da Finaud confirmado — CAM0050 + Balancete de Câmbio = insumo para o DDR (subcategoria cambial).
-- **§9 Modelo de rastreamento / §10 Catálogo / §11 Exemplos (T01–T19):** aprovados por Michel.
-- **Campo CC revisado:** CC usado condicionalmente (35% dos e-mails têm Finaud só no CC).
-- **"Threads irmãs":** Michel decidiu deixar para a Fase 2 — na Fase 1 a regra do último e-mail cobre todos os casos normais.
-
----
-
-**Bloco 2 — "Entregue" por categoria: varredura histórica + spec atualizada:**
-
-Investigação item a item com scripts contra o histórico real (oraculo_360_finaud). Resultados confirmados:
-
-| Categoria | O que a Finaud entrega |
-|---|---|
-| DDR 2011, DRM 2060, DRL 2160, DLO 2061, DLI 2062, CADOC 4111 | ZIP `CNPJ_CATEGORIA_DATA.zip` (substituição: sufixo `_S_N`) |
-| S5 | PDF (`Resultado Quantitativo - S5.pdf`) — não vai ao BACEN |
-| FORCAPITAL | Varia: e-mail texto, XLSX ou PDF — não vai ao BACEN |
-| PVCA 6209 | `BACEN.ZIP` com 8 TXT na raiz (CONGLOME, USUREMOT, ESTATCRT, ESTATATM, TRANSOPA, OPEINTRA, CONTATOS, DATABASE) — cliente transmite via STA |
-| DRSAC 2030 | XML (`DocumentoDRSAC`, CNPJ 8 dígitos, data AAAA-MM) |
-| RETORNO_BACEN | Não é entrega — é a etapa de crítica do BACEN |
-
-**DDR — problema multi-thread descoberto:** 99% das entregas de CADOC DDR acontecem em thread SEPARADA da thread onde o cliente enviou os dados brutos. Chave de ligação: CNPJ + data\_competencia extraída do nome do ZIP (padrão 100% padronizado). Registrado na spec. Fase 2 definirá a ligação automática.
-
-**RETORNO\_BACEN — requisito de leitura de imagem:** 1.061 PNG/JPGs detectados no histórico — a crítica do BACEN está embutida em prints de tela do sistema do BACEN. O classificador usará a visão nativa do Claude (multimodal) para extrair o texto. Confirmado por Michel e gravado na spec.
-
-**§9 atualizado** em `ESPECIFICACAO_NOVA_ARQUITETURA.md` e `spec_nova_arquitetura.html` (artifact republicado com mesmo link).
+- **R5 commitada** com tag `rodada-5-baseline` — 195 incertos (25,4%), primeiro baseline determinístico com `temperature=0`.
+- **Regra DDR específica adicionada à spec §10:** 4 padrões de assunto sem "DDR" explícito → DDR_2011 imediato (PI Exposure, PCAM, Compromissada, Cadastro de Ações e Opções).
+- **Regra geral de desambiguação testada e rejeitada:** instrução no `classificador_ia.py` para usar assunto quando incerto causou regressão (PI Exposure → S5). Revertida via `git restore`.
+- **R6 rodada:** 768 threads → 634 corretas + **134 incertos (17,4%)**. Melhora de 61 casos.
+- **Mapa dos 134 incertos concluído:**
+  - 97 têm sinal no assunto → fallback por keyword é possível
+  - ~25 são SUPORTE sem nenhum sinal de CADOC
+  - 14 genuinamente ambíguos → Michel classificou todos: 6 DDR, 6 SUPORTE, 2 DLO/LEC, 1 precisa do corpo
+- **Descoberta crítica:** "Planilha LEC" JÁ está na spec como sinal de Alta para DLO_2061 — mas a IA ainda retornou INCERTO para 2 threads com esse assunto. Causa não investigada.
+- **Decisão de abordagem:** em vez de regras de keyword, ensinar o **significado dos termos** (VMTM, POSICAO, LEC etc.) para que a IA raciocine corretamente.
+- **R6 tagueada** como `rodada-6-baseline`. Commit: `cdfaf01`.
 
 ---
 
 ### Estado atual
 
-**Revisão sequencial da spec:** §8, §9, §10, §11 ✅ concluídos
-**§9 "Entregue" por categoria:** ✅ confirmado e gravado na spec (03/08/2026)
-**RETORNO\_BACEN imagem:** ✅ requisito gravado na spec
-**Spec §10 (Campos 1–8):** ✅ todos concluídos
-**GitHub:** `github.com/michelruicosta/gestao_area_suporte` — branch `main`
+**Classificador R6:** `rodada-6-baseline` — 134 incertos (17,4%) — estado salvo e rastreável
+**Mapa dos incertos:** ✅ concluído — 97 solucionáveis, ~25 SUPORTE, 14 analisados com Michel
+**Abordagem decidida:** ensinar significado dos termos na spec (uma mudança por vez + amostra de 20)
+**GitHub:** `github.com/michelruicosta/gestao_area_suporte` — branch `main` (10 commits à frente do origin)
 
 ---
 
 ### Próximos passos
 
-> **Regra (aprovada por Michel, 31/07/2026):** a spec responde tudo antes de qualquer implementação começar.
+**🔴 PRIMEIRO — investigar por que "Planilha LEC" é INCERTO:**
+A spec já tem a regra (DLO_2061, sinal Alta). A IA ignorou. Antes de adicionar novas regras, entender o motivo — senão corremos o risco de R3 novamente.
 
-**🔴 BLOQUEADORES (antes do desenvolvimento das telas):**
+**Depois (uma mudança por vez, amostra de 20 após cada):**
+1. Fechar os 6 DDR sem sinal (VMTM, POSICAO, Cadastro Operações, Criação COSIF, CNPJ fundo, Doc. 2011-LIM) — significado dos termos no §10 DDR_2011
+2. Verificar os 3 keywords DDR que faltaram (Posição de Câmbio, FLUXO DE CAIXA) — já estão ou faltam na spec?
+3. Decidir o que fazer com "ARQUIVOS" (Fair Corretora) — precisa do corpo
 
-1. 🔴 **§7 — "Como o sistema processa"** (passo a passo) em cada um dos 8 campos
-2. 🔴 **OCR RETORNO\_BACEN** — requisito gravado na spec; implementação é bloqueador da Fase 3
-
-**Revisão sequencial — seções restantes:**
-
-3. 🟡 **§12 Padrões observados** ← PRÓXIMA SESSÃO
-4. 🟡 **§13 Telas do sistema** (só após seções funcionais completas)
-5. 🟡 **§14 Decisões e justificativas**
-6. 🟡 **§15 Plano de implantação**
-
-**Outras pendências ativas:**
-- 🟡 Convites de calendário e notificações automáticas — antes da Fase 3
-- 🟡 IA Assistente — histórico completo vs. limpeza para classificação
-- 🟡 Painel do gestor — design para threads com múltiplos CADOCs
-- 🟡 Encoding TRUSTEE DTVM — corrigir no pré-processamento
-- 🟡 `Abraço` (singular) — adicionar ao detector de assinatura
-
-**Após spec completa:**
-- 🟡 **Fase 1** — protótipo `coletor_gmail.py` + `classificador_ia.py`
-- 🟡 **MAPA\_DO\_PROJETO.md** — criar para a nova arquitetura
-
-Último /fechar: 2026-08-03 — memórias revisadas ✅ — §8–§11 revisados; "entregue" por categoria confirmado; próximo: §12
+Último /fechar: 2026-08-07 — memórias revisadas ✅ — R6 baseline + mapa dos 134 incertos concluído; próximo: investigar LEC
 
 ---

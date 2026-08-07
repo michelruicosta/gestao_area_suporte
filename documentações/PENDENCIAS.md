@@ -8,7 +8,50 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ---
 
-## ⏭ ETAPA ATUAL — Completar a spec antes da Fase 1
+## ⏭ ETAPA ATUAL — Reduzir os 134 incertos do classificador (R6 baseline)
+
+> Estado atual: 134 incertos (17,4%). Meta: aproximar de zero antes de implementar fallback.
+
+---
+
+### 🔴 CLASSIFICADOR — Investigar por que "Planilha LEC" é INCERTO apesar de estar na spec (identificado 07/08/2026)
+
+A spec §10 DLO_2061 já diz: "Planilha LEC no assunto = sinal de Alta confiança para DLO_2061". Mesmo assim, 2 threads com "Planilha LEC" no assunto retornaram INCERTO na R6. Antes de adicionar qualquer nova regra ao §10, entender o motivo — senão corremos o risco de novo colapso como o R3.
+
+**Threads afetadas:**
+- "Fwd: Encaminhar a planilha LEC 06 2026 - MIRAE." (andrea.inacio@finaud.com.br)
+- "Planilha LEC e ponderação 05/2026" (jessica.silva@banvox.com.br)
+
+**O que investigar:**
+1. O que a IA respondeu de motivo para cada uma? (campo `motivo` no R6 JSONL)
+2. O que estava no corpo (600 chars) dessas threads?
+3. A regra LEC na spec está clara o suficiente ou precisa ser reformulada?
+
+**Arquivo de destino:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — §10 DLO_2061.
+
+---
+
+### 🟡 CLASSIFICADOR — Fechar os 134 incertos usando significado dos termos (identificado 07/08/2026)
+
+Mapa dos incertos concluído. Abordagem aprovada: enriquecer a spec com o **significado dos termos** para que a IA raciocine corretamente — uma mudança por vez, amostra de 20 threads após cada adição.
+
+**6 casos DDR sem sinal no assunto que a IA não soube classificar (Michel confirmou DDR):**
+- "Erro ao calcular o VMTM do dia 30/07/2026" → VMTM é componente de cálculo DDR
+- "Cadastro Operações - 29/05" (Terra Investimentos)
+- "Criação de nova conta COSIF Junho/2026" → setup DDR
+- "RES: Encaminhar o CNPJ do fundo Mirae Asset APEX fund LP" → setup DDR
+- "ENC: POSICAO 10.07.2026" (Fair Corretora) → posição DDR
+- "RE: Geração do arquivo Doc. 2011-LIM de 16/06 - Sefer" → "2011-LIM" = CADOC DDR
+
+**3 keywords DDR que faltaram na varredura (verificar se já estão na spec):**
+- "Posição de Câmbio" → DDR_2011
+- "FLUXO DE CAIXA" → DDR_2011
+
+**Pré-requisito:** resolver o item 🔴 acima (investigar LEC) antes de começar.
+
+---
+
+## ⏭ ETAPA PARALELA — Completar a spec antes da Fase 1
 
 > Resolver tudo abaixo antes de escrever a primeira linha de código de produção.
 
