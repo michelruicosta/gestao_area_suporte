@@ -182,6 +182,74 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-08-07 (continuação 2) — Validação das 634 + B1 + descoberta Monte Bravo
+
+### 07/08 — Validação das 634 threads "corretas" — todas confirmadas
+
+**🔎 Em miúdos:** verificamos se as threads que a IA já classificou corretamente estavam de fato corretas. Encontramos 11 com assunto suspeito e Michel revisou uma por uma.
+
+**Resultado:** todas as 11 corretas. Nenhuma classificação errada encontrada no grupo inicial — exceto 2 Monte Bravo (ver entrada abaixo). Um caso (COS 4010 junho/2026 — SCD_4111 + DLO_2061) ficou como pendência para revisar na fase 3.
+
+**Validação:** ✅ VALIDADO por Michel em 07/08/2026.
+
+---
+
+### 07/08 — B1 concluído: ids_incertos.txt criado com 136 IDs
+
+**🔎 Em miúdos:** criamos o arquivo com os IDs de todas as threads que a IA não conseguiu classificar — mais 2 que foram classificadas errado como SUPORTE. A fase 2 vai usar esse arquivo para trabalhar só nesses casos.
+
+**Problema:** não havia forma de rodar a fase 2 apenas sobre os threads problemáticos sem processar as 768 inteiras.
+
+**Correção:** arquivo `data/ids_incertos.txt` criado com 136 IDs:
+- 134 threads com `incerto=true` da R6
+- 2 threads "Monte Bravo | Cadastro de Ações e Opções" classificadas erroneamente como SUPORTE (14/07 e 03/08)
+
+**Validação:** ✅ VALIDADO — arquivo criado e contagem confirmada (136 linhas).
+
+---
+
+### 07/08 — Descoberta: IA classifica Monte Bravo de forma inconsistente
+
+**🔎 Em miúdos:** o e-mail "Monte Bravo | Cadastro de Ações e Opções" deveria ser sempre DDR_2011. Mas a IA ora acerta, ora classifica como SUPORTE, ora fica incerta — dependendo do que está no corpo do e-mail.
+
+**Problema:** 21 threads com esse assunto no dataset. Resultado: 3 corretos (DDR_2011), 2 errados (SUPORTE), 15 INCERTO. A spec lista "Cadastro de Ações e Opções" como sinal DDR Alta — mas sem instrução explícita de que o assunto basta sozinho, a IA busca confirmação no corpo e, quando não encontra, vacila.
+
+**Correção:** IDs das 2 threads SUPORTE erradas adicionados ao `ids_incertos.txt`. A regra definitiva ("assunto Cadastro de Ações e Opções = DDR_2011 independente do corpo") será escrita na spec na etapa C2.
+
+**Validação:** ⚠️ VALIDAÇÃO PENDENTE — regra C2 ainda não escrita na spec.
+
+---
+
+### 07/08 — Categorização completa dos 136 incertos — base do gabarito
+
+**🔎 Em miúdos:** analisamos todos os 136 threads sem categoria (134 INCERTO + 2 SUPORTE errado) e identificamos a categoria correta de cada um, confirmada por Michel. Essa base alimenta o gabarito da fase 2.
+
+**Distribuição final:**
+
+| Categoria | Quant. | Padrões identificados |
+|---|---|---|
+| SUPORTE | ~65 | Comunicados, normativas BCB, dúvidas técnicas, erros de acesso, convites de reunião |
+| DDR_2011 | ~30 | Monte Bravo Cadastro A&O, TRUSTEE EXTRATO COMPROMISSADA, OP. SELIC, RE: DDR DIA XX, Posição de Câmbio, PCAM, Compromissadas |
+| DLO_2061 | ~15 | COS4010/4016, LEC, DLO+DLI multi, MIRAE BASILEIA |
+| RETORNO_BACEN | ~8 | AVISO DE ATRASO, INDICIO 2061, [SANTS] DRM, ARQUIVO DRM AZUMI |
+| DRL_2160 | ~4 | DRL JUNHO, ENVIAR DRL, TRINUS 2160, DLR junho (typo) |
+| SCD_4111 | ~3 | CADOC 4111 com datas |
+| DLI_2062 | ~2 | Multi-categoria DLO+DLI, DLI CV e SCD |
+| DRM_2060 | ~2 | SMM 2060 senha (Finaud enviou zip) |
+| FORCAPITAL | ~2 | Testes de Stress Pilar 3 |
+| S5 | ~2 | Resultados Quantitativos + COS4010 |
+
+**Descobertas importantes:**
+- A IA ignora regras "Alta" da spec quando o corpo do e-mail está fraco → solução é o gabarito (exemplos concretos)
+- "SCD" no assunto pode ser Sociedade de Crédito Direto (tipo de instituição), não o CADOC 4111
+- "Aceita: Risk S5" = convite de calendário → SUPORTE (regra de convites já na spec)
+- Basileia + RWA sendo enviados ao cliente = pode ser DLO ou DRM dependendo do contexto
+- suporteforcapital@finaud.com.br = fila exclusiva FORCAPITAL (sinal de categoria)
+
+**Validação:** ✅ VALIDADO — todas as categorias confirmadas por Michel em 07/08/2026.
+
+---
+
 ## 2026-08-06 — classificador_ia.py: temperature=0 adicionado
 
 ### 06/08 — Correção vital: temperatura do modelo estava indefinida (padrão 1.0)

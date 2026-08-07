@@ -81,6 +81,53 @@ Mapa dos incertos concluído. Abordagem aprovada: enriquecer a spec com o **sign
 
 ---
 
+### 🟡 SPEC — Definir comportamento do classificador em produção: threads novas vs. já classificadas (identificado 07/08/2026)
+
+**Contexto:** o projeto não é só as 768 threads de teste — em produção, novas threads chegam diariamente. A spec precisa definir como o classificador trata esse cenário antes de ir para produção.
+
+**O que precisa ser definido:**
+- Thread nova (nunca processada) → classifica e grava a categoria
+- Thread já classificada → não reclassifica; usa o que está gravado
+- Thread que recebeu nova resposta → reclassifica? Só se ainda estiver em aberto?
+- Como o sistema sabe o que já foi processado → lista ou banco de IDs já classificados
+
+**Por que importa:** sem essa regra, rodar o classificador duas vezes pode sobrescrever classificações corretas com resultados diferentes — mesmo com `temperature=0`, mudanças na spec geram resultados diferentes.
+
+**Onde documentar:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — seção de ciclo de vida das threads (a definir).
+
+---
+
+### 🟡 CLASSIFICADOR — Verificar dupla categoria: "COS 4010 junho/2026" (identificado 07/08/2026)
+
+Thread classificada como SCD_4111 + DLO_2061 com alta confiança. A IA viu COS4010 no assunto (→ DLO_2061) e "retificação do Doc 4111" no corpo (→ SCD_4111). Michel considerou correto por ora.
+
+**Dúvida:** o cliente tratava das duas entregas ao mesmo tempo ou só do DLO?
+**Quando revisar:** fase 3 — após corrigir erros confirmados e resolver os INCERTO.
+
+---
+
+### 🟡 CLASSIFICADOR — Gabarito de exemplos: criar, testar e integrar ao classificador (identificado 07/08/2026)
+
+**O que é:** arquivo separado com casos de classificação confirmados por Michel — usado como exemplos no prompt do classificador para que a IA aprenda pelo exemplo, não só pela regra abstrata.
+
+**Por que:** a IA lê as regras do §10 mas sobrepõe seu próprio julgamento quando o corpo do e-mail está fraco. Com exemplos concretos, ela tem menos chance de alucinar ou ignorar regras. A visão de Michel é usar o gabarito para TODAS as categorias, não só os casos problemáticos.
+
+**Fluxo de teste para cada mudança no gabarito:**
+1. Rodar nos casos problemáticos (~25 threads: TRUSTEE, OP. SELIC, Monte Bravo INCERTO) → esses agora acertam?
+2. Rodar em amostra de ~50 threads dos 634 já corretos (`ids_controle.txt`) → algo que estava certo quebrou?
+3. Se ambos passarem → rodar os 136 INCERTOs completos → quantos ainda sobram?
+
+**O que criar:**
+- `data/gabarito.json` — casos confirmados por Michel com assunto, categoria correta e explicação
+- `data/ids_controle.txt` — ~50 IDs dos 634 corretos para teste de regressão após cada mudança
+- Integração no `scripts/classificador_ia.py` — seção "Exemplos confirmados" no prompt, antes das instruções de classificação
+
+**Quando fazer:** após finalizar a análise dos 136 incertos e entender todos os padrões. O gabarito cresce com o projeto — cada novo caso edge confirmado por Michel entra no arquivo.
+
+**Resultado esperado:** menos incertos, menos alucinações, classificações mais consistentes em todas as categorias.
+
+---
+
 ## ⏭ ETAPA PARALELA — Completar a spec antes da Fase 1
 
 > Resolver tudo abaixo antes de escrever a primeira linha de código de produção.

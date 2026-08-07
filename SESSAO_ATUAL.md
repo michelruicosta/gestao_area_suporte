@@ -8,35 +8,35 @@
 
 ---
 
-## 📓 Diário da sessão (2026-08-07) — Investigação LEC + descoberta de hierarquia de regras
+## 📓 Diário da sessão (2026-08-07) — Validação 634 + B1 + início análise C2
 
-### Resumo do que foi feito (sessão de continuação — 07/08/2026)
-
-Sessão focada em investigar o LEC e na descoberta de um problema estrutural na spec.
+### Resumo do que foi feito (sessão de continuação 2 — 07/08/2026)
 
 **O que fizemos:**
 
-- **Investigação LEC completa:** 4 threads com "LEC" no assunto eram INCERTO no R6. Causas identificadas:
-  - Spec não explicava que LEC é **exclusiva** do DLO 2061 — só dizia que era um sinal de Alta
-  - Script lia só `mensagens[0]`, perdendo anexos de mensagens posteriores
-- **Parágrafo LEC adicionado à spec §10 DLO_2061:** explicação de que LEC = DLO_2061 sempre, mesmo sem COSIF
-- **Script atualizado** para ler até 5 mensagens (últimas) e coletar anexos de todas as mensagens
-- **Validador: argumento `--filtrar-ids` adicionado** — permite rodar só um subconjunto de threads por arquivo de IDs
-- **Teste das 88 threads** (4 LEC + 84 DLO/DLI corretos do R6):
-  - Com ambas as mudanças (spec + script): 2 regressões
-  - Com só spec (script revertido): 3 incertos, sendo 2 regressões
-  - **Conclusão: a mudança na spec causou regressões** — AI ficou mais exigente sobre anexos em DLO genérico
-- **Script revertido** para estabilidade (volta ao comportamento do R6)
-- **LEC congelado em PENDENCIAS** — retomar após hierarquia do §10 estar resolvida
-- **Descoberta estrutural:** a spec §10 não tem hierarquia de regras — regras amplas conflitam com específicas e a IA não sabe qual aplicar. Isso é a causa raiz das regressões.
-- **Decisão de abordagem:** próximo passo é revisar o §10 completo com hierarquia explícita (mais específico → mais geral)
+- **Validação das 634 threads "corretas":** 11 suspeitas identificadas por varredura automática; Michel revisou todas uma por uma. Todas corretas. Um caso (COS 4010 junho/2026) ficou em pendência para a fase 3.
+- **B1 concluído:** `data/ids_incertos.txt` criado com 136 IDs:
+  - 134 threads com `incerto=true` da R6
+  - 2 threads Monte Bravo erroneamente classificadas como SUPORTE (adicionadas manualmente)
+- **Descoberta Monte Bravo:** "Cadastro de Ações e Opções" deveria ser sempre DDR_2011, mas a IA classifica de forma inconsistente (3 corretos, 2 SUPORTE errado, 15 INCERTO). Causa: a IA busca confirmação no corpo; sem ela, vacila.
+- **Análise dos 134 incertos por grupo:**
+  - 68 sem sinal de CADOC (vários são DDR — Monte Bravo, OP. SELIC, TRUSTEE EXTRATO)
+  - 66 com sinal de CADOC (precisam de regra por categoria)
+  - **Conclusão: SUPORTE deve ser a última regra** (fallback), não a primeira
+
+### Sessão anterior (continuação 1 — 07/08/2026)
+
+- **Investigação LEC:** 4 threads INCERTO. Parágrafo LEC adicionado à spec + script multi-mensagem → causou regressões → revertido. LEC congelado em PENDENCIAS.
+- **Descoberta estrutural:** spec §10 sem hierarquia de regras = causa raiz das regressões.
+- **Validador `--filtrar-ids`:** adicionado — funcional.
 
 ---
 
 ### Estado atual
 
-**Classificador:** `rodada-6-baseline` — 134 incertos (17,4%) — estado preservado, sem regressão commitada
-**Spec:** parágrafo LEC adicionado (não commitado ainda — aguarda resolução das regressões)
+**Classificador:** `rodada-6-baseline` — 134 incertos (17,4%) — estado preservado
+**ids_incertos.txt:** 136 IDs — pronto para fase 2
+**Spec:** parágrafo LEC adicionado (não commitado — aguarda hierarquia §10 resolvida)
 **Script classificador:** revertido para comportamento R6 (mensagens[0])
 **Validador:** `--filtrar-ids` adicionado — funcional
 **GitHub:** `github.com/michelruicosta/gestao_area_suporte` — branch `main`
@@ -45,11 +45,13 @@ Sessão focada em investigar o LEC e na descoberta de um problema estrutural na 
 
 ### Próximos passos
 
-**🔴 PRIMEIRO — Revisar §10 da spec com hierarquia de regras:**
-Ler cada categoria, reescrever do mais específico para o mais geral, adicionar instrução explícita de prioridade. Testar amostra de 20 após cada categoria. Só rodar 768 se amostra não regredir. Meta: < 134 incertos sem regressão.
+**🔴 PRÓXIMA SESSÃO — Construir o gabarito (data/gabarito.json):**
+Base completa: 136 threads categorizadas por Michel. O gabarito conterá exemplos de cada categoria para ensinar a IA pelo exemplo — especialmente os casos onde a regra existe na spec mas a IA ignora (EXTRATO COMPROMISSADA, OP. SELIC, Cadastro de Ações e Opções).
 
-**Depois:** retomar LEC (congelado) — 1 thread ainda INCERTO (WNT DTVM), 2 regressões a resolver.
+**Depois:** criar `data/ids_controle.txt` (~50 threads dos 634 corretos) para teste de regressão.
 
-Último /fechar: 2026-08-07 — memórias revisadas ✅ — investigação LEC concluída; descoberta: spec sem hierarquia de regras é a causa raiz das regressões
+**Depois:** integrar gabarito ao `scripts/classificador_ia.py` e rodar nos 136 IDs para medir melhora.
+
+Último /fechar: 2026-08-07 18:30 — memórias revisadas ✅ — 136 incertos categorizados por Michel; gabarito é a próxima etapa; IDs em ids_incertos.txt prontos para fase 2
 
 ---
