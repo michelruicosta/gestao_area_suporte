@@ -197,18 +197,9 @@ O que está dentro da imagem é o erro real: código de crítica, conta contábi
 
 ---
 
-### 🟡 CLASSIFICADOR — Convites de calendário chegam na caixa como e-mails (identificado 30/07/2026)
+### ✅ CLASSIFICADOR — Convites de calendário (RESOLVIDO 07/08/2026)
 
-Quando alguém agenda uma reunião e inclui `suporte@finaud.com.br`, o Google envia um convite que chega como e-mail normal. O classificador não sabe o que fazer com ele — não é CADOC, não é suporte de cliente.
-
-**O que precisa ser decidido:**
-1. **Filtrar antes do classificador?** — detectar pelo padrão do assunto (`Convite:` ou `Invitation:` + horário + link Meet/Teams/Zoom) e descartar
-2. **Criar categoria `NOTIFICACAO_SISTEMA`?** — para convites, respostas automáticas de ausência, confirmações automáticas
-3. **Marcar para revisão humana?** — sistema sinaliza "não reconheci este tipo" e gestor decide
-
-**Outros tipos similares:** respostas automáticas de ausência, confirmações automáticas de recebimento, notificações de sistemas internos.
-
-**Arquivo de destino:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — seção do classificador.
+Decisão tomada por Michel: qualquer e-mail com invite.ics ou link de reunião (Teams, Meet, Zoom) → **SUPORTE**, mesmo que o assunto mencione um CADOC. Registrado em §10 SUPORTE e §12 Decisões da spec.
 
 ---
 

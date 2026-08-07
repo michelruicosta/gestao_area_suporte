@@ -84,18 +84,18 @@ O sistema trata 12 categorias distintas de e-mail. Cada categoria tem suas próp
 
 | Categoria | O que é |
 |---|---|
-| DDR 2011 | Relatório diário das posições financeiras do cliente — títulos, câmbio, compromissadas. O cliente envia à Finaud todo dia útil para gerar o CADOC. |
-| SCD 4111 | Saldo diário das contas contábeis do cliente no padrão COSIF do BACEN. Enviado todo dia útil. |
-| DRM 2060 | Relatório mensal que mede a exposição da instituição a riscos de mercado — juros, câmbio e preços de ativos. |
-| DLO 2061 | Relatório mensal sobre os limites regulatórios do conglomerado — adequação de capital (Basileia) e concentração de riscos. |
-| DLI 2062 | Mesmo que o DLO, mas individual — foca nos limites de cada instituição separadamente. |
-| DRL 2160 | Relatório mensal do "colchão de liquidez" — quanto de ativos líquidos a instituição mantém para cobrir saídas em situações de estresse. |
+| DDR_2011 | Relatório diário das posições financeiras do cliente — títulos, câmbio, compromissadas. O cliente envia à Finaud todo dia útil para gerar o CADOC. |
+| SCD_4111 | Saldo diário das contas contábeis do cliente no padrão COSIF do BACEN. Enviado todo dia útil. |
+| DRM_2060 | Relatório mensal que mede a exposição da instituição a riscos de mercado — juros, câmbio e preços de ativos. |
+| DLO_2061 | Relatório mensal sobre os limites regulatórios do conglomerado — adequação de capital (Basileia) e concentração de riscos. |
+| DLI_2062 | Mesmo que o DLO, mas individual — foca nos limites de cada instituição separadamente. |
+| DRL_2160 | Relatório mensal do "colchão de liquidez" — quanto de ativos líquidos a instituição mantém para cobrir saídas em situações de estresse. |
 | S5 | Relatório de risco para instituições de menor porte (Segmento 5 do BACEN). Fica entre Finaud e cliente — não é enviado ao BACEN. |
 | RETORNO_BACEN | Comunicado do BACEN rejeitando ou criticando uma entrega anterior. O cliente repassa à Finaud para investigar e corrigir. |
 | SUPORTE | Dúvidas, suporte técnico, acesso a sistemas, onboarding de clientes novos, reuniões e comunicação geral — tudo que não é entrega de CADOC. |
 | FORCAPITAL | Serviço da Finaud para projeção de capital do cliente. Não é regulatório — não vai ao BACEN. |
-| DRSAC 2030 | Relatório semestral sobre operações de crédito. A Finaud orienta, mas quem gera e entrega ao BACEN é o próprio cliente. |
-| PVCA 6209 | Relatório trimestral sobre pagamentos de varejo e canais de atendimento. O cliente transmite diretamente ao BACEN via sistema STA. |
+| DRSAC_2030 | Relatório semestral sobre operações de crédito. A Finaud orienta, mas quem gera e entrega ao BACEN é o próprio cliente. |
+| PVCA_6209 | Relatório trimestral sobre pagamentos de varejo e canais de atendimento. O cliente transmite diretamente ao BACEN via sistema STA. |
 
 > **Nota:** um e-mail pode conter mais de uma categoria (ex.: "DDR + DRM + DLI de março"). O sistema rastreia cada entrega separadamente — ver §9 (Modelo de rastreamento, duas camadas).
 
@@ -397,7 +397,7 @@ E-mails que o sistema descarta automaticamente sem processar. No sistema atual e
 → sistema não encontra Finaud no Para → verifica CC → encontra Finaud → thread monitorada; quem age é o destinatário do Para
 
 **Caso 2 — Para está vazio:**
-Henrique Rezende (Wise) enviou para suporte@finaud.com.br. O grupo relayou o e-mail e o "Para" original se perdeu. Assunto: "Re: DRM 2060 - 12/2025".
+Henrique Rezende (Wise) enviou para suporte@finaud.com.br. O grupo relayou o e-mail e o "Para" original se perdeu. Assunto: "Re: DRM_2060 - 12/2025".
 → Para vazio → sistema verifica CC → encontra Lucas Vellani + suporte@ (Finaud) → Finaud é o destinatário → thread monitorada, aguardando ação da Finaud
 
 **Variações do Caso 2:**
@@ -405,7 +405,7 @@ Henrique Rezende (Wise) enviou para suporte@finaud.com.br. O grupo relayou o e-m
 CC tem endereço externo (além de Finaud):
 → sistema usa o endereço externo como cliente
 
-CC tem só Finaud (como no DRM 2060 acima):
+CC tem só Finaud (como no DRM_2060 acima):
 → Finaud é o destinatário; cliente já identificado pelo Campo 4 (Reply-To)
 
 CC vazio (e Para também estava vazio):
@@ -643,12 +643,12 @@ Andrea Inacio
 
 | Arquivo | Categoria | Conteúdo encontrado |
 |---|---|---|
-| `90781_image.png` | RETORNO_BACEN | Screenshot Gmail com erro BACEN VCRD3001, DRM 2060, data-base 31/12/2025 |
-| `90916_image.png` | RETORNO_BACEN | STA: protocolo 364778868, DDR 2011, "Arquivo entregue ao destinatário", 03/02/2026 |
+| `90781_image.png` | RETORNO_BACEN | Screenshot Gmail com erro BACEN VCRD3001, DRM_2060, data-base 31/12/2025 |
+| `90916_image.png` | RETORNO_BACEN | STA: protocolo 364778868, DDR_2011, "Arquivo entregue ao destinatário", 03/02/2026 |
 | `91306_image.png` | DLO_2061 | Screenshot do sistema de arquivos com pastas de clientes com DLO pendente |
 | `91524_image.png` | DRL_2160 | Tela do RiskDriver, módulo DRL > Cálculo, data-base em branco |
 | `91867_image.png` | DDR_2011 | Boleta financeira: NTN-B 760199, R$87,7M, Planner Corretora + BRADESCO |
-| `91864_image.png` | RETORNO_BACEN | STA "Movimentação de arquivos": protocolo 371298848, DRL 2160, entregue 19/02/2026 |
+| `91864_image.png` | RETORNO_BACEN | STA "Movimentação de arquivos": protocolo 371298848, DRL_2160, entregue 19/02/2026 |
 | `93334_image.png` | RETORNO_BACEN | CRD Indício de qualidade: DLO00116, Planner Corretora, protocolo 357561053, prazo 17/03/2026 |
 
 **Conclusão:** 0 de 7 eram decorativos. A regra L7 foi removida com base nessa evidência.
@@ -814,7 +814,7 @@ A IA Assistente de Aprendizado precisa do conteúdo das imagens para entender co
 | 2 | ZIP com padrão `CNPJ_CADOC_DATA.zip` | Categoria identificada com altíssima confiança |
 | 3 | ZIP com sufixo `_S_N` | Substituição solicitada pelo BACEN — mesma categoria |
 | 4 | Arquivo COSIF (`.xml`, `.bc`) ou planilha LEC | DLO, DLI, S5 ou FORCAPITAL — ver regra COSIF abaixo |
-| 5 | Prefixo `RD_` | DDR 2011 — arquivo do cliente |
+| 5 | Prefixo `RD_` | DDR_2011 — arquivo do cliente |
 | 6 | Formatos especiais (`.rar`, `.eml`) | Abrir e ler conteúdo interno |
 | 7 | ZIP genérico (sem padrão CADOC no nome) | Abrir e verificar arquivos internos |
 | 8 | Imagem em anexo (`.png`, `.jpg`, `.jpeg`) | Aplicar as mesmas regras de imagem do Campo 6: Momento 1 (nome identifica decorativo? → descarta) + Momento 2 (OCR decide pelo conteúdo). Ver seção "Campo OCR" acima. |
@@ -824,12 +824,12 @@ A IA Assistente de Aprendizado precisa do conteúdo das imagens para entender co
 
 | Categoria | Emails | Sem anexo | ZIP CADOC | COSIF | RD_ | Sem padrão no nome |
 |---|---|---|---|---|---|---|
-| DDR 2011 | 2.395 | 60% | 7% | 0% | 10% | 20% |
-| SCD 4111 | 734 | 75% | 11% | 0% | 0% | 7% |
-| DRM 2060 | 177 | 67% | 14% | 1% | 0% | 10% |
-| DLO 2061 | 1.183 | 70% | 2% | 2% | 0% | 25% |
-| DLI 2062 | 136 | 85% | 5% | 0% | 0% | 9% |
-| DRL 2160 | 267 | 78% | 5% | 0% | 0% | 13% |
+| DDR_2011 | 2.395 | 60% | 7% | 0% | 10% | 20% |
+| SCD_4111 | 734 | 75% | 11% | 0% | 0% | 7% |
+| DRM_2060 | 177 | 67% | 14% | 1% | 0% | 10% |
+| DLO_2061 | 1.183 | 70% | 2% | 2% | 0% | 25% |
+| DLI_2062 | 136 | 85% | 5% | 0% | 0% | 9% |
+| DRL_2160 | 267 | 78% | 5% | 0% | 0% | 13% |
 | S5 | 132 | 69% | 0% | 0% | 2% | 16% |
 | RETORNO_BACEN | 1.223 | 56% | 3% | 0% | 0% | **40% (imagens — OCR obrigatório)** |
 | SUPORTE | 640 | 88% | 0% | 0% | 0% | 8% |
@@ -847,12 +847,12 @@ Quando a Finaud entrega o CADOC ao cliente, o arquivo ZIP segue o padrão `CNPJ_
 
 | Categoria | Padrão do ZIP | Exemplo real |
 |---|---|---|
-| DDR 2011 | `CNPJ_2011_YYYYMMDD.zip` | `12345678_2011_20260630.zip` |
-| SCD 4111 | `CNPJ_4111_YYYYMMDD_I_1.zip` | `32648370_4111_20260219_I_1.zip` |
-| DRM 2060 | `CNPJ_2060_YYYYMMDD.zip` | `32648370_2060_20260130.zip` |
-| DLO 2061 | `CNPJ_2061_YYYYMMDD.zip` | `12345678_2061_20260630.zip` |
-| DLI 2062 | `CNPJ_2062_YYYYMM_I_1_4010.zip` | `62280490_2062_202602_I_1_4010.zip` |
-| DRL 2160 | `CNPJ_2160_YYYYMMDD.zip` | `12345678_2160_20260630.zip` |
+| DDR_2011 | `CNPJ_2011_YYYYMMDD.zip` | `12345678_2011_20260630.zip` |
+| SCD_4111 | `CNPJ_4111_YYYYMMDD_I_1.zip` | `32648370_4111_20260219_I_1.zip` |
+| DRM_2060 | `CNPJ_2060_YYYYMMDD.zip` | `32648370_2060_20260130.zip` |
+| DLO_2061 | `CNPJ_2061_YYYYMMDD.zip` | `12345678_2061_20260630.zip` |
+| DLI_2062 | `CNPJ_2062_YYYYMM_I_1_4010.zip` | `62280490_2062_202602_I_1_4010.zip` |
+| DRL_2160 | `CNPJ_2160_YYYYMMDD.zip` | `12345678_2160_20260630.zip` |
 
 **Sufixo de substituição `_S_N`:** quando o BACEN detecta erro num CADOC já entregue e solicita correção, o cliente envia um novo ZIP com `_S_1`, `_S_2`, ... no nome (ex.: `32648370_2011_20241129_S_2.zip` = segunda substituição do DDR de novembro/2024). O sistema reconhece automaticamente como CADOC do mesmo tipo — o padrão de busca captura o sufixo via `.*`. 351 casos no histórico.
 
@@ -862,17 +862,17 @@ Quando a Finaud entrega o CADOC ao cliente, o arquivo ZIP segue o padrão `CNPJ_
 
 | Categoria | O que o cliente envia |
 |---|---|
-| DDR 2011 | Prefixo `RD_` — ex.: `RD_MOEDA.csv`, `RD_LFT.xlsx`, `RD_PREFIXADA.xlsx`; ou `DDR_YYYYMM.xlsx` |
-| SCD 4111 | `CADOC 4111.xlsx`, `DOC_4111_YYYYMMDD.xlsx`, `Saldos 4111.xlsx` |
-| DRM 2060 | `Saldos DRM.xlsx`, `DRM_2060_Finaud_YYYYMM.xlsx` |
-| DLO 2061 | Arquivos COSIF + planilha LEC — ver regra COSIF abaixo |
-| DLI 2062 | Arquivos COSIF **sem** planilha LEC — ver regra COSIF abaixo |
-| DRL 2160 | Planilha DRL `.xlsx` |
+| DDR_2011 | Prefixo `RD_` — ex.: `RD_MOEDA.csv`, `RD_LFT.xlsx`, `RD_PREFIXADA.xlsx`; ou `DDR_YYYYMM.xlsx` |
+| SCD_4111 | `CADOC 4111.xlsx`, `DOC_4111_YYYYMMDD.xlsx`, `Saldos 4111.xlsx` |
+| DRM_2060 | `Saldos DRM.xlsx`, `DRM_2060_Finaud_YYYYMM.xlsx` |
+| DLO_2061 | Arquivos COSIF + planilha LEC — ver regra COSIF abaixo |
+| DLI_2062 | Arquivos COSIF **sem** planilha LEC — ver regra COSIF abaixo |
+| DRL_2160 | Planilha DRL `.xlsx` |
 | S5 | Arquivos COSIF — ver regra COSIF abaixo |
 
 ---
 
-#### Regra COSIF — DLO 2061, DLI 2062, S5 e FORCAPITAL
+#### Regra COSIF — DLO_2061, DLI_2062, S5 e FORCAPITAL
 
 Balancetes contábeis que o cliente extrai do seu sistema e envia para a Finaud processar. Existem dois tipos, conforme a estrutura da empresa:
 
@@ -889,8 +889,8 @@ Balancetes contábeis que o cliente extrai do seu sistema e envia para a Finaud 
 
 | Sinal adicional | Categoria |
 |---|---|
-| COSIF + planilha LEC (`LEC_*.xlsx`) | DLO 2061 |
-| COSIF sem planilha LEC | DLI 2062 (confirmar pelo assunto) |
+| COSIF + planilha LEC (`LEC_*.xlsx`) | DLO_2061 |
+| COSIF sem planilha LEC | DLI_2062 (confirmar pelo assunto) |
 | COSIF + "S5" no assunto ou corpo | S5 |
 | COSIF + "FORCAPITAL" no assunto ou corpo | FORCAPITAL |
 
@@ -911,8 +911,8 @@ Balancetes contábeis que o cliente extrai do seu sistema e envia para a Finaud 
 | RETORNO_BACEN | XMLs de rejeição CRD e PDFs de prints de erro — nomes genéricos, sem padrão. OCR necessário (PENDENCIAS.md) |
 | SUPORTE | Qualquer arquivo ou nenhum — o anexo não identifica a categoria |
 | FORCAPITAL | Planilha ou PDF de projeção — sem padrão de nome específico |
-| DRSAC 2030 | Arquivo DRSAC para análise — sem padrão específico |
-| PVCA 6209 | Arquivo PVCA para análise — sem padrão específico |
+| DRSAC_2030 | Arquivo DRSAC para análise — sem padrão específico |
+| PVCA_6209 | Arquivo PVCA para análise — sem padrão específico |
 
 ---
 
@@ -932,7 +932,7 @@ Balancetes contábeis que o cliente extrai do seu sistema e envia para a Finaud 
 | `.RAR` | 6 | Mesma lógica do ZIP — tentar abrir e ler nomes internos. Se não conseguir: flag para revisão humana |
 | `.EML` (e-mail encaminhado como anexo) | 8 | Extrair assunto e anexos do e-mail interno e aplicar as regras de classificação normais. Prioritário para RETORNO_BACEN |
 | Sem extensão — nome embaralhado | ~200 | Encoding quebrado no parser (`=_utf-8_B_...`). Classificar pelo assunto e corpo; marcar como VERIFICAR_NOME para registro |
-| Sem extensão — código de protocolo BACEN | ~30 | `ADRM060-...` = DRM 2060 · `ALIM262-...` = DLI 2062 — sinal forte de categoria, usar direto |
+| Sem extensão — código de protocolo BACEN | ~30 | `ADRM060-...` = DRM_2060 · `ALIM262-...` = DLI_2062 — sinal forte de categoria, usar direto |
 
 ---
 
@@ -971,18 +971,18 @@ Balancetes contábeis que o cliente extrai do seu sistema e envia para a Finaud 
 
 | Categoria | Fórmula do prazo | Exemplo com data_competencia = 02/02/2026 |
 |---|---|---|
-| DDR 2011 | D+3 úteis após a data de referência | prazo = 05/02/2026 (quarta) |
-| SCD 4111 | D+3 úteis após a data de referência | prazo = 05/02/2026 |
-| DRM 2060 | D+5 úteis do mês seguinte | prazo = 06/03/2026 |
-| DLO 2061 | Dia 5 do 2º mês seguinte | prazo = 05/04/2026 |
-| DLI 2062 | Dia 5 do 2º mês seguinte | prazo = 05/04/2026 |
-| DRL 2160 | D+10 úteis do mês seguinte | prazo = 12/03/2026 |
+| DDR_2011 | D+3 úteis após a data de referência | prazo = 05/02/2026 (quarta) |
+| SCD_4111 | D+3 úteis após a data de referência | prazo = 05/02/2026 |
+| DRM_2060 | D+5 úteis do mês seguinte | prazo = 06/03/2026 |
+| DLO_2061 | Dia 5 do 2º mês seguinte | prazo = 05/04/2026 |
+| DLI_2062 | Dia 5 do 2º mês seguinte | prazo = 05/04/2026 |
+| DRL_2160 | D+10 úteis do mês seguinte | prazo = 12/03/2026 |
 | S5 | D+5 úteis após a data de referência | prazo = 09/02/2026 |
 | FORCAPITAL | D+5 úteis após a data do e-mail | usa data_email, não data_competencia |
 | SUPORTE | Sem prazo regulatório | — |
 | RETORNO_BACEN | Prazo definido pelo BACEN na crítica | extraído do corpo do e-mail |
-| DRSAC 2030 | 10º dia útil do 2º mês após data-base | base jun → 10º DU de agosto |
-| PVCA 6209 | Último DU do mês seguinte ao trimestre | base 30/jun → último DU de julho |
+| DRSAC_2030 | 10º dia útil do 2º mês após data-base | base jun → 10º DU de agosto |
+| PVCA_6209 | Último DU do mês seguinte ao trimestre | base 30/jun → último DU de julho |
 
 **Como o sistema usa os três:**
 
@@ -1151,7 +1151,7 @@ O sistema não precisa "lembrar" que estava concluído — a lógica do último 
 
 ### 8.5 Fechamento automático via ZIP — CADOCs
 
-Aplica a: DDR 2011, SCD 4111, DRM 2060, DLO 2061, DLI 2062, DRL 2160
+Aplica a: DDR_2011, SCD_4111, DRM_2060, DLO_2061, DLI_2062, DRL_2160
 
 Quando a Finaud envia o arquivo ZIP do CADOC por um e-mail separado — não como resposta no thread do cliente — esse e-mail chega na caixa oraculo@ pelo Caminho 2 (roteamento automático do Google Workspace). Nesses casos, o sistema faz o cruzamento automático:
 
@@ -1197,11 +1197,11 @@ E-mail: "Segue DDR, DRM e DLI - MIRAE março/2026"
 
 | Grupo | Categorias | O que a Finaud entrega ao cliente |
 |---|---|---|
-| CADOC ZIP | DDR 2011, DRM 2060, DRL 2160, DLO 2061, DLI 2062, CADOC 4111 | Arquivo ZIP com padrão `CNPJ_CATEGORIA_DATA.zip` (ex.: `12345678_2011_20260131_I_1.zip`). Substituições seguem o mesmo padrão com sufixo `_S_N`. |
+| CADOC ZIP | DDR_2011, DRM_2060, DRL_2160, DLO_2061, DLI_2062, SCD_4111 | Arquivo ZIP com padrão `CNPJ_CATEGORIA_DATA.zip` (ex.: `12345678_2011_20260131_I_1.zip`). Substituições seguem o mesmo padrão com sufixo `_S_N`. |
 | S5 | S5 | PDF (ex.: `Resultado Quantitativo - S5.pdf`) — não vai ao BACEN, fica entre Finaud e cliente. |
 | FORCAPITAL | FORCAPITAL | Varia: e-mail só texto (projeção de capital) ou XLSX/PDF. Não vai ao BACEN. |
-| PVCA 6209 | PVCA 6209 | Arquivo `BACEN.ZIP` contendo 8 TXT na raiz: `CONGLOME.TXT`, `USUREMOT.TXT`, `ESTATCRT.TXT`, `ESTATATM.TXT`, `TRANSOPA.TXT`, `OPEINTRA.TXT`, `CONTATOS.TXT`, `DATABASE.TXT`. Transmitido via STA pelo cliente. |
-| DRSAC 2030 | DRSAC 2030 | Arquivo XML (elemento raiz `DocumentoDRSAC`, CNPJ de 8 dígitos, data no formato AAAA-MM). |
+| PVCA_6209 | PVCA_6209 | Arquivo `BACEN.ZIP` contendo 8 TXT na raiz: `CONGLOME.TXT`, `USUREMOT.TXT`, `ESTATCRT.TXT`, `ESTATATM.TXT`, `TRANSOPA.TXT`, `OPEINTRA.TXT`, `CONTATOS.TXT`, `DATABASE.TXT`. Transmitido via STA pelo cliente. |
+| DRSAC_2030 | DRSAC_2030 | Arquivo XML (elemento raiz `DocumentoDRSAC`, CNPJ de 8 dígitos, data no formato AAAA-MM). |
 
 **RETORNO_BACEN — não é uma entrega, é uma crítica:**
 O RETORNO_BACEN não tem "entregue" próprio — ele representa a etapa **"crítica recebida → substituição enviada"** do ciclo de vida de outra categoria (DDR, DRM, DRL etc.). O BACEN rejeitou um CADOC já entregue e solicitou correção.
@@ -1228,36 +1228,6 @@ Para CADOCs com ZIP (§8.5), o encerramento é detectado pelo nome do arquivo �
 
 ---
 
-## 14. Telas do sistema
-
-### Tela 1 — Painel Operacional
-
-Lista de threads ativas, organizada por prazo, com destaque visual:
-
-| Cor | Urgência | Critério |
-|---|---|---|
-| 🔴 Urgente | Vence em até 3 dias | |
-| 🟡 Atenção | Vence em até 7 dias | |
-| 🟢 Normal | Mais de 7 dias | |
-
-Cada linha mostra: **cliente · categoria · lado (Finaud/cliente) · prazo · última mensagem**
-
-**Threads do mesmo cliente — agrupamento automático (confirmado por Michel, 05/08/2026):**
-Quando um cliente tem mais de um thread aberto ao mesmo tempo, o painel agrupa todos em um bloco único, exibindo-os lado a lado. Regras:
-- Cada thread fecha pelo seu próprio sinal (ZIP ou conversa) — de forma independente.
-- O sistema não cria vínculo automático entre threads do mesmo cliente.
-- O operador vê o contexto completo e decide como agir.
-- O grupo desaparece do painel quando todos os threads do cliente estiverem Concluídos.
-- Thread Concluída some imediatamente do painel (não fica visível por período de carência).
-
-### Tela 2 — Gestão de Filtros (Remetente)
-
-Tela de configuração onde Michel (ou a equipe) pode adicionar, editar ou remover endereços e assuntos filtrados sem precisar de intervenção técnica. Ver lista completa de filtros em §7 (Campo 1).
-
-> **Decisão confirmada por Michel (23/07/2026).**
-
----
-
 ## 10. Catálogo de categorias — o que a IA precisa saber
 
 Esta seção alimenta diretamente o prompt da IA. Para cada categoria, a IA recebe: o que é, como reconhece no e-mail (assunto + corpo + histórico da thread) e qual prazo aplicar.
@@ -1266,18 +1236,22 @@ Esta seção alimenta diretamente o prompt da IA. Para cada categoria, a IA rece
 
 | Categoria | Prazo |
 |---|---|
-| DDR 2011 | D+3 úteis após a data de referência |
-| 4111 | D+3 úteis após a data de referência |
-| DRM 2060 | D+5 úteis do mês seguinte à data de referência |
-| DLO 2061 | Dia 5 do segundo mês seguinte à data de referência |
-| DLI 2062 | Dia 5 do segundo mês seguinte à data de referência |
-| DRL 2160 | D+10 úteis do mês seguinte à data de referência |
+| DDR_2011 | D+3 úteis após a data de referência |
+| SCD_4111 | D+3 úteis após a data de referência |
+| DRM_2060 | D+5 úteis do mês seguinte à data de referência |
+| DLO_2061 | Dia 5 do segundo mês seguinte à data de referência |
+| DLI_2062 | Dia 5 do segundo mês seguinte à data de referência |
+| DRL_2160 | D+10 úteis do mês seguinte à data de referência |
 | S5 | D+5 úteis após a data de referência |
-| Retorno Bacen | D+3 úteis após a data do e-mail |
+| RETORNO_BACEN | Prazo informado pelo BACEN na crítica — se não houver prazo explícito, usar D+3 úteis após a data do e-mail |
+| SUPORTE       | Sem prazo regulatório — depende da urgência da solicitação |
+| FORCAPITAL    | D+5 úteis após a data do e-mail |
+| DRSAC_2030    | 10º dia útil do 2º mês subsequente à data-base |
+| PVCA_6209     | Último dia útil do mês seguinte ao fim do trimestre |
 
 ---
 
-### 4111 — Saldos Contábeis Diários
+### SCD_4111 — Saldos Contábeis Diários
 
 **O que é:** documento que registra os lançamentos nas contas contábeis da instituição a cada dia útil, baseado no plano COSIF (sistema de contas contábeis das instituições financeiras do Banco Central). O relatório de conglomerado (consolidação de todas as empresas do grupo) usa o mesmo formato e CADOC, mas é enviado mensalmente.
 
@@ -1334,7 +1308,7 @@ As mesmas 5 regras do DDR_2011. Sinais específicos do SCD_4111:
 
 ---
 
-### DDR 2011 — Documento Diário de Posições
+### DDR_2011 — Documento Diário de Posições
 
 **O que é:** documento que agrega várias posições financeiras do cliente ao final de cada dia útil. Não é um tipo único de dado — é uma consolidação de diferentes instrumentos, todos enviados diariamente para a Finaud.
 
@@ -1424,7 +1398,7 @@ Validado em 1.412 threads reais (29/07/2026). Cobertura: 100%.
 
 ---
 
-### DRM 2060 — Demonstrativo de Risco de Mercado
+### DRM_2060 — Demonstrativo de Risco de Mercado
 
 **O que é:** relatório mensal que mede o quanto a instituição está exposta a riscos de variações de mercado — taxas de juros, câmbio, preços de ativos. Parecido com o DDR, mas mensal: a data de referência é sempre o **último dia útil do mês**.
 
@@ -1434,14 +1408,14 @@ Validado em 1.412 threads reais (29/07/2026). Cobertura: 100%.
 
 | Sinal | O que aparece | Confiança |
 |---|---|---|
-| Assunto | "DRM 2060", "DRM (2060)", "DRM2060_MMAAAA", "2060 DRM", "Documento 2060", "SMM - 2060" | Alta |
+| Assunto | "DRM_2060", "DRM (2060)", "DRM2060_MMAAAA", "2060 DRM", "Documento 2060", "SMM - 2060" | Alta |
 | Assunto | "DRM" + mês/ano | Alta |
 | Corpo | Relatório de risco de mercado, exposição a taxas, VaR (valor em risco) | Média |
 | Anexo | `Saldos DRM.xlsx`, `DRM_2060_Finaud_YYYYMM.xlsx` | Alta |
 | Anexo | `CNPJ_2060_YYYYMMDD.zip` (CADOC gerado — Finaud entrega ao cliente) | Muito alta |
 | Anexo | `SALDOS BANCOS.pdf`, `CAIXA.pdf`, `SELIC.xls` | Baixa — genérico, não identifica |
 
-**O que NÃO é DRM 2060:**
+**O que NÃO é DRM_2060:**
 - "COMUNICACAO DE INCONSISTENCIA NO DRM - 2060" → é **RETORNO_BACEN** (o BACEN rejeitou um DRM anterior)
 - "RELATORIO DRM - Amaril Franklin" → pode ser **DLO** (é a planilha LEC usada para gerar o DLO)
 - DRM + DDR no mesmo assunto → registrar ambos (ver §9 — modelo de duas camadas)
@@ -1463,7 +1437,7 @@ Validado em 90 threads reais (29/07/2026). Cobertura: 100% (57 F→C + 33 C→F)
 | R1 | Finaud entregou o DRM ao cliente ou transmissão ao BACEN confirmada — OU cliente respondeu com agradecimento sem novo pedido | Concluído | — |
 | R2 | Cliente enviou dados mensais, prévia ou retificação — e Finaud ainda não processou | Aguardando | Finaud |
 | R3 | Finaud aguarda extratos, saldos ou arquivo que o cliente ainda não enviou | Aguardando | Cliente |
-| R4 | Finaud enviou análise técnica, explicação ou pergunta (sem entrega de arquivo) — aguarda retorno do cliente | Aguardando | Finaud |
+| R4 | Finaud enviou análise técnica, explicação ou pergunta (sem entrega de arquivo) — aguarda retorno do cliente | Aguardando | Cliente |
 | R5 | Não se aplica — nenhuma thread F→F identificada no DRM_2060 | — | — |
 
 **R1:** "segue anexo a remessa DRM (2060)", "segue o DRM (2060)", "DRM_2060 para transmissão ao BACEN", "transmitido ao BACEN"; agradecimento puro do cliente após entrega
@@ -1472,17 +1446,15 @@ Validado em 90 threads reais (29/07/2026). Cobertura: 100% (57 F→C + 33 C→F)
 
 **R3:** "encaminhar os extratos", "aguardo o balancete", Finaud pediu dado que ainda não chegou
 
-**R4:** Finaud respondeu pergunta técnica; Finaud agendou reunião com cliente ou BACEN; Finaud esclareceu erro — aguarda retorno
+**R4:** Finaud respondeu pergunta técnica; Finaud comunicou agendamento de reunião por texto (sem invite.ics ou link); Finaud esclareceu erro — aguarda retorno. ⚠️ Se o e-mail contém invite.ics ou link de reunião (Teams, Meet, Zoom) → classificar como **SUPORTE**, não DRM
 
 **Sub-padrão "Prévia":** quando o cliente envia rascunho dos dados para Finaud validar antes da versão oficial → R2 (Aguardando/Finaud) até a entrega do DRM definitivo.
-
-**Sub-padrão convite de reunião** (Teams, calendário): R2 (Aguardando/Finaud) — Finaud precisa participar.
 
 **Sub-padrão cliente transmite ao BACEN por conta própria** e avisa a Finaud via C→F → R1 (Concluído) — informacional, nenhuma ação da Finaud necessária.
 
 ---
 
-### DLO 2061 — Demonstrativo de Limites Operacionais
+### DLO_2061 — Demonstrativo de Limites Operacionais
 
 **O que é:** relatório mensal sobre os limites regulatórios da instituição — concentração por contraparte, adequação de capital (Basileia) e outros indicadores. O cliente envia à Finaud os quatro arquivos COSIF (**COS4010.xml**, **COS4016.xml**, **COS4060.xml**, **COS4066.xml**) mais a planilha **LEC** (`.xls`/`.xlsx`). A Finaud processa e gera o CADOC, entregando-o ao cliente, que transmite ao BACEN. Em alguns casos a Finaud entrega diretamente.
 
@@ -1492,9 +1464,10 @@ Validado em 90 threads reais (29/07/2026). Cobertura: 100% (57 F→C + 33 C→F)
 
 | Sinal | O que aparece | Confiança |
 |---|---|---|
-| Assunto | "DLO", "DLO 2061", "2061", "DLO/DLI" | Alta |
+| Assunto | "DLO", "DLO_2061", "2061", "DLO/DLI" | Alta |
 | Assunto | "COS 4010", "COS4010", "Planilha LEC", "Indicadores de Basiléia" | Alta |
 | Assunto | "4010", "4016" (sem prefixo "COS") | Alta — cliente referencia os arquivos COSIF pelo número sem o prefixo |
+| Assunto | "4060", "4066", "COS4060", "COS4066" | Alta — cliente conglomerado enviando COSIF; identifica DLO_2061 mesmo sem LEC no mesmo e-mail (LEC pode chegar em e-mail separado) |
 | Assunto | "Balancete" (com ou sem mês/ano) | Média — padrão DLO quando o corpo não indica DLI ou S5; se corpo indicar DLI → DLI_2062; se S5 → S5 |
 | Assunto | "Basileia" (sem "Indicadores de") | Média — confirmar com mês/ano ou corpo; "Indicadores de Basiléia" = Alta |
 | Assunto | "PRE" | Média — Patrimônio de Referência Exigido, indicador calculado no DLO |
@@ -1502,13 +1475,13 @@ Validado em 90 threads reais (29/07/2026). Cobertura: 100% (57 F→C + 33 C→F)
 | Anexo | `COS4010.xml`, `COS4016.xml`, `COS4060.xml`, `COS4066.xml` + `LEC_MMAAAA.xls/xlsx` (do cliente) | Alta — LEC junto com COSIFs confirma DLO |
 | Anexo | `CNPJ_2061_YYYYMMDD.zip`, `Cos4010.zip`, `Cos4016.zip` (CADOC gerado) | Muito alta |
 
-> **LEC (Limite de Exposição por Contraparte):** planilha exclusiva do DLO 2061 que lista as exposições da instituição por contraparte. O DLI 2062 usa os mesmos arquivos COSIF mas **nunca** usa LEC — ela não existe no fluxo do DLI. Consequência direta: qualquer e-mail que mencione LEC no assunto, no corpo ou no nome do anexo — seja entrega da planilha, solicitação ao cliente para enviá-la, erro de importação, ajuste de dados ou dúvida técnica sobre o preenchimento — é DLO_2061, mesmo sem COSIFs anexados. O arquivo `Importacao_LEC*.xls/xlsx` no anexo identifica a thread como DLO_2061 com Alta confiança.
+> **LEC (Limite de Exposição por Contraparte):** planilha exclusiva do DLO_2061 que lista as exposições da instituição por contraparte. O DLI_2062 usa os mesmos arquivos COSIF mas **nunca** usa LEC — ela não existe no fluxo do DLI. Consequência direta: qualquer e-mail que mencione LEC no assunto, no corpo ou no nome do anexo — seja entrega da planilha, solicitação ao cliente para enviá-la, erro de importação, ajuste de dados ou dúvida técnica sobre o preenchimento — é DLO_2061, mesmo sem COSIFs anexados. O arquivo `Importacao_LEC*.xls/xlsx` no anexo identifica a thread como DLO_2061 com Alta confiança.
 
-**O que NÃO é DLO 2061:**
+**O que NÃO é DLO_2061:**
 - "RELATORIO DRM - AMARIL FRANKLIN" → pode ser DLO (esse cliente envia a LEC junto com e-mails de DRM — verificar anexo para confirmar)
 - "ECSA (S5) - COS4010..." → é **S5** (código S5 no assunto prevalece sobre a menção ao COS4010)
-- "Colchão de Liquidez" / "DRL" → é **DRL 2160**, não DLO — podem vir no mesmo e-mail, registrar separado
-- COS4060, COS4066 → pertencem ao **DLI 2062**, não ao DLO
+- "Colchão de Liquidez" / "DRL" → é **DRL_2160**, não DLO — podem vir no mesmo e-mail, registrar separado
+- COS4060, COS4066 no assunto → são exclusivos do **DLO_2061** (cliente conglomerado) — **nunca** aparecem no DLI_2062, que é individual e usa apenas COS4010 e COS4016
 - DLO + DLI no mesmo e-mail → registrar ambos (§9 — modelo de duas camadas)
 
 **Fluxo típico:**
@@ -1542,9 +1515,9 @@ Validado em 482 threads reais (29/07/2026). Cobertura: 100%. Mesmas regras R1–
 
 ---
 
-### DLI 2062 — Demonstrativo de Limites Operacional Individual
+### DLI_2062 — Demonstrativo de Limites Operacional Individual
 
-**O que é:** relatório mensal semelhante ao DLO 2061, mas focado nos limites operacionais de cada instituição individualmente (não do conglomerado). Usa os mesmos quatro arquivos COSIF do DLO (**COS4010.xml**, **COS4016.xml**, **COS4060.xml**, **COS4066.xml**), mas **sem** a planilha LEC. Quando há erro na entrega original, uma **Substituição** é gerada e enviada. A Finaud entrega o CADOC ao cliente, que transmite ao BACEN.
+**O que é:** relatório mensal semelhante ao DLO_2061, mas focado nos limites operacionais de cada instituição individualmente (não do conglomerado). Usa os mesmos quatro arquivos COSIF do DLO (**COS4010.xml**, **COS4016.xml**, **COS4060.xml**, **COS4066.xml**), mas **sem** a planilha LEC. Quando há erro na entrega original, uma **Substituição** é gerada e enviada. A Finaud entrega o CADOC ao cliente, que transmite ao BACEN.
 
 **Frequência:** mensal — data de referência: último dia útil do mês.
 
@@ -1552,16 +1525,17 @@ Validado em 482 threads reais (29/07/2026). Cobertura: 100%. Mesmas regras R1–
 
 | Sinal | O que aparece | Confiança |
 |---|---|---|
-| Assunto | "DLI", "DLI 2062", "2062", "DLI2062_MMAAAA" | Alta |
+| Assunto | "DLI", "DLI_2062", "2062", "DLI2062_MMAAAA" | Alta |
 | Assunto | "Segue a remessa DLI", "Preencher as premissas DLI", "Confecção do DLI", "Substituição" + DLI | Alta |
 | Assunto | Nome do cliente + mês/ano, sem código explícito | Média |
-| Corpo | Adequação de capital, Basileia, limites individuais, referências a COS4060/COS4066, premissas DLI | Média |
-| Anexo | `COS4010.xml`, `COS4016.xml`, `COS4060.xml`, `COS4066.xml` — sem LEC (LEC é exclusiva do DLO) | Alta |
+| Corpo | Adequação de capital, Basileia, limites individuais, premissas DLI | Média |
+| Anexo | `COS4010.xml`, `COS4016.xml` — sem LEC (DLI é individual; COS4060 e COS4066 são exclusivos do DLO conglomerado, nunca aparecem no DLI) | Alta |
 | Anexo | `CNPJ_2062_YYYYMMDD.zip` (CADOC gerado) | Muito alta |
 
-**O que NÃO é DLI 2062:**
+**O que NÃO é DLI_2062:**
 - "Instrução Normativa BCB — Altera o DLI" → alerta regulatório sobre mudança de regra, não é entrega do CADOC — pode caber em SUPORTE
 - "Aviso Bacen - DLI" / "Questionamento BACEN" → pode ser **RETORNO_BACEN** — verificar contexto
+- COS4060, COS4066 no assunto ou em anexo → é **DLO_2061** (conglomerado) — DLI nunca usa esses arquivos
 - DLO + DLI no mesmo e-mail → registrar ambos (§9 — modelo de duas camadas)
 
 **Fluxo típico:**
@@ -1599,7 +1573,7 @@ Validado em 56 threads reais (29/07/2026). Cobertura: 100%. R5 se aplica (3 caso
 
 ---
 
-### DRL 2160 — Demonstrativo de Risco de Liquidez
+### DRL_2160 — Demonstrativo de Risco de Liquidez
 
 **O que é:** relatório mensal que mede o risco de liquidez da instituição — o chamado "Colchão de Liquidez" (quanto de ativos líquidos a instituição mantém para cobrir saídas de caixa em cenário de estresse). O cliente envia à Finaud uma **planilha DRL** (`.xlsx`), que é importada no sistema. A Finaud gera o CADOC e entrega ao cliente, que transmite ao BACEN. Frequentemente entregue junto com o DDR.
 
@@ -1609,17 +1583,17 @@ Validado em 56 threads reais (29/07/2026). Cobertura: 100%. R5 se aplica (3 caso
 
 | Sinal | O que aparece | Confiança |
 |---|---|---|
-| Assunto | "DRL", "DLR", "DRL 2160", "2160", "DRL2160_MMAAAA" | Alta — "DLR" é variante com erro de digitação frequente |
+| Assunto | "DRL", "DLR", "DRL_2160", "2160", "DRL2160_MMAAAA" | Alta — "DLR" é variante com erro de digitação frequente |
 | Assunto | "Colchão de Liquidez", "Encaminhar a planilha DRL", "Geração do arquivo Doc. 2160_DRL" | Alta |
 | Assunto | "Protocolo DRL2160", nome do cliente + mês/ano | Média |
 | Corpo | Colchão de liquidez, risco de liquidez, ativos líquidos, mapeamento COSIF × DRL | Média |
 | Anexo | Planilha DRL (`.xlsx`) do cliente | Alta |
 | Anexo | `CNPJ_2160_YYYYMMDD.zip` (CADOC gerado) | Muito alta |
 
-**O que NÃO é DRL 2160:**
-- "CONGLOMERADO" + DRL → variante do DRL para o conglomerado — ainda é DRL 2160, base de dados maior
-- "Substituição" / "CORREÇÃO" + DRL → reentregas normais — ainda é DRL 2160
-- "VENCIMENTO HOJE" + DRL → alerta de prazo — ainda é DRL 2160 (urgente)
+**O que NÃO é DRL_2160:**
+- "CONGLOMERADO" + DRL → variante do DRL para o conglomerado — ainda é DRL_2160, base de dados maior
+- "Substituição" / "CORREÇÃO" + DRL → reentregas normais — ainda é DRL_2160
+- "VENCIMENTO HOJE" + DRL → alerta de prazo — ainda é DRL_2160 (urgente)
 - DRL + DDR no mesmo e-mail → registrar ambos (§9 — modelo de duas camadas)
 
 **Fluxo típico:**
@@ -1797,6 +1771,7 @@ Validado em 196 threads reais (29/07/2026). Cobertura: 100%. R5 se aplica.
 | Corpo | XML com `<respostaCRD>`, `Rejeitado pelo CRD`, número de protocolo CRD | Muito alta |
 | Corpo | Código de erro BACEN: VCRD0007, DLO00020, DLO00024, DLO00075 etc. | Muito alta |
 | Corpo | "recebemos um apontamento", "foi rejeitado", "poderiam nos ajudar" | Média |
+
 **O que o sistema extrai de cada thread:**
 - Código da crítica (VCRD0007, DLO00020…) e qual CADOC foi criticado (2060, 2061, 2062…)
 - Data-base da remessa (MM/AAAA) e número de protocolo CRD
@@ -1811,7 +1786,7 @@ Validado em 196 threads reais (29/07/2026). Cobertura: 100%. R5 se aplica.
 4. Finaud orienta: corrigir o arquivo, reenviar ao BACEN, ou abrir chamado no sistema CRD
 5. Cliente corrige e reenvia → BACEN aceita → protocolo de aprovação confirma o fechamento
 
-**CADOCs que podem gerar RETORNO_BACEN:** qualquer CADOC que o cliente entrega ao BACEN — DDR 2011, DLO 2061, DLI 2062, DRM 2060, DRL 2160. O S5 nunca gera RETORNO_BACEN pois não é enviado ao BACEN.
+**CADOCs que podem gerar RETORNO_BACEN:** qualquer CADOC que o cliente entrega ao BACEN — DDR_2011, DLO_2061, DLI_2062, DRM_2060, DRL_2160. O S5 nunca gera RETORNO_BACEN pois não é enviado ao BACEN.
 
 **O que NÃO é RETORNO_BACEN:**
 - E-mail perguntando sobre prazo de entrega ao BACEN → é o **CADOC específico** (DDR, DRM, DLO etc.)
@@ -1819,7 +1794,7 @@ Validado em 196 threads reais (29/07/2026). Cobertura: 100%. R5 se aplica.
 - "Protocolo" ou "Resultado" referindo-se à entrega normal já aceita → é o **CADOC da entrega**
 - Finaud ou cliente **enviando** remessa ao BACEN ("Seguem as remessas DLO e DLI a serem transmitidas ao BC", "Segue o arquivo transmitido") → é o **CADOC da entrega** (DLO_2061, DLI_2062, DDR_2011 etc.) — o fato de mencionar "BACEN" ou "BC" no corpo não torna RETORNO_BACEN
 
-**Prazo:** urgente — o BACEN define prazo curto para correção e substituição do documento.
+**Prazo:** prazo informado pelo BACEN na crítica (extraído do corpo do e-mail ou da imagem). Se o BACEN não informar prazo explícito: D+3 úteis após a data do e-mail como padrão.
 
 > ⚠️ **Nota de amostra:** o histórico disponível (sistema de teste) tem apenas 6 threads RETORNO_BACEN. Os padrões documentados são reais, mas a variedade de códigos de crítica crescerá à medida que o histórico de produção for integrado.
 
@@ -1866,7 +1841,7 @@ Validado em 303 threads reais (29/07/2026). Cobertura: 100%. R5 se aplica (4 cas
 | Exemplos reais | "poderia nos enviar a projeção de capital para 36 meses?"; "Acesso ForCapital + credenciais"; "Encaminhamos projeção de capital DEZ/25 a DEZ/28" | — |
 
 **O que NÃO é FORCAPITAL:**
-- "projeção" referindo-se a dados regulatórios de Basileia, DLO ou DLI → é **DLO 2061** ou **DLI 2062**
+- "projeção" referindo-se a dados regulatórios de Basileia, DLO ou DLI → é **DLO_2061** ou **DLI_2062**
 - "projeção" de calendário, prazo ou cronograma → é **SUPORTE**
 - Acesso a sistemas regulatórios (Risk Driver, CRD do BACEN) → é **SUPORTE**
 
@@ -1901,7 +1876,7 @@ Validado em 30 threads reais (29/07/2026). Cobertura: 100%. Mesmas regras que SU
 
 ---
 
-### DRSAC 2030 — Demonstrativo de Responsabilidade em Soluções de Aplicações em Crédito
+### DRSAC_2030 — Demonstrativo de Responsabilidade em Soluções de Aplicações em Crédito
 
 **O que é:** relatório regulatório semestral sobre operações de crédito. A Finaud orienta e responde dúvidas — **não gera o arquivo** (diferente de DDR, DLO, DRM). O cliente entrega diretamente ao BACEN.
 
@@ -1909,11 +1884,12 @@ Validado em 30 threads reais (29/07/2026). Cobertura: 100%. Mesmas regras que SU
 
 **Como a IA reconhece:**
 
-| Sinal | Exemplo | Confiança |
+| Sinal | O que aparece | Confiança |
 |---|---|---|
 | Assunto | "DRSAC", "CADOC 2030", "Demonstrativo 2030" | Alta |
 | Corpo | Cliente pergunta se deve enviar / BACEN envia comunicado sobre DRSAC | Alta |
 | Contexto | Volume muito baixo — apenas 2 threads desde jan/2026 | — |
+
 
 **O que NÃO é DRSAC_2030:**
 - Um e-mail com "DRSAC rejeitado" + prazo urgente → é **RETORNO_BACEN**, não DRSAC.
@@ -1951,7 +1927,7 @@ Validado em 2 threads reais (29/07/2026). Cobertura: 100%. Mesmas regras que SUP
 
 ---
 
-### PVCA 6209 — Elaboração e Remessa de Informações Relativas a Pagamentos de Varejo e a Canais de Atendimento
+### PVCA_6209 — Elaboração e Remessa de Informações Relativas a Pagamentos de Varejo e a Canais de Atendimento
 
 **O que é:** relatório regulatório trimestral sobre pagamentos de varejo e canais de atendimento. O cliente transmite via STA ao BACEN.
 
@@ -1959,7 +1935,7 @@ Validado em 2 threads reais (29/07/2026). Cobertura: 100%. Mesmas regras que SUP
 
 **Como a IA reconhece:**
 
-| Sinal | Exemplo | Confiança |
+| Sinal | O que aparece | Confiança |
 |---|---|---|
 | Assunto ou corpo | "CADOC 6209", "6209", "pagamentos de varejo" | Alta |
 | Assunto ou corpo | "canais de atendimento" + contexto regulatório | Média |
@@ -2012,12 +1988,12 @@ O nome do arquivo em anexo é um sinal adicional para a IA. Quando o assunto nã
 
 | Categoria | Alta confiança — identifica a categoria | Baixa confiança — genérico, não identifica |
 |---|---|---|
-| DDR 2011 | `RD_MOEDA.csv`, `RD_LFT.xlsx`, `RD_PREFIXADA.xlsx` (prefixo `RD_`); `DDR_YYYYMM.xlsx` | — |
-| SCD 4111 | `CADOC 4111.xlsx`, `DOC_4111_YYYYMMDD.xlsx`, `CNPJ_4111_DATA_I_1.zip` | — |
-| DRM 2060 | `Saldos DRM.xlsx`, `DRM_2060_Finaud_YYYYMM.xlsx`, `CNPJ_2060_DATA.zip` | `SALDOS BANCOS.pdf`, `CAIXA.pdf`, `SELIC.xls` |
-| DLO 2061 | `Cos4010.zip`, `Cos4016.zip` | — |
-| DLI 2062 | `CNPJ_2062_YYYYMM_I_1_4010.zip` | — |
-| DRL 2160 | planilha DRL (`.xlsx`) do cliente; `CNPJ_2160_YYYYMMDD.zip` (CADOC gerado) | — |
+| DDR_2011 | `RD_MOEDA.csv`, `RD_LFT.xlsx`, `RD_PREFIXADA.xlsx` (prefixo `RD_`); `DDR_YYYYMM.xlsx` | — |
+| SCD_4111 | `CADOC 4111.xlsx`, `DOC_4111_YYYYMMDD.xlsx`, `CNPJ_4111_DATA_I_1.zip` | — |
+| DRM_2060 | `Saldos DRM.xlsx`, `DRM_2060_Finaud_YYYYMM.xlsx`, `CNPJ_2060_DATA.zip` | `SALDOS BANCOS.pdf`, `CAIXA.pdf`, `SELIC.xls` |
+| DLO_2061 | `Cos4010.zip`, `Cos4016.zip` | — |
+| DLI_2062 | `CNPJ_2062_YYYYMM_I_1_4010.zip` | — |
+| DRL_2160 | planilha DRL (`.xlsx`) do cliente; `CNPJ_2160_YYYYMMDD.zip` (CADOC gerado) | — |
 
 **Padrão transversal — ZIP do CADOC gerado:**  
 O padrão `CNPJ_CADOC_DATA.zip` é universal — aparece em todos os CADOCs. O número do CADOC está diretamente no nome do arquivo, tornando-o o sinal de maior confiança quando presente.
@@ -2026,12 +2002,12 @@ O padrão `CNPJ_CADOC_DATA.zip` é universal — aparece em todos os CADOCs. O n
 
 | Categoria | Exemplo de ZIP |
 |---|---|
-| DDR 2011 | `CNPJ_2011_YYYYMMDD.zip` |
-| DRM 2060 | `32648370_2060_20260130.zip` |
-| DLO 2061 | `CNPJ_2061_YYYYMMDD.zip` |
-| DLI 2062 | `62280490_2062_202602_I_1_4010.zip` |
-| DRL 2160 | `CNPJ_2160_YYYYMMDD.zip` |
-| 4111 | `32648370_4111_20260219_I_1.zip` |
+| DDR_2011 | `CNPJ_2011_YYYYMMDD.zip` |
+| DRM_2060 | `32648370_2060_20260130.zip` |
+| DLO_2061 | `CNPJ_2061_YYYYMMDD.zip` |
+| DLI_2062 | `62280490_2062_202602_I_1_4010.zip` |
+| DRL_2160 | `CNPJ_2160_YYYYMMDD.zip` |
+| SCD_4111 | `32648370_4111_20260219_I_1.zip` |
 
 > **Nota:** os arquivos XML (COS4010.xml, COS4016.xml, COS4060.xml, COS4066.xml) aparecem como **anexo direto** quando o cliente os envia à Finaud. O ZIP do CADOC gerado é o que a Finaud devolve ao cliente (ou envia ao BACEN diretamente).
 
@@ -2139,7 +2115,7 @@ Exemplos coletados durante a Fase 0 (22/07/2026) com leitura direta de 25+ threa
 
 ### T04 — DDR_2011 (câmbio) | Balancete de Câmbio / CAM0050 — distribuição diária pela WU
 
-**O que é:** Jair Bonetti Junior (Western Union Bank) envia diariamente o CAM0050 BACEN e o Balancete de Câmbio para uma lista de distribuição interna da WU — e inclui suporte@finaud.com.br como destinatária. A Finaud **recebe** esse e-mail. O papel exato da Finaud neste fluxo **aguarda confirmação de Michel**.
+**O que é:** Jair Bonetti Junior (Western Union Bank) envia diariamente o CAM0050 BACEN e o Balancete de Câmbio à Finaud. A Finaud usa esses arquivos como insumo para gerar o DDR — fluxo idêntico aos demais clientes DDR com dados cambiais.
 
 **CADOC:** DDR_2011 (subcategoria cambial)
 
@@ -2156,8 +2132,6 @@ Exemplos coletados durante a Fase 0 (22/07/2026) com leitura direta de 25+ threa
 - Finaud (receptora): suporte@finaud.com.br
 
 **Anexos recebidos:** `CAM0050 17 07 2026 - BANCO.pdf`, `BALANCETE 17 07 2026 - BANCO.pdf`, `BALANCETE 17 07 2026 - BANCO.xlsx`
-
-**Papel da Finaud (confirmado por Michel, 03/08/2026):** a Finaud recebe o CAM0050 e o Balancete de Câmbio e os utiliza como insumo para compor o DDR (subcategoria cambial). Thread de distribuição — Finaud processa internamente sem resposta por e-mail esperada.
 
 **Como sabemos que está resolvido:** thread sem resposta após o envio = Finaud processou internamente. Protocolo de aceite do STA confirma a transmissão ao BACEN.
 
@@ -2445,7 +2419,7 @@ Exemplos coletados durante a Fase 0 (22/07/2026) com leitura direta de 25+ threa
 
 **O que é:** BACEN detecta indício no documento 4111. Finaud instrui o time interno a regerar o 4111 e o 4010 com os dados corretos.
 
-**CADOC:** 4111 (com geração conjunta do 4010)
+**CADOC:** SCD_4111 (com geração conjunta do 4010)
 
 **Fluxo observado (exemplo: TC/Ignis — 21/07/2026):**
 
@@ -2513,7 +2487,7 @@ As quatro decisões fundacionais da arquitetura estão explicadas em detalhes no
 | Prazo lido da imagem em RETORNO_BACEN | A imagem do CRD/e-mail do BACEN contém o prazo real — substitui qualquer prazo pré-definido | §9 — Entregue por categoria (RETORNO_BACEN) |
 | DDR multi-thread (chave CNPJ + data) | 99% das entregas DDR chegam em thread separada dos dados brutos — ligação por nome do ZIP | §9 — Entregue por categoria (DDR) |
 | Threads irmãs deixadas para Fase 2 | Na Fase 1, regra do último e-mail cobre todos os casos normais — não vale a complexidade agora | §8 — Regras de classificação; PENDENCIAS.md |
-| Convites de calendário deixados para Fase 3 | Frequência baixa; decisão de filtrar ou categorizar depende de observação em produção | PENDENCIAS.md |
+| Convites de calendário → SUPORTE | Qualquer e-mail com invite.ics ou link de reunião (Teams, Meet, Zoom) é classificado como SUPORTE, mesmo que o assunto mencione um CADOC (decidido por Michel, 07/08/2026) | §10 — SUPORTE |
 | Telas definidas por último | Design de tela depende de comportamento, regras, filas e ciclo de vida — definir antes inverte a ordem e cria inconsistência | §14 — Telas do sistema |
 
 ---
@@ -2553,7 +2527,7 @@ As quatro decisões fundacionais da arquitetura estão explicadas em detalhes no
 | **Timing por lado** | Quanto tempo ficou aguardando a Finaud · aguardando o cliente |
 | **Participantes** | Cliente: nome + e-mail + empresa · Colaborador Finaud: nome + e-mail |
 
-**Resultado:** 19 tipos documentados (T01–T19). Os tipos T18 e T19 são filtrados automaticamente pelo sistema — não chegam à triagem. T04 (Western Union) aguarda confirmação de Michel sobre o papel exato da Finaud no fluxo.
+**Resultado:** 19 tipos documentados (T01–T19). Os tipos T18 e T19 são filtrados automaticamente pelo sistema — não chegam à triagem. T04 (Western Union) confirmado por Michel (07/08/2026): fluxo idêntico aos demais clientes DDR com dados cambiais.
 
 **O que esta base permite depois:**
 - Identificar quais clientes enviam mais e-mails (por empresa e por contato individual)
@@ -2563,6 +2537,36 @@ As quatro decisões fundacionais da arquitetura estão explicadas em detalhes no
 - Usar como base de exemplos para treinar e guiar a IA classificadora
 
 Este catálogo é o guia de todas as fases seguintes. Fase 0 concluída — T04 confirmado por Michel em 03/08/2026.
+
+---
+
+## 14. Telas do sistema
+
+### Tela 1 — Painel Operacional
+
+Lista de threads ativas, organizada por prazo, com destaque visual:
+
+| Cor | Urgência | Critério |
+|---|---|---|
+| 🔴 Urgente | Vence em até 3 dias | |
+| 🟡 Atenção | Vence em até 7 dias | |
+| 🟢 Normal | Mais de 7 dias | |
+
+Cada linha mostra: **cliente · categoria · lado (Finaud/cliente) · prazo · última mensagem**
+
+**Threads do mesmo cliente — agrupamento automático (confirmado por Michel, 05/08/2026):**
+Quando um cliente tem mais de um thread aberto ao mesmo tempo, o painel agrupa todos em um bloco único, exibindo-os lado a lado. Regras:
+- Cada thread fecha pelo seu próprio sinal (ZIP ou conversa) — de forma independente.
+- O sistema não cria vínculo automático entre threads do mesmo cliente.
+- O operador vê o contexto completo e decide como agir.
+- O grupo desaparece do painel quando todos os threads do cliente estiverem Concluídos.
+- Thread Concluída some imediatamente do painel (não fica visível por período de carência).
+
+### Tela 2 — Gestão de Filtros (Remetente)
+
+Tela de configuração onde Michel (ou a equipe) pode adicionar, editar ou remover endereços e assuntos filtrados sem precisar de intervenção técnica. Ver lista completa de filtros em §7 (Campo 1).
+
+> **Decisão confirmada por Michel (23/07/2026).**
 
 ---
 

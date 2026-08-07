@@ -10,6 +10,87 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-08-07 (sessão tarde) — Revisão spec: padronização, ambiguidades e decisões de negócio
+
+### 07/08 15:00 — Spec §10: COS4060/4066 corrigidos para DLO_2061 (era erro)
+
+**🔎 Em miúdos:** a spec dizia que COS4060 e COS4066 pertenciam ao DLI — errado. Eles são do DLO (cliente conglomerado). Corrigido em três lugares da spec.
+
+**Problema:** a seção DLO dizia que COS4060/4066 eram "do DLI". A seção DLI listava COS4060/COS4066 como anexos válidos. Confirmado via dados históricos: 10 threads DLO com 4060, 2 com 4066, 0 threads DLI com 4060/4066.
+
+**Correção:** (1) adicionada linha 4060/4066 na tabela "Como a IA reconhece" do DLO; (2) corrigida linha errada em "O que NÃO é DLO"; (3) removidas referências a COS4060/4066 da tabela DLI e adicionada linha em "O que NÃO é DLI".
+
+**Validação:** ✅ CONFIRMADO — varredura em 4786 threads históricas: 0 ocorrências de DLI com COS4060/4066.
+
+---
+
+### 07/08 15:30 — Spec §10: DLI_2062 é individual — só usa COS4010 e COS4016
+
+**🔎 Em miúdos:** a spec não deixava claro que o DLI é individual e nunca usa os arquivos de conglomerado (COS4060/4066). Regra explicitada na spec.
+
+**Decisão (Michel):** DLI_2062 é individual — usa apenas COS4010 e COS4016. COS4060/COS4066 = sempre DLO_2061.
+
+**Correção:** spec §10 DLI atualizada para refletir a regra com clareza. Ver entrada anterior para detalhe dos arquivos tocados.
+
+**Validação:** ✅ CONFIRMADO — histórico: 3 threads DLI com COSIF, todas com 4010 ou 4016, nenhuma com 4060/4066.
+
+---
+
+### 07/08 15:45 — Spec §10 tabela de referência: nomes padronizados + categorias faltantes + prazo RETORNO_BACEN
+
+**🔎 Em miúdos:** a tabela resumo do §10 tinha nomes inconsistentes (espaços vs underscore), faltavam 4 categorias inteiras e o prazo do RETORNO_BACEN estava incompleto.
+
+**Problema:** 8 de 12 categorias na tabela; nomes mistos ("DDR 2011" vs "DDR_2011"); prazo RETORNO_BACEN dizia "D+3 úteis" sem mencionar que o BACEN informa o prazo — o D+3 é só o padrão quando não é informado.
+
+**Correção:**
+- Nomes padronizados para `DDR_2011`, `SCD_4111`, `DRM_2060`, `DLO_2061`, `DLI_2062`, `DRL_2160`
+- Adicionadas 4 categorias faltantes: SUPORTE (sem prazo regulatório), FORCAPITAL (D+5), DRSAC_2030 (10º dia útil do 2º mês subsequente), PVCA_6209 (último dia útil do mês seguinte ao fim do trimestre)
+- RETORNO_BACEN prazo: "prazo informado pelo BACEN na crítica — se não explícito, D+3 úteis após data do e-mail"
+
+**Validação:** ✅ VALIDADO — prazos lidos diretamente das seções correspondentes da spec; consistente com o que estava em cada seção.
+
+---
+
+### 07/08 16:00 — Spec §10: DRM_2060 R4 responsável corrigido (Finaud → Cliente)
+
+**🔎 Em miúdos:** o status R4 do DRM dizia que quem aguardava era a Finaud — mas quem aguarda é o cliente. Invertido.
+
+**Problema:** R4 = "Finaud enviou análise, aguarda retorno do cliente" — responsável estava como "Finaud" quando deveria ser "Cliente".
+
+**Correção:** campo Responsável do R4 corrigido de "Finaud" para "Cliente".
+
+**Validação:** ✅ VALIDADO — leitura direta do contexto do status.
+
+---
+
+### 07/08 16:10 — Decisão: convites de calendário/reunião → SUPORTE (decisão de negócio)
+
+**🔎 Em miúdos:** antes ficava em aberto o que fazer com convites de reunião que chegam na caixa de suporte. Agora tem regra clara: é SUPORTE.
+
+**Decisão (Michel, 07/08/2026):** qualquer e-mail com invite.ics ou link de reunião (Teams, Meet, Zoom) = SUPORTE, mesmo que o assunto mencione um CADOC.
+
+**Correção:**
+- Spec §10 DRM_2060: removido "Sub-padrão convite de reunião" (era R2/DRM); adicionado aviso em R4 que convite.ics → SUPORTE
+- Spec §10 SUPORTE: adicionada regra explícita de convites de calendário
+- Spec §12 Decisões: fechado item "Convites deixados para Fase 3" com a decisão
+- PENDENCIAS.md: item "Convites de calendário chegam na caixa" removido da lista ativa
+
+**Validação:** ✅ VALIDADO — decisão de negócio confirmada por Michel; sem ambiguidade restante.
+
+---
+
+### 07/08 16:20 — Spec §14 reposicionado: estava entre §9 e §10, vai para após §13
+
+**🔎 Em miúdos:** o §14 (Hierarquia de regras para o classificador) estava no lugar errado no documento — aparecia antes de todo o §10. Movido para depois do §13.
+
+**Problema:** §14 aparecia entre §9 e §10, quebrando a ordem lógica do documento.
+
+**Correção:** bloco §14 removido da posição incorreta e reinserido após §13 (Plano de implantação) e antes do Apêndice A. Ordem final: §8→§9→§10→§11→§12→§13→§14→Apêndice A.
+
+**Validação:** ✅ VALIDADO — verificado no arquivo após a edição.
+
+---
+
 ## 2026-08-07 (continuação) — Investigação LEC + descoberta de problema estrutural na spec
 
 ### 07/08 11:00 — Validador: argumento `--filtrar-ids` adicionado
