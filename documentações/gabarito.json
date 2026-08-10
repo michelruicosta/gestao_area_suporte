@@ -1,0 +1,137 @@
+{
+  "versao": "1.0",
+  "atualizado": "2026-08-10",
+  "descricao": "Casos de classificação confirmados por Michel — usados como exemplos no prompt da IA. Cada padrão foi validado com dados reais da caixa suporte@finaud.com.br.",
+  "exemplos": [
+    {
+      "id": "G-DDR-001",
+      "categoria": "DDR_2011",
+      "padrao": "EXTRATO COMPROMISSADA no assunto",
+      "assunto_exemplo": "TRUSTEE DTVM - EXTRATO COMPROMISSADA 2026.07.22",
+      "corpo_tipico": "vazio ou só imagem — corpo não confirma",
+      "regra": "EXTRATO COMPROMISSADA no assunto = DDR_2011 sempre. O corpo pode estar vazio ou ser só imagem — o assunto basta.",
+      "confirmado_por": "Michel",
+      "data_confirmacao": "2026-08-07"
+    },
+    {
+      "id": "G-DDR-002",
+      "categoria": "DDR_2011",
+      "padrao": "Compromissadas no assunto (sem EXTRATO)",
+      "assunto_exemplo": "RES: Extratos das compromissadas Banvox dias 13 e 14",
+      "corpo_tipico": "corpo fraco sem referência a código CADOC",
+      "regra": "Compromissadas no assunto = DDR_2011. Cobre variações: 'Encaminhar Compromissadas', 'Extratos das compromissadas', 'Compromissada' em qualquer combinação.",
+      "confirmado_por": "Michel",
+      "data_confirmacao": "2026-08-07"
+    },
+    {
+      "id": "G-DDR-003",
+      "categoria": "DDR_2011",
+      "padrao": "Monte Bravo | Cadastro de Ações e Opções no assunto",
+      "assunto_exemplo": "Monte Bravo | Cadastro de Ações e Opções | 2026-07-22",
+      "corpo_tipico": "corpo sem referência explícita a DDR ou CADOC",
+      "regra": "Monte Bravo com 'Cadastro de Ações e Opções' no assunto = DDR_2011 sempre. É setup do DDR — o assunto basta mesmo sem menção a CADOC no corpo.",
+      "confirmado_por": "Michel",
+      "data_confirmacao": "2026-08-07"
+    },
+    {
+      "id": "G-DDR-004",
+      "categoria": "DDR_2011",
+      "padrao": "OP. SELIC no assunto",
+      "assunto_exemplo": "OP. SELIC ACTIVTRADES",
+      "corpo_tipico": "corpo fraco ou vazio",
+      "regra": "OP. SELIC no assunto = DDR_2011 sempre. Operação SELIC é um tipo de operação do mercado financeiro que gera DDR_2011. O assunto basta.",
+      "confirmado_por": "Michel",
+      "data_confirmacao": "2026-08-07"
+    },
+    {
+      "id": "G-DDR-005",
+      "categoria": "DDR_2011",
+      "padrao": "RE: DDR DIA no assunto",
+      "assunto_exemplo": "RE: DDR DIA 04/08",
+      "corpo_tipico": "corpo fraco — confirmação de entrega do dia",
+      "regra": "RE: DDR DIA no assunto = DDR_2011 sempre. São confirmações de entrega do DDR do dia — o assunto basta.",
+      "confirmado_por": "Michel",
+      "data_confirmacao": "2026-08-07"
+    },
+    {
+      "id": "G-DDR-006",
+      "categoria": "DDR_2011",
+      "padrao": "DDR seguido de intervalo de datas no assunto",
+      "assunto_exemplo": "DDR - 17/07 a 24/07",
+      "corpo_tipico": "corpo só imagem — IA não consegue ler",
+      "regra": "DDR seguido de intervalo de datas no assunto = DDR_2011 sempre. O corpo pode ser imagem — o padrão 'DDR - DATA a DATA' é suficiente.",
+      "confirmado_por": "Michel",
+      "data_confirmacao": "2026-08-07"
+    },
+    {
+      "id": "G-DDR-007",
+      "categoria": "DDR_2011",
+      "padrao": "Posição de Câmbio no assunto",
+      "assunto_exemplo": "Posição de Câmbio - 13/07 a 17/07",
+      "corpo_tipico": "corpo fraco sem código CADOC",
+      "regra": "Posição de Câmbio no assunto = DDR_2011. Cobre variações: 'Wise Posição de Câmbio', 'Posição de Câmbio - DATA a DATA'.",
+      "confirmado_por": "Michel",
+      "data_confirmacao": "2026-08-07"
+    },
+    {
+      "id": "G-DDR-008",
+      "categoria": "DDR_2011",
+      "padrao": "PCAM no assunto",
+      "assunto_exemplo": "ENC: PCAM 10.07.2026",
+      "corpo_tipico": "corpo fraco",
+      "regra": "PCAM no assunto = DDR_2011. PCAM é posição cambial — componente do DDR_2011.",
+      "confirmado_por": "Michel",
+      "data_confirmacao": "2026-08-07"
+    },
+    {
+      "id": "G-DDR-009",
+      "categoria": "DDR_2011",
+      "padrao": "TVM e Dep a Vista no assunto",
+      "assunto_exemplo": "Relatórios de TVM e Dep a Vista - 29/07/2026",
+      "corpo_tipico": "corpo fraco sem código CADOC",
+      "regra": "TVM (Títulos e Valores Mobiliários) e Depósito à Vista no assunto = DDR_2011. São componentes do DDR_2011.",
+      "confirmado_por": "Michel",
+      "data_confirmacao": "2026-08-07"
+    },
+    {
+      "id": "G-DDR-010",
+      "categoria": "DDR_2011",
+      "padrao": "Doc. 2011-LIM no assunto",
+      "assunto_exemplo": "RE: Geração do arquivo Doc. 2011-LIM de 16/06 - Sefer",
+      "corpo_tipico": "corpo fraco",
+      "regra": "Doc. 2011-LIM no assunto = DDR_2011. '2011' é o número do CADOC DDR — o assunto basta.",
+      "confirmado_por": "Michel",
+      "data_confirmacao": "2026-08-07"
+    },
+    {
+      "id": "G-DDR-011",
+      "categoria": "DDR_2011",
+      "padrao": "VMTM no assunto",
+      "assunto_exemplo": "Erro ao calcular o VMTM do dia 30/07/2026",
+      "corpo_tipico": "relato de erro técnico — parece SUPORTE mas é DDR",
+      "regra": "VMTM (Valor de Mercado a Tempo de Maturidade) no assunto = DDR_2011. É componente de cálculo do DDR_2011. Mesmo com 'Erro' no assunto, é DDR.",
+      "confirmado_por": "Michel",
+      "data_confirmacao": "2026-08-07"
+    },
+    {
+      "id": "G-DDR-012",
+      "categoria": "DDR_2011",
+      "padrao": "FLUXO DE CAIXA no assunto",
+      "assunto_exemplo": "2026.07.08 - FLUXO DE CAIXA - ZIIN",
+      "corpo_tipico": "corpo fraco sem código CADOC",
+      "regra": "FLUXO DE CAIXA no assunto = DDR_2011. É entrega de dados financeiros diários que compõem o DDR_2011.",
+      "confirmado_por": "Michel",
+      "data_confirmacao": "2026-08-10"
+    },
+    {
+      "id": "G-DDR-013",
+      "categoria": "DDR_2011",
+      "padrao": "POSICAO no assunto (Fair Corretora)",
+      "assunto_exemplo": "ENC: POSICAO 10.07.2026",
+      "corpo_tipico": "corpo fraco, anexo não reconhecido",
+      "regra": "POSICAO no assunto (especialmente da Fair Corretora) = DDR_2011. É relatório de posição financeira — componente do DDR_2011.",
+      "confirmado_por": "Michel",
+      "data_confirmacao": "2026-08-10"
+    }
+  ]
+}

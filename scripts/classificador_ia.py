@@ -22,8 +22,9 @@ MODELO = 'gpt-4o-mini'
 
 # ── Caminhos ──────────────────────────────────────────────────────────────────
 
-BASE_DIR     = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CAMINHO_SPEC = os.path.join(BASE_DIR, 'documentações', 'ESPECIFICACAO_NOVA_ARQUITETURA.md')
+BASE_DIR      = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CAMINHO_SPEC  = os.path.join(BASE_DIR, 'documentações', 'ESPECIFICACAO_NOVA_ARQUITETURA.md')
+CAMINHO_GAB   = os.path.join(BASE_DIR, 'documentações', 'gabarito.json')
 
 
 # ── Extração do §10 do arquivo de spec ────────────────────────────────────────
@@ -40,16 +41,58 @@ def _extrair_secao10(caminho: str) -> str:
     return m.group(1).strip()
 
 
+# ── Gabarito (few-shot examples) ──────────────────────────────────────────────
+
+def _formatar_gabarito(caminho: str) -> str:
+    """Lê gabarito.json e formata como seção de texto para o prompt."""
+    try:
+        with open(caminho, encoding='utf-8') as f:
+            dados = json.load(f)
+    except FileNotFoundError:
+        return ''
+
+    exemplos = dados.get('exemplos', [])
+    if not exemplos:
+        return ''
+
+    por_cat: dict[str, list] = {}
+    for ex in exemplos:
+        cat = ex.get('categoria', '')
+        por_cat.setdefault(cat, []).append(ex)
+
+    linhas = [
+        '## Exemplos confirmados — aprenda pelo exemplo',
+        '',
+        'Os casos abaixo foram revisados e confirmados por especialistas.',
+        'Quando o e-mail se encaixar num desses padrões, aplique a categoria indicada —',
+        'mesmo que o corpo esteja fraco, vazio ou em imagem.',
+        '',
+    ]
+    for cat, exs in por_cat.items():
+        linhas.append(f'**{cat} — padrões confirmados:**')
+        for ex in exs:
+            eid   = ex.get('id', '')
+            subj  = ex.get('assunto_exemplo', '')
+            regra = ex.get('regra', '')
+            linhas.append(f'• [{eid}] Exemplo: "{subj}" → {cat}')
+            linhas.append(f'  {regra}')
+        linhas.append('')
+
+    return '\n'.join(linhas)
+
+
 # ── Sistema (construído uma vez ao carregar o módulo) ─────────────────────────
 
 _SECAO10 = _extrair_secao10(CAMINHO_SPEC)
+_GAB     = _formatar_gabarito(CAMINHO_GAB)
+_GAB_SECAO = f'\n\n---\n\n{_GAB}' if _GAB else ''
 
 _SISTEMA = f"""Você é o classificador de e-mails regulatórios do sistema Oráculo 360 da Finaud.
 
 Sua função: dado um e-mail, identificar em qual(is) categoria(s) ele pertence com base \
 nas regras abaixo.
 
-{_SECAO10}
+{_SECAO10}{_GAB_SECAO}
 
 ---
 
