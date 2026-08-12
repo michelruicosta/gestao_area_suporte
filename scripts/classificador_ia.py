@@ -235,7 +235,10 @@ def _classificar_deterministico(
         return _ok(cats, f'sinal de CADOC no corpo ({", ".join(cats)})', None)
 
     # Camada 3 — CADOC pelos nomes dos anexos
-    cats = _detectar_cadoc(xu)
+    # Normaliza separadores de arquivo (_ e .) para espaço: DRM_2060.xml → DRM 2060 xml
+    # Sem isso, \bDRM\b não encontra "DRM" em "DRM_2060" porque _ é \w no regex.
+    xu_norm = xu.replace('_', ' ').replace('.', ' ')
+    cats = _detectar_cadoc(xu_norm)
     if cats:
         return _ok(cats, f'sinal de CADOC nos anexos ({", ".join(cats)})', None)
 

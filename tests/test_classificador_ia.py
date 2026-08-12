@@ -264,3 +264,107 @@ def test_buscar_imagens_filtra_por_indice(tmp_path, monkeypatch):
     assert '3_image002.jpg' in nomes, 'deve incluir 3_image002.jpg'
     assert '5_image001.png' not in nomes, 'não deve incluir imagens de outro índice'
     assert '3_documento.pdf' not in nomes, 'não deve incluir PDFs'
+
+
+# ── Camada 1: assunto detecta cada CADOC ─────────────────────────────────────
+
+@pytest.mark.parametrize('assunto,esperado', [
+    ('DDR - 22/07/2026',                  'DDR_2011'),
+    ('Doc. 2011-LIM',                     'DDR_2011'),
+    ('EXTRATO COMPROMISSADA - TRUSTEE',   'DDR_2011'),
+    ('Compromissadas JUNHO',              'DDR_2011'),
+    ('PCAM - JULHO',                      'DDR_2011'),
+    ('TVM - 30/06',                       'DDR_2011'),
+    ('VMTM - erro de cálculo',            'DDR_2011'),
+    ('DLO JUNHO 2026',                    'DLO_2061'),
+    ('2061 - envio mensal',               'DLO_2061'),
+    ('LEC - CÁLCULO JUNHO',               'DLO_2061'),
+    ('COS4016 DE JUNHO',                  'DLO_2061'),
+    ('DLI MAIO 2026',                     'DLI_2062'),
+    ('2062 - envio',                      'DLI_2062'),
+    ('DRM JUNHO',                         'DRM_2060'),
+    ('ARQUIVO DRM - AZUMI',               'DRM_2060'),
+    ('2060 - envio mensal',               'DRM_2060'),
+    ('DRL 2026',                          'DRL_2160'),
+    ('2160 - envio',                      'DRL_2160'),
+    ('CADOC 4111 JULHO',                  'SALDOS_CONTABEIS_DIARIOS_4111'),
+    ('Risk S5 JUNHO',                     'S5'),
+    ('AVISO DE ATRASO - DRM 2060',        'RETORNO_BACEN'),
+    ('INDICIO - DDR 2011',                'RETORNO_BACEN'),
+])
+def test_camada1_assunto_detecta_cadoc(assunto, esperado):
+    """Camada 1: assunto com sinal inequívoco → categoria correta."""
+    r = _classificar(assunto)
+    assert esperado in r['categorias'], (
+        f"Assunto '{assunto}': esperado '{esperado}', obtido {r['categorias']}"
+    )
+
+
+# ── Camada 2: corpo detecta quando assunto não tem sinal ─────────────────────
+
+@pytest.mark.parametrize('corpo,esperado', [
+    ('Preciso de ajuda com o DDR do mês',          'DDR_2011'),
+    ('Arquivo 2011 com problema de envio',          'DDR_2011'),
+    ('Envio do DLO - junho 2026',                   'DLO_2061'),
+    ('Arquivo 2061 está pendente',                  'DLO_2061'),
+    ('Cálculo do LEC está errado',                  'DLO_2061'),
+    ('Planilha DLI não foi aceita',                 'DLI_2062'),
+    ('Número 2062 — envio realizado',               'DLI_2062'),
+    ('Arquivo DRM com inconsistência',              'DRM_2060'),
+    ('Envio do 2060 do mês de junho',               'DRM_2060'),
+    ('DRL - envio realizado com sucesso',            'DRL_2160'),
+    ('Número 2160 — confirmado',                    'DRL_2160'),
+    ('Saldos contábeis 4111 enviados',              'SALDOS_CONTABEIS_DIARIOS_4111'),
+    ('Arquivo do S5 com erro',                      'S5'),
+    ('Arquivo DRSAC com rejeição',                  'DRSAC_2030'),
+    ('Entrega do CADOC 2030 — confirmada',          'DRSAC_2030'),
+    ('Arquivo PVCA rejeitado pelo sistema',         'PVCA_6209'),
+    ('Entrega do 6209 do segundo trimestre',        'PVCA_6209'),
+    ('Aviso de atraso recebido do BACEN',           'RETORNO_BACEN'),
+])
+def test_camada2_corpo_detecta_cadoc(corpo, esperado):
+    """Camada 2: corpo com sinal de CADOC quando assunto não tem → categoria correta."""
+    r = _classificar('dúvida', corpo=corpo)
+    assert esperado in r['categorias'], (
+        f"Corpo '{corpo[:50]}': esperado '{esperado}', obtido {r['categorias']}"
+    )
+
+
+# ── Camada 3: nome do anexo detecta quando assunto/corpo não têm sinal ────────
+
+@pytest.mark.parametrize('nome_anexo,esperado', [
+    ('COS4010_JUNHO.xml',                   'DLO_2061'),
+    ('COS4016_JULHO.xml',                   'DLO_2061'),
+    ('LEC_2026_06.xlsx',                    'DLO_2061'),
+    ('EXTRATO_COMPROMISSADA_JUNHO.xml',     'DDR_2011'),
+    ('DDR_DIARIO_22072026.xml',             'DDR_2011'),
+    ('SALDOS_CONTABEIS_4111_JUN.xlsx',      'SALDOS_CONTABEIS_DIARIOS_4111'),
+    ('DRM_2060_JUNHO.xml',                  'DRM_2060'),
+    ('DRL_2160_JULHO.xml',                  'DRL_2160'),
+    ('DLI_2062_JUN.xml',                    'DLI_2062'),
+])
+def test_camada3_anexo_detecta_cadoc(nome_anexo, esperado):
+    """Camada 3: nome de anexo com sinal de CADOC quando assunto/corpo sem sinal → categoria correta."""
+    r = _classificar('envio de arquivo', corpo='Segue em anexo.', nomes_anexos=[nome_anexo])
+    assert esperado in r['categorias'], (
+        f"Anexo '{nome_anexo}': esperado '{esperado}', obtido {r['categorias']}"
+    )
+
+
+# ── Camada 4: padrões de e-mail INTERNO ──────────────────────────────────────
+
+@pytest.mark.parametrize('assunto', [
+    'Boas-vindas à equipe Finaud',
+    'Bem-vindo ao time!',
+    'Comunicado de Saída — João Silva',
+    'Comunicado de saida da colaboradora',
+    'Seu código de verificação da conta Risk Driver',
+    'Bruno convidou você para a reunião no Microsoft Teams',
+    'Visita Finaud — agendamento',
+])
+def test_camada4_interno_por_assunto(assunto):
+    """Camada 4: assunto com padrão de e-mail interno → INTERNO (não SUPORTE)."""
+    r = _classificar(assunto)
+    assert r['categorias'] == ['INTERNO'], (
+        f"Assunto '{assunto}': esperado ['INTERNO'], obtido {r['categorias']}"
+    )
