@@ -183,6 +183,24 @@ Mantido: bypass do registro (thread confirmada → retorna salvo sem reprocessar
 
 ---
 
+### Correção 06 — 12/08/2026 — Registro: 15 threads DLO+DLI sem sinal de DLI corrigidas para DLO
+
+**🔎 Em miúdos:** 15 threads estavam marcadas como "DLO e DLI" no registro, mas nenhuma delas
+tinha a palavra "DLI" ou o número "2062" em nenhum lugar do e-mail. Como a regra é "DLI só é
+classificado se aparecer no texto", essas 15 foram corrigidas para só DLO.
+
+**Problema:** ao confirmar manualmente as threads, algumas foram marcadas DLO+DLI com base em
+contexto de negócio, não em sinal textual. A regra determinística exige sinal explícito no texto.
+
+**Correção:** 15 entradas no `data/registro_definitivo_threads.json` tiveram `categorias` alterado
+de `["DLI_2062", "DLO_2061"]` para `["DLO_2061"]`. Backup em:
+`data/backups/20260812_1817_correcao_registro_dlo_dli/`.
+
+**Validação:** ✅ VALIDADO — validação completa: 663/767 (86,4%); era 652/767 (85,0%).
+sem teste: alteração no registro de dados, não em código.
+
+---
+
 ### Correção 05 — 12/08/2026 — PI Exposure (relatório de posição Mirae Asset) não reconhecido como DDR
 
 **🔎 Em miúdos:** e-mails com "PI Exposure MiraeAsset Securities" no assunto iam para SUPORTE.
