@@ -201,6 +201,29 @@ sem teste: alteração no registro de dados, não em código.
 
 ---
 
+### Correção 08 — 12/08/2026 — "REJEITADO" no assunto não reconhecido como RETORNO_BACEN
+
+**🔎 Em miúdos:** quando o BACEN recusava um arquivo, o cliente encaminhava o e-mail com "REJEITADO"
+no assunto. O classificador via "DRM" ou "DLO" ou "4111" e parava aí — não percebía que era uma
+notificação de problema do BACEN.
+
+**Problema:** "REJEITADO" no assunto não estava na lista de sinais de RETORNO_BACEN. O CADOC
+presente no assunto (ex.: DRM 2060, DLO, 4111) disparava na Camada 1b antes de qualquer sinal
+RETORNO, e o classificador retornava só o CADOC.
+
+**Correção:** adicionado `if 'REJEITADO' in assunto_u: return True` à função `_tem_retorno_bacen`,
+verificado **só no assunto** (não no corpo — no corpo, "rejeitado" aparece em contextos normais
+como "o arquivo enviado foi rejeitado pelo sistema da empresa").
+
+**Simulação prévia:** varredura em todos os 767 dados confirmados — 8 threads com "REJEITADO" no
+assunto, todas RETORNO_BACEN, zero exceções. +7 ganhos, 0 regressões reais.
+
+**Testes:** 5 casos adicionados em `test_correcao08_rejeitado_assunto_retorno_bacen`.
+
+**Validação:** ✅ VALIDADO — `pytest tests/ -q` 90/90 passando; validação completa: 673/767 (87,7%); era 666/767 (86,8%).
+
+---
+
 ### Correção 07 — 12/08/2026 — DLI no corpo/anexo não detectado quando assunto já era DLO (e vice-versa)
 
 **🔎 Em miúdos:** quando o assunto de um e-mail dizia "DLO", o classificador parava por aí e não

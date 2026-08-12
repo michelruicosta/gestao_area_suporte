@@ -413,3 +413,21 @@ def test_correcao07_assunto_dlo_anexo_dli():
     )
     assert 'DLO_2061' in r['categorias'], 'DLO deve estar nas categorias'
     assert 'DLI_2062' in r['categorias'], 'DLI deve ser detectado no nome do anexo'
+
+
+# ── Correção 08: REJEITADO no assunto → RETORNO_BACEN ────────────────────────
+
+@pytest.mark.parametrize('assunto', [
+    # Correção 08 — 12/08/2026: arquivo rejeitado = RETORNO_BACEN (não o CADOC do arquivo)
+    'UNICRED - DRM (2060) 30 06 2026 - REJEITADO',
+    'RES: GREEN DTVM - DRM 2060 - ARQUIVO REJEITADO',
+    'DRM 30 06 2026 - ENTREGUE E REJEITADO',
+    'Arquivo DLO maio rejeitado',
+    '4111 - REJEITADO',
+])
+def test_correcao08_rejeitado_assunto_retorno_bacen(assunto):
+    """Correção 08 — 'REJEITADO' no assunto → RETORNO_BACEN (arquivo recusado pelo BACEN)."""
+    r = _classificar(assunto)
+    assert r['categorias'] == ['RETORNO_BACEN'], (
+        f"Assunto '{assunto}': esperado ['RETORNO_BACEN'], obtido {r['categorias']}"
+    )

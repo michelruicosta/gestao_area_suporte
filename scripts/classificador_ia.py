@@ -116,6 +116,9 @@ def _tem_retorno_bacen(assunto_u: str, corpo_u: str) -> bool:
     # INDICIO/INDÍCIO: só no assunto — no corpo é termo técnico comum
     if any(s in assunto_u for s in _RETORNO_SINAIS_INDICIO):
         return True
+    # REJEITADO: só no assunto — no corpo aparece em contextos normais (ex.: "o arquivo foi rejeitado")
+    if 'REJEITADO' in assunto_u:
+        return True
     return False
 
 
