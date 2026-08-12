@@ -1,137 +1,473 @@
 {
-  "versao": "1.0",
-  "atualizado": "2026-08-10",
-  "descricao": "Casos de classificação confirmados por Michel — usados como exemplos no prompt da IA. Cada padrão foi validado com dados reais da caixa suporte@finaud.com.br.",
-  "exemplos": [
+  "versao": "2.0",
+  "atualizado": "2026-08-12",
+  "descricao": "Regras e gabaritos de classificação confirmados por Michel. Regras cobrem padrões recorrentes e claros. Gabaritos cobrem casos que a regra sozinha deixa em dúvida.",
+  "regras": [
     {
-      "id": "G-DDR-001",
-      "categoria": "DDR_2011",
-      "padrao": "EXTRATO COMPROMISSADA no assunto",
-      "assunto_exemplo": "TRUSTEE DTVM - EXTRATO COMPROMISSADA 2026.07.22",
-      "corpo_tipico": "vazio ou só imagem — corpo não confirma",
-      "regra": "EXTRATO COMPROMISSADA no assunto = DDR_2011 sempre. O corpo pode estar vazio ou ser só imagem — o assunto basta.",
+      "id": "DDR - Regra 01 - EXTRATO COMPROMISSADA",
+      "categorias": [
+        "DDR_2011"
+      ],
+      "padrao": "Assunto contém 'EXTRATO COMPROMISSADA'",
+      "instrucao": "Classifique como DDR_2011. O assunto basta, mesmo com corpo vazio ou só imagem.",
+      "excecao": "",
       "confirmado_por": "Michel",
-      "data_confirmacao": "2026-08-07"
+      "data": "2026-08-12"
     },
     {
-      "id": "G-DDR-002",
-      "categoria": "DDR_2011",
-      "padrao": "Compromissadas no assunto (sem EXTRATO)",
-      "assunto_exemplo": "RES: Extratos das compromissadas Banvox dias 13 e 14",
-      "corpo_tipico": "corpo fraco sem referência a código CADOC",
-      "regra": "Compromissadas no assunto = DDR_2011. Cobre variações: 'Encaminhar Compromissadas', 'Extratos das compromissadas', 'Compromissada' em qualquer combinação.",
+      "id": "DDR - Regra 02 - Compromissadas",
+      "categorias": [
+        "DDR_2011"
+      ],
+      "padrao": "Assunto contém 'Compromissada', 'Compromissadas', 'Extratos das compromissadas' ou variações",
+      "instrucao": "Classifique como DDR_2011.",
+      "excecao": "",
       "confirmado_por": "Michel",
-      "data_confirmacao": "2026-08-07"
+      "data": "2026-08-12"
     },
     {
-      "id": "G-DDR-003",
-      "categoria": "DDR_2011",
-      "padrao": "Monte Bravo | Cadastro de Ações e Opções no assunto",
-      "assunto_exemplo": "Monte Bravo | Cadastro de Ações e Opções | 2026-07-22",
-      "corpo_tipico": "corpo sem referência explícita a DDR ou CADOC",
-      "regra": "Monte Bravo com 'Cadastro de Ações e Opções' no assunto = DDR_2011 sempre. É setup do DDR — o assunto basta mesmo sem menção a CADOC no corpo.",
+      "id": "DDR - Regra 03 - Cadastro de Ações e Opções",
+      "categorias": [
+        "DDR_2011"
+      ],
+      "padrao": "Assunto contém 'Cadastro de Ações e Opções' — ex.: 'Monte Bravo | Cadastro de Ações e Opções'",
+      "instrucao": "Classifique como DDR_2011. O cliente pede o cadastro para gerar o DDR — o assunto basta mesmo sem mencionar DDR ou CADOC no corpo.",
+      "excecao": "",
       "confirmado_por": "Michel",
-      "data_confirmacao": "2026-08-07"
+      "data": "2026-08-12"
     },
     {
-      "id": "G-DDR-004",
-      "categoria": "DDR_2011",
-      "padrao": "OP. SELIC no assunto",
-      "assunto_exemplo": "OP. SELIC ACTIVTRADES",
-      "corpo_tipico": "corpo fraco ou vazio",
-      "regra": "OP. SELIC no assunto = DDR_2011 sempre. Operação SELIC é um tipo de operação do mercado financeiro que gera DDR_2011. O assunto basta.",
+      "id": "DDR - Regra 04 - Operação SELIC",
+      "categorias": [
+        "DDR_2011"
+      ],
+      "padrao": "Assunto contém 'OP. SELIC' ou 'Operação SELIC'",
+      "instrucao": "Classifique como DDR_2011. Operação SELIC é tipo de operação do mercado financeiro que compõe o DDR_2011.",
+      "excecao": "",
       "confirmado_por": "Michel",
-      "data_confirmacao": "2026-08-07"
+      "data": "2026-08-12"
     },
     {
-      "id": "G-DDR-005",
-      "categoria": "DDR_2011",
-      "padrao": "RE: DDR DIA no assunto",
-      "assunto_exemplo": "RE: DDR DIA 04/08",
-      "corpo_tipico": "corpo fraco — confirmação de entrega do dia",
-      "regra": "RE: DDR DIA no assunto = DDR_2011 sempre. São confirmações de entrega do DDR do dia — o assunto basta.",
+      "id": "DDR - Regra 05 - DDR mais data",
+      "categorias": [
+        "DDR_2011"
+      ],
+      "padrao": "Assunto contém 'DDR' seguido de data ou intervalo — ex.: 'DDR DIA 22/07', 'DDR - 17/07 a 24/07', 'RE: DDR'",
+      "instrucao": "Classifique como DDR_2011.",
+      "excecao": "Se o e-mail mencionar crítica ou rejeição do BACEN → classifique como RETORNO_BACEN.",
       "confirmado_por": "Michel",
-      "data_confirmacao": "2026-08-07"
+      "data": "2026-08-12"
     },
     {
-      "id": "G-DDR-006",
-      "categoria": "DDR_2011",
-      "padrao": "DDR seguido de intervalo de datas no assunto",
-      "assunto_exemplo": "DDR - 17/07 a 24/07",
-      "corpo_tipico": "corpo só imagem — IA não consegue ler",
-      "regra": "DDR seguido de intervalo de datas no assunto = DDR_2011 sempre. O corpo pode ser imagem — o padrão 'DDR - DATA a DATA' é suficiente.",
+      "id": "DDR - Regra 06 - Posição de Câmbio",
+      "categorias": [
+        "DDR_2011"
+      ],
+      "padrao": "Assunto contém 'Posição de Câmbio' ou variações como 'Wise Posição de Câmbio'",
+      "instrucao": "Classifique como DDR_2011. Posição de Câmbio é componente do DDR_2011.",
+      "excecao": "",
       "confirmado_por": "Michel",
-      "data_confirmacao": "2026-08-07"
+      "data": "2026-08-12"
     },
     {
-      "id": "G-DDR-007",
-      "categoria": "DDR_2011",
-      "padrao": "Posição de Câmbio no assunto",
-      "assunto_exemplo": "Posição de Câmbio - 13/07 a 17/07",
-      "corpo_tipico": "corpo fraco sem código CADOC",
-      "regra": "Posição de Câmbio no assunto = DDR_2011. Cobre variações: 'Wise Posição de Câmbio', 'Posição de Câmbio - DATA a DATA'.",
+      "id": "DDR - Regra 07 - PCAM",
+      "categorias": [
+        "DDR_2011"
+      ],
+      "padrao": "Assunto contém 'PCAM'",
+      "instrucao": "Classifique como DDR_2011. PCAM é posição cambial — componente do DDR_2011.",
+      "excecao": "",
       "confirmado_por": "Michel",
-      "data_confirmacao": "2026-08-07"
+      "data": "2026-08-12"
     },
     {
-      "id": "G-DDR-008",
-      "categoria": "DDR_2011",
-      "padrao": "PCAM no assunto",
-      "assunto_exemplo": "ENC: PCAM 10.07.2026",
-      "corpo_tipico": "corpo fraco",
-      "regra": "PCAM no assunto = DDR_2011. PCAM é posição cambial — componente do DDR_2011.",
+      "id": "DDR - Regra 08 - TVM e Dep a Vista",
+      "categorias": [
+        "DDR_2011"
+      ],
+      "padrao": "Assunto contém 'TVM', 'Títulos e Valores Mobiliários' ou 'Dep a Vista'",
+      "instrucao": "Classifique como DDR_2011. TVM e Depósitos à Vista são componentes do DDR_2011.",
+      "excecao": "",
       "confirmado_por": "Michel",
-      "data_confirmacao": "2026-08-07"
+      "data": "2026-08-12"
     },
     {
-      "id": "G-DDR-009",
-      "categoria": "DDR_2011",
-      "padrao": "TVM e Dep a Vista no assunto",
-      "assunto_exemplo": "Relatórios de TVM e Dep a Vista - 29/07/2026",
-      "corpo_tipico": "corpo fraco sem código CADOC",
-      "regra": "TVM (Títulos e Valores Mobiliários) e Depósito à Vista no assunto = DDR_2011. São componentes do DDR_2011.",
+      "id": "DDR - Regra 09 - Doc. 2011",
+      "categorias": [
+        "DDR_2011"
+      ],
+      "padrao": "Assunto contém '2011', 'Doc. 2011' ou '2011-LIM'",
+      "instrucao": "Classifique como DDR_2011. '2011' é o número do CADOC DDR — o assunto sempre vence, mesmo que o corpo diga 'não há entrega hoje'.",
+      "excecao": "",
       "confirmado_por": "Michel",
-      "data_confirmacao": "2026-08-07"
+      "data": "2026-08-12"
     },
     {
-      "id": "G-DDR-010",
-      "categoria": "DDR_2011",
-      "padrao": "Doc. 2011-LIM no assunto",
-      "assunto_exemplo": "RE: Geração do arquivo Doc. 2011-LIM de 16/06 - Sefer",
-      "corpo_tipico": "corpo fraco",
-      "regra": "Doc. 2011-LIM no assunto = DDR_2011. '2011' é o número do CADOC DDR — o assunto basta.",
+      "id": "DDR - Regra 10 - Componentes de cálculo com Erro",
+      "categorias": [
+        "DDR_2011"
+      ],
+      "padrao": "Assunto contém 'VMTM', 'Taxa Referencial DDR' ou outros componentes de cálculo do DDR — mesmo com 'ERRO' no assunto",
+      "instrucao": "Classifique como DDR_2011. Componentes de cálculo do DDR são parte do DDR_2011. A palavra 'ERRO' no assunto não muda a categoria.",
+      "excecao": "",
       "confirmado_por": "Michel",
-      "data_confirmacao": "2026-08-07"
+      "data": "2026-08-12"
     },
     {
-      "id": "G-DDR-011",
-      "categoria": "DDR_2011",
-      "padrao": "VMTM no assunto",
-      "assunto_exemplo": "Erro ao calcular o VMTM do dia 30/07/2026",
-      "corpo_tipico": "relato de erro técnico — parece SUPORTE mas é DDR",
-      "regra": "VMTM (Valor de Mercado a Tempo de Maturidade) no assunto = DDR_2011. É componente de cálculo do DDR_2011. Mesmo com 'Erro' no assunto, é DDR.",
+      "id": "DLO - Regra 01 - DLO no assunto sempre",
+      "categorias": [
+        "DLO_2061"
+      ],
+      "padrao": "Assunto contém 'DLO'",
+      "instrucao": "Classifique como DLO_2061. O objetivo do e-mail é o DLO, independente do corpo — reunião, convite, erro, dúvida ou agradecimento não mudam a categoria.",
+      "excecao": "",
       "confirmado_por": "Michel",
-      "data_confirmacao": "2026-08-07"
+      "data": "2026-08-12"
     },
     {
-      "id": "G-DDR-012",
-      "categoria": "DDR_2011",
-      "padrao": "FLUXO DE CAIXA no assunto",
-      "assunto_exemplo": "2026.07.08 - FLUXO DE CAIXA - ZIIN",
-      "corpo_tipico": "corpo fraco sem código CADOC",
-      "regra": "FLUXO DE CAIXA no assunto = DDR_2011. É entrega de dados financeiros diários que compõem o DDR_2011.",
+      "id": "DLO - Regra 02 - Número 2061 ou LEC",
+      "categorias": [
+        "DLO_2061"
+      ],
+      "padrao": "Assunto contém '2061' ou 'LEC'",
+      "instrucao": "Classifique como DLO_2061.",
+      "excecao": "Se contiver também '2062' ou 'DLI' → classifique como DLO_2061 + DLI_2062.",
       "confirmado_por": "Michel",
-      "data_confirmacao": "2026-08-10"
+      "data": "2026-08-12"
     },
     {
-      "id": "G-DDR-013",
-      "categoria": "DDR_2011",
-      "padrao": "POSICAO no assunto (Fair Corretora)",
+      "id": "DRL - Regra 01 - DRL ou 2160",
+      "categorias": [
+        "DRL_2160"
+      ],
+      "padrao": "Assunto contém 'DRL' ou '2160'",
+      "instrucao": "Classifique como DRL_2160.",
+      "excecao": "",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
+    },
+    {
+      "id": "DRM - Regra 01 - DRM ou 2060",
+      "categorias": [
+        "DRM_2060"
+      ],
+      "padrao": "Assunto contém 'DRM', '2060' ou 'ARQUIVO DRM'",
+      "instrucao": "Classifique como DRM_2060. O assunto sempre vence, mesmo que o corpo seja só um agradecimento de encerramento.",
+      "excecao": "",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
+    },
+    {
+      "id": "RETORNO - Regra 01 - Aviso de atraso do BACEN",
+      "categorias": [
+        "RETORNO_BACEN"
+      ],
+      "padrao": "Assunto ou conteúdo encaminhado contém 'AVISO DE ATRASO' ou 'BANCO CENTRAL - AVISO'",
+      "instrucao": "Classifique como RETORNO_BACEN. O remetente pode ser o cliente encaminhando o e-mail do BACEN — o conteúdo encaminhado é o que importa.",
+      "excecao": "",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
+    },
+    {
+      "id": "RETORNO - Regra 02 - Indício mais número CADOC",
+      "categorias": [
+        "RETORNO_BACEN"
+      ],
+      "padrao": "Assunto contém 'INDICIO' ou 'INDÍCIO' seguido de número de CADOC (2011, 4111, 2060, 2061, 2062, 2160)",
+      "instrucao": "Classifique como RETORNO_BACEN. INDÍCIO é a sigla do BACEN para 'Indício de Problema de Qualidade' — o BACEN notificou a Finaud sobre problema na entrega regulatória.",
+      "excecao": "",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
+    },
+    {
+      "id": "S5 - Regra 01 - S5 no assunto",
+      "categorias": [
+        "S5"
+      ],
+      "padrao": "Assunto contém 'S5' ou 'Risk S5'",
+      "instrucao": "Classifique como S5. O assunto basta — mesmo que o corpo seja vazio ou seja um aceite automático de reunião.",
+      "excecao": "",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
+    },
+    {
+      "id": "SALDOS - Regra 01 - Número 4111",
+      "categorias": [
+        "SALDOS_CONTABEIS_DIARIOS_4111"
+      ],
+      "padrao": "Assunto contém '4111', 'CADOC 4111' ou 'Doc 4111'",
+      "instrucao": "Classifique como SALDOS_CONTABEIS_DIARIOS_4111.",
+      "excecao": "",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
+    }
+  ],
+  "gabaritos": [
+    {
+      "id": "DDR - Gabarito 01 - POSICAO Fair Corretora",
+      "categorias": [
+        "DDR_2011"
+      ],
+      "regra_base": "",
       "assunto_exemplo": "ENC: POSICAO 10.07.2026",
-      "corpo_tipico": "corpo fraco, anexo não reconhecido",
-      "regra": "POSICAO no assunto (especialmente da Fair Corretora) = DDR_2011. É relatório de posição financeira — componente do DDR_2011.",
+      "por_que_gabarito": "Assunto genérico 'POSICAO' sem sinal claro de DDR. Sem este exemplo a IA classificaria como SUPORTE. 'POSICAO' enviado pela Fair Corretora é relatório de posição financeira — componente do DDR_2011.",
       "confirmado_por": "Michel",
-      "data_confirmacao": "2026-08-10"
+      "data": "2026-08-12"
+    },
+    {
+      "id": "DDR - Gabarito 02 - PUs dos títulos públicos",
+      "categorias": [
+        "DDR_2011"
+      ],
+      "regra_base": "",
+      "assunto_exemplo": "PUs dos títulos públicos 30/06/2026.",
+      "por_que_gabarito": "Sem 'DDR' ou '2011' no assunto. PUs (Preços Unitários) de LFTs e NTNs são dados de mercado que compõem o DDR_2011 — o assunto basta mesmo sem menção explícita ao CADOC.",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
+    },
+    {
+      "id": "DDR - Gabarito 03 - Assunto genérico corpo com VMTM e DLO",
+      "categorias": [
+        "DDR_2011",
+        "DLO_2061"
+      ],
+      "regra_base": "",
+      "assunto_exemplo": "duvidas finaud",
+      "por_que_gabarito": "Assunto totalmente genérico. O corpo contém duas dúvidas: (1) erro ao calcular VMTM nas ações — DDR_2011; (2) problema na planilha DLO — DLO_2061. Quando o assunto é genérico, o corpo define as categorias. Resultado: DDR_2011 + DLO_2061.",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
+    },
+    {
+      "id": "DLI - Gabarito 01 - Instrução normativa BCB com DLI 2062 no corpo",
+      "categorias": [
+        "DLI_2062"
+      ],
+      "regra_base": "",
+      "assunto_exemplo": "ENC: INSTRUÇÃO NORMATIVA BCB Nº 749",
+      "por_que_gabarito": "Assunto parece comunicado regulatório genérico — poderia ser SUPORTE. O corpo menciona explicitamente 'DLI 2062' perguntando se o sistema está parametrizado. O corpo define a categoria quando o assunto não tem número de CADOC.",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
+    },
+    {
+      "id": "DLO - Gabarito 01 - ERRO NO DLO",
+      "categorias": [
+        "DLO_2061"
+      ],
+      "regra_base": "DLO - Regra 01 - DLO no assunto sempre",
+      "assunto_exemplo": "ERRO NO DLO",
+      "por_que_gabarito": "Tem 'DLO' no assunto (cobre a Regra 01), mas 'ERRO' poderia levar a IA a classificar como SUPORTE. Este exemplo ancora que ERRO sobre DLO ainda é DLO_2061.",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
+    },
+    {
+      "id": "DLO - Gabarito 02 - Alerta Risk Driver contas COSIF",
+      "categorias": [
+        "DLO_2061"
+      ],
+      "regra_base": "",
+      "assunto_exemplo": "ENC: Risk Driver - ID CORRETORA DE TITULOS E VALORES MOBILIARIOS S A - CONTA(S) COSIF(S) NÃO CADASTRADA(S) - 10:46:10",
+      "por_que_gabarito": "Assunto técnico de sistema sem 'DLO' explícito. É alerta do Risk Driver relacionado ao DLO 2061 — o cliente busca esclarecimento sobre alerta recebido ao realizar o DLO.",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
+    },
+    {
+      "id": "DLO - Gabarito 03 - Tratamento prudencial Direitos de Uso",
+      "categorias": [
+        "DLO_2061"
+      ],
+      "regra_base": "DLO - Regra 01 - DLO no assunto sempre",
+      "assunto_exemplo": "Solicitação de orientação técnica – Tratamento prudencial dos Direitos de Uso na apuração do DLO",
+      "por_que_gabarito": "Tem 'DLO' no assunto longo e técnico. Âncora para que a IA reconheça que orientação técnica sobre componentes do DLO ainda é DLO_2061.",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
+    },
+    {
+      "id": "DLO - Gabarito 04 - SANTS 2061 e 2062",
+      "categorias": [
+        "DLO_2061",
+        "DLI_2062"
+      ],
+      "regra_base": "DLO - Regra 02 - Número 2061 ou LEC",
+      "assunto_exemplo": "[SANTS] 2061 e 2062 - 05/2026",
+      "por_que_gabarito": "Assunto com 2061 e 2062 juntos. Cobre a exceção da Regra 02: quando 2062 aparece junto com 2061, classifica como DLO_2061 + DLI_2062. Remetente de bacenregulatorio.com coordenando entrega dos dois arquivos.",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
+    },
+    {
+      "id": "DLO - Gabarito 05 - Índice de basileia com referência ao DLO",
+      "categorias": [
+        "DLO_2061"
+      ],
+      "regra_base": "",
+      "assunto_exemplo": "RES: UNVERIFIED SENDER Re: Indice de basileia",
+      "por_que_gabarito": "Índice de basileia no assunto parece dúvida regulatória genérica — poderia ser SUPORTE. O corpo faz referência específica ao DLO e preocupações de conformidade com o DLO_2061.",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
+    },
+    {
+      "id": "DRL - Gabarito 01 - Norma BCB Risco de Liquidez sem DRL no assunto",
+      "categorias": [
+        "DRL_2160"
+      ],
+      "regra_base": "",
+      "assunto_exemplo": "RES: Norma BCB - Risco de Liquidez e LCR",
+      "por_que_gabarito": "Sem 'DRL' ou '2160' no assunto — a Regra 01 não captura. O corpo menciona explicitamente o preenchimento do DRL. 'Risco de Liquidez' e 'LCR' no assunto são pistas mas não suficientes — o corpo confirma.",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
+    },
+    {
+      "id": "DRL - Gabarito 02 - DLR typo de DRL",
+      "categorias": [
+        "DRL_2160"
+      ],
+      "regra_base": "DRL - Regra 01 - DRL ou 2160",
+      "assunto_exemplo": "DLR junho",
+      "por_que_gabarito": "Erro de digitação: 'DLR' em vez de 'DRL'. A Regra 01 busca 'DRL' mas este assunto tem 'DLR'. O corpo confirma que é envio de dados para o DRL. Âncora para que a IA reconheça typos comuns.",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
+    },
+    {
+      "id": "DRM - Gabarito 01 - ARQUIVO DRM com encerramento",
+      "categorias": [
+        "DRM_2060"
+      ],
+      "regra_base": "DRM - Regra 01 - DRM ou 2060",
+      "assunto_exemplo": "RES: ARQUIVO DRM - AZUMI",
+      "por_que_gabarito": "Tem 'DRM' no assunto (cobre a Regra 01), mas o corpo é só resposta de encerramento curta ('Obrigada, era erro do próprio BC'). Âncora para que corpo de encerramento não leve a IA a classificar como SUPORTE.",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
+    },
+    {
+      "id": "SALDOS - Gabarito 01 - FLUXO DE CAIXA ZIIN sem 4111",
+      "categorias": [
+        "SALDOS_CONTABEIS_DIARIOS_4111"
+      ],
+      "regra_base": "",
+      "assunto_exemplo": "2026.07.14 - FLUXO DE CAIXA - ZIIN",
+      "por_que_gabarito": "Sem '4111' no assunto — a Regra 01 não captura. O anexo contém '4111' no nome. 'FLUXO DE CAIXA - ZIIN' é o padrão de envio desta empresa específica para o SALDOS_CONTABEIS_DIARIOS_4111.",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
+    },
+    {
+      "id": "SUPORTE - Gabarito 01 - Re: duvida assunto genérico",
+      "categorias": [
+        "SUPORTE"
+      ],
+      "regra_base": "",
+      "assunto_exemplo": "Re: duvida",
+      "por_que_gabarito": "Assunto totalmente genérico sem sinal de CADOC. O corpo trata de alertas do sistema ou limites regulatórios sem mencionar número de CADOC. Âncora para que assuntos vagos sem CADOC sejam SUPORTE.",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
+    },
+    {
+      "id": "SUPORTE - Gabarito 02 - SUPORTE no assunto",
+      "categorias": [
+        "SUPORTE"
+      ],
+      "regra_base": "",
+      "assunto_exemplo": "SUPORTE",
+      "por_que_gabarito": "Assunto literalmente 'SUPORTE' ou 'suporte'. Sem menção a CADOC — é pedido de ajuda genérico.",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
+    },
+    {
+      "id": "SUPORTE - Gabarito 03 - PARCELA RWAJUR3 técnico sem CADOC",
+      "categorias": [
+        "SUPORTE"
+      ],
+      "regra_base": "",
+      "assunto_exemplo": "PARCELA RWAJUR3 - COMPOSIÇÃO DA MEMÓRIA DE CÁLCULO",
+      "por_que_gabarito": "Assunto técnico que parece regulatório (RWAJUR3 é parcela de capital) mas não é CADOC que a Finaud entrega. É pedido de ajuda sobre composição de cálculo — SUPORTE.",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
+    },
+    {
+      "id": "SUPORTE - Gabarito 04 - CONTA 4.1.9.30 número de conta",
+      "categorias": [
+        "SUPORTE"
+      ],
+      "regra_base": "",
+      "assunto_exemplo": "CONTA 4.1.9.30",
+      "por_que_gabarito": "Número no assunto que parece código de CADOC mas é conta COSIF. Pergunta sobre como informar uma conta específica — SUPORTE, não CADOC.",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
+    },
+    {
+      "id": "SUPORTE - Gabarito 05 - Instrução normativa BCB sem pedido de CADOC",
+      "categorias": [
+        "SUPORTE"
+      ],
+      "regra_base": "",
+      "assunto_exemplo": "RES: INSTRUÇÃO NORMATIVA BCB N° 757, DE 8 DE JULHO DE 2026",
+      "por_que_gabarito": "Instrução normativa do BACEN no assunto poderia parecer RETORNO_BACEN, mas aqui é consulta sobre se a Finaud pode gerar um arquivo com base na nova norma — sem pedido de entrega de CADOC existente. SUPORTE.",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
+    },
+    {
+      "id": "SUPORTE - Gabarito 06 - Alinhamento controle acionário",
+      "categorias": [
+        "SUPORTE"
+      ],
+      "regra_base": "",
+      "assunto_exemplo": "Alinhamento para mudança de controle acionário",
+      "por_que_gabarito": "Comunicação administrativa sobre mudança de controle acionário — sem menção a CADOC ou entrega regulatória. SUPORTE.",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
+    },
+    {
+      "id": "SUPORTE - Gabarito 07 - ANÁLISE DE SENSIBILIDADE sem CADOC",
+      "categorias": [
+        "SUPORTE"
+      ],
+      "regra_base": "",
+      "assunto_exemplo": "ANÁLISE DE SENSIBILIDADE - VIS DTVM 06/2026",
+      "por_que_gabarito": "Pedido de ajuda para preencher quadro com dados financeiros sem referência a CADOC específico — SUPORTE.",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
+    },
+    {
+      "id": "SUPORTE - Gabarito 08 - CNPJ do fundo Mirae Asset",
+      "categorias": [
+        "SUPORTE"
+      ],
+      "regra_base": "",
+      "assunto_exemplo": "RES: Encaminhar o CNPJ do fundo Mirae Asset APEX fund LP. Composição da carteira.",
+      "por_que_gabarito": "Informação sobre composição de carteira e CNPJ de fundo sem pedido de entrega de CADOC — comunicação informativa geral. SUPORTE.",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
+    },
+    {
+      "id": "SUPORTE - Gabarito 09 - Re: Assuntos Importantes",
+      "categorias": [
+        "SUPORTE"
+      ],
+      "regra_base": "",
+      "assunto_exemplo": "Re: Assuntos Importantes",
+      "por_que_gabarito": "Assunto vago e genérico. O corpo oferece ajuda ou encaminha a outro colaborador — sem conteúdo regulatório específico. SUPORTE.",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
+    },
+    {
+      "id": "SUPORTE - Gabarito 10 - ARQUIVOS logística sem CADOC",
+      "categorias": [
+        "SUPORTE"
+      ],
+      "regra_base": "",
+      "assunto_exemplo": "ARQUIVOS",
+      "por_que_gabarito": "Assunto genérico 'ARQUIVOS' — o corpo informa ausência e orienta sobre envio de arquivos para outra pessoa. Sem menção a CADOC específico. SUPORTE.",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
+    },
+    {
+      "id": "SUPORTE - Gabarito 11 - Usuário e permissão de sistema",
+      "categorias": [
+        "SUPORTE"
+      ],
+      "regra_base": "",
+      "assunto_exemplo": "Usuário Ativo",
+      "por_que_gabarito": "Assunto genérico + corpo fala em usuário, permissão ou acesso a sistema interno (Risk Driver, sistema de senha, plataforma). A IA pode confundir o nome do sistema com algo regulatório — este gabarito ancora que acesso e gestão de usuário de sistema = SUPORTE, independente do nome do sistema.",
+      "confirmado_por": "Michel",
+      "data": "2026-08-12"
     }
   ]
 }

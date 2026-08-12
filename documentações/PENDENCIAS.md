@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Oráculo 360 Finaud
 
-**Atualizado:** 2026-08-07
+**Atualizado:** 2026-08-12
 **Organização:** por etapa que bloqueia — reorganizado em 03/08/2026 para seguir as fases sem brechas.
 **Regra:** este arquivo lista **só o que ainda falta** (aberto / aguardando decisão / backlog).
 Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada no
@@ -8,9 +8,31 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ---
 
-## ⏭ ETAPA ATUAL — Reduzir os 134 incertos do classificador (R6 baseline)
+## ⏭ ETAPA ATUAL — Aprovar gabarito v2.0 + reduzir os 134 incertos
 
-> Estado atual: 134 incertos (17,4%). Meta: aproximar de zero antes de implementar fallback.
+> Estado atual: gabarito v2.0 com 18 regras + 24 gabaritos integrado ao classificador.
+> Amostra de controle: 15/20 corretas — REPROVADA. 3 casos precisam ser investigados antes de aprovar.
+
+### 🔴 AMOSTRA — Investigar os 3 casos reprovados (um por vez) — (12/08/2026)
+
+Rodar o ciclo: analisar → corrigir spec ou gabarito → amostra → se aprovada → commitar.
+
+**Caso 1:** "[CV INVEST] DLO - 05/2026"
+- Esperado: `[DLO_2061]` → Obtido: `[DLO_2061, DLI_2062]`
+- Investigar: corpo menciona 4010/4016? Por que o GPT adicionou DLI?
+
+**Caso 2:** "2026.07.07 - FLUXO DE CAIXA - ZIIN"
+- Esperado: `[DDR_2011, SALDOS_CONTABEIS_DIARIOS_4111]` → Obtido: `[SALDOS_CONTABEIS_DIARIOS_4111]`
+- Investigar: "FLUXO DE CAIXA" está nas keywords DDR da spec? Por que DDR_2011 sumiu?
+
+**Caso 3:** "Erro do DRM e DLO"
+- Esperado: `[DLO_2061, DRM_2060, RETORNO_BACEN]` → Obtido: `[DLO_2061, DRM_2060]`
+- Investigar: corpo menciona crítica do BACEN? Por que RETORNO_BACEN sumiu?
+
+**Critério de aprovação após correções:** amostra de 20 threads com ≤ 1 INCERTO e 0 erros.
+**Quando aprovada:** commitar com tag `gabarito-v2-estavel`.
+
+**Arquivo de destino:** `documentações/gabarito.json` e/ou `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` §10.
 
 ---
 
@@ -99,32 +121,50 @@ Mapa dos incertos concluído. Abordagem aprovada: enriquecer a spec com o **sign
 
 ### 🟡 CLASSIFICADOR — Verificar dupla categoria: "COS 4010 junho/2026" (identificado 07/08/2026)
 
-Thread classificada como SCD_4111 + DLO_2061 com alta confiança. A IA viu COS4010 no assunto (→ DLO_2061) e "retificação do Doc 4111" no corpo (→ SCD_4111). Michel considerou correto por ora.
+Thread classificada como SALDOS_CONTABEIS_DIARIOS_4111 + DLO_2061 com alta confiança. A IA viu COS4010 no assunto (→ DLO_2061) e "retificação do Doc 4111" no corpo (→ SALDOS_CONTABEIS_DIARIOS_4111). Michel considerou correto por ora.
 
 **Dúvida:** o cliente tratava das duas entregas ao mesmo tempo ou só do DLO?
 **Quando revisar:** fase 3 — após corrigir erros confirmados e resolver os INCERTO.
 
 ---
 
-### 🟡 CLASSIFICADOR — Gabarito de exemplos: criar, testar e integrar ao classificador (identificado 07/08/2026)
+### 🔴 SPEC §10 — Definir 3 distinções que a IA não sabe fazer (identificado 10/08/2026)
 
-**O que é:** arquivo separado com casos de classificação confirmados por Michel — usado como exemplos no prompt do classificador para que a IA aprenda pelo exemplo, não só pela regra abstrata.
+Durante os testes do gabarito (v1.0 a v1.3), ficou claro que a IA não tem regra conceitual para distinguir 3 situações. Sem essa distinção no §10, o gabarito não consegue corrigir esses casos — exemplos patcham sintomas, mas a raiz está na falta de regra.
 
-**Por que:** a IA lê as regras do §10 mas sobrepõe seu próprio julgamento quando o corpo do e-mail está fraco. Com exemplos concretos, ela tem menos chance de alucinar ou ignorar regras. A visão de Michel é usar o gabarito para TODAS as categorias, não só os casos problemáticos.
+**As 3 distinções que precisam ser definidas na spec:**
 
-**Fluxo de teste para cada mudança no gabarito:**
-1. Rodar nos casos problemáticos (~25 threads: TRUSTEE, OP. SELIC, Monte Bravo INCERTO) → esses agora acertam?
-2. Rodar em amostra de ~50 threads dos 634 já corretos (`ids_controle.txt`) → algo que estava certo quebrou?
-3. Se ambos passarem → rodar os 136 INCERTOs completos → quantos ainda sobram?
+1. **Entrega de CADOC × SUPORTE**
+   Quando um e-mail entregando um arquivo regulatório é classificado como CADOC (SCD, DDR, DLO…) e quando é SUPORTE? A IA está adicionando SUPORTE a entregas válidas de CADOC quando o corpo do e-mail é curto ("Segue até o dia XX").
 
-**O que criar:**
-- `data/gabarito.json` — casos confirmados por Michel com assunto, categoria correta e explicação
-- `data/ids_controle.txt` — ~50 IDs dos 634 corretos para teste de regressão após cada mudança
-- Integração no `scripts/classificador_ia.py` — seção "Exemplos confirmados" no prompt, antes das instruções de classificação
+2. **SUPORTE × RETORNO_BACEN**
+   Quando o BACEN aparece no e-mail, é RETORNO_BACEN ou SUPORTE? A regra atual não separa claramente: RETORNO_BACEN = BACEN comunicando inconsistência sobre entrega nossa; SUPORTE = pedido de ajuda operacional sem BACEN envolvido.
 
-**Quando fazer:** após finalizar a análise dos 136 incertos e entender todos os padrões. O gabarito cresce com o projeto — cada novo caso edge confirmado por Michel entra no arquivo.
+3. **Arquivo 4016: quando é DLO, quando é DLI, quando os dois?**
+   O COS4010 pode ser DLO ou DLI. O arquivo 4016 também. Sem regra clara, a IA erra ou omite uma das categorias. A definição precisa estar na spec antes de qualquer exemplo no gabarito.
 
-**Resultado esperado:** menos incertos, menos alucinações, classificações mais consistentes em todas as categorias.
+**O que fazer:**
+1. Rascunhar as 3 regras com Michel (quem sabe o negócio decide os critérios)
+2. Escrever o texto no padrão do §10 e apresentar para aprovação
+3. Gravar na spec após OK
+4. Só então criar exemplos de gabarito para esses casos
+
+**Bloqueador para:** COS4010+4016 (multi-categoria), qualquer caso onde SUPORTE é adicionado junto com CADOC.
+
+**Arquivo de destino:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — §10.
+
+---
+
+### 🟡 CLASSIFICADOR — Gabarito v2.0: validar e expandir (atualizado 12/08/2026)
+
+**Estado atual (12/08/2026):** `documentações/gabarito.json` v2.0 criado — 18 regras + 24 gabaritos. Integrado ao `classificador_ia.py` e ao `chat_ensino.py`. Amostra de controle: REPROVADA (15/20 — ver item 🔴 acima).
+
+**O que resta:**
+1. Corrigir os 3 casos reprovados na amostra (item 🔴 acima)
+2. Após aprovação: usar `chat_ensino.py` para resolver os 134 incertos restantes — cada confirmação entra no registro e o gabarito pode crescer com novos exemplos
+3. Commitar com tag `gabarito-v2-estavel` após amostra aprovada
+
+**Resultado esperado:** menos incertos, mais consistência, gabarito crescendo a cada sessão de ensino.
 
 ---
 

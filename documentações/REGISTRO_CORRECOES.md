@@ -10,6 +10,109 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-08-12 — Gabarito v2.0: campo orientação + normalização SCD_4111 + limpeza
+
+### 12/08 14:50 — Backup dos dados do gabarito v1.x e limpeza da pasta de dados
+
+**🔎 Em miúdos:** antes de evoluir o gabarito para v2.0, todos os arquivos da fase de testes antiga foram colocados em pasta de backup segura para não misturar com os dados novos.
+
+**O que foi movido:** 33 arquivos de resultados de validação (`.jsonl`), 3 arquivos de IDs de threads, 8 backups soltos que estavam espalhados na pasta `data/`.
+
+**Backup em:** `data/backups/20260812_1450_dados_gabarito_v1/` com `CONTEXTO.md` explicando o motivo.
+
+**Validação:** ✅ VALIDADO — pasta `data/` limpa; backups verificados presentes na pasta de destino.
+
+---
+
+### 12/08 14:55 — Limpeza de testes do projeto antigo
+
+**🔎 Em miúdos:** a pasta `tests/` tinha 41 arquivos de teste da arquitetura antiga (pipeline de 16 scripts) que causavam 16 erros de importação quando rodávamos `pytest`. Removidos e backupados.
+
+**Problema:** `tests/` continha testes que importavam módulos como `triagem`, `executar_tudo`, `base_conhecimento_bacen` — que não existem mais neste projeto. Ao rodar `pytest tests/ -q`, apareciam 16 erros de coleta antes de chegar nos nossos testes.
+
+**Correção:** 41 arquivos movidos para `data/backups/20260812_1455_testes_projeto_antigo/`. Ficaram em `tests/` apenas: `__init__.py`, `conftest.py`, `test_classificador_ia.py`.
+
+**Validação:** ✅ VALIDADO — `pytest tests/ -q` sem erros de coleção; 12/12 passando na época.
+
+---
+
+### 12/08 15:10 — Normalização: SCD_4111 → SALDOS_CONTABEIS_DIARIOS_4111 no registro
+
+**🔎 Em miúdos:** o registro definitivo usava um nome antigo e abreviado para identificar as threads de saldos contábeis diários. Corrigido para o nome completo e canônico usado no resto do sistema.
+
+**Problema:** 116 threads no `registro_definitivo_threads.json` tinham `categorias: ["SCD_4111"]` — nome interno antigo que o classificador não reconhece. 1 thread adicional tinha `"DDR_2011, DRM_2060"` como string única em vez de lista `["DDR_2011", "DRM_2060"]`. Isso causava 2 falsos erros na amostra de controle (o GPT retornava o nome canônico correto, mas a comparação com o registro falhava).
+
+**Correção:** script de normalização aplicado ao registro: 116 ocorrências de `SCD_4111` → `SALDOS_CONTABEIS_DIARIOS_4111`; 1 string combinada → lista correta. Backup em `data/backups/20260812_1510_normalizacao_scd4111/`.
+
+**Contagem final do registro:** DDR_2011: 348, SALDOS_CONTABEIS_DIARIOS_4111: 117, DLO_2061: 82, RETORNO_BACEN: 60, DLI_2062: 52, SUPORTE: 44, DRM_2060: 39, DRL_2160: 27, S5: 4, FORCAPITAL: 1, DRSAC_2030: 1.
+
+**Validação:** ✅ VALIDADO — nenhum `SCD_4111` remanescente no registro confirmado por varredura.
+
+---
+
+### 12/08 15:30 — chat_ensino.py: `_formatar_gabarito_completo()` atualizado para v2.0
+
+**🔎 Em miúdos:** a ferramenta de ensino ainda lia o gabarito no formato antigo e ficava em branco — o gabarito novo tem estrutura diferente e a função não entendia.
+
+**Problema:** `_formatar_gabarito_completo()` em `scripts/chat_ensino.py` lia campo `exemplos` (formato v1.x). O gabarito v2.0 usa `regras` e `gabaritos`. A função retornava string vazia — nenhum exemplo aparecia na tela de ensino.
+
+**Correção:** função reescrita para ler `regras` (padrão + instrução + exceção) e `gabaritos` (assunto exemplo + por quê), no padrão do arquivo atual.
+
+**Validação:** ✅ sem teste — mudança só na exibição em tela; sem comportamento de classificação alterado. sem teste: função de formatação de tela sem lógica de negócio testável.
+
+---
+
+### 12/08 16:00 — Campo `orientacao` adicionado ao classificador
+
+**🔎 Em miúdos:** quando o GPT não conseguia classificar um e-mail, ficava em silêncio — não explicava o motivo nem dizia o que precisava para conseguir classificar. Agora ele explica.
+
+**Problema:** ao retornar `incerto: true` ou `categorias: []`, o GPT retornava só um `motivo` (o que viu de errado), mas sem orientar como ajudá-lo. Michel pediu que o GPT orientasse o que precisaria estar no e-mail para classificar com confiança.
+
+**Correção:**
+- Campo `orientacao` adicionado ao formato de resposta JSON no `_SISTEMA` de `scripts/classificador_ia.py`
+- Instrução explícita: `null` quando classifica com sucesso; preencher só quando `incerto: true` ou `categorias: []`
+- Exemplo de retorno INCERTO atualizado para incluir o campo
+- Teste `test_orientacao_no_sistema` adicionado — suite: 13/13 passando
+
+**Validação:** ✅ VALIDADO — 13/13 testes passando.
+
+---
+
+### 12/08 16:30 — SUPORTE: palavras genéricas expandidas + Gabarito 11 + remoção Regra 01
+
+**🔎 Em miúdos:** e-mails sobre gerenciamento de usuário e permissões de sistema ficavam INCERTO porque a IA não sabia que esse tipo de pedido é sempre SUPORTE, independente do nome do sistema. Adicionamos exemplos e removemos uma regra redundante.
+
+**Problema:** thread "Usuário Ativo" (assunto genérico, corpo sobre permissão/acesso ao sistema Risk Driver) ficava INCERTO. A spec e o gabarito não tinham sinal claro para esse padrão. A IA confundia o nome do sistema com algo regulatório.
+
+**Correção em 3 passos:**
+1. Palavras `"usuário"`, `"permissão"`, `"login"`, `"reset"` adicionadas à lista de "Palavras regulatórias genéricas" no `_SISTEMA` do classificador.
+2. SUPORTE Gabarito 11 ("Usuário Ativo") adicionado ao `documentações/gabarito.json`: assunto genérico + corpo sobre acesso a sistema = SUPORTE, independente do nome do sistema.
+3. SUPORTE Regra 01 removida do `gabarito.json` — era redundante com o Gabarito 11 recém-criado (regra de não duplicar confirmada por Michel).
+
+**Nota sobre "Usuário Ativo" na amostra:** a thread "Usuário Ativo" (ID `19faf95a26e0c55b`) permanece INCERTO na amostra de controle porque já está CONFIRMADA no registro — em produção o GPT é bypassado e ela retorna SUPORTE corretamente. O Gabarito 11 ancora e-mails futuros com o mesmo padrão.
+
+**Validação:** ✅ VALIDADO — 13/13 testes passando; normalização verificada no registro.
+
+---
+
+### 12/08 17:00 — Amostra de controle v2.0: 15/20 corretas — REPROVADA
+
+**🔎 Em miúdos:** rodamos 20 e-mails confirmados para checar se o gabarito v2.0 não quebrou nada — o resultado foi 15 corretos, 2 incertos e 3 errados. A amostra não passou.
+
+**Resultado:**
+- ✅ Corretas: 15/20
+- ❓ Incertas: 2/20 (limite: ≤ 1)
+- ❌ Erradas: 3/20 (limite: 0)
+
+**Casos pendentes de investigação (um por vez na próxima sessão):**
+1. "[CV INVEST] DLO - 05/2026" — esperado `[DLO_2061]`, obtido `[DLO_2061, DLI_2062]`
+2. "2026.07.07 - FLUXO DE CAIXA - ZIIN" — esperado `[DDR_2011, SALDOS_CONTABEIS_DIARIOS_4111]`, obtido `[SALDOS_CONTABEIS_DIARIOS_4111]`
+3. "Erro do DRM e DLO" — esperado `[DLO_2061, DRM_2060, RETORNO_BACEN]`, obtido `[DLO_2061, DRM_2060]`
+
+**Validação:** ⚠️ VALIDAÇÃO PENDENTE — investigar os 3 casos acima antes de aprovar o gabarito v2.0.
+
+---
+
 ## 2026-08-07 (sessão tarde) — Revisão spec: padronização, ambiguidades e decisões de negócio
 
 ### 07/08 15:00 — Spec §10: COS4060/4066 corrigidos para DLO_2061 (era erro)
@@ -43,7 +146,7 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 **Problema:** 8 de 12 categorias na tabela; nomes mistos ("DDR 2011" vs "DDR_2011"); prazo RETORNO_BACEN dizia "D+3 úteis" sem mencionar que o BACEN informa o prazo — o D+3 é só o padrão quando não é informado.
 
 **Correção:**
-- Nomes padronizados para `DDR_2011`, `SCD_4111`, `DRM_2060`, `DLO_2061`, `DLI_2062`, `DRL_2160`
+- Nomes padronizados para `DDR_2011`, `SALDOS_CONTABEIS_DIARIOS_4111`, `DRM_2060`, `DLO_2061`, `DLI_2062`, `DRL_2160`
 - Adicionadas 4 categorias faltantes: SUPORTE (sem prazo regulatório), FORCAPITAL (D+5), DRSAC_2030 (10º dia útil do 2º mês subsequente), PVCA_6209 (último dia útil do mês seguinte ao fim do trimestre)
 - RETORNO_BACEN prazo: "prazo informado pelo BACEN na crítica — se não explícito, D+3 úteis após data do e-mail"
 
@@ -188,7 +291,7 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 **🔎 Em miúdos:** verificamos se as threads que a IA já classificou corretamente estavam de fato corretas. Encontramos 11 com assunto suspeito e Michel revisou uma por uma.
 
-**Resultado:** todas as 11 corretas. Nenhuma classificação errada encontrada no grupo inicial — exceto 2 Monte Bravo (ver entrada abaixo). Um caso (COS 4010 junho/2026 — SCD_4111 + DLO_2061) ficou como pendência para revisar na fase 3.
+**Resultado:** todas as 11 corretas. Nenhuma classificação errada encontrada no grupo inicial — exceto 2 Monte Bravo (ver entrada abaixo). Um caso (COS 4010 junho/2026 — SALDOS_CONTABEIS_DIARIOS_4111 + DLO_2061) ficou como pendência para revisar na fase 3.
 
 **Validação:** ✅ VALIDADO por Michel em 07/08/2026.
 
@@ -233,7 +336,7 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 | DLO_2061 | ~15 | COS4010/4016, LEC, DLO+DLI multi, MIRAE BASILEIA |
 | RETORNO_BACEN | ~8 | AVISO DE ATRASO, INDICIO 2061, [SANTS] DRM, ARQUIVO DRM AZUMI |
 | DRL_2160 | ~4 | DRL JUNHO, ENVIAR DRL, TRINUS 2160, DLR junho (typo) |
-| SCD_4111 | ~3 | CADOC 4111 com datas |
+| SALDOS_CONTABEIS_DIARIOS_4111 | ~3 | CADOC 4111 com datas |
 | DLI_2062 | ~2 | Multi-categoria DLO+DLI, DLI CV e SCD |
 | DRM_2060 | ~2 | SMM 2060 senha (Finaud enviou zip) |
 | FORCAPITAL | ~2 | Testes de Stress Pilar 3 |
@@ -256,7 +359,7 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 **🔎 Em miúdos:** o classificador estava usando o padrão de aleatoriedade do OpenAI (temperatura 1.0), o que fazia o modelo dar respostas diferentes a cada rodada com o mesmo e-mail. Adicionamos temperatura 0 para tornar o sistema determinístico — mesma entrada, mesma saída sempre.
 
-**Problema:** sem `temperature=0` na chamada à API, o gpt-4o-mini usava o padrão 1.0. Isso significa que uma thread "RE: CADOC 4111" poderia ser classificada como SCD_4111 numa rodada e INCERTO na próxima, sem nenhuma mudança na spec. Isso tornava impossível diagnosticar se um INCERTO era causado pela spec ou pela aleatoriedade do modelo.
+**Problema:** sem `temperature=0` na chamada à API, o gpt-4o-mini usava o padrão 1.0. Isso significa que uma thread "RE: CADOC 4111" poderia ser classificada como SALDOS_CONTABEIS_DIARIOS_4111 numa rodada e INCERTO na próxima, sem nenhuma mudança na spec. Isso tornava impossível diagnosticar se um INCERTO era causado pela spec ou pela aleatoriedade do modelo.
 
 **Causa raiz:** `temperature` não foi definido na criação do script. Rodadas 1 e 2 tiveram bons resultados parcialmente por sorte estatística — o modelo "chutou certo" mais vezes. Com temp=0 o modelo admite incerteza genuína em vez de chutar.
 
@@ -944,7 +1047,7 @@ A spec dizia "Assunto vazio → Retenção imediata". Michel identificou que a I
 | Categoria | E-mails | Assinatura | Hist. `>` | Hist. `---` | Rodapé | `[image:]` | `[cid:]` |
 |---|---|---|---|---|---|---|---|
 | DDR_2011 | 2.350 | 96,4% | 37,1% | 22,1% | 95,5% | 23,9% | 18,9% |
-| SCD_4111 | 728 | 97,7% | 38,2% | 25,1% | 92,3% | 19,8% | 22,0% |
+| SALDOS_CONTABEIS_DIARIOS_4111 | 728 | 97,7% | 38,2% | 25,1% | 92,3% | 19,8% | 22,0% |
 | DRM_2060 | 163 | 96,3% | 35,0% | 16,6% | 98,2% | 22,1% | 27,6% |
 | DLO_2061 | 1.172 | 77,7% | 39,2% | 26,6% | 96,8% | 29,1% | 28,0% |
 | DLI_2062 | 119 | 88,2% | 47,1% | 31,9% | 100,0% | 37,8% | 22,7% |
@@ -1108,7 +1211,7 @@ Regras transversais confirmadas durante o processo:
 
 **🔎 Em miúdos:** quando a Finaud entrega o arquivo e assina com "Desde já agradeço" — ou quando o cliente responde "Obrigado" — isso não cria nenhuma pendência. A thread está encerrada.
 
-**Problema:** o sistema antigo interpretava frases de assinatura cortês do colaborador Lucas ("Desde já agradeço e permaneço à disposição") como pedido ao cliente, marcando a thread como Aguardando/Cliente quando na verdade o arquivo já havia sido entregue. 3 threads do SCD_4111 tinham esse gap documentado.
+**Problema:** o sistema antigo interpretava frases de assinatura cortês do colaborador Lucas ("Desde já agradeço e permaneço à disposição") como pedido ao cliente, marcando a thread como Aguardando/Cliente quando na verdade o arquivo já havia sido entregue. 3 threads do SALDOS_CONTABEIS_DIARIOS_4111 tinham esse gap documentado.
 
 **Correção:** regra universal adicionada ao §11.5 da especificação e aplicada a todas as 12 categorias: frase de cortesia/agradecimento/assinatura padrão após a entrega = Concluído, independente de quem enviou (Finaud ou cliente).
 
@@ -1132,4 +1235,52 @@ Regras transversais confirmadas durante o processo:
 - 98 arquivos novos commitados e enviados (sistema atual + nova arquitetura + testes + CI)
 
 **Validação:** ✅ Push confirmado no GitHub — `github.com/michelruicosta/gestao_area_suporte`; `.xlsx` não aparece no repositório remoto.
+
+---
+
+## 2026-08-11 — Arquitetura de classificação estável (registro definitivo)
+
+### 11/08 — Etapa 1: criado registro_definitivo_threads.json
+
+**🔎 Em miúdos:** criamos uma lista permanente que guarda a classificação confirmada de cada e-mail. Enquanto não mudar nada, essa lista é a verdade — o classificador consulta ela antes de perguntar pra IA.
+
+**Problema:** cada rodada de validação reprocessava todas as 768 threads chamando o GPT do zero. Threads que já estavam classificadas corretamente podiam mudar de resposta quando um novo gabarito era adicionado — sem aviso, sem proteção.
+
+**Correção:** criado `data/registro_definitivo_threads.json` a partir do baseline R6 (768 threads). Campos por thread: `assunto`, `categorias`, `status_regra` ("confirmada" / "incerta"), `regra_usada`, `motivo_regra_usada`, `data_confirmacao_regra`. Script de inicialização: `scripts/criar_registro_definitivo.py` (no scratchpad).
+
+**Validação:** ✅ VALIDADO — 768 threads carregadas: 634 confirmadas, 134 incertas. Estrutura verificada manualmente.
+
+---
+
+### 11/08 — Etapa 2: chat_ensino.py reescrito para ler e gravar no registro
+
+**🔎 Em miúdos:** o script de conversa (onde Michel e a IA discutem e-mails incertos) agora usa a lista permanente. Quando Michel confirma uma classificação, ela vai para a lista e aquele e-mail sai da fila de incertos para sempre.
+
+**Problema:** o `chat_ensino.py` lia os resultados da R6 (arquivo `.jsonl`) e não gravava nada permanente — as classificações confirmadas durante a conversa não ficavam salvas em nenhum lugar estruturado.
+
+**Correção:** `scripts/chat_ensino.py` reescrito com:
+- `carregar_registro()` substitui `carregar_resultados_etapa3()`
+- `confirmar_no_registro()` grava `status_regra: "confirmada"` após cada aprovação
+- `_montar_fila()` monta a fila a partir das threads "incerta" do registro (não mais do `.jsonl`)
+- `_verificar_impacto()` e `_buscar_casos_similares()` consultam as "confirmadas" do registro
+- Após salvar gabarito → thread imediatamente marcada como "confirmada" no registro
+
+**Validação:** ✅ VALIDADO — testes manuais: carregamento OK (150 casos na fila: 134 incertos + 16 regressões), `confirmar_no_registro` atualiza e restaura corretamente, 9/9 reconhecimentos de comando OK.
+
+---
+
+### 11/08 — Etapa 3: classificador_ia.py consulta registro antes de chamar o GPT
+
+**🔎 Em miúdos:** o classificador agora verifica a lista permanente antes de perguntar pra IA. Se o e-mail já foi classificado e confirmado, devolve a resposta guardada — sem custo de API, sem risco de mudança.
+
+**Problema:** o classificador chamava o GPT para todas as 768 threads toda vez que rodava. Threads com classificação confirmada podiam receber uma resposta diferente se o gabarito tivesse mudado.
+
+**Correção:** adicionado ao início de `classificar_thread()` (em `scripts/classificador_ia.py`):
+1. Busca o `thread_id` no registro
+2. Se encontrar com `status_regra == "confirmada"` → retorna resultado salvo (skip GPT)
+3. Caso contrário (incerta, sem_categoria, não encontrada) → chama GPT normalmente
+
+Cache lazy-load: o registro é lido do disco uma vez por processo e mantido em memória.
+
+**Validação:** ✅ VALIDADO — `pytest tests/test_classificador_ia.py -v`: 12/12 passando, incluindo 2 novos testes: `test_registro_thread_confirmada_nao_chama_gpt` e `test_registro_thread_incerta_chama_gpt`.
 
