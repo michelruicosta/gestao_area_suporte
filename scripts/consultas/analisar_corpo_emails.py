@@ -18,7 +18,7 @@ Projetos disponíveis (onde estão os dados reais):
   gestao_area_suporte     → NÃO usar (só amostra de teste, ~36 threads)
 
 Filtros por categoria:
-  DDR_2011     → '2011'       SCD_4111  → '4111'
+  DDR_2011     → '2011'       SALDOS_CONTABEIS_DIARIOS_4111  → '4111'
   DRM_2060     → '2060'       DLO_2061  → '2061'
   DLI_2062     → '2062'       DRL_2160  → '2160'
   S5           → 'S5'         SUPORTE   → 'SUPORTE'

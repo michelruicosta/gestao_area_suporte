@@ -31,7 +31,7 @@ MODELO = 'gpt-4o-mini'
 
 BASE_DIR      = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CAMINHO_SPEC  = os.path.join(BASE_DIR, 'documentações', 'ESPECIFICACAO_NOVA_ARQUITETURA.md')
-CAMINHO_GAB   = os.path.join(BASE_DIR, 'documentações', 'gabarito.json')
+CAMINHO_REGRAS = os.path.join(BASE_DIR, 'documentações', 'regras_classificador_threads.json')
 PASTA_ANEXOS     = os.path.join(BASE_DIR, 'data', 'email_anexos')
 ARQUIVO_REGISTRO = os.path.join(BASE_DIR, 'data', 'registro_definitivo_threads.json')
 
@@ -50,26 +50,54 @@ def _extrair_secao10(caminho: str) -> str:
     return m.group(1).strip()
 
 
-# ── Gabarito (few-shot examples) ──────────────────────────────────────────────
+# ── Regras do classificador (prioridade + reconhecimento + gabaritos) ──────────
 
-def _formatar_gabarito(caminho: str) -> str:
-    """Lê gabarito.json (v2) e formata regras + gabaritos para o prompt."""
+def _formatar_regras(caminho: str) -> str:
+    """Lê regras_classificador_threads.json e formata todas as seções para o prompt."""
     try:
         with open(caminho, encoding='utf-8') as f:
             dados = json.load(f)
     except FileNotFoundError:
         return ''
 
-    regras    = dados.get('regras', [])
-    gabaritos = dados.get('gabaritos', [])
-    if not regras and not gabaritos:
-        return ''
+    linhas: list[str] = []
+
+    # — Regras de prioridade —
+    prioridades = dados.get('regras_prioridade', [])
+    if prioridades:
+        linhas += ['## Regras de prioridade — aplique nesta ordem', '']
+        for p in sorted(prioridades, key=lambda x: x.get('ordem', 0)):
+            linhas.append(f'[{p["ordem"]}] {p["id"]}')
+            linhas.append(f'Instrução: {p["instrucao"]}')
+            if 'palavras_chave' in p:
+                linhas.append(f'Palavras-chave: {", ".join(p["palavras_chave"])}')
+            if 'sinais' in p:
+                s = p['sinais']
+                linhas.append(f'Sinais (números de CADOC): {", ".join(s.get("numeros_cadoc", []))}')
+                linhas.append(f'Sinais (siglas): {", ".join(s.get("siglas", []))}')
+                linhas.append(f'Sinais (formulários): {", ".join(s.get("formularios", []))}')
+                linhas.append(f'Sinais (frases): {", ".join(s.get("frases", []))}')
+            if 'sub_regra_dlo_dli' in p:
+                sr = p['sub_regra_dlo_dli']
+                linhas.append(f'Regra DLO/DLI: {sr["descricao"]}')
+                for row in sr.get('tabela', []):
+                    linhas.append(f'  • Se mencionar {row["menciona"]} → {row["classificacao"]}')
+            if 'palavras_nao_sinal' in p:
+                linhas.append(f'Palavras que NÃO acionam CADOC: {", ".join(p["palavras_nao_sinal"])}')
+            linhas.append('')
+        linhas += ['---', '']
 
     def _cat_principal(entrada: dict) -> str:
         cats = entrada.get('categorias', [])
         return cats[0] if cats else ''
 
-    linhas = [
+    # — Regras de reconhecimento —
+    regras    = dados.get('regras', [])
+    gabaritos = dados.get('gabaritos', [])
+    if not regras and not gabaritos:
+        return '\n'.join(linhas) if linhas else ''
+
+    linhas += [
         '## Regras confirmadas — aplicar sempre que o padrão aparecer',
         '',
         'Estas regras foram validadas por especialistas.',
@@ -83,10 +111,10 @@ def _formatar_gabarito(caminho: str) -> str:
     for cat in sorted(por_cat_reg):
         linhas.append(f'**{cat}:**')
         for r in por_cat_reg[cat]:
-            rid      = r.get('id', '')
-            padrao   = r.get('padrao', '')
+            rid       = r.get('id', '')
+            padrao    = r.get('padrao', '')
             instrucao = r.get('instrucao', '')
-            excecao  = r.get('excecao', '')
+            excecao   = r.get('excecao', '')
             linhas.append(f'• [{rid}]')
             linhas.append(f'  Padrão: {padrao}')
             linhas.append(f'  Instrução: {instrucao}')
@@ -94,6 +122,7 @@ def _formatar_gabarito(caminho: str) -> str:
                 linhas.append(f'  Exceção: {excecao}')
         linhas.append('')
 
+    # — Gabaritos —
     linhas += [
         '---',
         '',
@@ -109,7 +138,7 @@ def _formatar_gabarito(caminho: str) -> str:
     for cat in sorted(por_cat_gab):
         linhas.append(f'**{cat}:**')
         for g in por_cat_gab[cat]:
-            gid    = g.get('id', '')
+            gid     = g.get('id', '')
             assunto = g.get('assunto_exemplo', '')
             por_que = g.get('por_que_gabarito', '')
             cats_g  = g.get('categorias', [cat])
@@ -194,16 +223,16 @@ def _carregar_registro() -> dict:
 
 # ── Sistema (construído uma vez ao carregar o módulo) ─────────────────────────
 
-_SECAO10 = _extrair_secao10(CAMINHO_SPEC)
-_GAB     = _formatar_gabarito(CAMINHO_GAB)
-_GAB_SECAO = f'\n\n---\n\n{_GAB}' if _GAB else ''
+_SECAO10    = _extrair_secao10(CAMINHO_SPEC)
+_REGRAS     = _formatar_regras(CAMINHO_REGRAS)
+_REGRAS_SECAO = f'\n\n---\n\n{_REGRAS}' if _REGRAS else ''
 
 _SISTEMA = f"""Você é o classificador de e-mails regulatórios do sistema Oráculo 360 da Finaud.
 
 Sua função: dado um e-mail, identificar em qual(is) categoria(s) ele pertence com base \
 nas regras abaixo.
 
-{_SECAO10}{_GAB_SECAO}
+{_SECAO10}{_REGRAS_SECAO}
 
 ---
 
@@ -216,37 +245,6 @@ ou nome dos anexos.
 - Categorias válidas (use exatamente esses nomes):
   DDR_2011, SALDOS_CONTABEIS_DIARIOS_4111, DRM_2060, DLO_2061, DLI_2062, DRL_2160, S5,
   RETORNO_BACEN, FORCAPITAL, DRSAC_2030, PVCA_6209, SUPORTE
-
-## Regras de prioridade — aplique nesta ordem
-
-1. RETORNO_BACEN primeiro: quando o e-mail (no assunto, corpo ou histórico citado) \
-mencionar que o BACEN criticou, rejeitou ou notificou um problema sobre uma entrega \
-regulatória nossa — palavras-chave: "inconsistência", "aviso de atraso", "crítica", \
-"indício de problema de qualidade" — classifique como RETORNO_BACEN. O remetente não \
-importa: pode ser o próprio cliente encaminhando a mensagem do BACEN. Não combine \
-com CADOC.
-
-2. CADOC quando houver sinal: sinal de CADOC é qualquer referência à entrega de \
-relatório regulatório — especificamente: números de CADOC (2011, 4111, 2060, 2061, \
-2062, 2160), siglas (DDR, DRM, DLO, DLI, DRL, S5), frases-chave ("saldos contábeis"), \
-nomes de formulários (COS4010, COS4016, EXTRATO COMPROMISSADA, PCAM, TVM, LEC) ou \
-padrões de arquivo definidos no §10 acima. Se existir qualquer desses sinais → \
-classifique pelo CADOC. Nunca adicione SUPORTE junto.
-   Regra COS4010/COS4016: esses formulários servem a DLO e DLI. Sem menção explícita \
-a 2061 ou 2062 → DLO_2061. Com ambos juntos (COS4010 + COS4016) → DLO_2061 + DLI_2062. \
-Se 2062 ou "DLI" for explicitamente mencionado → DLI_2062 (ou DLO_2061 + DLI_2062).
-
-3. SUPORTE como padrão final: sem sinal de CADOC e sem conteúdo de RETORNO_BACEN → \
-classifique como SUPORTE. Nunca retorne INCERTO apenas porque não encontrou CADOC. \
-Use INCERTO somente quando houver sinal de CADOC mas não for possível determinar qual \
-categoria com confiança.
-   Palavras regulatórias genéricas — "BACEN", "basileia", "instrução normativa", \
-"limite operacional", "capital", "PLD/CFT", "risco de liquidez", "LCR", "senha", \
-"acesso", "usuário", "permissão", "login", "reset", "mailing", "comunicado", \
-"visita", "agendamento" — sem menção a número \
-de CADOC (2011, 4111, 2060, 2061, 2062, 2160) ou sigla específica (DDR, DRM, DLO, \
-DLI, DRL, S5) não são sinais de CADOC. Classifique como SUPORTE diretamente — \
-nunca como INCERTO quando a única razão de dúvida são essas palavras genéricas.
 
 ## Formato de resposta — JSON válido com esta estrutura exata:
 

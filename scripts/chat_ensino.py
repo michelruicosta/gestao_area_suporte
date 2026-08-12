@@ -32,7 +32,7 @@ BASE = r'D:\02_Finaud\Projetos\ativos\gestao_area_suporte'
 sys.path.insert(0, os.path.join(BASE, 'scripts'))
 load_dotenv(os.path.join(BASE, '.env'))
 
-from classificador_ia import _SISTEMA, CAMINHO_GAB, buscar_imagens, _extrair_texto_ocr
+from classificador_ia import _SISTEMA, CAMINHO_REGRAS, buscar_imagens, _extrair_texto_ocr
 
 cliente = OpenAI()
 
@@ -46,7 +46,7 @@ ARQUIVO_REGISTRO = os.path.join(BASE, 'data', 'registro_definitivo_threads.json'
 # ── Carregamento ───────────────────────────────────────────────────────────────
 
 def carregar_gabarito() -> dict:
-    with open(CAMINHO_GAB, encoding='utf-8') as f:
+    with open(CAMINHO_REGRAS, encoding='utf-8') as f:
         return json.load(f)
 
 
@@ -358,7 +358,7 @@ def _salvar_gabarito(gabarito: dict, novo: dict, registro: dict) -> bool:
 
     gabarito.setdefault('gabaritos', []).append(novo)
     gabarito['atualizado'] = datetime.now().strftime('%Y-%m-%d')
-    with open(CAMINHO_GAB, 'w', encoding='utf-8') as f:
+    with open(CAMINHO_REGRAS, 'w', encoding='utf-8') as f:
         json.dump(gabarito, f, ensure_ascii=False, indent=2)
     print(f'\nGabarito {novo["id"]} salvo.\n')
     return True

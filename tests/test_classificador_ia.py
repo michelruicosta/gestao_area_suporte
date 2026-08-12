@@ -1,6 +1,6 @@
 """
 test_classificador_ia.py
-Testes para scripts/classificador_ia.py — gabarito e integração ao prompt.
+Testes para scripts/classificador_ia.py — regras_classificador_threads e integração ao prompt.
 """
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ _scripts_dir = os.path.join(RAIZ, 'scripts')
 if _scripts_dir not in sys.path:
     sys.path.insert(0, _scripts_dir)
 
-CAMINHO_GAB = os.path.join(RAIZ, 'documentações', 'gabarito.json')
+CAMINHO_REGRAS = os.path.join(RAIZ, 'documentações', 'regras_classificador_threads.json')
 
 CATEGORIAS_VALIDAS = {
     'DDR_2011', 'SALDOS_CONTABEIS_DIARIOS_4111', 'DRM_2060', 'DLO_2061', 'DLI_2062',
@@ -26,21 +26,26 @@ CATEGORIAS_VALIDAS = {
 }
 
 
-def test_gabarito_arquivo_existe():
-    """gabarito.json existe em documentações/ e tem as seções regras e gabaritos."""
-    assert os.path.isfile(CAMINHO_GAB), 'gabarito.json não encontrado em documentações/'
-    with open(CAMINHO_GAB, encoding='utf-8') as f:
+def test_regras_arquivo_existe():
+    """regras_classificador_threads.json existe e tem as seções regras_prioridade, regras e gabaritos."""
+    assert os.path.isfile(CAMINHO_REGRAS), 'regras_classificador_threads.json não encontrado em documentações/'
+    with open(CAMINHO_REGRAS, encoding='utf-8') as f:
         dados = json.load(f)
-    assert isinstance(dados.get('regras'), list), "gabarito.json deve ter campo 'regras' (lista)"
-    assert isinstance(dados.get('gabaritos'), list), "gabarito.json deve ter campo 'gabaritos' (lista)"
+    assert isinstance(dados.get('regras_prioridade'), list), "deve ter campo 'regras_prioridade' (lista)"
+    assert isinstance(dados.get('regras'), list), "deve ter campo 'regras' (lista)"
+    assert isinstance(dados.get('gabaritos'), list), "deve ter campo 'gabaritos' (lista)"
 
 
-def test_gabarito_campos_obrigatorios():
-    """Regras têm id, categorias, padrao, instrucao. Gabaritos têm id, categorias, assunto_exemplo, por_que_gabarito."""
-    with open(CAMINHO_GAB, encoding='utf-8') as f:
+def test_regras_campos_obrigatorios():
+    """Regras de prioridade têm ordem e instrucao. Regras têm id, categorias, padrao, instrucao. Gabaritos têm id, categorias, assunto_exemplo, por_que_gabarito."""
+    with open(CAMINHO_REGRAS, encoding='utf-8') as f:
         dados = json.load(f)
-    campos_regra   = {'id', 'categorias', 'padrao', 'instrucao'}
-    campos_gabarito = {'id', 'categorias', 'assunto_exemplo', 'por_que_gabarito'}
+    campos_prioridade = {'ordem', 'id', 'instrucao'}
+    campos_regra      = {'id', 'categorias', 'padrao', 'instrucao'}
+    campos_gabarito   = {'id', 'categorias', 'assunto_exemplo', 'por_que_gabarito'}
+    for p in dados['regras_prioridade']:
+        faltando = campos_prioridade - set(p.keys())
+        assert not faltando, f"Prioridade {p.get('id', '?')} sem campos: {faltando}"
     for r in dados['regras']:
         faltando = campos_regra - set(r.keys())
         assert not faltando, f"Regra {r.get('id', '?')} sem campos: {faltando}"
@@ -49,9 +54,9 @@ def test_gabarito_campos_obrigatorios():
         assert not faltando, f"Gabarito {g.get('id', '?')} sem campos: {faltando}"
 
 
-def test_gabarito_categorias_validas():
+def test_regras_categorias_validas():
     """Todas as entradas usam categorias válidas do sistema."""
-    with open(CAMINHO_GAB, encoding='utf-8') as f:
+    with open(CAMINHO_REGRAS, encoding='utf-8') as f:
         dados = json.load(f)
     for entrada in dados['regras'] + dados['gabaritos']:
         cats = entrada.get('categorias', [])
@@ -62,13 +67,13 @@ def test_gabarito_categorias_validas():
                 f"{entrada.get('id', '?')}: categoria '{cat}' inválida"
 
 
-def test_gabarito_ids_unicos():
-    """Todos os IDs no gabarito são únicos (regras + gabaritos juntos)."""
-    with open(CAMINHO_GAB, encoding='utf-8') as f:
+def test_regras_ids_unicos():
+    """Todos os IDs em regras + gabaritos são únicos."""
+    with open(CAMINHO_REGRAS, encoding='utf-8') as f:
         dados = json.load(f)
     ids = [e['id'] for e in dados['regras'] + dados['gabaritos']]
     duplicados = [i for i in ids if ids.count(i) > 1]
-    assert not duplicados, f"IDs duplicados no gabarito: {duplicados}"
+    assert not duplicados, f"IDs duplicados: {duplicados}"
 
 
 def test_normalizacao_saldos_contabeis():
@@ -86,10 +91,14 @@ def test_normalizacao_saldos_contabeis():
             f"Variação '{v}' não normalizada corretamente"
 
 
-def test_gabarito_integrado_no_prompt():
-    """O conteúdo do gabarito (regras e gabaritos) aparece em _SISTEMA do classificador_ia."""
+def test_regras_integradas_no_prompt():
+    """O conteúdo do regras_classificador_threads (prioridade + regras + gabaritos) aparece em _SISTEMA."""
     mod = importlib.import_module('classificador_ia')
     sistema = mod._SISTEMA
+    assert 'Regras de prioridade' in sistema, \
+        "_SISTEMA deve ter a seção 'Regras de prioridade'"
+    assert 'PRIORIDADE - 01 - RETORNO_BACEN' in sistema, \
+        "_SISTEMA deve conter a prioridade RETORNO_BACEN"
     assert 'EXTRATO COMPROMISSADA' in sistema, \
         "_SISTEMA deve conter a DDR - Regra 01 (EXTRATO COMPROMISSADA)"
     assert 'DDR - Regra 01' in sistema, \
