@@ -291,6 +291,10 @@ def test_buscar_imagens_filtra_por_indice(tmp_path, monkeypatch):
     ('Risk S5 JUNHO',                     'S5'),
     ('AVISO DE ATRASO - DRM 2060',        'RETORNO_BACEN'),
     ('INDICIO - DDR 2011',                'RETORNO_BACEN'),
+    # Correção 01 — 12/08/2026: cedilha (Ç) em POSIÇÃO não era detectada
+    ('Posição de Câmbio CAM0050 BACEN',   'DDR_2011'),
+    ('Posição de Câmbio - 28/07/26',      'DDR_2011'),
+    ('TRINUS - ENVIAR POSIÇÃO DDR 2011',  'DDR_2011'),
 ])
 def test_camada1_assunto_detecta_cadoc(assunto, esperado):
     """Camada 1: assunto com sinal inequívoco → categoria correta."""

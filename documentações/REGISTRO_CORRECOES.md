@@ -170,6 +170,44 @@ Mantido: bypass do registro (thread confirmada → retorna salvo sem reprocessar
 
 ---
 
+---
+
+## Correções do Classificador Determinístico
+
+> Esta seção registra todas as correções do motor de classificação Python (`scripts/classificador_ia.py`),
+> em ordem crescente de data. Cada correção tem teste automatizado associado — se a correção for desfeita
+> acidentalmente, o teste vai falhar e avisar.
+>
+> **Antes de corrigir qualquer problema:** verificar se já existe entrada aqui. Antes de alterar qualquer
+> padrão de detecção: rodar `pytest tests/ -q` e confirmar zero regressões.
+
+---
+
+### Correção 01 — 12/08/2026 — Bug da cedilha em "Posição de Câmbio"
+
+**🔎 Em miúdos:** o classificador não reconhecia e-mails com "Posição de Câmbio" no assunto e os
+jogava para SUPORTE em vez de DDR_2011. O problema era que a letra Ç (cedilha) é diferente de C
+para o computador — e o código só sabia procurar "POSICAO" (sem cedilha), não "POSIÇÃO" (com Ç).
+
+**Problema:** padrão `POSIC[AÃ][OÃ] DE C[AÂ]MBIO` não encontra "POSIÇÃO DE CÂMBIO" porque "POSIÇÃO"
+tem Ç (U+00C7), não C. Em Python regex, `C` é literalmente o caractere C — não engloba Ç.
+
+**Impacto:** 62 threads com "POSIÇÃO" no assunto não eram detectadas pelo assunto; 25 delas
+acabavam em SUPORTE (as outras 26 ainda eram pegas pelo corpo ou anexos).
+
+**Correção:** `POSI[CÇ][AÃ][OÃ] DE C[AÂ]MBIO` — aceita tanto C quanto Ç.
+Arquivo: `scripts/classificador_ia.py`, lista `_DDR_PADROES`.
+
+**Testes:** 3 casos adicionados a `test_camada1_assunto_detecta_cadoc`:
+- `'Posição de Câmbio CAM0050 BACEN'` → `DDR_2011` ✅
+- `'Posição de Câmbio - 28/07/26'` → `DDR_2011` ✅
+- `'TRINUS - ENVIAR POSIÇÃO DDR 2011'` → `DDR_2011` ✅ (pegava antes via `\bDDR\b`, continua pegando)
+
+**Validação:** ✅ VALIDADO — `pytest tests/ -q` 78/78 passando; validação completa: 607/767 (79,1%),
+melhoria de +25 threads em relação ao estado anterior (582/767 = 75,9%).
+
+---
+
 ## 2026-08-07 (sessão tarde) — Revisão spec: padronização, ambiguidades e decisões de negócio
 
 ### 07/08 15:00 — Spec §10: COS4060/4066 corrigidos para DLO_2061 (era erro)

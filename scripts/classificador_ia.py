@@ -83,7 +83,7 @@ _DDR_PADROES = [
     r'\bPCAM\b',
     r'\bTVM\b',                # word boundary → não pega DTVM
     r'OP\.\s*SELIC',
-    r'POSIC[AÃ][OÃ] DE C[AÂ]MBIO',
+    r'POSI[CÇ][AÃ][OÃ] DE C[AÂ]MBIO',
     r'\bPUs?\b',
     r'\bVMTM\b',
     r'CADASTRO DE A[ÇC][OÕ]ES E OP[ÇC][OÕ]ES',
