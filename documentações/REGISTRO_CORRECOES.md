@@ -125,6 +125,29 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+### 12/08 — Classificador determinístico implementado (sem GPT)
+
+**🔎 Em miúdos:** o `classificador_ia.py` foi reescrito do zero sem nenhuma chamada ao GPT. Agora ele aplica regras fixas em 5 camadas para decidir a categoria — rápido, previsível e sem custo de API.
+
+**Problema:** o GPT ignorava instruções de classificação quando o conteúdo era "sugestivo", mesmo com exceções bem escritas. Instável, caro e impossível de depurar.
+
+**Correção:** `classificar_thread()` reescrita como classificador determinístico com 5 camadas em ordem de prioridade:
+1. Assunto: sinal RETORNO_BACEN → sinal CADOC
+2. Corpo: sinal RETORNO_BACEN → sinal CADOC
+3. Nomes dos anexos: sinal CADOC
+4. Padrão de e-mail INTERNO (boas-vindas, comunicado de saída, código de verificação, convite Teams)
+5. SUPORTE (catch-all)
+
+Sub-regras implementadas: DLO/DLI distinção (ambos, só um, ou padrão DLO); TVM com word boundary (não pega DTVM); DLR como typo de DRL; sinais adicionados para FORCAPITAL, DRSAC_2030, PVCA_6209, COS4060/4066.
+
+Mantido: bypass do registro (thread confirmada → retorna salvo sem reprocessar); OCR e `buscar_imagens()` para uso futuro do pipeline.
+
+**Testes:** 19/19 passando. 3 testes do `_SISTEMA` (GPT) substituídos por 10 testes do classificador determinístico.
+
+**Validação:** ✅ VALIDADO — `pytest tests/ -q` 19/19.
+
+---
+
 ### 12/08 — Revisão de 49 threads e registro no registro_definitivo
 
 **🔎 Em miúdos:** Michel revisou 41 threads que o sistema não conseguia classificar (as mais ambíguas) + 9 que estavam marcadas como "confirmadas" mas sem categoria preenchida (falha do GPT da sessão anterior). Todas foram classificadas e gravadas.
