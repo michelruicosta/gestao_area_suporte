@@ -241,7 +241,7 @@
           <thead><tr><th>Categoria</th><th>O que é</th></tr></thead>
           <tbody>
             <tr><td><span class="cat cat-ddr">DDR 2011</span></td><td>Relatório diário das posições financeiras do cliente — títulos, câmbio, compromissadas. O cliente envia à Finaud todo dia útil para gerar o CADOC.</td></tr>
-            <tr><td><span class="cat cat-4111">SCD 4111</span></td><td>Saldo diário das contas contábeis do cliente no padrão COSIF do BACEN. Enviado todo dia útil.</td></tr>
+            <tr><td><span class="cat cat-4111">Saldos Contábeis Diários 4111</span></td><td>Saldo diário das contas contábeis do cliente no padrão COSIF do BACEN. Enviado todo dia útil.</td></tr>
             <tr><td><span class="cat cat-drm">DRM 2060</span></td><td>Relatório mensal que mede a exposição da instituição a riscos de mercado — juros, câmbio e preços de ativos.</td></tr>
             <tr><td><span class="cat cat-dlo">DLO 2061</span></td><td>Relatório mensal sobre os limites regulatórios do conglomerado — adequação de capital (Basileia) e concentração de riscos.</td></tr>
             <tr><td><span class="cat cat-dli">DLI 2062</span></td><td>Mesmo que o DLO, mas individual — foca nos limites de cada instituição separadamente.</td></tr>
@@ -515,7 +515,7 @@
           <thead><tr><th>Padrão no assunto</th><th>Categoria</th><th>Notas</th></tr></thead>
           <tbody>
             <tr><td><code>DDR</code>, <code>2011</code>, <code>TVM</code>, <code>RD_*</code></td><td><span class="cat cat-ddr">DDR_2011</span></td><td>Prefixo <code>RD_</code> no anexo é sinal de alta confiança</td></tr>
-            <tr><td><code>4111</code>, <code>CADOC 4111</code>, <code>saldos diários</code>, <code>SCD</code></td><td><span class="cat cat-4111">SCD_4111</span></td><td>ZIP <code>CNPJ_4111_DATA.zip</code> = muito alta confiança</td></tr>
+            <tr><td><code>4111</code>, <code>CADOC 4111</code>, <code>saldos diários</code>, <code>SCD</code></td><td><span class="cat cat-4111">SALDOS_CONTABEIS_DIARIOS_4111</span></td><td>ZIP <code>CNPJ_4111_DATA.zip</code> = muito alta confiança</td></tr>
             <tr><td><code>DRM</code>, <code>2060</code></td><td><span class="cat cat-drm">DRM_2060</span></td><td>"COMUNICACAO DE INCONSISTENCIA no DRM" → RETORNO_BACEN</td></tr>
             <tr><td><code>DLO</code>, <code>2061</code>, <code>COS4010</code> + contexto</td><td><span class="cat cat-dlo">DLO_2061</span></td><td>LEC junto com COSIFs confirma DLO (sem LEC = DLI)</td></tr>
             <tr><td><code>DLI</code>, <code>2062</code></td><td><span class="cat cat-dli">DLI_2062</span></td><td>Mesmos COSIFs que DLO, sem a planilha LEC</td></tr>
@@ -537,7 +537,7 @@
           <thead><tr><th>ZIP</th><th>Categoria</th></tr></thead>
           <tbody>
             <tr><td><code>CNPJ_2011_YYYYMMDD.zip</code></td><td><span class="cat cat-ddr">DDR_2011</span></td></tr>
-            <tr><td><code>CNPJ_4111_DATA_I_1.zip</code></td><td><span class="cat cat-4111">SCD_4111</span></td></tr>
+            <tr><td><code>CNPJ_4111_DATA_I_1.zip</code></td><td><span class="cat cat-4111">SALDOS_CONTABEIS_DIARIOS_4111</span></td></tr>
             <tr><td><code>CNPJ_2060_YYYYMMDD.zip</code></td><td><span class="cat cat-drm">DRM_2060</span></td></tr>
             <tr><td><code>CNPJ_2061_YYYYMMDD.zip</code></td><td><span class="cat cat-dlo">DLO_2061</span></td></tr>
             <tr><td><code>CNPJ_2062_YYYYMM_I_1_4010.zip</code></td><td><span class="cat cat-dli">DLI_2062</span></td></tr>
@@ -611,7 +611,7 @@
               <td>Não confundir com 4111 (contábil) ou DLO/DLI (mensais)</td>
             </tr>
             <tr>
-              <td><span class="cat cat-4111">SCD_4111</span></td>
+              <td><span class="cat cat-4111">SALDOS_CONTABEIS_DIARIOS_4111</span></td>
               <td>Assunto "4111", "CADOC 4111"; anexo <code>CADOC 4111.xlsx</code>; ZIP <code>CNPJ_4111_*.zip</code></td>
               <td>"Conglomerado" no assunto sozinho não identifica — verificar contexto</td>
             </tr>
@@ -690,7 +690,7 @@
         <strong>Armadilha:</strong> DDR Concluído nem sempre tem arquivo — confirmação de ação interna ("O cadastro está disponível") também é R1.
       </div>
 
-      <h3 style="margin-top:24px;">SCD_4111 — Regras de classificação (Aguardando ou Concluído)</h3>
+      <h3 style="margin-top:24px;">SALDOS_CONTABEIS_DIARIOS_4111 — Regras de classificação (Aguardando ou Concluído)</h3>
       <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">Mesmas regras R1–R5 do DDR_2011 — validado em 376 threads reais (29/07/2026). Sinais específicos do 4111:</p>
       <div class="tbl-wrap">
         <table>
@@ -956,7 +956,7 @@
             <tr><td>T14</td><td><span class="cat cat-suporte">SUPORTE</span></td><td>Erro de transmissão ao BACEN → Finaud orienta canal correto</td><td>Finaud orienta; cliente resolve diretamente com BACEN</td></tr>
             <tr><td>T15</td><td><span class="cat cat-suporte">SUPORTE</span></td><td>Ex-cliente solicita arquivos históricos</td><td>Finaud envia os arquivos</td></tr>
             <tr><td>T16</td><td>Multi-CADOC</td><td>BACEN detecta problema no 4016/4010 → multi-partes investigam</td><td>4016 já foi substituído</td></tr>
-            <tr><td>T17</td><td><span class="cat cat-4111">SCD_4111</span></td><td>BACEN detecta indício no 4111 → Finaud instrui regeneração</td><td>Finaud regenera + protocolo STA</td></tr>
+            <tr><td>T17</td><td><span class="cat cat-4111">SALDOS_CONTABEIS_DIARIOS_4111</span></td><td>BACEN detecta indício no 4111 → Finaud instrui regeneração</td><td>Finaud regenera + protocolo STA</td></tr>
             <tr><td>T18</td><td>FILTRAR</td><td>Alertas automáticos do sistema Finaud (<code>contato@finaud.com.br</code>)</td><td>Não entra na triagem — filtrar automaticamente</td></tr>
             <tr><td>T19</td><td>FILTRAR</td><td>Notificações FogBugz (desenvolvimento interno)</td><td>Não entra na triagem — filtrar automaticamente</td></tr>
           </tbody>

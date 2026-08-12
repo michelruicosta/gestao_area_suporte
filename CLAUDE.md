@@ -294,7 +294,7 @@ Ao chamar qualquer API externa (OpenAI, Anthropic, Gmail, etc.), definir **expli
 - `max_tokens` — sempre definido
 - `response_format` — sempre definido
 
-> **Por que existe:** em 06/08/2026, o classificador rodou sem `temperature` definido por semanas. O padrão do OpenAI (1.0) causava respostas aleatórias — a mesma thread podia ser classificada como SCD_4111 numa rodada e INCERTO na próxima. As Rodadas 1 e 2 tiveram bons resultados parcialmente por sorte. O problema foi descoberto ao comparar duas rodadas com spec idêntica e obter resultados diferentes.
+> **Por que existe:** em 06/08/2026, o classificador rodou sem `temperature` definido por semanas. O padrão do OpenAI (1.0) causava respostas aleatórias — a mesma thread podia ser classificada como SALDOS_CONTABEIS_DIARIOS_4111 numa rodada e INCERTO na próxima. As Rodadas 1 e 2 tiveram bons resultados parcialmente por sorte. O problema foi descoberto ao comparar duas rodadas com spec idêntica e obter resultados diferentes.
 
 > Regra estabelecida por Michel em 06/08/2026.
 

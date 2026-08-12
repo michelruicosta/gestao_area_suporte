@@ -85,7 +85,7 @@ O sistema trata 12 categorias distintas de e-mail. Cada categoria tem suas próp
 | Categoria | O que é |
 |---|---|
 | DDR_2011 | Relatório diário das posições financeiras do cliente — títulos, câmbio, compromissadas. O cliente envia à Finaud todo dia útil para gerar o CADOC. |
-| SCD_4111 | Saldo diário das contas contábeis do cliente no padrão COSIF do BACEN. Enviado todo dia útil. |
+| SALDOS_CONTABEIS_DIARIOS_4111 | Saldo diário das contas contábeis do cliente no padrão COSIF do BACEN. Enviado todo dia útil. |
 | DRM_2060 | Relatório mensal que mede a exposição da instituição a riscos de mercado — juros, câmbio e preços de ativos. |
 | DLO_2061 | Relatório mensal sobre os limites regulatórios do conglomerado — adequação de capital (Basileia) e concentração de riscos. |
 | DLI_2062 | Mesmo que o DLO, mas individual — foca nos limites de cada instituição separadamente. |
@@ -567,7 +567,7 @@ Fonte: `oraculo_360_finaud` — histórico completo de produção.
 | # | Categoria | E-mails | Assinatura | Hist. `>` | Hist. `---` | Rodapé | `[image:]` | `[cid:]` |
 |---|---|---|---|---|---|---|---|---|
 | 1 | DDR_2011 | 2.350 | 96,4% | 37,1% | 22,1% | 95,5% | 23,9% | 18,9% |
-| 2 | SCD_4111 | 728 | 97,7% | 38,2% | 25,1% | 92,3% | 19,8% | 22,0% |
+| 2 | SALDOS_CONTABEIS_DIARIOS_4111 | 728 | 97,7% | 38,2% | 25,1% | 92,3% | 19,8% | 22,0% |
 | 3 | DRM_2060 | 163 | 96,3% | 35,0% | 16,6% | 98,2% | 22,1% | 27,6% |
 | 4 | DLO_2061 | 1.172 | 77,7% | 39,2% | 26,6% | 96,8% | 29,1% | 28,0% |
 | 5 | DLI_2062 | 119 | 88,2% | 47,1% | 31,9% | 100,0% | 37,8% | 22,7% |
@@ -825,7 +825,7 @@ A IA Assistente de Aprendizado precisa do conteúdo das imagens para entender co
 | Categoria | Emails | Sem anexo | ZIP CADOC | COSIF | RD_ | Sem padrão no nome |
 |---|---|---|---|---|---|---|
 | DDR_2011 | 2.395 | 60% | 7% | 0% | 10% | 20% |
-| SCD_4111 | 734 | 75% | 11% | 0% | 0% | 7% |
+| SALDOS_CONTABEIS_DIARIOS_4111 | 734 | 75% | 11% | 0% | 0% | 7% |
 | DRM_2060 | 177 | 67% | 14% | 1% | 0% | 10% |
 | DLO_2061 | 1.183 | 70% | 2% | 2% | 0% | 25% |
 | DLI_2062 | 136 | 85% | 5% | 0% | 0% | 9% |
@@ -848,7 +848,7 @@ Quando a Finaud entrega o CADOC ao cliente, o arquivo ZIP segue o padrão `CNPJ_
 | Categoria | Padrão do ZIP | Exemplo real |
 |---|---|---|
 | DDR_2011 | `CNPJ_2011_YYYYMMDD.zip` | `12345678_2011_20260630.zip` |
-| SCD_4111 | `CNPJ_4111_YYYYMMDD_I_1.zip` | `32648370_4111_20260219_I_1.zip` |
+| SALDOS_CONTABEIS_DIARIOS_4111 | `CNPJ_4111_YYYYMMDD_I_1.zip` | `32648370_4111_20260219_I_1.zip` |
 | DRM_2060 | `CNPJ_2060_YYYYMMDD.zip` | `32648370_2060_20260130.zip` |
 | DLO_2061 | `CNPJ_2061_YYYYMMDD.zip` | `12345678_2061_20260630.zip` |
 | DLI_2062 | `CNPJ_2062_YYYYMM_I_1_4010.zip` | `62280490_2062_202602_I_1_4010.zip` |
@@ -863,7 +863,7 @@ Quando a Finaud entrega o CADOC ao cliente, o arquivo ZIP segue o padrão `CNPJ_
 | Categoria | O que o cliente envia |
 |---|---|
 | DDR_2011 | Prefixo `RD_` — ex.: `RD_MOEDA.csv`, `RD_LFT.xlsx`, `RD_PREFIXADA.xlsx`; ou `DDR_YYYYMM.xlsx` |
-| SCD_4111 | `CADOC 4111.xlsx`, `DOC_4111_YYYYMMDD.xlsx`, `Saldos 4111.xlsx` |
+| SALDOS_CONTABEIS_DIARIOS_4111 | `CADOC 4111.xlsx`, `DOC_4111_YYYYMMDD.xlsx`, `Saldos 4111.xlsx` |
 | DRM_2060 | `Saldos DRM.xlsx`, `DRM_2060_Finaud_YYYYMM.xlsx` |
 | DLO_2061 | Arquivos COSIF + planilha LEC — ver regra COSIF abaixo |
 | DLI_2062 | Arquivos COSIF **sem** planilha LEC — ver regra COSIF abaixo |
@@ -972,7 +972,7 @@ Balancetes contábeis que o cliente extrai do seu sistema e envia para a Finaud 
 | Categoria | Fórmula do prazo | Exemplo com data_competencia = 02/02/2026 |
 |---|---|---|
 | DDR_2011 | D+3 úteis após a data de referência | prazo = 05/02/2026 (quarta) |
-| SCD_4111 | D+3 úteis após a data de referência | prazo = 05/02/2026 |
+| SALDOS_CONTABEIS_DIARIOS_4111 | D+3 úteis após a data de referência | prazo = 05/02/2026 |
 | DRM_2060 | D+5 úteis do mês seguinte | prazo = 06/03/2026 |
 | DLO_2061 | Dia 5 do 2º mês seguinte | prazo = 05/04/2026 |
 | DLI_2062 | Dia 5 do 2º mês seguinte | prazo = 05/04/2026 |
@@ -1151,7 +1151,7 @@ O sistema não precisa "lembrar" que estava concluído — a lógica do último 
 
 ### 8.5 Fechamento automático via ZIP — CADOCs
 
-Aplica a: DDR_2011, SCD_4111, DRM_2060, DLO_2061, DLI_2062, DRL_2160
+Aplica a: DDR_2011, SALDOS_CONTABEIS_DIARIOS_4111, DRM_2060, DLO_2061, DLI_2062, DRL_2160
 
 Quando a Finaud envia o arquivo ZIP do CADOC por um e-mail separado — não como resposta no thread do cliente — esse e-mail chega na caixa oraculo@ pelo Caminho 2 (roteamento automático do Google Workspace). Nesses casos, o sistema faz o cruzamento automático:
 
@@ -1197,7 +1197,7 @@ E-mail: "Segue DDR, DRM e DLI - MIRAE março/2026"
 
 | Grupo | Categorias | O que a Finaud entrega ao cliente |
 |---|---|---|
-| CADOC ZIP | DDR_2011, DRM_2060, DRL_2160, DLO_2061, DLI_2062, SCD_4111 | Arquivo ZIP com padrão `CNPJ_CATEGORIA_DATA.zip` (ex.: `12345678_2011_20260131_I_1.zip`). Substituições seguem o mesmo padrão com sufixo `_S_N`. |
+| CADOC ZIP | DDR_2011, DRM_2060, DRL_2160, DLO_2061, DLI_2062, SALDOS_CONTABEIS_DIARIOS_4111 | Arquivo ZIP com padrão `CNPJ_CATEGORIA_DATA.zip` (ex.: `12345678_2011_20260131_I_1.zip`). Substituições seguem o mesmo padrão com sufixo `_S_N`. |
 | S5 | S5 | PDF (ex.: `Resultado Quantitativo - S5.pdf`) — não vai ao BACEN, fica entre Finaud e cliente. |
 | FORCAPITAL | FORCAPITAL | Varia: e-mail só texto (projeção de capital) ou XLSX/PDF. Não vai ao BACEN. |
 | PVCA_6209 | PVCA_6209 | Arquivo `BACEN.ZIP` contendo 8 TXT na raiz: `CONGLOME.TXT`, `USUREMOT.TXT`, `ESTATCRT.TXT`, `ESTATATM.TXT`, `TRANSOPA.TXT`, `OPEINTRA.TXT`, `CONTATOS.TXT`, `DATABASE.TXT`. Transmitido via STA pelo cliente. |
@@ -1237,7 +1237,7 @@ Esta seção alimenta diretamente o prompt da IA. Para cada categoria, a IA rece
 | Categoria | Prazo |
 |---|---|
 | DDR_2011 | D+3 úteis após a data de referência |
-| SCD_4111 | D+3 úteis após a data de referência |
+| SALDOS_CONTABEIS_DIARIOS_4111 | D+3 úteis após a data de referência |
 | DRM_2060 | D+5 úteis do mês seguinte à data de referência |
 | DLO_2061 | Dia 5 do segundo mês seguinte à data de referência |
 | DLI_2062 | Dia 5 do segundo mês seguinte à data de referência |
@@ -1251,7 +1251,7 @@ Esta seção alimenta diretamente o prompt da IA. Para cada categoria, a IA rece
 
 ---
 
-### SCD_4111 — Saldos Contábeis Diários
+### SALDOS_CONTABEIS_DIARIOS_4111 — Saldos Contábeis Diários
 
 **O que é:** documento que registra os lançamentos nas contas contábeis da instituição a cada dia útil, baseado no plano COSIF (sistema de contas contábeis das instituições financeiras do Banco Central). O relatório de conglomerado (consolidação de todas as empresas do grupo) usa o mesmo formato e CADOC, mas é enviado mensalmente.
 
@@ -1286,7 +1286,7 @@ Esta seção alimenta diretamente o prompt da IA. Para cada categoria, a IA rece
 
 Validado em 386 threads reais (29/07/2026). Cobertura: 100%.
 
-As mesmas 5 regras do DDR_2011. Sinais específicos do SCD_4111:
+As mesmas 5 regras do DDR_2011. Sinais específicos do SALDOS_CONTABEIS_DIARIOS_4111:
 
 | Regra | Situação | Status | Responsável |
 |---|---|---|---|
@@ -1481,8 +1481,21 @@ Validado em 90 threads reais (29/07/2026). Cobertura: 100% (57 F→C + 33 C→F)
 - "RELATORIO DRM - AMARIL FRANKLIN" → pode ser DLO (esse cliente envia a LEC junto com e-mails de DRM — verificar anexo para confirmar)
 - "ECSA (S5) - COS4010..." → é **S5** (código S5 no assunto prevalece sobre a menção ao COS4010)
 - "Colchão de Liquidez" / "DRL" → é **DRL_2160**, não DLO — podem vir no mesmo e-mail, registrar separado
-- COS4060, COS4066 no assunto → são exclusivos do **DLO_2061** (cliente conglomerado) — **nunca** aparecem no DLI_2062, que é individual e usa apenas COS4010 e COS4016
+- COS4060, COS4066 no assunto → são exclusivos do **DLO_2061** (cliente conglomerado) — **nunca** aparecem no DLI_2062 (o que diferencia DLO de DLI é o que o e-mail menciona — ver **Regra DLO / DLI** abaixo, não o tipo de arquivo COSIF)
 - DLO + DLI no mesmo e-mail → registrar ambos (§9 — modelo de duas camadas)
+
+**Regra DLO / DLI — determinada pelo que o e-mail menciona:**
+
+A classificação entre DLO_2061 e DLI_2062 é determinada pelo que o assunto ou corpo do e-mail menciona explicitamente:
+
+| O e-mail menciona | Classificação |
+|---|---|
+| "DLO" e "DLI" (ou "2061" e "2062") | DLO_2061 + DLI_2062 |
+| Apenas "DLI" (ou "2062") | DLI_2062 |
+| Apenas "DLO" (ou "2061") | DLO_2061 |
+| Nenhum dos dois | DLO_2061 (padrão) |
+
+**Nota:** a presença dos arquivos COS4010, COS4016 ou outros COSIF não determina sozinha a categoria — é o texto do e-mail que decide. A planilha LEC continua sendo sinal de Alta confiança para DLO_2061 (ver tabela de sinais acima).
 
 **Fluxo típico:**
 1. Cliente envia `COS4010.xml` + planilha LEC à Finaud — "Seguem 4010 e planilha LEC, para que seja gerado o DLO"
@@ -1529,7 +1542,7 @@ Validado em 482 threads reais (29/07/2026). Cobertura: 100%. Mesmas regras R1–
 | Assunto | "Segue a remessa DLI", "Preencher as premissas DLI", "Confecção do DLI", "Substituição" + DLI | Alta |
 | Assunto | Nome do cliente + mês/ano, sem código explícito | Média |
 | Corpo | Adequação de capital, Basileia, limites individuais, premissas DLI | Média |
-| Anexo | `COS4010.xml`, `COS4016.xml` — sem LEC (DLI é individual; COS4060 e COS4066 são exclusivos do DLO conglomerado, nunca aparecem no DLI) | Alta |
+| Anexo | `COS4010.xml`, `COS4016.xml` — sem menção a DLO/2061 no texto | Média — confirmar pelo assunto ou corpo; se não houver menção a DLI/2062 tampouco, classificar como DLO_2061 (padrão) |
 | Anexo | `CNPJ_2062_YYYYMMDD.zip` (CADOC gerado) | Muito alta |
 
 **O que NÃO é DLI_2062:**
@@ -1989,7 +2002,7 @@ O nome do arquivo em anexo é um sinal adicional para a IA. Quando o assunto nã
 | Categoria | Alta confiança — identifica a categoria | Baixa confiança — genérico, não identifica |
 |---|---|---|
 | DDR_2011 | `RD_MOEDA.csv`, `RD_LFT.xlsx`, `RD_PREFIXADA.xlsx` (prefixo `RD_`); `DDR_YYYYMM.xlsx` | — |
-| SCD_4111 | `CADOC 4111.xlsx`, `DOC_4111_YYYYMMDD.xlsx`, `CNPJ_4111_DATA_I_1.zip` | — |
+| SALDOS_CONTABEIS_DIARIOS_4111 | `CADOC 4111.xlsx`, `DOC_4111_YYYYMMDD.xlsx`, `CNPJ_4111_DATA_I_1.zip` | — |
 | DRM_2060 | `Saldos DRM.xlsx`, `DRM_2060_Finaud_YYYYMM.xlsx`, `CNPJ_2060_DATA.zip` | `SALDOS BANCOS.pdf`, `CAIXA.pdf`, `SELIC.xls` |
 | DLO_2061 | `Cos4010.zip`, `Cos4016.zip` | — |
 | DLI_2062 | `CNPJ_2062_YYYYMM_I_1_4010.zip` | — |
@@ -2007,7 +2020,7 @@ O padrão `CNPJ_CADOC_DATA.zip` é universal — aparece em todos os CADOCs. O n
 | DLO_2061 | `CNPJ_2061_YYYYMMDD.zip` |
 | DLI_2062 | `62280490_2062_202602_I_1_4010.zip` |
 | DRL_2160 | `CNPJ_2160_YYYYMMDD.zip` |
-| SCD_4111 | `32648370_4111_20260219_I_1.zip` |
+| SALDOS_CONTABEIS_DIARIOS_4111 | `32648370_4111_20260219_I_1.zip` |
 
 > **Nota:** os arquivos XML (COS4010.xml, COS4016.xml, COS4060.xml, COS4066.xml) aparecem como **anexo direto** quando o cliente os envia à Finaud. O ZIP do CADOC gerado é o que a Finaud devolve ao cliente (ou envia ao BACEN diretamente).
 
@@ -2419,7 +2432,7 @@ Exemplos coletados durante a Fase 0 (22/07/2026) com leitura direta de 25+ threa
 
 **O que é:** BACEN detecta indício no documento 4111. Finaud instrui o time interno a regerar o 4111 e o 4010 com os dados corretos.
 
-**CADOC:** SCD_4111 (com geração conjunta do 4010)
+**CADOC:** SALDOS_CONTABEIS_DIARIOS_4111 (com geração conjunta do 4010)
 
 **Fluxo observado (exemplo: TC/Ignis — 21/07/2026):**
 
