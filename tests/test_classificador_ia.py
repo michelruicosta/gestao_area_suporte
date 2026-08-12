@@ -1,6 +1,6 @@
 """
 test_classificador_ia.py
-Testes para scripts/classificador_ia.py — regras_classificador_threads e integração ao prompt.
+Testes para scripts/classificador_ia.py — classificador determinístico de threads.
 """
 from __future__ import annotations
 
@@ -22,9 +22,11 @@ CAMINHO_REGRAS = os.path.join(RAIZ, 'documentações', 'regras_classificador_thr
 CATEGORIAS_VALIDAS = {
     'DDR_2011', 'SALDOS_CONTABEIS_DIARIOS_4111', 'DRM_2060', 'DLO_2061', 'DLI_2062',
     'DRL_2160', 'S5', 'RETORNO_BACEN', 'FORCAPITAL', 'DRSAC_2030',
-    'PVCA_6209', 'SUPORTE',
+    'PVCA_6209', 'SUPORTE', 'INTERNO',
 }
 
+
+# ── Testes do arquivo regras_classificador_threads.json ───────────────────────
 
 def test_regras_arquivo_existe():
     """regras_classificador_threads.json existe e tem as seções regras_prioridade, regras e gabaritos."""
@@ -76,6 +78,8 @@ def test_regras_ids_unicos():
     assert not duplicados, f"IDs duplicados: {duplicados}"
 
 
+# ── Testes de normalização ────────────────────────────────────────────────────
+
 def test_normalizacao_saldos_contabeis():
     """Variações do nome legível de SALDOS_CONTABEIS_DIARIOS_4111 são normalizadas."""
     mod = importlib.import_module('classificador_ia')
@@ -91,59 +95,87 @@ def test_normalizacao_saldos_contabeis():
             f"Variação '{v}' não normalizada corretamente"
 
 
-def test_regras_integradas_no_prompt():
-    """O conteúdo do regras_classificador_threads (prioridade + regras + gabaritos) aparece em _SISTEMA."""
+# ── Testes do classificador determinístico ────────────────────────────────────
+
+def _classificar(assunto: str, corpo: str = '', nomes_anexos: list | None = None) -> dict:
+    """Atalho para chamar classificar_thread com thread simples."""
     mod = importlib.import_module('classificador_ia')
-    sistema = mod._SISTEMA
-    assert 'Regras de prioridade' in sistema, \
-        "_SISTEMA deve ter a seção 'Regras de prioridade'"
-    assert 'PRIORIDADE - 01 - RETORNO_BACEN' in sistema, \
-        "_SISTEMA deve conter a prioridade RETORNO_BACEN"
-    assert 'EXTRATO COMPROMISSADA' in sistema, \
-        "_SISTEMA deve conter a DDR - Regra 01 (EXTRATO COMPROMISSADA)"
-    assert 'DDR - Regra 01' in sistema, \
-        "_SISTEMA deve conter o ID 'DDR - Regra 01'"
-    assert 'Regras confirmadas' in sistema, \
-        "_SISTEMA deve ter a seção 'Regras confirmadas'"
-    assert 'Gabaritos' in sistema, \
-        "_SISTEMA deve ter a seção 'Gabaritos'"
+    thread = {
+        'assunto': assunto,
+        'mensagens': [{'corpo_texto': corpo, 'nomes_anexos': nomes_anexos or []}],
+    }
+    return mod.classificar_thread(thread)
 
 
-def test_ocr_ignorado_sem_imagens():
-    """classificar_thread sem imagens não altera o email_texto enviado à IA."""
-    mod = importlib.import_module('classificador_ia')
-    # Verifica que _extrair_texto_ocr retorna vazio quando lista vazia
-    resultado = mod._extrair_texto_ocr([])
-    assert resultado == '', '_extrair_texto_ocr([]) deve retornar string vazia'
+def test_classificar_extrato_compromissada_ddr():
+    """'EXTRATO COMPROMISSADA' no assunto → DDR_2011."""
+    r = _classificar('EXTRATO COMPROMISSADA - TRUSTEE DTVM - JUNHO 2026')
+    assert r['categorias'] == ['DDR_2011']
+    assert r['incerto'] is False
 
 
-def test_buscar_imagens_pasta_inexistente(tmp_path, monkeypatch):
-    """buscar_imagens retorna lista vazia quando pasta de anexos não existe."""
-    mod = importlib.import_module('classificador_ia')
-    monkeypatch.setattr(mod, 'PASTA_ANEXOS', str(tmp_path / 'nao_existe'))
-    resultado = mod.buscar_imagens(0)
-    assert resultado == [], 'buscar_imagens deve retornar [] quando pasta não existe'
+def test_classificar_dtvm_nao_aciona_ddr():
+    """'DTVM' no assunto NÃO ativa DDR (word boundary evita confundir DTVM com TVM)."""
+    r = _classificar('DTVM - COS4016 DE JUNHO/2026')
+    assert 'DDR_2011' not in r['categorias'], 'DTVM não deve acionar DDR_2011'
+    assert 'DLO_2061' in r['categorias'], 'COS4016 deve acionar DLO_2061'
 
 
-def test_gabarito_usado_no_sistema():
-    """O campo gabarito_usado aparece no formato de resposta do _SISTEMA."""
-    mod = importlib.import_module('classificador_ia')
-    assert 'gabarito_usado' in mod._SISTEMA, \
-        '_SISTEMA deve solicitar o campo gabarito_usado no JSON de resposta'
+def test_classificar_dlo_e_dli_juntos():
+    """Assunto com DLO e DLI → ambas as categorias."""
+    r = _classificar('DLO E DLI - JUNHO 2026')
+    assert 'DLO_2061' in r['categorias']
+    assert 'DLI_2062' in r['categorias']
 
 
-def test_orientacao_no_sistema():
-    """O campo orientacao aparece no formato de resposta do _SISTEMA com instrução de uso."""
-    mod = importlib.import_module('classificador_ia')
-    assert 'orientacao' in mod._SISTEMA, \
-        '_SISTEMA deve conter o campo orientacao no formato de resposta'
-    assert 'incerto' in mod._SISTEMA and 'orientacao' in mod._SISTEMA, \
-        '_SISTEMA deve instruir a preencher orientacao quando incerto ou categorias vazias'
+def test_classificar_retorno_bacen_aviso_de_atraso():
+    """'AVISO DE ATRASO' no assunto → RETORNO_BACEN (prioridade máxima)."""
+    r = _classificar('BANCO CENTRAL - AVISO DE ATRASO - DDR 2011')
+    assert r['categorias'] == ['RETORNO_BACEN']
 
 
-def test_registro_thread_confirmada_nao_chama_gpt(monkeypatch):
-    """Thread com status_regra 'confirmada' no registro retorna resultado salvo sem chamar o GPT."""
-    import importlib
+def test_classificar_retorno_bacen_no_corpo():
+    """'AVISO DE ATRASO' no corpo (cliente encaminhando e-mail do BACEN) → RETORNO_BACEN."""
+    r = _classificar(
+        assunto='Fwd: FW: resposta BACEN',
+        corpo='Segue o e-mail: BANCO CENTRAL - AVISO DE ATRASO referente ao arquivo DRM'
+    )
+    assert r['categorias'] == ['RETORNO_BACEN']
+
+
+def test_classificar_suporte_sem_sinais():
+    """Assunto e corpo sem qualquer sinal de CADOC → SUPORTE."""
+    r = _classificar('dúvida sobre o sistema', corpo='Olá, tudo bem? Preciso de ajuda.')
+    assert r['categorias'] == ['SUPORTE']
+    assert r['incerto'] is False
+
+
+def test_classificar_interno_boas_vindas():
+    """Assunto com 'boas-vindas' → INTERNO."""
+    r = _classificar('Boas-vindas à equipe Finaud!')
+    assert r['categorias'] == ['INTERNO']
+
+
+def test_classificar_cadoc_por_anexo():
+    """Sem CADOC no assunto/corpo mas nome do anexo tem '4111' → SALDOS_CONTABEIS_DIARIOS_4111."""
+    r = _classificar(
+        assunto='2026.07.14 - FLUXO DE CAIXA - ZIIN',
+        corpo='',
+        nomes_anexos=['CADOC_4111_JULHO.xlsx']
+    )
+    assert r['categorias'] == ['SALDOS_CONTABEIS_DIARIOS_4111']
+
+
+def test_classificar_drl_typo_dlr():
+    """'DLR' (erro de digitação para DRL) no assunto → DRL_2160."""
+    r = _classificar('DLR junho')
+    assert 'DRL_2160' in r['categorias']
+
+
+# ── Testes do registro ────────────────────────────────────────────────────────
+
+def test_registro_thread_confirmada_nao_reprocessa(monkeypatch):
+    """Thread com status_regra 'confirmada' no registro retorna resultado salvo sem reclassificar."""
     mod = importlib.import_module('classificador_ia')
 
     registro_mock = {
@@ -166,22 +198,14 @@ def test_registro_thread_confirmada_nao_chama_gpt(monkeypatch):
         'mensagens': [],
     }
 
-    class _ClienteFalso:
-        class chat:
-            class completions:
-                @staticmethod
-                def create(**kwargs):
-                    raise AssertionError('GPT foi chamado — nao deveria para thread confirmada')
-
-    resultado = mod.classificar_thread(thread, cliente=_ClienteFalso())
+    resultado = mod.classificar_thread(thread)
     assert resultado['categorias'] == ['DDR_2011'], 'deve devolver categorias do registro'
     assert resultado['incerto'] is False, 'confirmada nao pode ser incerta'
     assert resultado['gabarito_usado'] == 'G-DDR-001', 'deve preservar regra_usada do registro'
 
 
-def test_registro_thread_incerta_chama_gpt(monkeypatch):
-    """Thread com status_regra 'incerta' no registro passa pelo GPT normalmente."""
-    import importlib
+def test_registro_thread_incerta_classifica_deterministicamente(monkeypatch):
+    """Thread com status_regra 'incerta' no registro passa pelo classificador determinístico."""
     mod = importlib.import_module('classificador_ia')
 
     registro_mock = {
@@ -190,7 +214,7 @@ def test_registro_thread_incerta_chama_gpt(monkeypatch):
                 'assunto':      'e-mail sem categoria',
                 'categorias':   [],
                 'status_regra': 'incerta',
-                'regra_usada':  'R6',
+                'regra_usada':  None,
             }
         }
     }
@@ -198,34 +222,30 @@ def test_registro_thread_incerta_chama_gpt(monkeypatch):
 
     thread = {
         'thread_id': 'thread-incerta-001',
-        'assunto':   'e-mail sem categoria',
-        'mensagens': [{'remetente': 'teste@finaud.com', 'corpo_texto': 'corpo', 'nomes_anexos': []}],
+        'assunto':   'DRM JUNHO 2026',
+        'mensagens': [],
     }
 
-    gpt_chamado = {'sim': False}
-    _resp_json  = '{"categorias":["SUPORTE"],"confianca":"alta","motivo":"teste","incerto":false,"gabarito_usado":null}'
+    resultado = mod.classificar_thread(thread)
+    assert resultado['categorias'] == ['DRM_2060'], 'deve classificar deterministicamente pelo assunto'
+    assert resultado['incerto'] is False
 
-    class _ClienteFalso:
-        class chat:
-            class completions:
-                @staticmethod
-                def create(**kwargs):
-                    gpt_chamado['sim'] = True
 
-                    class _Msg:
-                        content = _resp_json
+# ── Testes de OCR / imagens ───────────────────────────────────────────────────
 
-                    class _Choice:
-                        message = _Msg()
+def test_ocr_ignorado_sem_imagens():
+    """_extrair_texto_ocr com lista vazia retorna string vazia."""
+    mod = importlib.import_module('classificador_ia')
+    resultado = mod._extrair_texto_ocr([])
+    assert resultado == '', '_extrair_texto_ocr([]) deve retornar string vazia'
 
-                    class _Resp:
-                        choices = [_Choice()]
 
-                    return _Resp()
-
-    resultado = mod.classificar_thread(thread, cliente=_ClienteFalso())
-    assert gpt_chamado['sim'], 'GPT deveria ter sido chamado para thread incerta'
-    assert resultado['categorias'] == ['SUPORTE']
+def test_buscar_imagens_pasta_inexistente(tmp_path, monkeypatch):
+    """buscar_imagens retorna lista vazia quando pasta de anexos não existe."""
+    mod = importlib.import_module('classificador_ia')
+    monkeypatch.setattr(mod, 'PASTA_ANEXOS', str(tmp_path / 'nao_existe'))
+    resultado = mod.buscar_imagens(0)
+    assert resultado == [], 'buscar_imagens deve retornar [] quando pasta não existe'
 
 
 def test_buscar_imagens_filtra_por_indice(tmp_path, monkeypatch):
@@ -233,10 +253,9 @@ def test_buscar_imagens_filtra_por_indice(tmp_path, monkeypatch):
     mod = importlib.import_module('classificador_ia')
     monkeypatch.setattr(mod, 'PASTA_ANEXOS', str(tmp_path))
 
-    # Criar arquivos de teste
     (tmp_path / '3_image001.png').write_bytes(b'')
     (tmp_path / '3_image002.jpg').write_bytes(b'')
-    (tmp_path / '5_image001.png').write_bytes(b'')  # outro índice
+    (tmp_path / '5_image001.png').write_bytes(b'')   # outro índice
     (tmp_path / '3_documento.pdf').write_bytes(b'')  # não é imagem
 
     resultado = mod.buscar_imagens(3)

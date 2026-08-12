@@ -1,20 +1,22 @@
 """
 classificador_ia.py
-O que faz: recebe uma thread (formato do coletor_gmail.py) e classifica
-           em uma ou mais categorias do §10 usando GPT como motor.
-Entrada:   thread dict com mensagens[], assunto, etc.
-Saída:     { categorias, confianca, motivo, incerto }
+Classifica threads de e-mail usando regras determinísticas (sem chamada a IA).
+A fonte de verdade das regras está em documentações/regras_classificador_threads.json.
 
-Modelo atual: gpt-4o-mini (OpenAI)
-Para trocar de modelo: alterar a constante MODELO abaixo.
+Fluxo:
+  1. Thread confirmada no registro → retorna o que está salvo sem reprocessar.
+  2. Camada 1 — assunto: RETORNO_BACEN → CADOC.
+  3. Camada 2 — corpo: RETORNO_BACEN → CADOC.
+  4. Camada 3 — nomes dos anexos: CADOC.
+  5. Camada 4 — padrões de e-mail interno (boas-vindas, comunicado de saída…).
+  6. Camada 5 — SUPORTE (catch-all).
 """
 
-import os
-import json
-import re
+from __future__ import annotations
 
-from dotenv import load_dotenv
-from openai import OpenAI
+import json
+import os
+import re
 
 try:
     import pytesseract
@@ -23,175 +25,15 @@ try:
 except ImportError:
     _OCR_DISPONIVEL = False
 
-load_dotenv()
-
-MODELO = 'gpt-4o-mini'
-
 # ── Caminhos ──────────────────────────────────────────────────────────────────
 
-BASE_DIR      = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CAMINHO_SPEC  = os.path.join(BASE_DIR, 'documentações', 'ESPECIFICACAO_NOVA_ARQUITETURA.md')
-CAMINHO_REGRAS = os.path.join(BASE_DIR, 'documentações', 'regras_classificador_threads.json')
+BASE_DIR         = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CAMINHO_REGRAS   = os.path.join(BASE_DIR, 'documentações', 'regras_classificador_threads.json')
 PASTA_ANEXOS     = os.path.join(BASE_DIR, 'data', 'email_anexos')
 ARQUIVO_REGISTRO = os.path.join(BASE_DIR, 'data', 'registro_definitivo_threads.json')
 
-
-# ── Extração do §10 do arquivo de spec ────────────────────────────────────────
-
-def _extrair_secao10(caminho: str) -> str:
-    with open(caminho, encoding='utf-8') as f:
-        conteudo = f.read()
-    m = re.search(
-        r'(## 10\. Catálogo de categorias.*?)(?=## 11\.)',
-        conteudo, re.DOTALL
-    )
-    if not m:
-        raise RuntimeError('Seção §10 não encontrada na spec. Verifique o arquivo.')
-    return m.group(1).strip()
-
-
-# ── Regras do classificador (prioridade + reconhecimento + gabaritos) ──────────
-
-def _formatar_regras(caminho: str) -> str:
-    """Lê regras_classificador_threads.json e formata todas as seções para o prompt."""
-    try:
-        with open(caminho, encoding='utf-8') as f:
-            dados = json.load(f)
-    except FileNotFoundError:
-        return ''
-
-    linhas: list[str] = []
-
-    # — Regras de prioridade —
-    prioridades = dados.get('regras_prioridade', [])
-    if prioridades:
-        linhas += ['## Regras de prioridade — aplique nesta ordem', '']
-        for p in sorted(prioridades, key=lambda x: x.get('ordem', 0)):
-            linhas.append(f'[{p["ordem"]}] {p["id"]}')
-            linhas.append(f'Instrução: {p["instrucao"]}')
-            if 'palavras_chave' in p:
-                linhas.append(f'Palavras-chave: {", ".join(p["palavras_chave"])}')
-            if 'sinais' in p:
-                s = p['sinais']
-                linhas.append(f'Sinais (números de CADOC): {", ".join(s.get("numeros_cadoc", []))}')
-                linhas.append(f'Sinais (siglas): {", ".join(s.get("siglas", []))}')
-                linhas.append(f'Sinais (formulários): {", ".join(s.get("formularios", []))}')
-                linhas.append(f'Sinais (frases): {", ".join(s.get("frases", []))}')
-            if 'sub_regra_dlo_dli' in p:
-                sr = p['sub_regra_dlo_dli']
-                linhas.append(f'Regra DLO/DLI: {sr["descricao"]}')
-                for row in sr.get('tabela', []):
-                    linhas.append(f'  • Se mencionar {row["menciona"]} → {row["classificacao"]}')
-            if 'palavras_nao_sinal' in p:
-                linhas.append(f'Palavras que NÃO acionam CADOC: {", ".join(p["palavras_nao_sinal"])}')
-            linhas.append('')
-        linhas += ['---', '']
-
-    def _cat_principal(entrada: dict) -> str:
-        cats = entrada.get('categorias', [])
-        return cats[0] if cats else ''
-
-    # — Regras de reconhecimento —
-    regras    = dados.get('regras', [])
-    gabaritos = dados.get('gabaritos', [])
-    if not regras and not gabaritos:
-        return '\n'.join(linhas) if linhas else ''
-
-    linhas += [
-        '## Regras confirmadas — aplicar sempre que o padrão aparecer',
-        '',
-        'Estas regras foram validadas por especialistas.',
-        'O assunto determina a categoria; o corpo não muda a decisão.',
-        '',
-    ]
-    por_cat_reg: dict[str, list] = {}
-    for r in regras:
-        por_cat_reg.setdefault(_cat_principal(r), []).append(r)
-
-    for cat in sorted(por_cat_reg):
-        linhas.append(f'**{cat}:**')
-        for r in por_cat_reg[cat]:
-            rid       = r.get('id', '')
-            padrao    = r.get('padrao', '')
-            instrucao = r.get('instrucao', '')
-            excecao   = r.get('excecao', '')
-            linhas.append(f'• [{rid}]')
-            linhas.append(f'  Padrão: {padrao}')
-            linhas.append(f'  Instrução: {instrucao}')
-            if excecao:
-                linhas.append(f'  Exceção: {excecao}')
-        linhas.append('')
-
-    # — Gabaritos —
-    linhas += [
-        '---',
-        '',
-        '## Gabaritos — exemplos para casos ambíguos',
-        '',
-        'Use quando a regra não for suficiente para decidir com confiança.',
-        '',
-    ]
-    por_cat_gab: dict[str, list] = {}
-    for g in gabaritos:
-        por_cat_gab.setdefault(_cat_principal(g), []).append(g)
-
-    for cat in sorted(por_cat_gab):
-        linhas.append(f'**{cat}:**')
-        for g in por_cat_gab[cat]:
-            gid     = g.get('id', '')
-            assunto = g.get('assunto_exemplo', '')
-            por_que = g.get('por_que_gabarito', '')
-            cats_g  = g.get('categorias', [cat])
-            cat_str = ', '.join(cats_g)
-            linhas.append(f'• [{gid}] "{assunto}" → {cat_str}')
-            linhas.append(f'  Por quê: {por_que}')
-        linhas.append('')
-
-    return '\n'.join(linhas)
-
-
-# ── OCR ───────────────────────────────────────────────────────────────────────
-
-def buscar_imagens(indice: int) -> list:
-    """
-    Retorna caminhos das imagens salvas para a thread de índice `indice`.
-    Convenção: arquivos em PASTA_ANEXOS com nome '{indice}_*'.
-    """
-    if not os.path.isdir(PASTA_ANEXOS):
-        return []
-    prefix = f'{indice}_'
-    exts   = {'.png', '.jpg', '.jpeg'}
-    imgs   = [
-        os.path.join(PASTA_ANEXOS, arq)
-        for arq in os.listdir(PASTA_ANEXOS)
-        if arq.startswith(prefix) and os.path.splitext(arq)[1].lower() in exts
-    ]
-    return sorted(imgs)
-
-
-def _extrair_texto_ocr(caminhos: list) -> str:
-    """
-    Extrai texto das imagens via OCR.
-    Ignora imagens que retornam menos de 30 chars (logos, assinaturas de e-mail).
-    Retorna string vazia se OCR não estiver disponível ou não extrair nada útil.
-    """
-    if not _OCR_DISPONIVEL or not caminhos:
-        return ''
-    partes = []
-    for caminho in caminhos[:4]:
-        try:
-            img   = _PILImage.open(caminho)
-            texto = pytesseract.image_to_string(img, lang='por+eng').strip()
-            if len(texto) >= 30:
-                partes.append(texto)
-        except Exception:
-            pass
-    return '\n\n'.join(partes)
-
-
 # ── Normalização de nomes de categoria ───────────────────────────────────────
-# A IA às vezes retorna o nome legível ("Saldos Contábeis Diários 4111") ao invés
-# do código canônico. Este mapa corrige variações conhecidas.
+# Converte variantes do nome legível para o código canônico do sistema.
 _NORM_CATEGORIAS: dict[str, str] = {
     'Saldos Contábeis Diários 4111':  'SALDOS_CONTABEIS_DIARIOS_4111',
     'saldos contábeis diários 4111':  'SALDOS_CONTABEIS_DIARIOS_4111',
@@ -202,10 +44,7 @@ _NORM_CATEGORIAS: dict[str, str] = {
     'Saltos_Contabeis_Diarios_4111':  'SALDOS_CONTABEIS_DIARIOS_4111',
 }
 
-
-# ── Registro definitivo — consulta antes de chamar o GPT ─────────────────────
-# Threads confirmadas retornam o resultado salvo sem chamar o GPT.
-# O cache é carregado uma vez por processo (lazy load); nunca altera o arquivo.
+# ── Registro definitivo ───────────────────────────────────────────────────────
 
 _REGISTRO_CACHE: dict | None = None
 
@@ -221,91 +60,216 @@ def _carregar_registro() -> dict:
     return _REGISTRO_CACHE
 
 
-# ── Sistema (construído uma vez ao carregar o módulo) ─────────────────────────
+# ── Padrões de detecção ───────────────────────────────────────────────────────
 
-_SECAO10    = _extrair_secao10(CAMINHO_SPEC)
-_REGRAS     = _formatar_regras(CAMINHO_REGRAS)
-_REGRAS_SECAO = f'\n\n---\n\n{_REGRAS}' if _REGRAS else ''
+# Sinais de RETORNO_BACEN
+_RETORNO_SINAIS_FORTES = [
+    'AVISO DE ATRASO',
+    'BANCO CENTRAL - AVISO',
+    'COMUNICACAO DE INCONSISTENCIA',
+    'COMUNICAÇÃO DE INCONSISTÊNCIA',
+    'INDICIO DE PROBLEMA DE QUALIDADE',
+    'INDÍCIO DE PROBLEMA DE QUALIDADE',
+]
+_RETORNO_SINAIS_VCRD = ['VCRD', 'CRITICA VCRD', 'CRÍTICA VCRD']
+_RETORNO_SINAIS_INDICIO = ['INDICIO', 'INDÍCIO']
 
-_SISTEMA = f"""Você é o classificador de e-mails regulatórios do sistema Oráculo 360 da Finaud.
+# Padrões DDR_2011 (regex aplicado sobre texto em maiúsculo)
+_DDR_PADROES = [
+    r'\bDDR\b',
+    r'\b2011\b',
+    r'EXTRATO COMPROMISSADA',
+    r'COMPROMISSAD',           # cobre compromissada, compromissadas
+    r'\bPCAM\b',
+    r'\bTVM\b',                # word boundary → não pega DTVM
+    r'OP\.\s*SELIC',
+    r'POSIC[AÃ][OÃ] DE C[AÂ]MBIO',
+    r'\bPUs?\b',
+    r'\bVMTM\b',
+    r'CADASTRO DE A[ÇC][OÕ]ES E OP[ÇC][OÕ]ES',
+]
 
-Sua função: dado um e-mail, identificar em qual(is) categoria(s) ele pertence com base \
-nas regras abaixo.
-
-{_SECAO10}{_REGRAS_SECAO}
-
----
-
-## Instruções de classificação
-
-- Um e-mail pode pertencer a mais de uma categoria (ex.: DLO + DLI no mesmo assunto). \
-Liste todas.
-- Use SUPORTE apenas quando nenhuma categoria CADOC for identificada no assunto, corpo \
-ou nome dos anexos.
-- Categorias válidas (use exatamente esses nomes):
-  DDR_2011, SALDOS_CONTABEIS_DIARIOS_4111, DRM_2060, DLO_2061, DLI_2062, DRL_2160, S5,
-  RETORNO_BACEN, FORCAPITAL, DRSAC_2030, PVCA_6209, SUPORTE
-
-## Formato de resposta — JSON válido com esta estrutura exata:
-
-{{
-  "categorias": ["CATEGORIA"],
-  "confianca": "alta",
-  "motivo": "explicação curta em português",
-  "incerto": false,
-  "gabarito_usado": "DDR - Regra 01 - EXTRATO COMPROMISSADA",
-  "orientacao": null
-}}
-
-- "gabarito_usado": ID da regra ou gabarito que fundamentou a decisão. \
-Use null quando a classificação vier diretamente das regras do §10.
-- "orientacao": use null quando classificar com sucesso. \
-Preencha APENAS quando "incerto": true ou "categorias": [] — explique o que precisaria \
-estar no e-mail (assunto, corpo ou anexo) para você classificar com confiança.
-
-Se não conseguir classificar com confiança suficiente, retorne:
-{{
-  "categorias": [],
-  "confianca": "baixa",
-  "motivo": "o que você viu no e-mail que gerou a dúvida",
-  "incerto": true,
-  "gabarito_usado": null,
-  "orientacao": "o que precisaria estar no e-mail para você classificar com certeza"
-}}
-
-Exemplos de orientacao bem preenchida:
-- Se o assunto ou corpo mencionasse o número do CADOC (2011, 2060, 2061...) ou a sigla \
-(DDR, DRM, DLO), eu classificaria diretamente.
-- O e-mail menciona erro no DRM mas não está claro se houve rejeição do BACEN. Se o \
-histórico mencionasse inconsistência ou aviso de atraso, eu classificaria como RETORNO_BACEN."""
+# Padrões INTERNO (regex aplicado sobre assunto em maiúsculo)
+_INTERNO_PADROES_ASSUNTO = [
+    r'BOAS.VINDAS',
+    r'BOA.VINDA',
+    r'BEM.VINDO',
+    r'COMUNICADO DE SA[IÍ]DA',
+    r'C[OÓ]DIGO DE VERIFICA',
+    r'CONVIDOU VOC[EÊ]',
+    r'INGRESSAR.*TEAMS',
+    r'VISITA FINAUD',
+]
 
 
-# ── Classificação ──────────────────────────────────────────────────────────────
+# ── Funções de detecção ───────────────────────────────────────────────────────
 
-def classificar_thread(thread: dict, cliente: OpenAI = None,
-                       imagens: list = None) -> dict:
+def _tem_retorno_bacen(assunto_u: str, corpo_u: str) -> bool:
+    """Retorna True se o texto contém sinais claros de RETORNO_BACEN."""
+    texto = assunto_u + ' ' + corpo_u
+    if any(s in texto for s in _RETORNO_SINAIS_FORTES):
+        return True
+    if any(s in texto for s in _RETORNO_SINAIS_VCRD):
+        return True
+    # INDICIO/INDÍCIO: só no assunto — no corpo é termo técnico comum
+    if any(s in assunto_u for s in _RETORNO_SINAIS_INDICIO):
+        return True
+    return False
+
+
+def _detectar_cadoc(texto_u: str) -> list[str]:
     """
-    Classifica uma thread em uma ou mais categorias do §10.
+    Detecta categorias CADOC presentes em um texto (assunto, corpo ou anexos).
+    Retorna lista ordenada das categorias identificadas.
+    """
+    cats: set[str] = set()
+
+    # SALDOS_CONTABEIS_DIARIOS_4111
+    if (re.search(r'\b4111\b', texto_u)
+            or 'SALDOS CONT' in texto_u
+            or 'FLUXO DE CAIXA' in texto_u):
+        cats.add('SALDOS_CONTABEIS_DIARIOS_4111')
+
+    # DRM_2060
+    if re.search(r'\bDRM\b', texto_u) or re.search(r'\b2060\b', texto_u):
+        cats.add('DRM_2060')
+
+    # DRL_2160
+    if (re.search(r'\bDRL\b', texto_u)
+            or re.search(r'\bDLR\b', texto_u)   # typo frequente
+            or re.search(r'\b2160\b', texto_u)):
+        cats.add('DRL_2160')
+
+    # DDR_2011
+    if any(re.search(p, texto_u) for p in _DDR_PADROES):
+        cats.add('DDR_2011')
+
+    # DLO_2061 e DLI_2062 — sub-regra de distinção
+    tem_dlo = bool(
+        re.search(r'\bDLO\b', texto_u)
+        or re.search(r'\b2061\b', texto_u)
+        or re.search(r'\bLEC\b', texto_u)
+        or 'COS4010' in texto_u
+        or 'COS4016' in texto_u
+        or 'COS4060' in texto_u
+        or 'COS4066' in texto_u
+    )
+    tem_dli = bool(
+        re.search(r'\bDLI\b', texto_u)
+        or re.search(r'\b2062\b', texto_u)
+    )
+    if tem_dlo and tem_dli:
+        cats.add('DLO_2061')
+        cats.add('DLI_2062')
+    elif tem_dlo:
+        cats.add('DLO_2061')
+    elif tem_dli:
+        cats.add('DLI_2062')
+
+    # S5
+    if re.search(r'\bS5\b', texto_u) or 'RESULTADO QUANTITATIVO' in texto_u:
+        cats.add('S5')
+
+    # FORCAPITAL
+    if ('FORCAPITAL' in texto_u
+            or 'FOR CAPITAL' in texto_u
+            or 'FOR-CAPITAL' in texto_u
+            or 'PROJECAO DE CAPITAL' in texto_u
+            or 'PROJEÇÃO DE CAPITAL' in texto_u):
+        cats.add('FORCAPITAL')
+
+    # DRSAC_2030
+    if 'DRSAC' in texto_u or re.search(r'\b2030\b', texto_u):
+        cats.add('DRSAC_2030')
+
+    # PVCA_6209
+    if (re.search(r'\bPVCA\b', texto_u)
+            or re.search(r'\b6209\b', texto_u)
+            or 'PAGAMENTOS DE VAREJO' in texto_u):
+        cats.add('PVCA_6209')
+
+    return sorted(cats)
+
+
+def _eh_interno(assunto: str) -> bool:
+    """Retorna True se o assunto corresponde a um padrão de e-mail interno."""
+    au = assunto.upper()
+    return any(re.search(p, au) for p in _INTERNO_PADROES_ASSUNTO)
+
+
+def _ok(cats: list[str], motivo: str, regra_usada: str | None) -> dict:
+    return {
+        'categorias':     cats,
+        'confianca':      'alta',
+        'motivo':         motivo,
+        'incerto':        False,
+        'gabarito_usado': regra_usada,
+    }
+
+
+# ── Classificação determinística ──────────────────────────────────────────────
+
+def _classificar_deterministico(
+    assunto: str, corpo: str, anexos: str
+) -> dict:
+    au = assunto.upper()
+    cu = corpo.upper()
+    xu = anexos.upper()
+
+    # Camada 1a — RETORNO_BACEN pelo assunto (prioridade máxima)
+    if _tem_retorno_bacen(au, ''):
+        return _ok(['RETORNO_BACEN'], 'sinal de RETORNO_BACEN no assunto', 'RETORNO - Regra 01')
+
+    # Camada 1b — CADOC pelo assunto
+    cats = _detectar_cadoc(au)
+    if cats:
+        return _ok(cats, f'sinal de CADOC no assunto ({", ".join(cats)})', None)
+
+    # Camada 2a — RETORNO_BACEN pelo corpo (cliente encaminhando e-mail do BACEN)
+    if _tem_retorno_bacen('', cu):
+        return _ok(['RETORNO_BACEN'], 'sinal de RETORNO_BACEN no corpo', 'RETORNO - Regra 01')
+
+    # Camada 2b — CADOC pelo corpo
+    cats = _detectar_cadoc(cu)
+    if cats:
+        return _ok(cats, f'sinal de CADOC no corpo ({", ".join(cats)})', None)
+
+    # Camada 3 — CADOC pelos nomes dos anexos
+    cats = _detectar_cadoc(xu)
+    if cats:
+        return _ok(cats, f'sinal de CADOC nos anexos ({", ".join(cats)})', None)
+
+    # Camada 4 — padrões de e-mail interno
+    if _eh_interno(assunto):
+        return _ok(['INTERNO'], 'padrão de e-mail interno no assunto', 'INTERNO - Regra 01')
+
+    # Camada 5 — SUPORTE (catch-all)
+    return _ok(['SUPORTE'], 'sem sinal de CADOC → SUPORTE', None)
+
+
+# ── Ponto de entrada público ──────────────────────────────────────────────────
+
+def classificar_thread(thread: dict, cliente=None, imagens: list = None) -> dict:
+    """
+    Classifica uma thread de e-mail de forma determinística (sem chamada a IA).
 
     Parâmetros
     ----------
     thread  : dict no formato do coletor_gmail.py
-    cliente : instância do openai.OpenAI (opcional — cria uma se não passada)
-    imagens : lista de caminhos de imagens da thread (opcional).
-              Quando fornecida, o texto extraído via OCR é incluído no prompt.
-              Use buscar_imagens(indice) para obter os caminhos.
+    cliente : ignorado (mantido para compatibilidade de assinatura)
+    imagens : ignorado (nomes de anexos são lidos diretamente do campo 'nomes_anexos')
 
     Retorna
     -------
     {
-      "categorias"    : list[str],        ex.: ["DDR_2011"] ou ["DLO_2061", "DLI_2062"]
-      "confianca"     : str,              "alta" | "media" | "baixa"
-      "motivo"        : str,              explicação em português
-      "incerto"       : bool
-      "gabarito_usado": str | None,       ID do gabarito que embasou a decisão, ou None
+      "categorias"    : list[str],
+      "confianca"     : str,        "alta"
+      "motivo"        : str,        explicação em português
+      "incerto"       : bool,       sempre False (determinístico sempre decide)
+      "gabarito_usado": str | None
     }
     """
-    # Threads com status_regra "confirmada" no registro não chamam o GPT.
+    # Threads com status_regra "confirmada" no registro retornam o valor salvo.
     thread_id = thread.get('thread_id', '')
     if thread_id:
         reg    = _carregar_registro()
@@ -314,69 +278,56 @@ def classificar_thread(thread: dict, cliente: OpenAI = None,
             return {
                 'categorias':     entrada.get('categorias', []),
                 'confianca':      'alta',
-                'motivo':         f'Confirmada via {entrada.get("regra_usada", "registro")}',
+                'motivo':         f'Confirmada no registro ({entrada.get("regra_usada", "registro")})',
                 'incerto':        False,
                 'gabarito_usado': entrada.get('regra_usada'),
             }
 
-    if cliente is None:
-        cliente = OpenAI()
+    # Coleta de dados da thread
+    mensagens    = thread.get('mensagens', [])
+    assunto      = (thread.get('assunto') or '').strip()
+    corpo_partes: list[str] = []
+    nomes_anexos: list[str] = []
 
-    mensagens = thread.get('mensagens', [])
-    assunto   = thread.get('assunto', '')
+    for msg in mensagens[:3]:
+        corpo_msg = (msg.get('corpo_texto') or '').strip()
+        if corpo_msg:
+            corpo_partes.append(corpo_msg[:600])
+        nomes_anexos.extend(msg.get('nomes_anexos') or [])
 
-    # Lê até 3 mensagens da thread para dar contexto completo à IA.
-    # A primeira mensagem inclui anexos; as demais só remetente + corpo.
-    partes = []
-    for i, msg in enumerate(mensagens[:3], start=1):
-        rem  = msg.get('remetente', '')[:80]
-        corp = msg.get('corpo_texto', '')[:300]
-        anx  = msg.get('nomes_anexos', [])
-        if i == 1:
-            lista_anx = ', '.join(anx) if anx else '(nenhum)'
-            partes.append(
-                f"De: {rem}\nAnexos: {lista_anx}\n\n{corp}"
-            )
-        else:
-            partes.append(f"--- Mensagem {i} ---\nDe: {rem}\n\n{corp}")
+    corpo  = ' '.join(corpo_partes)
+    anexos = ' '.join(nomes_anexos)
 
-    email_texto = f"Assunto: {assunto}\n\n" + "\n\n".join(partes)
+    return _classificar_deterministico(assunto, corpo, anexos)
 
-    # Acrescenta texto OCR das imagens quando disponível.
-    if imagens:
-        texto_ocr = _extrair_texto_ocr(imagens)
-        if texto_ocr:
-            email_texto += f'\n\nTexto extraído das imagens anexadas:\n{texto_ocr[:800]}'
 
-    resposta = cliente.chat.completions.create(
-        model=MODELO,
-        max_tokens=512,
-        temperature=0,
-        response_format={'type': 'json_object'},  # garante JSON válido — sem erros de parse
-        messages=[
-            {'role': 'system', 'content': _SISTEMA},
-            {'role': 'user',   'content': email_texto},
-        ]
+# ── OCR e imagens (mantidos para uso pelo pipeline) ──────────────────────────
+
+def buscar_imagens(indice: int) -> list:
+    """Retorna caminhos das imagens do índice informado na pasta de anexos."""
+    if not os.path.isdir(PASTA_ANEXOS):
+        return []
+    prefix = f'{indice}_'
+    exts   = {'.png', '.jpg', '.jpeg'}
+    return sorted(
+        os.path.join(PASTA_ANEXOS, arq)
+        for arq in os.listdir(PASTA_ANEXOS)
+        if arq.startswith(prefix)
+        and os.path.splitext(arq)[1].lower() in exts
     )
 
-    texto = resposta.choices[0].message.content.strip()
 
-    try:
-        resultado = json.loads(texto)
-    except json.JSONDecodeError:
-        resultado = _resultado_erro(texto)
-
-    resultado['categorias'] = [
-        _NORM_CATEGORIAS.get(c, c) for c in resultado.get('categorias', [])
-    ]
-
-    return resultado
-
-
-def _resultado_erro(texto_bruto: str) -> dict:
-    return {
-        'categorias': [],
-        'confianca': 'baixa',
-        'motivo': f'Erro ao interpretar resposta da IA: {texto_bruto[:120]}',
-        'incerto': True
-    }
+def _extrair_texto_ocr(caminhos: list) -> str:
+    """Extrai texto de imagens via OCR. Retorna '' se lista vazia ou OCR indisponível."""
+    if not _OCR_DISPONIVEL or not caminhos:
+        return ''
+    partes = []
+    for caminho in caminhos[:4]:
+        try:
+            img   = _PILImage.open(caminho)
+            texto = pytesseract.image_to_string(img, lang='por+eng').strip()
+            if len(texto) >= 30:
+                partes.append(texto)
+        except Exception:
+            pass
+    return '\n\n'.join(partes)
