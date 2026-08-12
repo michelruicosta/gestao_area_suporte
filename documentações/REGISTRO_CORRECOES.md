@@ -201,6 +201,33 @@ sem teste: alteração no registro de dados, não em código.
 
 ---
 
+### Correção 07 — 12/08/2026 — DLI no corpo/anexo não detectado quando assunto já era DLO (e vice-versa)
+
+**🔎 Em miúdos:** quando o assunto de um e-mail dizia "DLO", o classificador parava por aí e não
+olhava mais nada. Se o corpo ou o anexo mencionasse "DLI 2062", era ignorado — a thread ficava
+classificada só como DLO quando deveria ser DLO + DLI.
+
+**Problema:** a Camada 1b (assunto detecta CADOC) retornava imediatamente ao encontrar qualquer
+categoria. Se o assunto tinha DLO mas não tinha DLI, não havia verificação de corpo/anexos para a
+metade faltante. O mesmo valia no sentido inverso: assunto com DLI mas DLO só no corpo.
+
+**Correção:** "complemento DLO/DLI" adicionado à Camada 1b. Após detectar CADOC pelo assunto:
+- Se encontrou DLO mas não DLI → verifica só `\bDLI\b` / `\b2062\b` no corpo e nos anexos.
+- Se encontrou DLI mas não DLO → verifica só sinais de DLO (`\bDLO\b`, `\b2061\b`, `\bLEC\b`, COS40xx) no corpo e nos anexos.
+- Varredura cirúrgica — não escaneia todos os CADOCs no corpo/anexos (o que causaria 44 regressões
+  em e-mails de RETORNO_BACEN que citam códigos DDR/DRM no corpo).
+
+Arquivo: `scripts/classificador_ia.py`, função `_classificar_deterministico`, Camada 1b.
+
+**Testes:** 3 casos adicionados em `tests/test_classificador_ia.py` (seção "Correção 07"):
+- assunto DLO + corpo com DLI → `[DLO_2061, DLI_2062]` ✅
+- assunto DLI + corpo com LEC/COS4016 (sinal DLO) → `[DLI_2062, DLO_2061]` ✅
+- assunto DLO + nome do anexo "DLI_2062_JUL.xml" → `[DLO_2061, DLI_2062]` ✅
+
+**Validação:** ✅ VALIDADO — `pytest tests/ -q` 85/85 passando; validação completa: 666/767 (86,8%); era 663/767 (86,4%).
+
+---
+
 ### Correção 05 — 12/08/2026 — PI Exposure (relatório de posição Mirae Asset) não reconhecido como DDR
 
 **🔎 Em miúdos:** e-mails com "PI Exposure MiraeAsset Securities" no assunto iam para SUPORTE.

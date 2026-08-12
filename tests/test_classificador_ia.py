@@ -380,3 +380,36 @@ def test_camada4_interno_por_assunto(assunto):
     assert r['categorias'] == ['INTERNO'], (
         f"Assunto '{assunto}': esperado ['INTERNO'], obtido {r['categorias']}"
     )
+
+
+# ── Correção 07: complemento DLO/DLI entre assunto e corpo/anexo ─────────────
+
+def test_correcao07_assunto_dlo_corpo_dli():
+    """Correção 07 — assunto detecta DLO; corpo tem sinal explícito de DLI → ambas."""
+    r = _classificar(
+        assunto='DLO JUNHO 2026',
+        corpo='Segue o DLI (2062) referente ao mesmo período.',
+    )
+    assert 'DLO_2061' in r['categorias'], 'DLO deve estar nas categorias'
+    assert 'DLI_2062' in r['categorias'], 'DLI deve ser detectado no corpo'
+
+
+def test_correcao07_assunto_dli_corpo_dlo():
+    """Correção 07 — assunto detecta DLI; corpo tem sinal explícito de DLO → ambas."""
+    r = _classificar(
+        assunto='DLI MAIO 2026',
+        corpo='Planilha LEC e COS4016 do mês de maio também em anexo.',
+    )
+    assert 'DLI_2062' in r['categorias'], 'DLI deve estar nas categorias'
+    assert 'DLO_2061' in r['categorias'], 'DLO deve ser detectado no corpo (LEC/COS4016)'
+
+
+def test_correcao07_assunto_dlo_anexo_dli():
+    """Correção 07 — assunto detecta DLO; nome do anexo tem sinal de DLI → ambas."""
+    r = _classificar(
+        assunto='DLO JULHO 2026',
+        corpo='',
+        nomes_anexos=['DLI_2062_JUL.xml'],
+    )
+    assert 'DLO_2061' in r['categorias'], 'DLO deve estar nas categorias'
+    assert 'DLI_2062' in r['categorias'], 'DLI deve ser detectado no nome do anexo'

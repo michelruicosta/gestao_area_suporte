@@ -216,15 +216,29 @@ def _classificar_deterministico(
 ) -> dict:
     au = assunto.upper()
     cu = corpo.upper()
-    xu = anexos.upper()
+    # xu_norm aqui: _ e . viram espaço para que \bDRM\b encontre "DRM" em "DRM_2060.xml"
+    xu_norm = anexos.upper().replace('_', ' ').replace('.', ' ')
 
     # Camada 1a — RETORNO_BACEN pelo assunto (prioridade máxima)
     if _tem_retorno_bacen(au, ''):
         return _ok(['RETORNO_BACEN'], 'sinal de RETORNO_BACEN no assunto', 'RETORNO - Regra 01')
 
     # Camada 1b — CADOC pelo assunto
-    cats = _detectar_cadoc(au)
+    cats = set(_detectar_cadoc(au))
     if cats:
+        # Complemento DLO/DLI: se o assunto tem um mas não o outro,
+        # busca só a metade faltante no corpo+anexos — evita falsos positivos
+        # de outros CADOCs citados no contexto do e-mail.
+        texto_resto = cu + ' ' + xu_norm
+        if 'DLO_2061' in cats and 'DLI_2062' not in cats:
+            if re.search(r'\bDLI\b', texto_resto) or re.search(r'\b2062\b', texto_resto):
+                cats.add('DLI_2062')
+        elif 'DLI_2062' in cats and 'DLO_2061' not in cats:
+            if (re.search(r'\bDLO\b', texto_resto) or re.search(r'\b2061\b', texto_resto)
+                    or re.search(r'\bLEC\b', texto_resto)
+                    or any(c in texto_resto for c in ('COS4010', 'COS4016', 'COS4060', 'COS4066'))):
+                cats.add('DLO_2061')
+        cats = sorted(cats)
         return _ok(cats, f'sinal de CADOC no assunto ({", ".join(cats)})', None)
 
     # Camada 2a — RETORNO_BACEN pelo corpo (cliente encaminhando e-mail do BACEN)
@@ -237,9 +251,6 @@ def _classificar_deterministico(
         return _ok(cats, f'sinal de CADOC no corpo ({", ".join(cats)})', None)
 
     # Camada 3 — CADOC pelos nomes dos anexos
-    # Normaliza separadores de arquivo (_ e .) para espaço: DRM_2060.xml → DRM 2060 xml
-    # Sem isso, \bDRM\b não encontra "DRM" em "DRM_2060" porque _ é \w no regex.
-    xu_norm = xu.replace('_', ' ').replace('.', ' ')
     cats = _detectar_cadoc(xu_norm)
     if cats:
         return _ok(cats, f'sinal de CADOC nos anexos ({", ".join(cats)})', None)
