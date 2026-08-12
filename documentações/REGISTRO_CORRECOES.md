@@ -113,6 +113,40 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+### 12/08 — Decisão: abandonar GPT, adotar classificador determinístico
+
+**🔎 Em miúdos:** depois de múltiplas tentativas de corrigir erros do GPT via instrução de texto, Michel decidiu que a classificação não será mais feita por nenhuma IA — será um programa Python que segue regras fixas, sem chamada de API.
+
+**Problema:** o GPT ignorava instruções quando o conteúdo do e-mail era "sugestivo" — mesmo com exceções bem escritas, ele classificava e-mails de DLO como RETORNO_BACEN porque o corpo mencionava "crítica". Instável e impossível de depurar.
+
+**Decisão:** substituir `classificar_thread()` (GPT) por um classificador Python determinístico que lê regras do `regras_classificador_threads.json` e as aplica em ordem de prioridade.
+
+**Validação:** ⚠️ VALIDAÇÃO PENDENTE — classificador determinístico ainda a construir.
+
+---
+
+### 12/08 — Revisão de 49 threads e registro no registro_definitivo
+
+**🔎 Em miúdos:** Michel revisou 41 threads que o sistema não conseguia classificar (as mais ambíguas) + 9 que estavam marcadas como "confirmadas" mas sem categoria preenchida (falha do GPT da sessão anterior). Todas foram classificadas e gravadas.
+
+**Problema:** 103 threads estavam como "incerta" no registro. Dessas, 41 não tinham nenhum sinal claro de CADOC no assunto — o GPT não conseguia decidir. Além disso, 9 threads de ontem (11/08) tinham `status_regra = "confirmada"` mas `categorias = []` — falha silenciosa do GPT.
+
+**Correção:**
+- Michel revisou as 41 ambíguas e classificou 40 (1 pendente: thread 19f71c34de2418fe "Arquivos Regulatórios - ZIIN" — precisa identificar o anexo).
+- As 9 anômalas foram classificadas e corrigidas (SUPORTE, INTERNO, DLO_2061+DLI_2062, RETORNO_BACEN).
+- Total de novas regras descobertas: FLUXO DE CAIXA → S4111; LEC → DLO; OP. SELIC / PUs → DDR; Cadastro de fundos/operações sem CADOC → DDR; Posição de Câmbio → DDR; Reunião/Posição/Dúvida com CADOC no assunto → o CADOC; sem CADOC → SUPORTE; divulgação de IN pela Finaud → INTERNO; cliente questionando norma → SUPORTE; e-mails automáticos de plataforma → INTERNO.
+- Categoria INTERNO criada (boas-vindas, comunicados de saída, divulgação de IN, e-mails automáticos, agendamento de visita).
+
+**Estado final do registro:**
+- Confirmadas: 705 (91,8%) — zero anomalias
+- Incertas: 63 (8,2%) — aguardam classificador determinístico
+
+**Backup em:** `data/backups/20260812_1558_registrar_ambiguos/`
+
+**Validação:** ✅ VALIDADO — diagnóstico confirma 0 "confirmadas sem categoria".
+
+---
+
 ## 2026-08-07 (sessão tarde) — Revisão spec: padronização, ambiguidades e decisões de negócio
 
 ### 07/08 15:00 — Spec §10: COS4060/4066 corrigidos para DLO_2061 (era erro)
