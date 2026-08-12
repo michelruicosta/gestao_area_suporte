@@ -292,9 +292,17 @@ def test_buscar_imagens_filtra_por_indice(tmp_path, monkeypatch):
     ('AVISO DE ATRASO - DRM 2060',        'RETORNO_BACEN'),
     ('INDICIO - DDR 2011',                'RETORNO_BACEN'),
     # Correção 01 — 12/08/2026: cedilha (Ç) em POSIÇÃO não era detectada
-    ('Posição de Câmbio CAM0050 BACEN',   'DDR_2011'),
-    ('Posição de Câmbio - 28/07/26',      'DDR_2011'),
-    ('TRINUS - ENVIAR POSIÇÃO DDR 2011',  'DDR_2011'),
+    ('Posição de Câmbio CAM0050 BACEN',      'DDR_2011'),
+    ('Posição de Câmbio - 28/07/26',         'DDR_2011'),
+    ('TRINUS - ENVIAR POSIÇÃO DDR 2011',     'DDR_2011'),
+    # Correção 02 — 12/08/2026: PUs (plural) virava PUS maiúsculo sem match
+    ('PUs dos títulos públicos 30/06/2026',  'DDR_2011'),
+    # Correção 03 — 12/08/2026: DDRs (plural) virava DDRS sem match
+    ('COLUNA: DDRs - 16/07/2026 e 17/07/2026',  'DDR_2011'),
+    # Correção 04 — 12/08/2026: REMITLY é cliente que sempre envia DDR
+    ('REMITLY : Movimento 2026.08.04',                              'DDR_2011'),
+    # Correção 05 — 12/08/2026: PI EXPOSURE é relatório diário de posição (DDR)
+    ('PI Exposure MiraeAsset Securities in Brazil_HK - 20260804_AUDIT', 'DDR_2011'),
 ])
 def test_camada1_assunto_detecta_cadoc(assunto, esperado):
     """Camada 1: assunto com sinal inequívoco → categoria correta."""

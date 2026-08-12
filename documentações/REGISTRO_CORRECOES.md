@@ -183,6 +183,73 @@ Mantido: bypass do registro (thread confirmada → retorna salvo sem reprocessar
 
 ---
 
+### Correção 05 — 12/08/2026 — PI Exposure (relatório de posição Mirae Asset) não reconhecido como DDR
+
+**🔎 Em miúdos:** e-mails com "PI Exposure MiraeAsset Securities" no assunto iam para SUPORTE.
+Esse é um relatório diário de posição enviado por um cliente que é sempre DDR_2011.
+
+**Problema:** o assunto "PI Exposure MiraeAsset Securities in Brazil_HK - 20260804_AUDIT" não
+contém nenhum dos sinais de DDR conhecidos (DDR, 2011, TVM, PU, PCAM, etc.).
+
+**Correção:** padrão `PI EXPOSURE` adicionado a `_DDR_PADROES` em `scripts/classificador_ia.py`.
+
+**Teste:** `test_camada1_assunto_detecta_cadoc` com `'PI Exposure MiraeAsset Securities...'` → `DDR_2011` ✅
+
+**Validação:** ✅ VALIDADO — 82/82 testes passando. (Impacto somado com correções 02-04 abaixo:
+652/767 = 85,0% corretas; era 607/767 = 79,1% antes do bloco de 4 correções.)
+
+---
+
+### Correção 04 — 12/08/2026 — REMITLY (relatório de movimento cambial) não reconhecido como DDR
+
+**🔎 Em miúdos:** e-mails com "REMITLY : Movimento" no assunto iam para SUPORTE. REMITLY é um
+cliente que envia relatório diário de posição de moeda estrangeira — sempre DDR_2011.
+
+**Problema:** o assunto "REMITLY : Movimento 2026.08.04" não contém sinais de DDR conhecidos.
+O corpo tem "ContaCosif", "Posicao", "Moeda ME" — sinais DDR — mas não eram suficientes sozinhos.
+
+**Correção:** padrão `\bREMITLY\b` adicionado a `_DDR_PADROES` em `scripts/classificador_ia.py`.
+Confirmado por Michel: REMITLY sempre envia DDR.
+
+**Teste:** `test_camada1_assunto_detecta_cadoc` com `'REMITLY : Movimento 2026.08.04'` → `DDR_2011` ✅
+
+**Validação:** ✅ VALIDADO — 81/81 testes passando.
+
+---
+
+### Correção 03 — 12/08/2026 — "DDRs" (plural) não detectado
+
+**🔎 Em miúdos:** e-mails com "DDRs" no assunto (plural de DDR) iam para SUPORTE porque o
+computador procurava "DDR" como palavra completa e "DDRs" não é — tem letra extra depois.
+
+**Problema:** padrão `\bDDR\b` exige word boundary após R. Em "DDRS" (maiúsculo de "DDRs"),
+após R vem S que é letra — sem boundary → não detecta.
+
+**Correção:** `r'\bDDR\b'` → `r'\bDDRS?\b'` (S maiúsculo opcional) em `_DDR_PADROES`.
+
+**Teste:** `test_camada1_assunto_detecta_cadoc` com `'COLUNA: DDRs - 16/07/2026 e 17/07/2026'` → `DDR_2011` ✅
+
+**Validação:** ✅ VALIDADO — 80/80 testes passando.
+
+---
+
+### Correção 02 — 12/08/2026 — "PUs" (plural de PU) não detectado em maiúsculo
+
+**🔎 Em miúdos:** e-mails com "PUs" no assunto iam para SUPORTE. PU é Preço Unitário de título
+— sinal inequívoco de DDR. O bug: no código, a letra "s" do plural estava em minúsculo, mas o
+sistema converte tudo para maiúsculo antes de pesquisar — então "PUS" não casava com "PUs".
+
+**Problema:** padrão `\bPUs?\b` tem `s` minúsculo. Texto convertido para maiúsculo tem `S`
+maiúsculo. Em Python regex, `s` ≠ `S` → não detecta "PUS".
+
+**Correção:** `r'\bPUs?\b'` → `r'\bPU[S]?\b'` (S maiúsculo dentro de colchete, opcional).
+
+**Teste:** `test_camada1_assunto_detecta_cadoc` com `'PUs dos títulos públicos 30/06/2026'` → `DDR_2011` ✅
+
+**Validação:** ✅ VALIDADO — 79/79 testes passando.
+
+---
+
 ### Correção 01 — 12/08/2026 — Bug da cedilha em "Posição de Câmbio"
 
 **🔎 Em miúdos:** o classificador não reconhecia e-mails com "Posição de Câmbio" no assunto e os

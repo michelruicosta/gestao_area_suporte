@@ -76,7 +76,7 @@ _RETORNO_SINAIS_INDICIO = ['INDICIO', 'INDÍCIO']
 
 # Padrões DDR_2011 (regex aplicado sobre texto em maiúsculo)
 _DDR_PADROES = [
-    r'\bDDR\b',
+    r'\bDDRS?\b',
     r'\b2011\b',
     r'EXTRATO COMPROMISSADA',
     r'COMPROMISSAD',           # cobre compromissada, compromissadas
@@ -84,9 +84,11 @@ _DDR_PADROES = [
     r'\bTVM\b',                # word boundary → não pega DTVM
     r'OP\.\s*SELIC',
     r'POSI[CÇ][AÃ][OÃ] DE C[AÂ]MBIO',
-    r'\bPUs?\b',
+    r'\bPU[S]?\b',
     r'\bVMTM\b',
     r'CADASTRO DE A[ÇC][OÕ]ES E OP[ÇC][OÕ]ES',
+    r'\bREMITLY\b',
+    r'PI EXPOSURE',
 ]
 
 # Padrões INTERNO (regex aplicado sobre assunto em maiúsculo)
