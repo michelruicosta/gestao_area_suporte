@@ -183,6 +183,20 @@ Mantido: bypass do registro (thread confirmada → retorna salvo sem reprocessar
 
 ---
 
+### Correção 23 — 13/08/2026 — Classificador: 'ERRO' no início + só DDR no assunto → SUPORTE
+
+**🔎 Em miúdos:** quando o assunto começa com "ERRO" e o único código CADOC identificado no assunto é o DDR, o classificador agora entende que é um pedido de suporte sobre um problema de cálculo — não uma entrega do CADOC — e classifica como SUPORTE.
+
+**Problema:** dois threads de pedido de suporte estavam sendo classificados como DDR_2011: "ERRO -- Taxa Referencial DDR" (erro na taxa de referência) e "Erro ao calcular o VMTM do dia 30/07/2026" (VMTM é um componente de cálculo do DDR). Em ambos, o cliente não estava entregando o CADOC — estava pedindo ajuda para resolver um erro no processo.
+
+**Correção:** dentro da Camada 1b, após os checks de REUNIÃO, verifica-se se o assunto começa com "ERRO" e se o único CADOC detectado no assunto é DDR_2011. Se sim, retorna SUPORTE. A condição `cats == {'DDR_2011'}` garante que assuntos com ERRO + DLO, DRM etc. não são afetados.
+
+**Varredura:** +2 ganhos, 0 regressões (767 threads). Placar: 707 → 709 acertos.
+
+**Placar:** 709/767 acertos (58 erros). `pytest tests/ -q` → 128 passed. ✅
+
+---
+
 ### Correção 22 — 13/08/2026 — Classificador: 'REUNIÃO' + CADOC no assunto → SUPORTE
 
 **🔎 Em miúdos:** quando o assunto do e-mail tem a palavra "REUNIÃO" junto com um código CADOC (ex.: "Reunião - Demandas BACEN - DLO Junho"), o classificador agora entende que é uma pauta de reunião sobre o CADOC — não uma entrega — e classifica como SUPORTE.

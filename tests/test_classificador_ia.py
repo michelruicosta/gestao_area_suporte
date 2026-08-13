@@ -697,3 +697,30 @@ def test_correcao22_reuniao_sem_cadoc_retorna_suporte():
     """Correção 22 — 'Reunião' no assunto sem CADOC também → SUPORTE."""
     r = _classificar('Reunião sobre processos internos')
     assert r['categorias'] == ['SUPORTE'], f"SUPORTE esperado; obtido {r['categorias']}"
+
+
+# ── Correção 23 — 'ERRO' no início + só DDR no assunto → SUPORTE ─────────────
+
+
+def test_correcao23_erro_ddr_no_assunto_retorna_suporte():
+    """Correção 23 — 'ERRO' no início + só DDR no assunto → pedido de suporte, não entrega."""
+    r = _classificar('ERRO -- Taxa Referencial DDR')
+    assert r['categorias'] == ['SUPORTE'], f"SUPORTE esperado; obtido {r['categorias']}"
+
+
+def test_correcao23_erro_vmtm_retorna_suporte():
+    """Correção 23 — 'Erro ao calcular o VMTM' dispara DDR mas é pedido de suporte → SUPORTE."""
+    r = _classificar('Erro ao calcular o VMTM do dia 30/07/2026')
+    assert r['categorias'] == ['SUPORTE'], f"SUPORTE esperado; obtido {r['categorias']}"
+
+
+def test_correcao23_erro_com_dlo_nao_afeta():
+    """Correção 23 — 'ERRO NO DLO' tem DLO no assunto (não só DDR) → mantém DLO_2061."""
+    r = _classificar('ERRO NO DLO')
+    assert 'DLO_2061' in r['categorias'], f"DLO_2061 esperado; obtido {r['categorias']}"
+
+
+def test_correcao23_erro_drm_nao_afeta():
+    """Correção 23 — assunto com DRM não é afetado pela regra (só DDR)."""
+    r = _classificar('Erro - 2060 DRM')
+    assert 'DRM_2060' in r['categorias'], f"DRM_2060 esperado; obtido {r['categorias']}"
