@@ -90,6 +90,7 @@ _DDR_PADROES = [
     r'\bREMITLY\b',
     r'PI EXPOSURE',
     r'\bRD\b',              # Remessa Diária — arquivos RD_MOEDA, RD_LFT, RD_NTN etc.
+    r'SALDOS 4111 E POSI[CÇ][AÃ][OÃ] LFT',  # planilha ZIIN com DDR + SALDOS no mesmo arquivo
 ]
 
 # Padrões INTERNO (regex aplicado sobre assunto em maiúsculo)
@@ -245,6 +246,10 @@ def _classificar_deterministico(
                     or re.search(r'(?<!DRL-)\bLEC\b', texto_resto)
                     or any(c in texto_resto for c in ('COS4010', 'COS4016', 'COS4060', 'COS4066'))):
                 cats.add('DLO_2061')
+        # Complemento DDR: planilha ZIIN "Saldos 4111 e Posição LFT" = SALDOS + DDR no mesmo arquivo
+        if 'SALDOS_CONTABEIS_DIARIOS_4111' in cats and 'DDR_2011' not in cats:
+            if re.search(r'SALDOS 4111 E POSI[CÇ][AÃ][OÃ] LFT', texto_resto):
+                cats.add('DDR_2011')
         cats = sorted(cats)
         return _ok(cats, f'sinal de CADOC no assunto ({", ".join(cats)})', None)
 

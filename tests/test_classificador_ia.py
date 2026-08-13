@@ -518,3 +518,22 @@ def test_correcao14_tvm_sozinho_ainda_dispara_ddr():
     assert 'DDR_2011' in r['categorias'], (
         f"TVM sozinho deve disparar DDR; obtido {r['categorias']}"
     )
+
+
+# ── Correção 15: planilha ZIIN "Saldos 4111 e Posição LFT" → DDR + SALDOS ────
+
+def test_correcao15_ziin_posicao_lft_dispara_ddr():
+    """Correção 15 — arquivo 'Saldos 4111 e Posição LFT.ods' contém DDR + SALDOS."""
+    r = _classificar(
+        assunto='2026.07.14 - FLUXO DE CAIXA - ZIIN',
+        nomes_anexos=['image001.png', 'Saldos 4111 e Posição LFT.ods'],
+    )
+    assert 'DDR_2011' in r['categorias'], f"DDR esperado; obtido {r['categorias']}"
+    assert 'SALDOS_CONTABEIS_DIARIOS_4111' in r['categorias'], f"SALDOS esperado; obtido {r['categorias']}"
+
+
+def test_correcao15_posicao_lft_no_corpo():
+    """Correção 15 — 'Posição LFT' mencionado no corpo também dispara DDR."""
+    r = _classificar(assunto='FLUXO DE CAIXA', corpo='Segue planilha Saldos 4111 e Posição LFT do mês.')
+    assert 'DDR_2011' in r['categorias'], f"DDR esperado; obtido {r['categorias']}"
+    assert 'SALDOS_CONTABEIS_DIARIOS_4111' in r['categorias'], f"SALDOS esperado; obtido {r['categorias']}"

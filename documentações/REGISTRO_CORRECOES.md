@@ -183,6 +183,32 @@ Mantido: bypass do registro (thread confirmada → retorna salvo sem reprocessar
 
 ---
 
+### Correção 15 — 13/08/2026 — Registro + Classificador: 10 threads ZIIN (FLUXO DE CAIXA) corrigidas para DDR_2011 + SALDOS_4111
+
+**🔎 Em miúdos:** e-mails da ZIIN (Unicred do Brasil) com o arquivo "Saldos 4111 e Posição LFT.ods" estavam classificados só como SALDOS. Esse arquivo tem duas partes: saldos contábeis (SALDOS_4111) e posição em LFT — que é um componente do DDR. Correto é DDR + SALDOS.
+
+**Problema:** 7 threads no registro estavam como SALDOS_4111 apenas (erro de registro). O classificador também não detectava DDR, pois o sinal estava no nome do anexo ("Posição LFT") e o assunto ("FLUXO DE CAIXA") acionava SALDOS na Camada 1b — que retorna antes de checar os anexos.
+
+**Correção:**
+- Registro: 7 threads corrigidas de `['SALDOS_CONTABEIS_DIARIOS_4111']` → `['DDR_2011', 'SALDOS_CONTABEIS_DIARIOS_4111']` (IDs: 19f712fcf0d6355e, 19f6cc9e3ae71697, 19f66f51245ff1ad, 19f5ba8915ea7697, 19f5de5f21440421, 19f46de0c963964f, 19f38e55c0f8e584). Backup: `data/backups/20260813_1123_correcao15_ziin_lft_saldos_ddr/`.
+- Classificador: complemento DDR adicionado na Camada 1b — quando SALDOS está no assunto e o corpo/anexos contêm `SALDOS 4111 E POSIÇÃO LFT`, DDR_2011 é acrescentado. Padrão `SALDOS 4111 E POSI[CÇ][AÃ][OÃ] LFT` também adicionado em `_DDR_PADROES` como rede de segurança para Camada 3.
+
+**Validação:** ✅ VALIDADO — 103 testes passando; placar 687/767 = 89,6% (+3 ganhos líquidos; as 7 do registro passaram de erros para acertos).
+
+---
+
+### Correção 14 — 13/08/2026 — "TPF/TVM" em contexto DLO disparando DDR_2011 indevidamente
+
+**🔎 Em miúdos:** e-mails sobre DLO com "TPF/TVM" no assunto eram classificados como DDR + DLO. "TVM" após uma barra é o nome do instrumento no contexto do DLO — não é sinal de DDR.
+
+**Problema:** `\bTVM\b` nos padrões DDR capturava "TVM" em "TPF/TVM" (Títulos Públicos Federais / Títulos e Valores Mobiliários), que é terminologia do DLO, não do DDR.
+
+**Correção:** `\bTVM\b` → `(?<!/)\bTVM\b` em `_DDR_PADROES` no `classificador_ia.py`. O lookbehind negativo `(?<!/)` impede que TVM seja reconhecido quando precedido por barra.
+
+**Validação:** ✅ VALIDADO — 101 testes passando; +1 ganho (thread "Re: DLO - TPF/TVM - maio/26"); 0 regressões; todos os ~25 threads DDR com TVM standalone mantidos.
+
+---
+
 ### Correção 13 — 13/08/2026 — "DRL-LEC" disparando DLO_2061 indevidamente
 
 **🔎 Em miúdos:** e-mails com "Planilha DRL-LEC Junho/2026" no assunto eram classificados como
