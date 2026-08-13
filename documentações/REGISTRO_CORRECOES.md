@@ -183,6 +183,23 @@ Mantido: bypass do registro (thread confirmada → retorna salvo sem reprocessar
 
 ---
 
+### Correção 20 — 13/08/2026 — Classificador: 'AJUSTE BACEN' e 'CRITICAS AO' no assunto → RETORNO_BACEN (Sinais 1 e 4 do Grupo 1)
+
+**🔎 Em miúdos:** dois tipos de assunto que indicam claramente uma crítica do BACEN — "AJUSTE BACEN" e "CRITICAS AO [CADOC]" — passaram a ser reconhecidos diretamente, sem precisar checar o corpo do e-mail. Além disso, a thread "RES: ARQUIVO DRM - AZUMI" foi corrigida no registro: ela é RETORNO_BACEN, não DRM.
+
+**Problema:** dois threads eram classificados errado porque o assunto tinha sinais claros de crítica do BACEN mas o classificador não os reconhecia: (a) "DRM JUNHO - AJUSTE BACEN" → o cliente estava fazendo ajuste por exigência do BACEN; (b) "BC - Criticas ao DRM 2026 ref. Maio/2026" → o próprio Banco Central listando críticas ao CADOC enviado. Ambos ficavam como DRM_2060 em vez de RETORNO_BACEN. Também foi identificado que "RES: ARQUIVO DRM - AZUMI" é RETORNO_BACEN (conteúdo confirma comunicação de crítica do BACEN) — registro corrigido com backup.
+
+**Correção:**
+- `scripts/classificador_ia.py`: adicionados dois checks na Camada 1a (antes do CADOC no assunto): `if 'AJUSTE BACEN' in au` e `if 'CRITICAS AO' in au or 'CRÍTICAS AO' in au` → ambos retornam RETORNO_BACEN.
+- `data/registro_definitivo_threads.json`: thread "RES: ARQUIVO DRM - AZUMI" corrigida de `DRM_2060` para `RETORNO_BACEN`. Backup em `data/backups/20260813_1418_correcao20_azumi_drm_para_retorno/`.
+- `tests/test_classificador_ia.py`: 3 novos testes (`test_correcao20_*`).
+
+**Varredura:** +2 ganhos, 0 regressões (nas 767 threads com corpo truncado a 600 chars). Placar líquido: 701 → 702 acertos (+2 corrigidos, -1 do AZUMI que agora é esperado RETORNO mas Sinal 6b ainda não aplicado).
+
+**Placar:** 702/767 acertos (65 erros). `pytest tests/ -q` → 115 passed. ✅
+
+---
+
 ### Correção 19 — 13/08/2026 — Classificador: strip de citações + RETORNO DO STA no corpo (Sinal D)
 
 **🔎 Em miúdos:** quando o assunto tem um CADOC mas o corpo do e-mail (excluindo partes copiadas de e-mails anteriores) tem uma crítica do BACEN — agora o classificador detecta o RETORNO_BACEN corretamente.

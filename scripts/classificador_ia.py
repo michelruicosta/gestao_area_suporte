@@ -249,6 +249,12 @@ def _classificar_deterministico(
     # 'QUALIDADE BACEN' no assunto indica crítica de qualidade do BACEN (ex.: DLO QUALIDADE BACEN)
     if 'QUALIDADE BACEN' in au:
         return _ok(['RETORNO_BACEN'], "'QUALIDADE BACEN' no assunto", 'RETORNO - Regra 01')
+    # 'AJUSTE BACEN' no assunto → cliente pedindo ajuste por crítica do BACEN
+    if 'AJUSTE BACEN' in au:
+        return _ok(['RETORNO_BACEN'], "'AJUSTE BACEN' no assunto", 'RETORNO - Regra 01')
+    # 'CRITICAS AO' no assunto → BC apontando críticas ao CADOC enviado
+    if 'CRITICAS AO' in au or 'CRÍTICAS AO' in au:
+        return _ok(['RETORNO_BACEN'], "'CRITICAS AO' no assunto", 'RETORNO - Regra 01')
 
     # Camada 1b — CADOC pelo assunto
     cats = set(_detectar_cadoc(au))

@@ -609,3 +609,21 @@ def test_correcao19_sinal_retorno_apenas_citado_nao_dispara():
     )
     r = _classificar('DRM JUNHO', corpo)
     assert 'RETORNO_BACEN' not in r['categorias'], f"RETORNO nao esperado; obtido {r['categorias']}"
+
+
+def test_correcao20_ajuste_bacen_no_assunto_dispara_retorno():
+    """Correção 20 — 'AJUSTE BACEN' no assunto → RETORNO_BACEN (cliente com crítica do BACEN)."""
+    r = _classificar('DRM JUNHO - AJUSTE BACEN')
+    assert r['categorias'] == ['RETORNO_BACEN'], f"RETORNO esperado; obtido {r['categorias']}"
+
+
+def test_correcao20_criticas_ao_no_assunto_dispara_retorno():
+    """Correção 20 — 'CRITICAS AO' no assunto → RETORNO_BACEN (BC criticando o CADOC)."""
+    r = _classificar('BC - Criticas ao DRM 2026 ref. Maio/2026')
+    assert r['categorias'] == ['RETORNO_BACEN'], f"RETORNO esperado; obtido {r['categorias']}"
+
+
+def test_correcao20_ajuste_sem_bacen_nao_dispara():
+    """Correção 20 — 'AJUSTE' sozinho sem 'BACEN' não ativa RETORNO."""
+    r = _classificar('DRM JUNHO - AJUSTE DE LAYOUT')
+    assert 'RETORNO_BACEN' not in r['categorias'], f"RETORNO nao esperado; obtido {r['categorias']}"
