@@ -563,3 +563,15 @@ def test_correcao16_variacao_relevante_nao_dispara_sem_contexto():
     """Correção 16 — 'variação relevante' sozinha sem contexto BACEN não deve aparecer no assunto de CADOC normal."""
     r = _classificar('DRM 06/2026 - VARIAÇÕES MENSAIS RELEVANTES DE POSIÇÃO')
     assert 'RETORNO_BACEN' not in r['categorias'], f"RETORNO nao esperado; obtido {r['categorias']}"
+
+
+def test_correcao18_qualidade_bacen_assunto_dispara_retorno():
+    """Correção 18 — 'QUALIDADE BACEN' no assunto antes do CADOC → RETORNO_BACEN."""
+    r = _classificar('RE: DLO ABRIL E MAIO - QUALIDADE BACEN')
+    assert r['categorias'] == ['RETORNO_BACEN'], f"RETORNO esperado; obtido {r['categorias']}"
+
+
+def test_correcao18_qualidade_bacen_nao_confunde_sem_bacen():
+    """Correção 18 — 'QUALIDADE' sozinha sem 'BACEN' não ativa RETORNO."""
+    r = _classificar('DLO ABRIL - QUALIDADE DOS DADOS')
+    assert 'RETORNO_BACEN' not in r['categorias'], f"RETORNO nao esperado; obtido {r['categorias']}"

@@ -183,6 +183,22 @@ Mantido: bypass do registro (thread confirmada → retorna salvo sem reprocessar
 
 ---
 
+### Correção 18 — 13/08/2026 — Classificador: 'QUALIDADE BACEN' no assunto → RETORNO_BACEN (Sinal A)
+
+**🔎 Em miúdos:** e-mails com "qualidade BACEN" no assunto — indicando que o BACEN apontou um problema de qualidade no CADOC — agora são reconhecidos como RETORNO_BACEN em vez de DLO ou outro CADOC.
+
+**Problema:** dois threads com assunto "DLO ABRIL E MAIO - QUALIDADE BACEN" chegavam à Camada 1b e eram classificados como DLO_2061 — o classificador não checava RETORNO antes de pegar o CADOC pelo assunto. A frase "QUALIDADE BACEN" no assunto indica crítica formal de qualidade do BACEN, que é RETORNO_BACEN pela regra de negócio.
+
+**Correção:** adicionado bloco após a Camada 1a em `scripts/classificador_ia.py`: se `'QUALIDADE BACEN'` estiver no assunto, retorna RETORNO_BACEN antes de Camada 1b processar o CADOC. Varredura em 767 threads: +2 ganhos, 0 regressões. 2 novos testes adicionados em `tests/test_classificador_ia.py` (109 total).
+
+**Threads corrigidas:**
+- `Re: DLO ABRIL E MAIO - QUALIDADE BACEN. Seguem a nova versão.` → era DLO_2061, agora RETORNO_BACEN
+- `RE: DLO ABRIL E MAIO - QUALIDADE BACEN` → era DLO_2061, agora RETORNO_BACEN
+
+**Placar:** 696 → 698 acertos (69 erros). `pytest tests/ -q` → 109 passed. ✅
+
+---
+
 ### Correção 17 — 13/08/2026 — Registro: 2 threads com categoria desatualizada corrigidas para RETORNO_BACEN
 
 **🔎 Em miúdos:** dois e-mails que eram sobre crítica do BACEN estavam salvos como DLO+DRM e DDR — agora estão corretos como RETORNO_BACEN.

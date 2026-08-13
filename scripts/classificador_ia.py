@@ -234,6 +234,9 @@ def _classificar_deterministico(
     # Camada 1a — RETORNO_BACEN pelo assunto (prioridade máxima)
     if _tem_retorno_bacen(au, ''):
         return _ok(['RETORNO_BACEN'], 'sinal de RETORNO_BACEN no assunto', 'RETORNO - Regra 01')
+    # 'QUALIDADE BACEN' no assunto indica crítica de qualidade do BACEN (ex.: DLO QUALIDADE BACEN)
+    if 'QUALIDADE BACEN' in au:
+        return _ok(['RETORNO_BACEN'], "'QUALIDADE BACEN' no assunto", 'RETORNO - Regra 01')
 
     # Camada 1b — CADOC pelo assunto
     cats = set(_detectar_cadoc(au))
