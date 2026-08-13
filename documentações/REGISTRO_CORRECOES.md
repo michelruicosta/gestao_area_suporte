@@ -183,6 +183,58 @@ Mantido: bypass do registro (thread confirmada → retorna salvo sem reprocessar
 
 ---
 
+### Correção 12 — 13/08/2026 — "CADOC" genérico (sem número) não detectado como SALDOS_4111
+
+**🔎 Em miúdos:** e-mails com "DDR e CADOC" ou "CADOC e DDR" no assunto iam para DDR_2011
+apenas, sem SALDOS_4111. Clientes usam "CADOC" coloquialmente para se referir ao SALDOS_4111 —
+quando escrevem "CADOC" sem número, sempre querem dizer o relatório de saldos contábeis.
+
+**Problema:** o classificador detectava SALDOS_4111 pelos sinais `\b4111\b`, `SALDOS CONT` e
+`FLUXO DE CAIXA`, mas não pelo nome coloquial "CADOC" sem número. Emails do tipo "COLUNA -
+ENVIAR DDR e CADOC 27/07" tinham DDR detectado (via `\bDDRS?\b` no assunto) mas SALDOS ignorado.
+
+**Análise prévia:** varredura em 767 confirmados — 30 threads com "CADOC" genérico no texto; 23
+são SALDOS_4111 (18 isolado, 5 junto com DDR_2011); 3 são DDR_2011 apenas mas confirmadas
+erroneamente (ver Correção 11 abaixo). Padrão é inequívoco: "CADOC" sem número = SALDOS_4111.
+
+**Correção:** condição `re.search(r'\bCADOC\b(?!\s{0,4}\d{4})', texto_u)` adicionada ao bloco
+de detecção de SALDOS_4111 em `_detectar_cadoc` em `scripts/classificador_ia.py`.
+O lookahead `(?!\s{0,4}\d{4})` garante que "CADOC 4111" e "CADOC 4010" não disparam a regra
+(o `\d{4}` imediatamente após pertence ao código do CADOC específico, não ao nome coloquial).
+
+**Simulação prévia (com registro já corrigido pela Correção 11):** +4 ganhos, 0 regressões.
+
+**Testes:** 4 casos em `test_correcao12_cadoc_generico_saldos`:
+- `'DDR e CADOC'` → `['DDR_2011', 'SALDOS_CONTABEIS_DIARIOS_4111']` ✅
+- `'CADOC e DDR - 14/07 a 17/07'` → `['DDR_2011', 'SALDOS_CONTABEIS_DIARIOS_4111']` ✅
+- `'CADOC 4111'` → `['SALDOS_CONTABEIS_DIARIOS_4111']` (via `\b4111\b`, não via CADOC genérico) ✅
+- corpo `'Segue abaixo DDR. Segue abaixo CADOC.'` → `['DDR_2011', 'SALDOS_CONTABEIS_DIARIOS_4111']` ✅
+
+**Validação:** ✅ VALIDADO — `pytest tests/ -q` 97/97 passando; validação completa: 682/767 (88,9%); era 678/767 (88,4%).
+
+---
+
+### Correção 11 — 13/08/2026 — Registro: 3 threads "DDR e CADOC" corrigidas de DDR_2011 para DDR_2011+SALDOS_4111
+
+**🔎 Em miúdos:** três e-mails do tipo "CADOC e DDR - 23/07 a 24/07" estavam marcados no
+registro como DDR_2011 apenas — mas o conteúdo era idêntico aos outros "DDR e CADOC" (o cliente
+enviou screenshots de DDR e de CADOC juntos). Michel confirmou: são DDR_2011 + SALDOS_4111.
+
+**Problema:** ao classificar manualmente as ~700 threads, essas 3 foram marcadas como DDR_2011
+apenas por engano de consistência — o conteúdo (corpo + anexos de imagem) é exatamente igual
+aos outros "DDR e CADOC" que foram corretamente marcados como DDR+SALDOS.
+
+**Threads corrigidas:**
+- `19fb8a12bd246188` "VIS - ENVIAR DDR e CADOC" → `['DDR_2011']` → `['DDR_2011', 'SALDOS_CONTABEIS_DIARIOS_4111']`
+- `19fa9ef70a60ce38` "CADOC e DDR - 23/07 a 24/07" → mesmo ajuste
+- `19f42135d14b75c7` "CADOC e DDR - 06/07 a 07/07" → mesmo ajuste
+
+**Backup:** `data/backups/20260813_1043_correcao_cadoc_ddr_saldos/`.
+
+**Validação:** ✅ VALIDADO — sem teste: alteração no registro de dados, não em código.
+
+---
+
 ### Correção 06 — 12/08/2026 — Registro: 15 threads DLO+DLI sem sinal de DLI corrigidas para DLO
 
 **🔎 Em miúdos:** 15 threads estavam marcadas como "DLO e DLI" no registro, mas nenhuma delas
