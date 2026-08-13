@@ -8,6 +8,128 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ---
 
+## 🔧 CLASSIFICADOR DETERMINÍSTICO — 61 erros a corrigir (placar: 706/767)
+
+> Mapeado em 13/08/2026. Atacar grupo por grupo; ao concluir um grupo, remover daqui e gravar no REGISTRO_CORRECOES.md.
+> Dois RETORNO (Sinal 6b) já estão corretos em produção — aparecem aqui só porque a validação usa corpo truncado.
+
+### ✅ RETORNO_BACEN — resolvido (2 erros restantes só na validação truncada)
+
+Esses dois estão corretos em produção (Sinal 6b detecta VCRD no corpo completo). Só aparecem como erro na validação com 600 chars porque o "VCRD" está além desse corte.
+- `RES: ARQUIVO DRM - AZUMI` → RETORNO_BACEN (atual: DRM_2060)
+- `RES: Erro do DRM e DLO` → RETORNO_BACEN (atual: DLO+DRM)
+
+---
+
+### 🔴 Grupo A — SUPORTE classificado como CADOC (15 threads)
+
+E-mails de suporte (dúvida, pedido de acesso, notícia regulatória, reunião) estão sendo confundidos com entrega de CADOC porque o assunto ou corpo menciona o código apenas de passagem.
+
+| Thread | Esperado | Obtido (errado) |
+|---|---|---|
+| (sem assunto) | SUPORTE | DLO_2061 |
+| DLO | SUPORTE | DLO_2061 |
+| ENC: INSTRUÇÃO NORMATIVA BCB Nº 749 | SUPORTE | DLI_2062 |
+| ENC: PR | SUPORTE | DDR_2011 |
+| ERRO -- Taxa Referencial DDR | SUPORTE | DDR_2011 |
+| Erro ao calcular o VMTM do dia 30/07/2026 | SUPORTE | DDR_2011 |
+| Freex Câmbio - Login Riskdriver | SUPORTE | S5 |
+| MIRAE ASSET - BASILEIA - JUNHO DE 2026 | SUPORTE | DLO_2061 |
+| RES: **UNVERIFIED SENDER** Re: PR | SUPORTE | DLO_2061 + SCD |
+| RES: Dados para o relatório | SUPORTE | DLO_2061 + S5 |
+| RES: Risk Driver - NOVA SENHA | SUPORTE | FORCAPITAL |
+| Re: **UNVERIFIED SENDER** Re: Solicitação de orientação técnica | SUPORTE | DLO_2061 |
+| Re: TESTES DE STRESS E PILAR 3 | SUPORTE | FORCAPITAL |
+| Reunião - Demandas BACEN - DLO Junho (Antecipações) | SUPORTE | DLO_2061 |
+| SUPORTE - INTRA DTVM | SUPORTE | DDR_2011 |
+
+---
+
+### 🔴 Grupo B — CADOC real não detectado, fica em SUPORTE (7 threads)
+
+E-mails que são claramente entrega de CADOC mas o classificador não reconhece e cai em SUPORTE.
+
+| Thread | Esperado | Obtido (errado) |
+|---|---|---|
+| 4010 Trinus | DLO_2061 | SUPORTE |
+| Arquivo COS | DLO_2061 | SUPORTE |
+| CADASTRO DOS FUNDOS NO SISTEMA - RISKDRIVER | DDR_2011 | SUPORTE |
+| ENC: POSICAO 10.07.2026 | DDR_2011 | SUPORTE |
+| EXTRATOS - JUNHO-2026 - ATUAL | DDR_2011 | SUPORTE |
+| RES: COSIF'S 4010 JUN/2026 - BANVOX DTVM | DLO_2061 | SUPORTE |
+| RES: Norma BCB - Risco de Liquidez e LCR | DRL_2160 | SUPORTE |
+
+---
+
+### 🔴 Grupo C — Faltam categorias (classificador acerta uma mas perde outras) (14 threads)
+
+| Thread | Esperado | Obtido (errado) |
+|---|---|---|
+| Re: DLO E DLI - JUNHO. PLANNER | DDR+DLI+DLO+DRM | DLI+DLO |
+| Re: DLO MAIO 2026. Seguem as remessas. | DDR+DLI+DLO+DRM | DLI+DLO |
+| RES: DLO - 06/2026 - Encaminhar a composição do fundo | DLI+DLO+DRL+DRM | DLI+DLO |
+| Re: ATUAL CORRETORA - COS4010 e 4016 06/2026 | DLI+DLO+DRM | DLI+DLO |
+| ENC: DLI MAIO | DLI+DLO+SCD | DLI+DLO |
+| RE: DRM 05.2026 | DDR+DRM | DRM |
+| Prévia dos saldos contábeis de junho/2026 | DDR+DRM | DRM+SCD |
+| Re: Arquivo 2061. Segue o DLO 05/2026. ACCREDITO. | DLI+DLO | DLO |
+| RELATÓRIO DRM 06/2026 - AMARIL FRANKLIN | DLO+DRM | DRM |
+| RELATÓRIO DRM 07/2026 - AMARIL FRANKLIN | DLO+DRM | DRM |
+| Re: Guru CTVM: Planilha LEC para DLO (2061) 05/2026 | DLO+DRM | DLO |
+| COS 4010 junho/2026 | DLO+SCD | SCD |
+| RES: DRM 2060 Traders | DRM+SCD | DRM |
+| Segue a remessa DRM (2060) junho/2026. MIRAE. | DRM+SCD | DRM |
+
+---
+
+### 🔴 Grupo D — Categoria extra adicionada indevidamente (10 threads)
+
+O classificador acerta as categorias certas mas adiciona uma categoria a mais que não pertence.
+
+| Thread | Esperado | Obtido (errado) |
+|---|---|---|
+| Re: Planilha DRL-LEC Junho/2026 | DLI+DLO | DDR+DLI+DLO+DRL |
+| Re: REMITLY - Encaminhar COS4010 e LEC maio/2026 | DLI+DLO | DDR+DLI+DLO |
+| RES: VIS : STA - DDR2011 e demais não disponíveis | DDR | DDR+DLI+DLO |
+| duvidas finaud | DLO | DDR+DLO |
+| Re: Arquivo 2061 e 2062. Segue o DLI. ACCREDITO. | DLI | DLI+DLO |
+| Re: COS4016 DE 06-2026. Segue o 4111. FAIRWAY | SCD | DLO+SCD |
+| Saldos do dia 20/07 até 22/07 | SCD | DDR+SCD |
+| Saldos do dia 27/07 (retificação) e 28/07 | SCD | DDR+SCD |
+| Pendencias BACEN - 2011 ref. 30/01/2026 | SCD | DDR |
+| Remitly CC - 4010/4016 - 06/2026 | DLO | DDR |
+
+---
+
+### 🔴 Grupo E — Falta SUPORTE ao lado do CADOC (5 threads)
+
+Classificador detecta o CADOC corretamente mas não reconhece que o e-mail também é de suporte.
+
+| Thread | Esperado | Obtido (errado) |
+|---|---|---|
+| Posição de Câmbio CAM0050 BACEN... | DDR+SUPORTE | DDR |
+| Erro - 2060 DRM | DRM+SUPORTE | DRM |
+| Re: DLO - 30.06.2026. ATUAL Corretora de Câmbio | DLO+SUPORTE | DLO |
+| Re: Risk Driver - Guru Corretora de Títulos | DLO+SUPORTE | DLO |
+| DRL - Jun/26 | DRL+SUPORTE | DRL |
+
+---
+
+### 🔴 Grupo F — Casos individuais a avaliar (8 threads)
+
+| Thread | Esperado | Obtido | Situação |
+|---|---|---|---|
+| INDICIO 2061 - DLO MAIO | DLO_2061 | RETORNO_BACEN | ⚠️ Pendente: "INDICIO" no assunto dispara RETORNO — Michel decide se a regra deve ser especificada |
+| ENC: Risk Driver - CV INVESTIMENTOS | DLO+SUPORTE | RETORNO_BACEN | Falso RETORNO — verificar sinal disparado |
+| Divulgação Instrução Normativa BCB nº 761 | INTERNO | SUPORTE | Categoria INTERNO não existe no classificador atual — avaliar se deve ser criada |
+| Re: Encaminhar COS4010 jan a maio/2026. FREEX | S5 | DLO | S5 não detectado |
+| Re: Solicitação de treinamento – FREEX | S5 | DLO | S5 não detectado |
+| RE: Executive Corretora - Demonstrativo S5 | DLO | S5 | DLO não detectado |
+| Re: COS4010 06/2026 - VBS SCD (VECTOR) | S5 | DLO+S5 | DLO a mais |
+| Saldos do dia 20/07 até 22/07 (ver Grupo D) | — | — | — |
+
+---
+
 ## ⏭ ETAPA ATUAL — Aprovar gabarito v2.0 + reduzir os 134 incertos
 
 > Estado atual: gabarito v2.0 com 18 regras + 24 gabaritos integrado ao classificador.
