@@ -499,3 +499,22 @@ def test_correcao13_lec_sozinho_ainda_dispara_dlo():
     assert 'DLO_2061' in r['categorias'], (
         f"LEC sozinho deve disparar DLO; obtido {r['categorias']}"
     )
+
+
+# ── Correção 14: TVM em "/TVM" (contexto DLO/TPF) não dispara DDR_2011 ────────
+
+def test_correcao14_tpf_tvm_nao_dispara_ddr():
+    """Correção 14 — 'TPF/TVM' em contexto DLO: TVM após barra não é sinal DDR."""
+    r = _classificar('Re: DLO - TPF/TVM - maio/26')
+    assert 'DLO_2061' in r['categorias'], 'DLO deve ser detectado'
+    assert 'DDR_2011' not in r['categorias'], (
+        f"DDR não deve disparar em TPF/TVM; obtido {r['categorias']}"
+    )
+
+
+def test_correcao14_tvm_sozinho_ainda_dispara_ddr():
+    """Correção 14 — 'TVM' sozinho (sem barra) ainda dispara DDR_2011 normalmente."""
+    r = _classificar('Relatórios de TVM e Dep a Vista - 04/08/2026')
+    assert 'DDR_2011' in r['categorias'], (
+        f"TVM sozinho deve disparar DDR; obtido {r['categorias']}"
+    )

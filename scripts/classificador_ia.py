@@ -81,7 +81,7 @@ _DDR_PADROES = [
     r'EXTRATO COMPROMISSADA',
     r'COMPROMISSAD',           # cobre compromissada, compromissadas
     r'\bPCAM\b',
-    r'\bTVM\b',                # word boundary → não pega DTVM
+    r'(?<!/)\bTVM\b',          # não dispara em "/TVM" (ex: TPF/TVM em contexto DLO)
     r'OP\.\s*SELIC',
     r'POSI[CÇ][AÃ][OÃ] DE C[AÂ]MBIO',
     r'\bPU[S]?\b',
