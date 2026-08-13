@@ -97,6 +97,12 @@ _DDR_PADROES = [
     r'SALDOS 4111 E POSI[CÇ][AÃ][OÃ] LFT',  # planilha ZIIN com DDR + SALDOS no mesmo arquivo
 ]
 
+# Marcadores de início de texto citado/encaminhado no corpo do e-mail
+_MARC_CITACAO = re.compile(
+    r'^(>|De:|From:|Enviada em:|Sent:|Em \w)',
+    re.MULTILINE | re.IGNORECASE,
+)
+
 # Padrões INTERNO (regex aplicado sobre assunto em maiúsculo)
 _INTERNO_PADROES_ASSUNTO = [
     r'BOAS.VINDAS',
@@ -211,6 +217,12 @@ def _eh_interno(assunto: str) -> bool:
     return any(re.search(p, au) for p in _INTERNO_PADROES_ASSUNTO)
 
 
+def _extrair_corpo_principal(corpo: str) -> str:
+    """Retorna só a parte do corpo anterior ao primeiro trecho citado/encaminhado."""
+    m = _MARC_CITACAO.search(corpo)
+    return corpo[:m.start()].strip() if m else corpo.strip()
+
+
 def _ok(cats: list[str], motivo: str, regra_usada: str | None) -> dict:
     return {
         'categorias':     cats,
@@ -257,6 +269,10 @@ def _classificar_deterministico(
         if 'SALDOS_CONTABEIS_DIARIOS_4111' in cats and 'DDR_2011' not in cats:
             if re.search(r'SALDOS 4111 E POSI[CÇ][AÃ][OÃ] LFT', texto_resto):
                 cats.add('DDR_2011')
+        # Sinal D: corpo principal (sem citações) pode ter crítica do BACEN mesmo com CADOC no assunto
+        corpo_principal_u = _extrair_corpo_principal(corpo).upper()
+        if _tem_retorno_bacen('', corpo_principal_u) or 'RETORNO DO STA' in corpo_principal_u:
+            return _ok(['RETORNO_BACEN'], 'sinal de RETORNO_BACEN no corpo principal (sem citações)', 'RETORNO - Regra 01')
         cats = sorted(cats)
         return _ok(cats, f'sinal de CADOC no assunto ({", ".join(cats)})', None)
 

@@ -183,6 +183,23 @@ Mantido: bypass do registro (thread confirmada → retorna salvo sem reprocessar
 
 ---
 
+### Correção 19 — 13/08/2026 — Classificador: strip de citações + RETORNO DO STA no corpo (Sinal D)
+
+**🔎 Em miúdos:** quando o assunto tem um CADOC mas o corpo do e-mail (excluindo partes copiadas de e-mails anteriores) tem uma crítica do BACEN — agora o classificador detecta o RETORNO_BACEN corretamente.
+
+**Problema:** três threads tinham CADOC no assunto, o que ativava a Camada 1b e retornava o CADOC sem checar o corpo. Mas o corpo — no texto novo, não no texto copiado — tinha sinais claros de RETORNO_BACEN (ex.: "Comunicação de inconsistência" ou "Protocolo de retorno do STA apresentou rejeição"). Esses threads estavam sendo classificados como DRM ou SALDOS quando deveriam ser RETORNO_BACEN.
+
+**Correção:** (a) adicionada regex `_MARC_CITACAO` para identificar início de texto citado; (b) adicionada função `_extrair_corpo_principal()` que retorna só a parte antes das citações; (c) dentro da Camada 1b, após os complementos DLO/DLI/DDR, verifica-se o corpo principal por sinais de RETORNO_BACEN e por "RETORNO DO STA" — se encontrar, retorna RETORNO_BACEN antes do CADOC. Varredura em 767 threads: +3 ganhos, 0 regressões.
+
+**Threads corrigidas:**
+- `[Compliance_email] Inconsistências DRM - Crítica BACEN - Oliveira Trust` → era DRM_2060, agora RETORNO_BACEN
+- `Ocorrência no envio do arquivo DRM 2060 – Ratificação de entendimento` → era DRM_2060, agora RETORNO_BACEN
+- `Erro DRM` → era DRM_2060, agora RETORNO_BACEN
+
+**Placar:** 698 → 701 acertos (66 erros). `pytest tests/ -q` → 112 passed. ✅
+
+---
+
 ### Correção 18 — 13/08/2026 — Classificador: 'QUALIDADE BACEN' no assunto → RETORNO_BACEN (Sinal A)
 
 **🔎 Em miúdos:** e-mails com "qualidade BACEN" no assunto — indicando que o BACEN apontou um problema de qualidade no CADOC — agora são reconhecidos como RETORNO_BACEN em vez de DLO ou outro CADOC.

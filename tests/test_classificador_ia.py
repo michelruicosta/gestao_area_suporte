@@ -575,3 +575,37 @@ def test_correcao18_qualidade_bacen_nao_confunde_sem_bacen():
     """Correção 18 — 'QUALIDADE' sozinha sem 'BACEN' não ativa RETORNO."""
     r = _classificar('DLO ABRIL - QUALIDADE DOS DADOS')
     assert 'RETORNO_BACEN' not in r['categorias'], f"RETORNO nao esperado; obtido {r['categorias']}"
+
+
+def test_correcao19_sinal_retorno_no_corpo_principal_com_cadoc_no_assunto():
+    """Correção 19 — CADOC no assunto + sinal de RETORNO no corpo principal → RETORNO_BACEN."""
+    corpo = (
+        "Andrea, tudo bem?\n"
+        "Recebemos um e-mail do Bacen de 'Comunicação de inconsistência no DRM - 2060'.\n"
+        "Pode nos ajudar?\n"
+    )
+    r = _classificar('DRM JUNHO', corpo)
+    assert r['categorias'] == ['RETORNO_BACEN'], f"RETORNO esperado; obtido {r['categorias']}"
+
+
+def test_correcao19_retorno_sta_no_corpo_principal_com_cadoc_no_assunto():
+    """Correção 19 — CADOC no assunto + 'RETORNO DO STA' no corpo principal → RETORNO_BACEN."""
+    corpo = (
+        "O protocolo de retorno do STA apresentou rejeição com as seguintes mensagens:\n"
+        "- Instituição não existe no Unicad\n"
+    )
+    r = _classificar('DRM 2060 - JUNHO', corpo)
+    assert r['categorias'] == ['RETORNO_BACEN'], f"RETORNO esperado; obtido {r['categorias']}"
+
+
+def test_correcao19_sinal_retorno_apenas_citado_nao_dispara():
+    """Correção 19 — sinal de RETORNO só no texto citado (após 'De:') NÃO ativa RETORNO."""
+    corpo = (
+        "Andrea,\n"
+        "Pode ignorar meu e-mail anterior.\n\n"
+        "De: Andrea Inacio\n"
+        "Assunto: Re: DRM\n"
+        "> Comunicação de inconsistência no DRM - 2060\n"
+    )
+    r = _classificar('DRM JUNHO', corpo)
+    assert 'RETORNO_BACEN' not in r['categorias'], f"RETORNO nao esperado; obtido {r['categorias']}"
