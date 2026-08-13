@@ -259,6 +259,9 @@ def _classificar_deterministico(
     # Camada 1b — CADOC pelo assunto
     cats = set(_detectar_cadoc(au))
     if cats:
+        # 'REUNIÃO' + CADOC no assunto = pauta/convite de reunião sobre o CADOC → SUPORTE, não entrega
+        if 'REUNI' in au:
+            return _ok(['SUPORTE'], "'reunião' + CADOC no assunto — pauta/convite, não entrega", None)
         # Complemento DLO/DLI: se o assunto tem um mas não o outro,
         # busca só a metade faltante no corpo+anexos — evita falsos positivos
         # de outros CADOCs citados no contexto do e-mail.

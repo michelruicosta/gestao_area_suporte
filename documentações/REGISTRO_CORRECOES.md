@@ -183,6 +183,20 @@ Mantido: bypass do registro (thread confirmada → retorna salvo sem reprocessar
 
 ---
 
+### Correção 22 — 13/08/2026 — Classificador: 'REUNIÃO' + CADOC no assunto → SUPORTE
+
+**🔎 Em miúdos:** quando o assunto do e-mail tem a palavra "REUNIÃO" junto com um código CADOC (ex.: "Reunião - Demandas BACEN - DLO Junho"), o classificador agora entende que é uma pauta de reunião sobre o CADOC — não uma entrega — e classifica como SUPORTE.
+
+**Problema:** "Reunião - Demandas BACEN - DLO Junho (Antecipações)" tinha "DLO" no assunto, o que ativava a Camada 1b e retornava DLO_2061. Mas era uma solicitação de reunião sobre o DLO, não uma entrega do CADOC.
+
+**Correção:** dentro da Camada 1b (após detectar CADOC no assunto), verifica-se se o assunto também contém "REUNI" (cobre REUNIÃO e REUNIAO). Se sim, retorna SUPORTE antes de continuar. O check está dentro da Camada 1b para não afetar convites do Teams ("reunião no Microsoft Teams") que chegam sem CADOC no assunto e são corretamente classificados como INTERNO pela Camada 4.
+
+**Varredura:** +1 ganho, 0 regressões (767 threads). Placar: 706 → 707 acertos.
+
+**Placar:** 707/767 acertos (60 erros). `pytest tests/ -q` → 124 passed. ✅
+
+---
+
 ### Correção 21 — 13/08/2026 — Classificador: 5 sinais do Grupo 2 dentro da Camada 1b (corpo/anexos)
 
 **🔎 Em miúdos:** quando um e-mail tem o código CADOC no assunto (por exemplo, "DRM 2060"), mas o corpo ou o nome do arquivo anexo revela que é na verdade uma crítica do BACEN, o classificador agora detecta isso corretamente em vez de ficar preso na categoria do CADOC.

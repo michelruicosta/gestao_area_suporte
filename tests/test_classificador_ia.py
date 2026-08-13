@@ -682,3 +682,18 @@ def test_correcao21_sinal6b_vcrd_no_corpo_dispara_retorno():
     )
     r = _classificar('DLO DRM 2060 - 06/2026', corpo)
     assert r['categorias'] == ['RETORNO_BACEN'], f"RETORNO esperado; obtido {r['categorias']}"
+
+
+# ── Correção 22 — 'REUNIÃO' no assunto → SUPORTE ─────────────────────────────
+
+
+def test_correcao22_reuniao_no_assunto_retorna_suporte():
+    """Correção 22 — 'REUNIÃO' no assunto → SUPORTE (não entrega de CADOC)."""
+    r = _classificar('Reunião - Demandas BACEN - DLO Junho (Antecipações)')
+    assert r['categorias'] == ['SUPORTE'], f"SUPORTE esperado; obtido {r['categorias']}"
+
+
+def test_correcao22_reuniao_sem_cadoc_retorna_suporte():
+    """Correção 22 — 'Reunião' no assunto sem CADOC também → SUPORTE."""
+    r = _classificar('Reunião sobre processos internos')
+    assert r['categorias'] == ['SUPORTE'], f"SUPORTE esperado; obtido {r['categorias']}"
