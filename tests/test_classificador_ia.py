@@ -627,3 +627,58 @@ def test_correcao20_ajuste_sem_bacen_nao_dispara():
     """Correção 20 — 'AJUSTE' sozinho sem 'BACEN' não ativa RETORNO."""
     r = _classificar('DRM JUNHO - AJUSTE DE LAYOUT')
     assert 'RETORNO_BACEN' not in r['categorias'], f"RETORNO nao esperado; obtido {r['categorias']}"
+
+
+# ── Correção 21 — Sinais 2, 3, 5, 6b, 7 do Grupo 2 (corpo/anexos dentro de Camada 1b) ──────────
+
+
+def test_correcao21_sinal5_indicio_qualidade_prazo_dispara_retorno():
+    """Correção 21 — Sinal 5: 'indício de qualidade' + 'prazo' no corpo principal → RETORNO_BACEN."""
+    corpo = "Segue a crítica: indício de qualidade apurado pelo BACEN. Prazo para correção: 05/09/2026."
+    r = _classificar('DLI 2062 MAIO CV', corpo)
+    assert r['categorias'] == ['RETORNO_BACEN'], f"RETORNO esperado; obtido {r['categorias']}"
+
+
+def test_correcao21_sinal5_indicio_sem_prazo_nao_dispara():
+    """Correção 21 — Sinal 5: 'indício de qualidade' sem 'prazo' NÃO ativa RETORNO."""
+    corpo = "Verificamos indício de qualidade nos dados informados, sem pendência formal."
+    r = _classificar('DLI 2062 MAIO', corpo)
+    assert 'RETORNO_BACEN' not in r['categorias'], f"RETORNO nao esperado; obtido {r['categorias']}"
+
+
+def test_correcao21_sinal7_crd_pendencia_dispara_retorno():
+    """Correção 21 — Sinal 7: 'CRD' + 'pendência' no corpo principal → RETORNO_BACEN."""
+    corpo = "Acessei o CRD e verifiquei que há pendência no cadastro da posição de junho/2026."
+    r = _classificar('SMM 2060 - 06/2026', corpo)
+    assert r['categorias'] == ['RETORNO_BACEN'], f"RETORNO esperado; obtido {r['categorias']}"
+
+
+def test_correcao21_sinal7_crd_sem_pendencia_nao_dispara():
+    """Correção 21 — Sinal 7: 'CRD' sozinho sem 'pendência' NÃO ativa RETORNO."""
+    corpo = "Acesse o CRD para verificar o status do arquivo enviado ontem."
+    r = _classificar('DRM 06/2026 ref', corpo)
+    assert 'RETORNO_BACEN' not in r['categorias'], f"RETORNO nao esperado; obtido {r['categorias']}"
+
+
+def test_correcao21_sinal2_determinamos_a_corr_dispara_retorno():
+    """Correção 21 — Sinal 2: 'determinamos a correção' no corpo → BACEN ordenando ajuste."""
+    corpo = "Prezado, determinamos a correção dos dados informados conforme art. 5º da Resolução 4.966."
+    r = _classificar('CADOC 4111 - 30/06/2026', corpo)
+    assert r['categorias'] == ['RETORNO_BACEN'], f"RETORNO esperado; obtido {r['categorias']}"
+
+
+def test_correcao21_sinal3_possivel_inconsistencia_no_anexo_dispara():
+    """Correção 21 — Sinal 3: 'possivel inconsistencia' no nome do anexo → RETORNO_BACEN."""
+    r = _classificar('DRM 06/2026 urgente', '', ['comunicacao_possivel_inconsistencia_drm.eml'])
+    assert r['categorias'] == ['RETORNO_BACEN'], f"RETORNO esperado; obtido {r['categorias']}"
+
+
+def test_correcao21_sinal6b_vcrd_no_corpo_dispara_retorno():
+    """Correção 21 — Sinal 6b: 'VCRD' no corpo completo (inclui citações) → RETORNO_BACEN."""
+    corpo = (
+        "Andrea, pode verificar o andamento?\n\n"
+        "De: Banco Central\n"
+        "> Identificamos critica VCRD no arquivo DLO enviado em 30/06/2026.\n"
+    )
+    r = _classificar('DLO DRM 2060 - 06/2026', corpo)
+    assert r['categorias'] == ['RETORNO_BACEN'], f"RETORNO esperado; obtido {r['categorias']}"

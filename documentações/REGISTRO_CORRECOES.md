@@ -183,6 +183,30 @@ Mantido: bypass do registro (thread confirmada → retorna salvo sem reprocessar
 
 ---
 
+### Correção 21 — 13/08/2026 — Classificador: 5 sinais do Grupo 2 dentro da Camada 1b (corpo/anexos)
+
+**🔎 Em miúdos:** quando um e-mail tem o código CADOC no assunto (por exemplo, "DRM 2060"), mas o corpo ou o nome do arquivo anexo revela que é na verdade uma crítica do BACEN, o classificador agora detecta isso corretamente em vez de ficar preso na categoria do CADOC.
+
+**Problema:** seis threads tinham CADOC no assunto (ativando a Camada 1b), mas a crítica do BACEN estava no corpo do e-mail ou no nome do anexo — após o ponto de retorno da Camada 1b, esses sinais eram ignorados. As threads eram classificadas como DRM, DLI, DRM/DLO ou SMM quando deveriam ser RETORNO_BACEN.
+
+**Correção — 5 sinais adicionados dentro da Camada 1b, após o Sinal D existente:**
+
+| Sinal | Condição | Thread alvo |
+|---|---|---|
+| **5** | 'indício de qualidade' + 'prazo' no corpo principal | DLI 2062 MAIO CV |
+| **7** | 'CRD' + 'pendência' no corpo principal | SMM 2060 - 06/2026 |
+| **2** | 'determinamos a correção' no corpo completo (BACEN ordenando) | BANVOX DTVM - CADOC 4111 - 30/06/2026 |
+| **3** | Sinais de RETORNO nos nomes dos anexos (incl. 'possivel inconsistencia') | DRM 06/2026 urgente |
+| **6b** | VCRD no corpo completo (inclui citações encaminhadas) | RES: Erro do DRM e DLO / RES: ARQUIVO DRM - AZUMI |
+
+**Nota sobre Sinal 6b:** 'VCRD' nas threads-alvo aparece além de 600 caracteres no corpo. Na validação com truncamento a 600 chars não é detectado, mas em produção (corpo completo) funciona corretamente. Os testes automatizados cobrem o Sinal 6b com corpo sintético curto.
+
+**Varredura (corpo truncado 600 chars):** +4 ganhos (Sinais 2, 3, 5, 7), 0 regressões. Sinal 6b: +2 ganhos em produção (corpo completo). Placar: 702 → 706 acertos (validação com truncamento).
+
+**Placar:** 706/767 acertos (61 erros, truncado). `pytest tests/ -q` → 122 passed. ✅
+
+---
+
 ### Correção 20 — 13/08/2026 — Classificador: 'AJUSTE BACEN' e 'CRITICAS AO' no assunto → RETORNO_BACEN (Sinais 1 e 4 do Grupo 1)
 
 **🔎 Em miúdos:** dois tipos de assunto que indicam claramente uma crítica do BACEN — "AJUSTE BACEN" e "CRITICAS AO [CADOC]" — passaram a ser reconhecidos diretamente, sem precisar checar o corpo do e-mail. Além disso, a thread "RES: ARQUIVO DRM - AZUMI" foi corrigida no registro: ela é RETORNO_BACEN, não DRM.

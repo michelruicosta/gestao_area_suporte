@@ -279,6 +279,24 @@ def _classificar_deterministico(
         corpo_principal_u = _extrair_corpo_principal(corpo).upper()
         if _tem_retorno_bacen('', corpo_principal_u) or 'RETORNO DO STA' in corpo_principal_u:
             return _ok(['RETORNO_BACEN'], 'sinal de RETORNO_BACEN no corpo principal (sem citações)', 'RETORNO - Regra 01')
+        # Sinal 5: 'indício de qualidade' + 'prazo' no corpo principal → BACEN apontou prazo para corrigir
+        if ('INDICIO DE QUALIDADE' in corpo_principal_u or 'INDÍCIO DE QUALIDADE' in corpo_principal_u) and 'PRAZO' in corpo_principal_u:
+            return _ok(['RETORNO_BACEN'], "'indício de qualidade' + 'prazo' no corpo principal", 'RETORNO - Regra 01')
+        # Sinal 7: CRD (sistema BACEN de críticas) + 'pendência' no corpo principal → cliente checou o CRD e encontrou pendência
+        if re.search(r'\bCRD\b', corpo_principal_u) and ('PENDENCIA' in corpo_principal_u or 'PENDÊNCIA' in corpo_principal_u):
+            return _ok(['RETORNO_BACEN'], "'CRD' + 'pendência' no corpo principal", 'RETORNO - Regra 01')
+        # Sinal 2: BACEN ordenando correção explicitamente no corpo completo
+        if 'DETERMINAMOS A CORR' in cu:
+            return _ok(['RETORNO_BACEN'], "'determinamos a correção' no corpo (BACEN ordena)", 'RETORNO - Regra 01')
+        # Sinal 3: sinais de crítica do BACEN nos nomes dos anexos (arquivo recebido do BACEN)
+        _SINAIS_ANEXO_EXTRA = ['POSSIVEL INCONSISTENCIA', 'POSSÍVEL INCONSISTÊNCIA',
+                               'COMUNICACAO DE POSSIVEL', 'COMUNICAÇÃO DE POSSÍVEL']
+        if (any(s in xu_norm for s in _RETORNO_SINAIS_FORTES + _RETORNO_SINAIS_VCRD)
+                or any(s in xu_norm for s in _SINAIS_ANEXO_EXTRA)):
+            return _ok(['RETORNO_BACEN'], 'sinal de RETORNO_BACEN nos nomes dos anexos', 'RETORNO - Regra 01')
+        # Sinal 6b: VCRD no corpo completo (inclui citações) — crítica de VCRD encaminhada no histórico
+        if any(s in cu for s in _RETORNO_SINAIS_VCRD):
+            return _ok(['RETORNO_BACEN'], 'sinal VCRD no corpo completo', 'RETORNO - Regra 01')
         cats = sorted(cats)
         return _ok(cats, f'sinal de CADOC no assunto ({", ".join(cats)})', None)
 
