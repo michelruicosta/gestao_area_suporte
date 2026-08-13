@@ -746,3 +746,26 @@ def test_correcao24_resultado_quantitativo_no_assunto_detecta():
     """Correção 24 — 'Resultado Quantitativo' no assunto ainda detecta S5."""
     r = _classificar('Re: Arquivo COS. Segue o Resultado Quantitativo 06/2026. EXECUTIVE')
     assert 'S5' in r['categorias'], f"S5 esperado; obtido {r['categorias']}"
+
+
+# ── Correção 25 — FORCAPITAL restrito ao assunto ─────────────────────────────
+
+
+def test_correcao25_forcapital_email_no_corpo_nao_dispara():
+    """Correção 25 — 'forcapital@...' no corpo (endereço de e-mail) não dispara FORCAPITAL → SUPORTE."""
+    r = _classificar('RES: Risk Driver - NOVA SENHA - Acesso ao Sistema',
+                     'To: gilvanice.rocha@brokerbrasilcambio.com.br, forcapital@finaud.com.br')
+    assert r['categorias'] == ['SUPORTE'], f"SUPORTE esperado; obtido {r['categorias']}"
+
+
+def test_correcao25_projecao_capital_no_corpo_nao_dispara():
+    """Correção 25 — 'projeção de capital' no corpo (contexto de suporte) não dispara FORCAPITAL → SUPORTE."""
+    r = _classificar('Re: TESTES DE STRESS E PILAR 3',
+                     'Realizei a projeção de capital com base nas instruções que você me enviou.')
+    assert r['categorias'] == ['SUPORTE'], f"SUPORTE esperado; obtido {r['categorias']}"
+
+
+def test_correcao25_projecao_capital_no_assunto_detecta():
+    """Correção 25 — 'Projeção de Capital' no assunto ainda detecta FORCAPITAL normalmente."""
+    r = _classificar('Re: Projeção de Capital para Cenário Realista de DEZ25 a DEZ28')
+    assert 'FORCAPITAL' in r['categorias'], f"FORCAPITAL esperado; obtido {r['categorias']}"

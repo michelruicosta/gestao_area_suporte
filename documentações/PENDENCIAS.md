@@ -8,7 +8,7 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ---
 
-## 🔧 CLASSIFICADOR DETERMINÍSTICO — 57 erros restantes (placar: 710/767)
+## 🔧 CLASSIFICADOR DETERMINÍSTICO — 55 erros restantes (placar: 712/767)
 
 > Mapeado em 13/08/2026. Atacar grupo por grupo; ao concluir um grupo, remover daqui e gravar no REGISTRO_CORRECOES.md.
 > Dois RETORNO (Sinal 6b) já estão corretos em produção — aparecem aqui só porque a validação usa corpo truncado.
@@ -50,11 +50,11 @@ Dois e-mails de suporte técnico sobre o sistema VMTM (componente de cálculo do
 
 ---
 
-### 🔴 Grupo A — SUPORTE classificado como CADOC (7 threads restantes)
+### 🔴 Grupo A — SUPORTE classificado como CADOC (5 threads restantes)
 
 E-mails de suporte (dúvida, pedido de acesso, notícia regulatória) estão sendo confundidos com entrega de CADOC porque o assunto ou corpo menciona o código apenas de passagem.
 
-✅ Corrigidos: Reunião+CADOC (C22), ERRO+só DDR (C23), S5 no corpo (C24) — 4 threads corrigidas.
+✅ Corrigidos: Reunião+CADOC (C22), ERRO+só DDR (C23), S5 no corpo (C24), FORCAPITAL no corpo (C25) — 6 threads corrigidas.
 ⚠️ Sem correção viável: 2 convites Teams + 2 VMTM → ver seções acima.
 
 | Thread | Esperado | Obtido (errado) |
@@ -63,9 +63,7 @@ E-mails de suporte (dúvida, pedido de acesso, notícia regulatória) estão sen
 | MIRAE ASSET - BASILEIA - JUNHO DE 2026 | SUPORTE | DLO_2061 |
 | RES: **UNVERIFIED SENDER** Re: PR | SUPORTE | DLO_2061 + SCD |
 | RES: Dados para o relatório | SUPORTE | DLO_2061 + S5 |
-| RES: Risk Driver - NOVA SENHA | SUPORTE | FORCAPITAL |
 | Re: **UNVERIFIED SENDER** Re: Solicitação de orientação técnica | SUPORTE | DLO_2061 |
-| Re: TESTES DE STRESS E PILAR 3 | SUPORTE | FORCAPITAL |
 
 ---
 

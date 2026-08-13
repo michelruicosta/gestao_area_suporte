@@ -183,6 +183,22 @@ Mantido: bypass do registro (thread confirmada → retorna salvo sem reprocessar
 
 ---
 
+### Correção 25 — 13/08/2026 — Classificador: FORCAPITAL restrito ao assunto (não dispara no corpo)
+
+**🔎 Em miúdos:** quando "forcapital" ou "projeção de capital" aparece só no corpo do e-mail, o classificador parou de entender como entrega do relatório FORCAPITAL. No corpo, esses termos aparecem como endereço de e-mail (`forcapital@finaud.com.br`) ou em contexto de suporte técnico — não como entrega CADOC.
+
+**Problema:** dois e-mails de suporte estavam sendo classificados como FORCAPITAL: "RES: Risk Driver - NOVA SENHA" (o endereço `forcapital@finaud.com.br` aparecia no cabeçalho do corpo) e "Re: TESTES DE STRESS E PILAR 3" (o corpo dizia "realizei a projeção de capital" — ação de suporte, não entrega do relatório).
+
+**Correção:** os sinais de FORCAPITAL foram removidos de `_detectar_cadoc` (que é chamada para corpo e anexos). Adicionado check explícito no assunto dentro da Camada 1b, igual ao padrão da Correção 24 para S5. O único FORCAPITAL legítimo no corpus ("Re: Projeção de Capital para Cenário Realista…") tem o sinal no assunto e continua funcionando.
+
+**Arquivos alterados:** `scripts/classificador_ia.py` (linhas 195–201 e Camada 1b), `tests/test_classificador_ia.py` (3 testes novos).
+
+**Varredura:** +2 ganhos, 0 regressões (767 threads). Placar: 710 → 712 acertos.
+
+**Placar:** 712/767 acertos (55 erros). `pytest tests/ -q` → 133 passed. ✅
+
+---
+
 ### Correção 24 — 13/08/2026 — Classificador: '\bS5\b' restrito ao assunto (não dispara no corpo)
 
 **🔎 Em miúdos:** quando o e-mail menciona "S5" só no corpo (ex.: "login exclusivo para o Risk Driver S5"), o classificador parava de entender que era uma entrega CADOC do tipo S5. No corpo, "S5" é uma categoria de tamanho de instituição financeira (definição BACEN), não o código do relatório.

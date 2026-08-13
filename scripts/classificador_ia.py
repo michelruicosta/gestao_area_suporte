@@ -192,13 +192,10 @@ def _detectar_cadoc(texto_u: str) -> list[str]:
     if 'RESULTADO QUANTITATIVO' in texto_u:
         cats.add('S5')
 
-    # FORCAPITAL
-    if ('FORCAPITAL' in texto_u
-            or 'FOR CAPITAL' in texto_u
-            or 'FOR-CAPITAL' in texto_u
-            or 'PROJECAO DE CAPITAL' in texto_u
-            or 'PROJEÇÃO DE CAPITAL' in texto_u):
-        cats.add('FORCAPITAL')
+    # FORCAPITAL — somente via assunto (Camada 1b);
+    # no corpo, termos como 'projeção de capital' aparecem em contexto de suporte,
+    # e 'forcapital' pode ser endereço de e-mail (forcapital@finaud.com.br)
+    pass  # verificação movida para Camada 1b em _classificar_deterministico
 
     # DRSAC_2030
     if 'DRSAC' in texto_u or re.search(r'\b2030\b', texto_u):
@@ -263,6 +260,10 @@ def _classificar_deterministico(
     # '\bS5\b' só no assunto — no corpo é tamanho de instituição BACEN (S1–S5), não entrega CADOC
     if re.search(r'\bS5\b', au):
         cats.add('S5')
+    # FORCAPITAL só no assunto — no corpo aparece como endereço de e-mail ou contexto de suporte
+    _FC_SINAIS = ('FORCAPITAL', 'FOR CAPITAL', 'FOR-CAPITAL', 'PROJECAO DE CAPITAL', 'PROJEÇÃO DE CAPITAL')
+    if any(s in au for s in _FC_SINAIS):
+        cats.add('FORCAPITAL')
     if cats:
         # 'REUNIÃO' + CADOC no assunto = pauta/convite de reunião sobre o CADOC → SUPORTE, não entrega
         if 'REUNI' in au:
