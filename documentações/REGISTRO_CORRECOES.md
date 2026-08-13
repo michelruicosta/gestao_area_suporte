@@ -201,6 +201,33 @@ sem teste: alteração no registro de dados, não em código.
 
 ---
 
+### Correção 10 — 13/08/2026 — Arquivos RD (Remessa Diária do DDR) não reconhecidos como DDR_2011
+
+**🔎 Em miúdos:** e-mails com "RD MES 07-2026" no assunto ou anexos no formato "RD_MOEDA.csv"
+iam para SUPORTE. "RD" é a Remessa Diária — são os arquivos de importação que o cliente envia
+para gerar o DDR. Todos os tipos (RD_MOEDA, RD_LFT, RD_NTN, RD_ACOES, RD_DEBENTURE etc.) são DDR.
+
+**Problema:** o padrão `\bDDRS?\b` captura "DDR" mas não captura "RD" — a abreviação usada nos
+nomes dos arquivos de remessa diária. Emails com apenas "RD MES 07-2026" no assunto não tinham
+nenhum sinal DDR e caíam em SUPORTE.
+
+**Contexto (Michel, 13/08/2026):** o BACEN define vários tipos de remessa diária — todas com
+prefixo "RD_": RD_MOEDA, RD_LFT, RD_LTN, RD_NTN, RD_ACOES, RD_DEBENTURE, RD_CDB_POS_APLICACAO,
+RD_CUPOM_MOEDA, etc. Qualquer arquivo RD é arquivo de importação para gerar o DDR.
+
+**Correção:** padrão `r'\bRD\b'` adicionado a `_DDR_PADROES` em `scripts/classificador_ia.py`.
+Funciona em assunto ("RD MES 07-2026") e em nomes de anexos ("RD_MOEDA.csv" → após normalização
+de `_` → espaço: "RD MOEDA CSV").
+
+**Simulação prévia:** varredura nos 767 confirmados — padrão `\bRD\b` só aparecia em 2 threads
+no assunto (ambas DDR_2011). Resultado: +2 ganhos, 0 regressões.
+
+**Testes:** 3 casos em `test_correcao10_rd_remessa_diaria_ddr` (assunto, variante, via anexo).
+
+**Validação:** ✅ VALIDADO — `pytest tests/ -q` 93/93 passando; validação completa: 678/767 (88,4%); era 676/767 (88,1%).
+
+---
+
 ### Correção 09 — 13/08/2026 — Registro: 3 threads "Monte Bravo | Cadastro de Ações e Opções" corrigidas de SUPORTE para DDR_2011
 
 **🔎 Em miúdos:** três threads do cliente Monte Bravo, sobre cadastro de ações e opções, estavam

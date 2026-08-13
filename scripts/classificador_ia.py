@@ -89,6 +89,7 @@ _DDR_PADROES = [
     r'CADASTRO DE A[ÇC][OÕ]ES E OP[ÇC][OÕ]ES',
     r'\bREMITLY\b',
     r'PI EXPOSURE',
+    r'\bRD\b',              # Remessa Diária — arquivos RD_MOEDA, RD_LFT, RD_NTN etc.
 ]
 
 # Padrões INTERNO (regex aplicado sobre assunto em maiúsculo)

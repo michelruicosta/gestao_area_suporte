@@ -425,6 +425,36 @@ def test_correcao07_assunto_dlo_anexo_dli():
     'Arquivo DLO maio rejeitado',
     '4111 - REJEITADO',
 ])
+def test_correcao10_rd_remessa_diaria_ddr(assunto):
+    """Correção 10 — 'RD' no assunto/anexo (Remessa Diária do DDR) → DDR_2011."""
+
+
+# ── Correção 10: RD (Remessa Diária) → DDR_2011 ──────────────────────────────
+
+@pytest.mark.parametrize('assunto,corpo,anexos', [
+    # Correção 10 — 13/08/2026: RD = Remessa Diária, arquivo de importação do DDR
+    ('RD MES 07-2026',                  '', []),
+    ('RD MES 07-2026 - DESCONSIDERAR',  '', []),
+    ('envio mensal',  '', ['RD_MOEDA_31-07-2026.csv']),   # via nome de anexo
+])
+def test_correcao10_rd_remessa_diaria_ddr(assunto, corpo, anexos):
+    """Correção 10 — 'RD' no assunto/anexo (Remessa Diária do DDR) → DDR_2011."""
+    r = _classificar(assunto, corpo=corpo, nomes_anexos=anexos)
+    assert 'DDR_2011' in r['categorias'], (
+        f"Assunto '{assunto}' / anexos {anexos}: esperado DDR_2011, obtido {r['categorias']}"
+    )
+
+
+# ── Correção 08: REJEITADO no assunto → RETORNO_BACEN ────────────────────────
+
+@pytest.mark.parametrize('assunto', [
+    # Correção 08 — 12/08/2026: arquivo rejeitado = RETORNO_BACEN (não o CADOC do arquivo)
+    'UNICRED - DRM (2060) 30 06 2026 - REJEITADO',
+    'RES: GREEN DTVM - DRM 2060 - ARQUIVO REJEITADO',
+    'DRM 30 06 2026 - ENTREGUE E REJEITADO',
+    'Arquivo DLO maio rejeitado',
+    '4111 - REJEITADO',
+])
 def test_correcao08_rejeitado_assunto_retorno_bacen(assunto):
     """Correção 08 — 'REJEITADO' no assunto → RETORNO_BACEN (arquivo recusado pelo BACEN)."""
     r = _classificar(assunto)
