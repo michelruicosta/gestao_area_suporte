@@ -183,6 +183,29 @@ Mantido: bypass do registro (thread confirmada → retorna salvo sem reprocessar
 
 ---
 
+### Correção 13 — 13/08/2026 — "DRL-LEC" disparando DLO_2061 indevidamente
+
+**🔎 Em miúdos:** e-mails com "Planilha DRL-LEC Junho/2026" no assunto eram classificados como
+DLO_2061 + DRL_2160, quando o correto é só DRL_2160. O "LEC" em "DRL-LEC" é o nome de uma aba
+da planilha do DRL — não é o relatório LEC que pertence ao DLO.
+
+**Problema:** o classificador usava `\bLEC\b` como sinal de DLO. Em "DRL-LEC", o hífen cria uma
+word boundary antes de "LEC", então `\bLEC\b` casava e adicionava DLO_2061 incorretamente.
+
+**Correção:** `r'\bLEC\b'` → `r'(?<!DRL-)\bLEC\b'` — lookbehind negativo impede que LEC dispare
+DLO quando está imediatamente após "DRL-". Aplicado em dois lugares em `_classificar_deterministico`:
+(1) detecção principal de `tem_dlo` em `_detectar_cadoc`, e (2) complemento DLI→DLO da Camada 1b.
+
+**Simulação prévia:** +1 ganho ("Planilha DRL-LEC Junho/2026"), 0 regressões em 767 threads.
+
+**Testes:** 2 casos em `test_correcao13_*`:
+- `'Planilha DRL-LEC Junho/2026'` → DRL_2160 sem DLO_2061 ✅
+- `'LEC JUNHO 2026'` (sem prefixo DRL-) → ainda dispara DLO_2061 ✅
+
+**Validação:** ✅ VALIDADO — `pytest tests/ -q` 99/99 passando; validação completa: 683/767 (89,0%); era 682/767 (88,9%).
+
+---
+
 ### Correção 12 — 13/08/2026 — "CADOC" genérico (sem número) não detectado como SALDOS_4111
 
 **🔎 Em miúdos:** e-mails com "DDR e CADOC" ou "CADOC e DDR" no assunto iam para DDR_2011

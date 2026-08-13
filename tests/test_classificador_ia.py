@@ -480,3 +480,22 @@ def test_correcao12_cadoc_generico_saldos(assunto, corpo, esperado):
     assert sorted(r['categorias']) == sorted(esperado), (
         f"Assunto '{assunto}' / corpo '{corpo[:40]}': esperado {esperado}, obtido {r['categorias']}"
     )
+
+
+# ── Correção 13: LEC não dispara DLO em "DRL-LEC" (componente do relatório DRL) ─
+
+def test_correcao13_drl_lec_nao_dispara_dlo():
+    """Correção 13 — 'DRL-LEC' no assunto: LEC é aba da planilha DRL, não sinal de DLO."""
+    r = _classificar('Planilha DRL-LEC Junho/2026')
+    assert 'DRL_2160' in r['categorias'], 'DRL deve ser detectado'
+    assert 'DLO_2061' not in r['categorias'], (
+        f"DLO não deve disparar em DRL-LEC; obtido {r['categorias']}"
+    )
+
+
+def test_correcao13_lec_sozinho_ainda_dispara_dlo():
+    """Correção 13 — 'LEC' sem prefixo DRL- ainda dispara DLO_2061 normalmente."""
+    r = _classificar('LEC JUNHO 2026')
+    assert 'DLO_2061' in r['categorias'], (
+        f"LEC sozinho deve disparar DLO; obtido {r['categorias']}"
+    )

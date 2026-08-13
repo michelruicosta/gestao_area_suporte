@@ -153,10 +153,11 @@ def _detectar_cadoc(texto_u: str) -> list[str]:
         cats.add('DDR_2011')
 
     # DLO_2061 e DLI_2062 — sub-regra de distinção
+    # LEC com lookbehind: não dispara DLO em "DRL-LEC" (LEC é componente do DRL, não DLO)
     tem_dlo = bool(
         re.search(r'\bDLO\b', texto_u)
         or re.search(r'\b2061\b', texto_u)
-        or re.search(r'\bLEC\b', texto_u)
+        or re.search(r'(?<!DRL-)\bLEC\b', texto_u)
         or 'COS4010' in texto_u
         or 'COS4016' in texto_u
         or 'COS4060' in texto_u
@@ -241,7 +242,7 @@ def _classificar_deterministico(
                 cats.add('DLI_2062')
         elif 'DLI_2062' in cats and 'DLO_2061' not in cats:
             if (re.search(r'\bDLO\b', texto_resto) or re.search(r'\b2061\b', texto_resto)
-                    or re.search(r'\bLEC\b', texto_resto)
+                    or re.search(r'(?<!DRL-)\bLEC\b', texto_resto)
                     or any(c in texto_resto for c in ('COS4010', 'COS4016', 'COS4060', 'COS4066'))):
                 cats.add('DLO_2061')
         cats = sorted(cats)
