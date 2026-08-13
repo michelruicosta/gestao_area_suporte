@@ -537,3 +537,29 @@ def test_correcao15_posicao_lft_no_corpo():
     r = _classificar(assunto='FLUXO DE CAIXA', corpo='Segue planilha Saldos 4111 e Posição LFT do mês.')
     assert 'DDR_2011' in r['categorias'], f"DDR esperado; obtido {r['categorias']}"
     assert 'SALDOS_CONTABEIS_DIARIOS_4111' in r['categorias'], f"SALDOS esperado; obtido {r['categorias']}"
+
+
+# ── Correção 16: VARIAÇÃO RELEVANTE e REITERAÇÃO → RETORNO_BACEN ─────────────
+
+def test_correcao16_variacao_relevante_dispara_retorno():
+    """Correção 16 — 'VARIAÇÃO RELEVANTE' no assunto é comunicado BACEN → RETORNO_BACEN."""
+    r = _classificar('Fwd: 1a REITERACAO - BANCO CENTRAL - COMUNICACAO DE VARIACAO RELEVANTE NO DDR - 2011')
+    assert r['categorias'] == ['RETORNO_BACEN'], f"RETORNO esperado; obtido {r['categorias']}"
+
+
+def test_correcao16_variacao_relevante_com_acento():
+    """Correção 16 — variante com acento 'VARIAÇÃO RELEVANTE' também dispara."""
+    r = _classificar('BANCO CENTRAL - COMUNICAÇÃO DE VARIAÇÃO RELEVANTE NO DDR - 2011')
+    assert r['categorias'] == ['RETORNO_BACEN'], f"RETORNO esperado; obtido {r['categorias']}"
+
+
+def test_correcao16_reiteracao_sozinha_dispara_retorno():
+    """Correção 16 — 'REITERAÇÃO' de comunicado BACEN no assunto → RETORNO_BACEN."""
+    r = _classificar('1a REITERAÇÃO - BANCO CENTRAL - COMUNICACAO DE INCONSISTENCIA NO DRM - 2060')
+    assert r['categorias'] == ['RETORNO_BACEN'], f"RETORNO esperado; obtido {r['categorias']}"
+
+
+def test_correcao16_variacao_relevante_nao_dispara_sem_contexto():
+    """Correção 16 — 'variação relevante' sozinha sem contexto BACEN não deve aparecer no assunto de CADOC normal."""
+    r = _classificar('DRM 06/2026 - VARIAÇÕES MENSAIS RELEVANTES DE POSIÇÃO')
+    assert 'RETORNO_BACEN' not in r['categorias'], f"RETORNO nao esperado; obtido {r['categorias']}"

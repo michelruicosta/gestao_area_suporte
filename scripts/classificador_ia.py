@@ -70,6 +70,10 @@ _RETORNO_SINAIS_FORTES = [
     'COMUNICAÇÃO DE INCONSISTÊNCIA',
     'INDICIO DE PROBLEMA DE QUALIDADE',
     'INDÍCIO DE PROBLEMA DE QUALIDADE',
+    'VARIACAO RELEVANTE',           # comunicado BACEN de variação acima da média
+    'VARIAÇÃO RELEVANTE',           # idem com acento
+    'REITERACAO',                   # 1ª/2ª reiteração de comunicado BACEN
+    'REITERAÇÃO',                   # idem com acento
 ]
 _RETORNO_SINAIS_VCRD = ['VCRD', 'CRITICA VCRD', 'CRÍTICA VCRD']
 _RETORNO_SINAIS_INDICIO = ['INDICIO', 'INDÍCIO']

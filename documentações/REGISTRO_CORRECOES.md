@@ -183,6 +183,32 @@ Mantido: bypass do registro (thread confirmada → retorna salvo sem reprocessar
 
 ---
 
+### Correção 17 — 13/08/2026 — Registro: 2 threads com categoria desatualizada corrigidas para RETORNO_BACEN
+
+**🔎 Em miúdos:** dois e-mails que eram sobre crítica do BACEN estavam salvos como DLO+DRM e DDR — agora estão corretos como RETORNO_BACEN.
+
+**Problema:** após a aprovação da regra "RETORNO_BACEN sempre sozinho" (Correção 16) e a adição dos sinais VARIAÇÃO RELEVANTE e REITERAÇÃO, o classificador passou a dar RETORNO_BACEN corretamente para 2 threads — mas o registro ainda tinha as categorias antigas (DDR_2011 e DLO_2061+DRM_2060).
+
+**Correção:** atualizado `data/registro_definitivo_threads.json` para as 2 threads:
+- `RES: BANCO CENTRAL - COMUNICAÇÃO DE VARIAÇÃO RELEVANTE NO DDR - 2011` → era DDR_2011, agora RETORNO_BACEN
+- `RES: BANCO CENTRAL - COMUNICACAO DE INCONSISTENCIA NO DRM - 2060` (DLO+DRM) → era DLO_2061+DRM_2060, agora RETORNO_BACEN
+
+**Validação:** placar subiu de 694 → 696 acertos (71 erros). `pytest tests/ -q` → 107 passed. ✅
+
+---
+
+### Correção 16 — 13/08/2026 — Classificador: VARIAÇÃO RELEVANTE e REITERAÇÃO adicionados como sinais de RETORNO_BACEN + 14 threads de registro corrigidas
+
+**🔎 Em miúdos:** e-mails com "reiteração" ou "variação relevante" do BACEN no assunto agora são reconhecidos como RETORNO. E 14 threads que tinham RETORNO misturado com outro CADOC foram corrigidas para RETORNO sozinho.
+
+**Problema:** (a) e-mails com assunto "1ª REITERAÇÃO - BANCO CENTRAL - COMUNICAÇÃO DE VARIAÇÃO RELEVANTE NO DDR - 2011" não eram detectados como RETORNO_BACEN — os sinais REITERAÇÃO e VARIAÇÃO RELEVANTE não existiam na lista. (b) 14 threads no registro tinham RETORNO_BACEN combinado com outro CADOC (DDR+RETORNO, DLI+RETORNO, DRM+RETORNO etc.) — regra de negócio aprovada: RETORNO_BACEN é sempre categoria única.
+
+**Correção:** adicionados `'VARIACAO RELEVANTE'`, `'VARIAÇÃO RELEVANTE'`, `'REITERACAO'`, `'REITERAÇÃO'` em `_RETORNO_SINAIS_FORTES` em `scripts/classificador_ia.py`. Corrigidas 14 threads no registro para RETORNO_BACEN. Backup: `data/backups/20260813_1218_correcao16_retorno_sempre_sozinho/`.
+
+**Validação:** 107 testes passando. `pytest tests/ -q` ✅
+
+---
+
 ### Correção 15 — 13/08/2026 — Registro + Classificador: 10 threads ZIIN (FLUXO DE CAIXA) corrigidas para DDR_2011 + SALDOS_4111
 
 **🔎 Em miúdos:** e-mails da ZIIN (Unicred do Brasil) com o arquivo "Saldos 4111 e Posição LFT.ods" estavam classificados só como SALDOS. Esse arquivo tem duas partes: saldos contábeis (SALDOS_4111) e posição em LFT — que é um componente do DDR. Correto é DDR + SALDOS.
