@@ -327,7 +327,7 @@ def test_camada1_assunto_detecta_cadoc(assunto, esperado):
     ('DRL - envio realizado com sucesso',            'DRL_2160'),
     ('Número 2160 — confirmado',                    'DRL_2160'),
     ('Saldos contábeis 4111 enviados',              'SALDOS_CONTABEIS_DIARIOS_4111'),
-    ('Arquivo do S5 com erro',                      'S5'),
+    # S5 via '\bS5\b' não dispara no corpo — ver Correção 24 e test_correcao24_s5_no_corpo_nao_dispara
     ('Arquivo DRSAC com rejeição',                  'DRSAC_2030'),
     ('Entrega do CADOC 2030 — confirmada',          'DRSAC_2030'),
     ('Arquivo PVCA rejeitado pelo sistema',         'PVCA_6209'),
@@ -724,3 +724,25 @@ def test_correcao23_erro_drm_nao_afeta():
     """Correção 23 — assunto com DRM não é afetado pela regra (só DDR)."""
     r = _classificar('Erro - 2060 DRM')
     assert 'DRM_2060' in r['categorias'], f"DRM_2060 esperado; obtido {r['categorias']}"
+
+
+# ── Correção 24 — '\bS5\b' no corpo não dispara S5 (só no assunto) ───────────
+
+
+def test_correcao24_s5_no_corpo_nao_dispara():
+    """Correção 24 — 'S5' no corpo indica tamanho de instituição, não entrega CADOC → SUPORTE."""
+    r = _classificar('Freex Câmbio - Login Riskdriver',
+                     'O login é exclusivo para o Risk Driver S5, segue o link abaixo:')
+    assert r['categorias'] == ['SUPORTE'], f"SUPORTE esperado; obtido {r['categorias']}"
+
+
+def test_correcao24_s5_no_assunto_detecta():
+    """Correção 24 — 'S5' no assunto ainda detecta S5 normalmente."""
+    r = _classificar('Aceita: Risk S5')
+    assert 'S5' in r['categorias'], f"S5 esperado; obtido {r['categorias']}"
+
+
+def test_correcao24_resultado_quantitativo_no_assunto_detecta():
+    """Correção 24 — 'Resultado Quantitativo' no assunto ainda detecta S5."""
+    r = _classificar('Re: Arquivo COS. Segue o Resultado Quantitativo 06/2026. EXECUTIVE')
+    assert 'S5' in r['categorias'], f"S5 esperado; obtido {r['categorias']}"

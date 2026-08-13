@@ -183,6 +183,22 @@ Mantido: bypass do registro (thread confirmada → retorna salvo sem reprocessar
 
 ---
 
+### Correção 24 — 13/08/2026 — Classificador: '\bS5\b' restrito ao assunto (não dispara no corpo)
+
+**🔎 Em miúdos:** quando o e-mail menciona "S5" só no corpo (ex.: "login exclusivo para o Risk Driver S5"), o classificador parava de entender que era uma entrega CADOC do tipo S5. No corpo, "S5" é uma categoria de tamanho de instituição financeira (definição BACEN), não o código do relatório.
+
+**Problema:** "Freex Câmbio - Login Riskdriver" tinha "Risk Driver S5" no corpo — S5 é o nome de um módulo do sistema de relatórios. O classificador detectava `\bS5\b` no corpo e retornava S5 em vez de SUPORTE.
+
+**Correção:** `\bS5\b` foi removido da função `_detectar_cadoc` (que é chamada no assunto, corpo e anexos). Adicionado check explícito de `\bS5\b` apenas dentro da Camada 1b (sobre o assunto). `RESULTADO QUANTITATIVO` permanece em `_detectar_cadoc` para funcionar em qualquer contexto.
+
+**Arquivos alterados:** `scripts/classificador_ia.py` (linhas 189–194 e Camada 1b), `tests/test_classificador_ia.py` (3 testes novos + 1 linha obsoleta removida).
+
+**Varredura:** +1 ganho, 0 regressões (767 threads). Placar: 709 → 710 acertos.
+
+**Placar:** 710/767 acertos (57 erros). `pytest tests/ -q` → 130 passed. ✅
+
+---
+
 ### Correção 23 — 13/08/2026 — Classificador: 'ERRO' no início + só DDR no assunto → SUPORTE
 
 **🔎 Em miúdos:** quando o assunto começa com "ERRO" e o único código CADOC identificado no assunto é o DDR, o classificador agora entende que é um pedido de suporte sobre um problema de cálculo — não uma entrega do CADOC — e classifica como SUPORTE.

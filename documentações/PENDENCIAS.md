@@ -8,7 +8,7 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ---
 
-## 🔧 CLASSIFICADOR DETERMINÍSTICO — 61 erros a corrigir (placar: 706/767)
+## 🔧 CLASSIFICADOR DETERMINÍSTICO — 57 erros restantes (placar: 710/767)
 
 > Mapeado em 13/08/2026. Atacar grupo por grupo; ao concluir um grupo, remover daqui e gravar no REGISTRO_CORRECOES.md.
 > Dois RETORNO (Sinal 6b) já estão corretos em produção — aparecem aqui só porque a validação usa corpo truncado.
@@ -21,27 +21,51 @@ Esses dois estão corretos em produção (Sinal 6b detecta VCRD no corpo complet
 
 ---
 
-### 🔴 Grupo A — SUPORTE classificado como CADOC (15 threads)
+### ⚠️ Casos sem correção viável — convite Teams com assunto CADOC (13/08/2026)
 
-E-mails de suporte (dúvida, pedido de acesso, notícia regulatória, reunião) estão sendo confundidos com entrega de CADOC porque o assunto ou corpo menciona o código apenas de passagem.
+Dois e-mails são convites de reunião no Microsoft Teams cujo assunto coincide com um código CADOC — o classificador confunde com entrega real.
+
+- `(sem assunto)` → esperado SUPORTE, obtido DLO_2061
+- `DLO` → esperado SUPORTE, obtido DLO_2061 (assunto é literalmente só "DLO")
+
+**Por que não foi corrigido:** todos os sinais testados causaram regressões:
+- `invite.ics` nos anexos → -3 regressões
+- `teams.microsoft.com` no corpo → -2 regressões
+- Combinação das duas → ainda -2 regressões
+
+**Impacto:** 2 threads (0,3% do total). Deixar para revisão futura se aparecer padrão melhor.
+
+---
+
+### ⚠️ Casos sem correção viável — VMTM no corpo (sub-padrão 2a) (13/08/2026)
+
+Dois e-mails de suporte técnico sobre o sistema VMTM (componente de cálculo do DDR) ficam com DDR_2011 incorreto.
+
+- `SUPORTE - INTRA DTVM` → esperado SUPORTE, obtido DDR_2011 (VMTM no corpo principal — "gerando divergência no VMTM...")
+- `ENC: PR` → esperado SUPORTE, obtido DDR_2011 (sinal DDR no conteúdo encaminhado)
+
+**Por que não foi corrigido:** remover `\bVMTM\b` dos padrões DDR causa -9 regressões em threads legítimas (FLUXO DE CAIXA - ZIIN usa VMTM como sinal de entrega DDR). Nenhum sinal alternativo isolou esses dois casos sem causar dano.
+
+**Impacto:** 2 threads (0,3% do total). Baixo impacto — registrado como não-corrigível no sub-padrão 2a.
+
+---
+
+### 🔴 Grupo A — SUPORTE classificado como CADOC (7 threads restantes)
+
+E-mails de suporte (dúvida, pedido de acesso, notícia regulatória) estão sendo confundidos com entrega de CADOC porque o assunto ou corpo menciona o código apenas de passagem.
+
+✅ Corrigidos: Reunião+CADOC (C22), ERRO+só DDR (C23), S5 no corpo (C24) — 4 threads corrigidas.
+⚠️ Sem correção viável: 2 convites Teams + 2 VMTM → ver seções acima.
 
 | Thread | Esperado | Obtido (errado) |
 |---|---|---|
-| (sem assunto) | SUPORTE | DLO_2061 |
-| DLO | SUPORTE | DLO_2061 |
 | ENC: INSTRUÇÃO NORMATIVA BCB Nº 749 | SUPORTE | DLI_2062 |
-| ENC: PR | SUPORTE | DDR_2011 |
-| ERRO -- Taxa Referencial DDR | SUPORTE | DDR_2011 |
-| Erro ao calcular o VMTM do dia 30/07/2026 | SUPORTE | DDR_2011 |
-| Freex Câmbio - Login Riskdriver | SUPORTE | S5 |
 | MIRAE ASSET - BASILEIA - JUNHO DE 2026 | SUPORTE | DLO_2061 |
 | RES: **UNVERIFIED SENDER** Re: PR | SUPORTE | DLO_2061 + SCD |
 | RES: Dados para o relatório | SUPORTE | DLO_2061 + S5 |
 | RES: Risk Driver - NOVA SENHA | SUPORTE | FORCAPITAL |
 | Re: **UNVERIFIED SENDER** Re: Solicitação de orientação técnica | SUPORTE | DLO_2061 |
 | Re: TESTES DE STRESS E PILAR 3 | SUPORTE | FORCAPITAL |
-| Reunião - Demandas BACEN - DLO Junho (Antecipações) | SUPORTE | DLO_2061 |
-| SUPORTE - INTRA DTVM | SUPORTE | DDR_2011 |
 
 ---
 

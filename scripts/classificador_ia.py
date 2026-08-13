@@ -186,8 +186,10 @@ def _detectar_cadoc(texto_u: str) -> list[str]:
     elif tem_dli:
         cats.add('DLI_2062')
 
-    # S5
-    if re.search(r'\bS5\b', texto_u) or 'RESULTADO QUANTITATIVO' in texto_u:
+    # S5 — somente via 'RESULTADO QUANTITATIVO' em qualquer contexto;
+    # '\bS5\b' é verificado separadamente só no assunto (Camada 1b),
+    # pois no corpo 'S5' indica tamanho de instituição BACEN, não entrega CADOC
+    if 'RESULTADO QUANTITATIVO' in texto_u:
         cats.add('S5')
 
     # FORCAPITAL
@@ -258,6 +260,9 @@ def _classificar_deterministico(
 
     # Camada 1b — CADOC pelo assunto
     cats = set(_detectar_cadoc(au))
+    # '\bS5\b' só no assunto — no corpo é tamanho de instituição BACEN (S1–S5), não entrega CADOC
+    if re.search(r'\bS5\b', au):
+        cats.add('S5')
     if cats:
         # 'REUNIÃO' + CADOC no assunto = pauta/convite de reunião sobre o CADOC → SUPORTE, não entrega
         if 'REUNI' in au:
