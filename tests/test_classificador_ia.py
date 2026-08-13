@@ -461,3 +461,22 @@ def test_correcao08_rejeitado_assunto_retorno_bacen(assunto):
     assert r['categorias'] == ['RETORNO_BACEN'], (
         f"Assunto '{assunto}': esperado ['RETORNO_BACEN'], obtido {r['categorias']}"
     )
+
+
+# ── Correção 12: CADOC genérico (sem número) → SALDOS_CONTABEIS_DIARIOS_4111 ─
+
+@pytest.mark.parametrize('assunto,corpo,esperado', [
+    # Correção 12 — 13/08/2026: "CADOC" sem número = coloquial para SALDOS_4111
+    ('DDR e CADOC',               '', ['DDR_2011', 'SALDOS_CONTABEIS_DIARIOS_4111']),
+    ('CADOC e DDR - 14/07 a 17/07', '', ['DDR_2011', 'SALDOS_CONTABEIS_DIARIOS_4111']),
+    # CADOC 4111 explícito não deve disparar CADOC genérico (mas 4111 já detecta SALDOS)
+    ('CADOC 4111',                '', ['SALDOS_CONTABEIS_DIARIOS_4111']),
+    # CADOC no corpo (sem assunto) → SALDOS_4111
+    ('',                          'Segue abaixo DDR. Segue abaixo CADOC.', ['DDR_2011', 'SALDOS_CONTABEIS_DIARIOS_4111']),
+])
+def test_correcao12_cadoc_generico_saldos(assunto, corpo, esperado):
+    """Correção 12 — CADOC sem número no texto → inclui SALDOS_CONTABEIS_DIARIOS_4111."""
+    r = _classificar(assunto, corpo=corpo)
+    assert sorted(r['categorias']) == sorted(esperado), (
+        f"Assunto '{assunto}' / corpo '{corpo[:40]}': esperado {esperado}, obtido {r['categorias']}"
+    )

@@ -131,9 +131,11 @@ def _detectar_cadoc(texto_u: str) -> list[str]:
     cats: set[str] = set()
 
     # SALDOS_CONTABEIS_DIARIOS_4111
+    # "CADOC" sem número de 4 dígitos imediatamente após = uso coloquial para SALDOS (Correção 12)
     if (re.search(r'\b4111\b', texto_u)
             or 'SALDOS CONT' in texto_u
-            or 'FLUXO DE CAIXA' in texto_u):
+            or 'FLUXO DE CAIXA' in texto_u
+            or re.search(r'\bCADOC\b(?!\s{0,4}\d{4})', texto_u)):
         cats.add('SALDOS_CONTABEIS_DIARIOS_4111')
 
     # DRM_2060
