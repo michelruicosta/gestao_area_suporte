@@ -201,6 +201,25 @@ sem teste: alteração no registro de dados, não em código.
 
 ---
 
+### Correção 09 — 13/08/2026 — Registro: 3 threads "Monte Bravo | Cadastro de Ações e Opções" corrigidas de SUPORTE para DDR_2011
+
+**🔎 Em miúdos:** três threads do cliente Monte Bravo, sobre cadastro de ações e opções, estavam
+marcadas como SUPORTE no registro — mas Michel confirmou que esse tipo de e-mail é sempre DDR_2011.
+O classificador estava certo; o registro é que estava errado.
+
+**Problema:** ao classificar manualmente ~700 threads, essas 3 foram marcadas como SUPORTE por engano.
+O classificador detectava corretamente o padrão "Cadastro de Ações e Opções" como DDR_2011, mas o
+registro dizia SUPORTE — então a validação contava como erro do classificador.
+
+**Correção:** 3 entradas no `data/registro_definitivo_threads.json` tiveram `categorias` alterado
+de `["SUPORTE"]` para `["DDR_2011"]`. Backup em:
+`data/backups/20260813_0740_correcao_monte_bravo_suporte_ddr/`.
+
+**Validação:** ✅ VALIDADO — validação completa: 676/767 (88,1%); era 673/767 (87,7%).
+sem teste: alteração no registro de dados, não em código.
+
+---
+
 ### Correção 08 — 12/08/2026 — "REJEITADO" no assunto não reconhecido como RETORNO_BACEN
 
 **🔎 Em miúdos:** quando o BACEN recusava um arquivo, o cliente encaminhava o e-mail com "REJEITADO"
