@@ -8,7 +8,7 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ---
 
-## 🔧 CLASSIFICADOR DETERMINÍSTICO — 55 erros restantes (placar: 712/767)
+## 🔧 CLASSIFICADOR DETERMINÍSTICO — 54 erros restantes (placar: 713/767)
 
 > Mapeado em 13/08/2026. Atacar grupo por grupo; ao concluir um grupo, remover daqui e gravar no REGISTRO_CORRECOES.md.
 > Dois RETORNO (Sinal 6b) já estão corretos em produção — aparecem aqui só porque a validação usa corpo truncado.
@@ -50,20 +50,25 @@ Dois e-mails de suporte técnico sobre o sistema VMTM (componente de cálculo do
 
 ---
 
-### 🔴 Grupo A — SUPORTE classificado como CADOC (5 threads restantes)
+### ⚠️ Casos sem correção viável — CADOC citado no corpo como contexto de pergunta (sub-padrão 2d) (13/08/2026)
 
-E-mails de suporte (dúvida, pedido de acesso, notícia regulatória) estão sendo confundidos com entrega de CADOC porque o assunto ou corpo menciona o código apenas de passagem.
+Quatro e-mails de suporte têm código CADOC mencionado no **corpo** como contexto de uma dúvida ou pedido de acesso. O classificador os confunde com entrega real porque não há como distinguir deterministicamente "cita o código" de "entrega o arquivo".
 
-✅ Corrigidos: Reunião+CADOC (C22), ERRO+só DDR (C23), S5 no corpo (C24), FORCAPITAL no corpo (C25) — 6 threads corrigidas.
-⚠️ Sem correção viável: 2 convites Teams + 2 VMTM → ver seções acima.
+- `MIRAE ASSET - BASILEIA - JUNHO DE 2026` → esperado SUPORTE, obtido DLO_2061 (corpo diz "aguardando o DLO/LEC de Junho")
+- `RES: **UNVERIFIED SENDER** Re: PR` → esperado SUPORTE, obtido DLO_2061+SCD (corpo pede confirmação de envio de DLO e SaldosContábeis)
+- `RES: Dados para o relatório` → esperado SUPORTE, obtido DLO_2061+S5 (corpo pergunta se COS4010 está disponível — dúvida, não entrega)
+- `Re: **UNVERIFIED SENDER** Re: Solicitação de orientação técnica` → esperado SUPORTE, obtido DLO_2061 (corpo é dúvida sobre tratamento prudencial no DLO)
 
-| Thread | Esperado | Obtido (errado) |
-|---|---|---|
-| ENC: INSTRUÇÃO NORMATIVA BCB Nº 749 | SUPORTE | DLI_2062 |
-| MIRAE ASSET - BASILEIA - JUNHO DE 2026 | SUPORTE | DLO_2061 |
-| RES: **UNVERIFIED SENDER** Re: PR | SUPORTE | DLO_2061 + SCD |
-| RES: Dados para o relatório | SUPORTE | DLO_2061 + S5 |
-| Re: **UNVERIFIED SENDER** Re: Solicitação de orientação técnica | SUPORTE | DLO_2061 |
+**Por que não foi corrigido:** padrão indistinguível deterministicamente. O CADOC no corpo pode ser tanto entrega real quanto contexto de pergunta — sem sinal estrutural que diferencie os casos.
+
+**Impacto:** 4 threads (0,5% do total). Registrado como não-corrigível neste ciclo.
+
+---
+
+### ✅ Grupo A — SUPORTE classificado como CADOC — concluído (13/08/2026)
+
+✅ Corrigidos: Reunião+CADOC (C22), ERRO+só DDR (C23), S5 no corpo (C24), FORCAPITAL no corpo (C25), Instrução Normativa sem CADOC (C26) — 7 threads corrigidas.
+⚠️ Sem correção viável: 2 convites Teams + 2 VMTM + 4 CADOC no corpo como contexto → ver seções acima.
 
 ---
 

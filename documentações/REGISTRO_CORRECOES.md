@@ -183,6 +183,22 @@ Mantido: bypass do registro (thread confirmada → retorna salvo sem reprocessar
 
 ---
 
+### Correção 26 — 13/08/2026 — Classificador: 'Instrução Normativa' sem CADOC no assunto → SUPORTE
+
+**🔎 Em miúdos:** quando o assunto do e-mail menciona "Instrução Normativa" (circular regulatória do BACEN) mas não tem nenhum código CADOC junto, o classificador agora retorna SUPORTE. Se tiver código CADOC no assunto também (ex.: "Instrução Normativa BCB nº 721/26 - DLI 2062"), mantém a detecção normal do CADOC.
+
+**Problema:** "ENC: INSTRUÇÃO NORMATIVA BCB Nº 749" (encaminhamento de circular regulatória) estava sendo classificado como DLI_2062 porque o corpo do e-mail perguntava sobre o DLI 2062. O e-mail não era entrega do CADOC — era uma dúvida sobre como o regulamento impactaria o reporte. O código DLI aparecia no corpo como contexto da pergunta, não como assunto da entrega.
+
+**Correção:** dentro da Camada 1b, após calcular os CADOCs do assunto, verifica-se: se o assunto contém "INSTRUÇÃO NORMATIVA" (ou "INSTRUCAO NORMATIVA") e o assunto não detectou nenhum CADOC → retorna SUPORTE imediatamente. A condição `not cats` garante que assuntos que têm tanto a normativa quanto um código CADOC (como "DLI 2062") continuam sendo detectados normalmente.
+
+**Arquivos alterados:** `scripts/classificador_ia.py` (Camada 1b — 3 linhas novas), `tests/test_classificador_ia.py` (2 testes novos).
+
+**Varredura:** +1 ganho, 0 regressões (767 threads). Placar: 712 → 713 acertos.
+
+**Placar:** 713/767 acertos (54 erros). `pytest tests/ -q` → 135 passed. ✅
+
+---
+
 ### Correção 25 — 13/08/2026 — Classificador: FORCAPITAL restrito ao assunto (não dispara no corpo)
 
 **🔎 Em miúdos:** quando "forcapital" ou "projeção de capital" aparece só no corpo do e-mail, o classificador parou de entender como entrega do relatório FORCAPITAL. No corpo, esses termos aparecem como endereço de e-mail (`forcapital@finaud.com.br`) ou em contexto de suporte técnico — não como entrega CADOC.

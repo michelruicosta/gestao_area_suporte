@@ -769,3 +769,19 @@ def test_correcao25_projecao_capital_no_assunto_detecta():
     """Correção 25 — 'Projeção de Capital' no assunto ainda detecta FORCAPITAL normalmente."""
     r = _classificar('Re: Projeção de Capital para Cenário Realista de DEZ25 a DEZ28')
     assert 'FORCAPITAL' in r['categorias'], f"FORCAPITAL esperado; obtido {r['categorias']}"
+
+
+# ── Correção 26 — 'Instrução Normativa' sem CADOC no assunto → SUPORTE ────────
+
+
+def test_correcao26_instrucao_normativa_sem_cadoc_retorna_suporte():
+    """Correção 26 — circular regulatória encaminhada sem CADOC no assunto → SUPORTE."""
+    r = _classificar('ENC: INSTRUÇÃO NORMATIVA BCB Nº 749',
+                     'O sistema já está parametrizado para as alterações do DLI 2062?')
+    assert r['categorias'] == ['SUPORTE'], f"SUPORTE esperado; obtido {r['categorias']}"
+
+
+def test_correcao26_instrucao_normativa_com_cadoc_no_assunto_mantem_cadoc():
+    """Correção 26 — 'Instrução Normativa' + código CADOC no assunto → mantém detecção normal."""
+    r = _classificar('RES: Instrução Normativa BCB nº 721/26 - DLI 2062 - UNICRED')
+    assert 'DLI_2062' in r['categorias'], f"DLI_2062 esperado; obtido {r['categorias']}"
