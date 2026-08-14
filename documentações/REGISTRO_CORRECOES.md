@@ -267,6 +267,40 @@ Mantido: bypass do registro (thread confirmada → retorna salvo sem reprocessar
 
 ---
 
+### Correção 32 — 14/08/2026 — Classificador: códigos BACEN (2011/2060/2061/2062) nos nomes de arquivo complementam a detecção pelo assunto
+
+**🔎 Em miúdos:** quando um e-mail entrega mais de um CADOC ao mesmo tempo, o assunto normalmente menciona só um (ex.: "DLO e DLI"), mas os arquivos enviados têm o código BACEN no nome (ex.: `00806535_2011_20260630_S_2.zip`). O classificador agora lê esses códigos nos nomes de arquivo para completar a lista de categorias detectadas.
+
+**Problema:** threads do Grupo C onde o assunto detectava 1 ou 2 CADOCs, mas os arquivos anexados continham arquivos de outros CADOCs pelo padrão de nome BACEN (`CNPJ_CÓDIGO_DATA.ext`). Como a Camada 1b retornava após detectar o assunto, os arquivos nunca eram inspecionados para complemento. Ex.: "Re: DLO E DLI - JUNHO" com anexo `00806535_2011_20260630_S_2.zip` retornava só DLO+DLI, faltando DDR_2011.
+
+**Correção:** dentro do bloco `if cats:` da Camada 1b (após o complemento DLO/DLI existente), adicionados checks para `\b2011\b`, `\b2060\b`, `\b2061\b`, `\b2062\b` em `xu_norm` (nomes de arquivo normalizados). SALDOS+4111 exige as duas palavras juntas para evitar falso positivo em arquivos como "DLI CV - MAIO _ 4111 CV" onde 4111 é referência interna. 4 testes novos adicionados.
+
+**Arquivos alterados:** `scripts/classificador_ia.py` (bloco C32 na Camada 1b), `tests/test_classificador_ia.py` (4 testes novos).
+
+**Varredura:** +5 ganhos, 0 regressões (767 threads confirmadas). Placar: 720 → 725 acertos.
+
+**Placar:** 725/767 acertos (42 erros). `pytest tests/ -q` → 148 passed. ✅
+
+---
+
+### Correção 33 — 14/08/2026 — Classificador: código 4010 nos nomes de arquivo → DLO_2061
+
+**🔎 Em miúdos:** e-mails da AMARIL FRANKLIN enviam o arquivo DLO com o nome no padrão `CNPJ_4010_DATA.xml` (onde 4010 é o código do canal de entrega COS). O classificador não reconhecia esse padrão e retornava só DRM (que estava no assunto), sem DLO. Agora, quando o nome do arquivo tem `4010` isolado, DLO é adicionado ao resultado.
+
+**Problema:** "RELATÓRIO DRM 06/2026 - AMARIL FRANKLIN" e "RELATÓRIO DRM 07/2026 - AMARIL FRANKLIN" tinham assunto com DRM, mas os anexos continham `17312661_4010_062026.xml`. A C32 (entrada anterior) detecta 2061, 2062, etc. pelos códigos CADOC no nome do arquivo — mas `4010` é o código do canal de entrega, não do CADOC diretamente.
+
+**Por que só 4010 (não 4016/4060/4066):** simulação revelou que `4016` aparece em filenames da MIRAE como código de entrega DLI — adicionar DLO para 4016 causaria 1 regressão. Sem evidência suficiente de que 4060/4066 também são exclusivamente DLO nos nomes de arquivo. `4010` = DLO confirmado por 2 threads reais.
+
+**Correção:** acrescentado check `if 'DLO_2061' not in cats and re.search(r'\b4010\b', xu_norm): cats.add('DLO_2061')` logo após o bloco C32, dentro do `if cats:` da Camada 1b. 2 testes novos adicionados (1 positivo AMARIL + 1 anti-regressão 4016 MIRAE).
+
+**Arquivos alterados:** `scripts/classificador_ia.py` (linha C33 na Camada 1b), `tests/test_classificador_ia.py` (2 testes novos).
+
+**Varredura:** +2 ganhos, 0 regressões (767 threads confirmadas). Placar: 725 → 727 acertos.
+
+**Placar:** 727/767 acertos (40 erros). `pytest tests/ -q` → 150 passed. ✅
+
+---
+
 ### Correção 26 — 13/08/2026 — Classificador: 'Instrução Normativa' sem CADOC no assunto → SUPORTE
 
 **🔎 Em miúdos:** quando o assunto do e-mail menciona "Instrução Normativa" (circular regulatória do BACEN) mas não tem nenhum código CADOC junto, o classificador agora retorna SUPORTE. Se tiver código CADOC no assunto também (ex.: "Instrução Normativa BCB nº 721/26 - DLI 2062"), mantém a detecção normal do CADOC.

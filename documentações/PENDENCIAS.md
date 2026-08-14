@@ -8,7 +8,7 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ---
 
-## 🔧 CLASSIFICADOR DETERMINÍSTICO — 47 erros restantes (placar: 720/767)
+## 🔧 CLASSIFICADOR DETERMINÍSTICO — 40 erros restantes (placar: 727/767)
 
 > Mapeado em 13/08/2026. Atacar grupo por grupo; ao concluir um grupo, remover daqui e gravar no REGISTRO_CORRECOES.md.
 > Dois RETORNO (Sinal 6b) já estão corretos em produção — aparecem aqui só porque a validação usa corpo truncado.
@@ -85,24 +85,17 @@ Placar parcial do Grupo B: 713 → 720/767 acertos.
 
 ---
 
-### 🔴 Grupo C — Faltam categorias (classificador acerta uma mas perde outras) (14 threads)
+### 🔴 Grupo C — Faltam categorias — 5 restantes (9 de 14 resolvidos)
 
-| Thread | Esperado | Obtido (errado) |
-|---|---|---|
-| Re: DLO E DLI - JUNHO. PLANNER | DDR+DLI+DLO+DRM | DLI+DLO |
-| Re: DLO MAIO 2026. Seguem as remessas. | DDR+DLI+DLO+DRM | DLI+DLO |
-| RES: DLO - 06/2026 - Encaminhar a composição do fundo | DLI+DLO+DRL+DRM | DLI+DLO |
-| Re: ATUAL CORRETORA - COS4010 e 4016 06/2026 | DLI+DLO+DRM | DLI+DLO |
-| ENC: DLI MAIO | DLI+DLO+SCD | DLI+DLO |
-| RE: DRM 05.2026 | DDR+DRM | DRM |
-| Prévia dos saldos contábeis de junho/2026 | DDR+DRM | DRM+SCD |
-| Re: Arquivo 2061. Segue o DLO 05/2026. ACCREDITO. | DLI+DLO | DLO |
-| RELATÓRIO DRM 06/2026 - AMARIL FRANKLIN | DLO+DRM | DRM |
-| RELATÓRIO DRM 07/2026 - AMARIL FRANKLIN | DLO+DRM | DRM |
-| Re: Guru CTVM: Planilha LEC para DLO (2061) 05/2026 | DLO+DRM | DLO |
-| COS 4010 junho/2026 | DLO+SCD | SCD |
-| RES: DRM 2060 Traders | DRM+SCD | DRM |
-| Segue a remessa DRM (2060) junho/2026. MIRAE. | DRM+SCD | DRM |
+✅ Resolvidos: PLANNER, DLO MAIO, ATUAL CORRETORA, DLI MAIO (C32: códigos 2011/2060/2061/2062 nos anexos) + Guru CTVM, COS 4010 junho, DRM 2060 Traders (C32: SCD via 4111/SALDOS nos anexos) + AMARIL FRANKLIN 06/2026 e 07/2026 (C33: 4010 no nome do arquivo)
+
+| Thread | Esperado | Obtido atual | Sinal faltante |
+|---|---|---|---|
+| RES: DLO - 06/2026 - Encaminhar a composição do fundo | DLI+DLO+DRL+DRM | DLI+DLO | DRL e DRM citados no corpo como pergunta — a decidir com Michel |
+| RE: DRM 05.2026 | DDR+DRM | DRM | "Enviado o DDR de 29/05 ajustado" no corpo (só sinal no corpo) |
+| Prévia dos saldos contábeis de junho/2026 | DDR+DRM | DRM+SCD | DDR no corpo; SCD sobrando (assunto menciona "saldos contábeis") |
+| Re: Arquivo 2061. Segue o DLO 05/2026. ACCREDITO. | DLI+DLO | DLO | Nenhum sinal de DLI no corpo nem nos anexos |
+| Segue a remessa DRM (2060) junho/2026. MIRAE. | DRM+SCD | DRM | "saldos contábeis" no corpo (sem 4111/SALDOS nos anexos) |
 
 ---
 
