@@ -95,6 +95,9 @@ _DDR_PADROES = [
     r'PI EXPOSURE',
     r'\bRD\b',              # Remessa Diária — arquivos RD_MOEDA, RD_LFT, RD_NTN etc.
     r'SALDOS 4111 E POSI[CÇ][AÃ][OÃ] LFT',  # planilha ZIIN com DDR + SALDOS no mesmo arquivo
+    r'CADASTRO.*RISKDRIVER|RISKDRIVER.*CADASTRO',  # cadastro de fundos no Risk Driver = entrega DDR (C27)
+    r'POSICAO\s+\d{2}[./]\d{2}[./]\d{4}',          # 'POSICAO DD.MM.AAAA' no assunto = arquivo de posição DDR (C28)
+    r'\bEXTRATO[S]?\b',                             # extratos de conta/câmbio/aplicações = insumo DDR (C29)
 ]
 
 # Marcadores de início de texto citado/encaminhado no corpo do e-mail
@@ -264,6 +267,9 @@ def _classificar_deterministico(
     _FC_SINAIS = ('FORCAPITAL', 'FOR CAPITAL', 'FOR-CAPITAL', 'PROJECAO DE CAPITAL', 'PROJEÇÃO DE CAPITAL')
     if any(s in au for s in _FC_SINAIS):
         cats.add('FORCAPITAL')
+    # Códigos COS DLO solo no assunto (ex.: '4010 Trinus', 'COSIF'S 4010') — no corpo podem ser contexto (C30)
+    if re.search(r'\b(?:4010|4016|4060|4066)\b', au):
+        cats.add('DLO_2061')
     # 'INSTRUÇÃO NORMATIVA' sem CADOC no assunto = circular regulatória encaminhada, não entrega CADOC
     # (se o assunto também tiver código CADOC, ex.: 'DLI 2062', mantém a detecção normal)
     if not cats and ('INSTRUÇÃO NORMATIVA' in au or 'INSTRUCAO NORMATIVA' in au):
@@ -326,7 +332,11 @@ def _classificar_deterministico(
         return _ok(cats, f'sinal de CADOC no corpo ({", ".join(cats)})', None)
 
     # Camada 3 — CADOC pelos nomes dos anexos
-    cats = _detectar_cadoc(xu_norm)
+    cats_set = set(_detectar_cadoc(xu_norm))
+    # 'COS 4010' (com espaço) nos nomes de arquivo = entrega DLO — no corpo pode ser contexto de pergunta (C31)
+    if re.search(r'COS\s*(?:4010|4016|4060|4066)', xu_norm):
+        cats_set.add('DLO_2061')
+    cats = sorted(cats_set)
     if cats:
         return _ok(cats, f'sinal de CADOC nos anexos ({", ".join(cats)})', None)
 

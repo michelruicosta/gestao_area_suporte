@@ -785,3 +785,76 @@ def test_correcao26_instrucao_normativa_com_cadoc_no_assunto_mantem_cadoc():
     """Correção 26 — 'Instrução Normativa' + código CADOC no assunto → mantém detecção normal."""
     r = _classificar('RES: Instrução Normativa BCB nº 721/26 - DLI 2062 - UNICRED')
     assert 'DLI_2062' in r['categorias'], f"DLI_2062 esperado; obtido {r['categorias']}"
+
+
+# ── Correção 27 — CADASTRO + RISKDRIVER no assunto → DDR_2011 ────────────────
+
+
+def test_correcao27_cadastro_riskdriver_retorna_ddr():
+    """Correção 27 — cadastro de fundos no Risk Driver = entrega DDR → DDR_2011."""
+    r = _classificar('CADASTRO DOS FUNDOS NO SISTEMA - RISKDRIVER')
+    assert 'DDR_2011' in r['categorias'], f"DDR_2011 esperado; obtido {r['categorias']}"
+
+
+def test_correcao27_riskdriver_sem_cadastro_nao_dispara_ddr():
+    """Correção 27 — Risk Driver sozinho (sem cadastro) não vira DDR automaticamente."""
+    r = _classificar('Re: Acesso ao Risk Driver - senha')
+    assert 'DDR_2011' not in r['categorias'], f"DDR_2011 indevido; obtido {r['categorias']}"
+
+
+# ── Correção 28 — 'POSICAO DD.MM.AAAA' no assunto → DDR_2011 ─────────────────
+
+
+def test_correcao28_posicao_com_data_retorna_ddr():
+    """Correção 28 — arquivo de posição com data no assunto = entrega DDR → DDR_2011."""
+    r = _classificar('ENC: POSICAO 10.07.2026')
+    assert 'DDR_2011' in r['categorias'], f"DDR_2011 esperado; obtido {r['categorias']}"
+
+
+def test_correcao28_posicao_sem_data_nao_dispara_ddr():
+    """Correção 28 — 'posição' genérico (sem data) não dispara DDR."""
+    r = _classificar('RES: SSG - ENVIAR POSIÇÃO - 4111')
+    assert 'DDR_2011' not in r['categorias'], f"DDR_2011 indevido; obtido {r['categorias']}"
+
+
+# ── Correção 29 — 'EXTRATOS' no assunto → DDR_2011 ───────────────────────────
+
+
+def test_correcao29_extratos_retorna_ddr():
+    """Correção 29 — extratos de conta corrente/câmbio/aplicações no assunto = insumo DDR → DDR_2011."""
+    r = _classificar('EXTRATOS - JUNHO-2026 - ATUAL')
+    assert 'DDR_2011' in r['categorias'], f"DDR_2011 esperado; obtido {r['categorias']}"
+
+
+# ── Correção 30 — código COS DLO solo no assunto → DLO_2061 ──────────────────
+
+
+def test_correcao30_numero_4010_no_assunto_retorna_dlo():
+    """Correção 30 — '4010' solo no assunto (ex.: '4010 Trinus') → DLO_2061."""
+    r = _classificar('4010 Trinus')
+    assert 'DLO_2061' in r['categorias'], f"DLO_2061 esperado; obtido {r['categorias']}"
+
+
+def test_correcao30_cosifs_4010_no_assunto_retorna_dlo():
+    """Correção 30 — 'COSIF''S 4010' no assunto também detecta DLO."""
+    r = _classificar("RES: COSIF'S 4010 JUN/2026 - BANVOX DTVM. Seguem as remessas.")
+    assert 'DLO_2061' in r['categorias'], f"DLO_2061 esperado; obtido {r['categorias']}"
+
+
+# ── Correção 31 — 'COS 4010' (com espaço) nos nomes de arquivo → DLO_2061 ────
+
+
+def test_correcao31_cos_espaco_4010_no_anexo_retorna_dlo():
+    """Correção 31 — 'COS 4010' com espaço no nome do arquivo → DLO_2061."""
+    r = _classificar('Arquivo COS',
+                     'Segue arquivos COS junho/2026',
+                     ['EXECUTIVE CORRETORA - COS 4010 06_2026.zip'])
+    assert 'DLO_2061' in r['categorias'], f"DLO_2061 esperado; obtido {r['categorias']}"
+
+
+def test_correcao31_cos_espaco_no_corpo_nao_dispara_dlo():
+    """Correção 31 — 'COS 4010' com espaço no corpo não dispara DLO (evita balancete como SUPORTE)."""
+    r = _classificar('ENC: BALANCETE TRADERS COMP 06-2026',
+                     'Segue CADOC 4111. Quanto ao balancete COS 4010, verificar com contabilidade.',
+                     ['62280490_4111_20260630.zip'])
+    assert 'DLO_2061' not in r['categorias'], f"DLO_2061 indevido; obtido {r['categorias']}"
