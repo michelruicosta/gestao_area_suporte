@@ -267,6 +267,24 @@ Mantido: bypass do registro (thread confirmada → retorna salvo sem reprocessar
 
 ---
 
+### Correção 35 — 14/08/2026 — Gabarito + Classificador: "saldos contábeis de mês/ano" não é SCD; DDR removido do gabarito
+
+**🔎 Em miúdos:** (1) O gabarito desta thread estava errado — DDR foi mencionado apenas como referência de metodologia ("a mesma base que usamos para gerar o DDR"), não foi entregue. Removido do gabarito. (2) O classificador adicionava SCD (Saldos Contábeis Diários) quando o assunto dizia "saldos contábeis de junho/2026" — mas "junho/2026" é mensal, não diário. SCD é por definição diário.
+
+**Problema:** Thread "Prévia dos saldos contábeis de junho/2026 para gerar a remessa DRM (2060). ACCREDITO." — esperado era DDR+DRM (gabarito errado); classificador retornava DRM+SCD (SCD falso). Após corrigir gabarito para DRM, o SCD ainda era indevido.
+
+**Correção:**
+- Gabarito: `['DRM_2060', 'DDR_2011']` → `['DRM_2060']` para TID `19f3d18eee10faaf`. Backup em `data/backups/20260814_1200_correcao_gabarito_previa_saldos/`.
+- Classificador: em `_detectar_cadoc`, a condição `'SALDOS CONT' in texto_u` que dispara SCD recebe guarda adicional: se "SALDOS CONT" for seguido de nome de mês + /ano (ex.: "junho/2026"), não adicionar SCD. As outras condições (4111, FLUXO DE CAIXA, CADOC coloquial) permanecem inalteradas.
+
+**Arquivos alterados:** `data/registro_definitivo_threads.json` (gabarito), `scripts/classificador_ia.py` (`_detectar_cadoc`), `tests/test_classificador_ia.py` (2 testes novos).
+
+**Varredura:** +1 ganho, 0 regressões (767 threads). Placar: 729 → 730 acertos.
+
+**Placar:** 730/767 acertos (37 erros). `pytest tests/ -q` → 156 passed. ✅
+
+---
+
 ### Correção 34c — 14/08/2026 — Classificador: DRM e DRL mencionados juntos no corpo → ambos adicionados
 
 **🔎 Em miúdos:** quando o corpo do e-mail menciona DRM e DRL ao mesmo tempo dentro de um contexto de entrega CADOC (Camada 1b), o classificador agora adiciona os dois. O par é específico o suficiente: em todo o corpus, nenhuma thread com DRM sem DRL (ou vice-versa) foi afetada.

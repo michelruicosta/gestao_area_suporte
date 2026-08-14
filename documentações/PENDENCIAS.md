@@ -8,7 +8,7 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ---
 
-## 🔧 CLASSIFICADOR DETERMINÍSTICO — 38 erros restantes (placar: 729/767)
+## 🔧 CLASSIFICADOR DETERMINÍSTICO — 37 erros restantes (placar: 730/767)
 
 > Mapeado em 13/08/2026. Atacar grupo por grupo; ao concluir um grupo, remover daqui e gravar no REGISTRO_CORRECOES.md.
 > Dois RETORNO (Sinal 6b) já estão corretos em produção — aparecem aqui só porque a validação usa corpo truncado.
@@ -91,7 +91,6 @@ Placar parcial do Grupo B: 713 → 720/767 acertos.
 
 | Thread | Esperado | Obtido atual | Sinal faltante |
 |---|---|---|---|
-| Prévia dos saldos contábeis de junho/2026 | DDR+DRM | DRM+SCD | DDR no corpo; SCD sobrando (assunto diz "saldos contábeis") |
 | Re: Arquivo 2061. Segue o DLO 05/2026. ACCREDITO. | DLI+DLO | DLO | Nenhum sinal de DLI no corpo nem nos anexos — possível erro de gabarito |
 | Segue a remessa DRM (2060) junho/2026. MIRAE. | DRM+SCD | DRM | "saldos contábeis" no corpo (sem 4111/SALDOS nos anexos) |
 
