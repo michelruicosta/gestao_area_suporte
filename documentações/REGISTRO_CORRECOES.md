@@ -434,6 +434,26 @@ if ('DRL_2160' in cats and 'DLO_2061' in cats and 'DLI_2062' in cats
 
 ---
 
+### Correção 43 — 14/08/2026 — Classificador: VMTM removido de _DDR_PADROES
+
+**🔎 Em miúdos:** a sigla VMTM (cálculo de "Valor de Mercado") aparecia em e-mails de suporte — clientes perguntando sobre erros no cálculo do VMTM — e o sistema classificava como DDR por engano. Ao varrer os dados, nenhuma thread que deveria ser DDR dependia de VMTM para ser detectada.
+
+**Problema:** `\bVMTM\b` estava em `_DDR_PADROES` como sinal de entrega DDR. Quando um cliente mandava uma dúvida sobre cálculo de VMTM no corpo do e-mail, DDR_2011 era adicionado indevidamente.
+
+**Threads afetadas:**
+- `19f5cf7d65226416` "duvidas finaud" — extra DDR_2011 (esperado só DLO_2061)
+- `19fce01f5b5311fd` "SUPORTE - INTRA DTVM" — DDR indevido (esperado SUPORTE)
+
+**Correção:** removido `r'\bVMTM\b'` de `_DDR_PADROES`. Nenhuma thread DDR correta dependia desse padrão — todas têm outros sinais (TVM, DDR, 2011, PU, etc.).
+
+**Arquivos alterados:** `scripts/classificador_ia.py` (C43 em `_DDR_PADROES`), `tests/test_classificador_ia.py` (entrada VMTM removida do parametrizado, 2 testes novos).
+
+**Varredura:** +2 ganhos, 0 regressões (768 threads). `pytest tests/ -q` → 173 passed. ✅
+
+**Placar:** 743/768 acertos (25 erros).
+
+---
+
 ### Correção 34c — 14/08/2026 — Classificador: DRM e DRL mencionados juntos no corpo → ambos adicionados
 
 **🔎 Em miúdos:** quando o corpo do e-mail menciona DRM e DRL ao mesmo tempo dentro de um contexto de entrega CADOC (Camada 1b), o classificador agora adiciona os dois. O par é específico o suficiente: em todo o corpus, nenhuma thread com DRM sem DRL (ou vice-versa) foi afetada.

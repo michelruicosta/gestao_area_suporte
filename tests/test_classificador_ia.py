@@ -275,7 +275,7 @@ def test_buscar_imagens_filtra_por_indice(tmp_path, monkeypatch):
     ('Compromissadas JUNHO',              'DDR_2011'),
     ('PCAM - JULHO',                      'DDR_2011'),
     ('TVM - 30/06',                       'DDR_2011'),
-    ('VMTM - erro de cálculo',            'DDR_2011'),
+    # C43: VMTM removido de _DDR_PADROES — sigla de cálculo, não entrega DDR confiável
     ('DLO JUNHO 2026',                    'DLO_2061'),
     ('2061 - envio mensal',               'DLO_2061'),
     ('LEC - CÁLCULO JUNHO',               'DLO_2061'),
@@ -1154,3 +1154,35 @@ def test_correcao42_drl_solo_no_assunto_mantem_drl():
     )
     assert 'DRL_2160' in r['categorias'], \
         f"DRL removido indevidamente quando DRL está explícito no assunto; obtido {r['categorias']}"
+
+
+# ── Correção 43 — VMTM removido de _DDR_PADROES (sigla de cálculo, não entrega DDR) ──
+
+def test_correcao43_vmtm_no_corpo_nao_dispara_ddr():
+    """C43 — VMTM no corpo de pergunta de suporte não deve disparar DDR_2011.
+    Caso real: 'duvidas finaud' — cliente pergunta sobre cálculo do vmtm; esperado DLO, não DDR+DLO.
+    """
+    r = _classificar(
+        'duvidas finaud',
+        'Quando tentamos calcular o vmtm das operações dos saldos diários '
+        'apresentou erro. A segunda dúvida é com relação ao DLO a planilha de importação.',
+        []
+    )
+    assert 'DDR_2011' not in r['categorias'], \
+        f"DDR indevido (VMTM em pergunta de suporte); obtido {r['categorias']}"
+    assert 'DLO_2061' in r['categorias'], \
+        f"DLO ausente (corpo menciona DLO explicitamente); obtido {r['categorias']}"
+
+
+def test_correcao43_threads_ddr_reais_nao_regridem():
+    """C43 — threads com DDR legítimo (TVM, DDR, PU, 2011) continuam detectadas após remoção do VMTM."""
+    casos = [
+        ('TVM - 30/06', 'DDR_2011'),
+        ('PCAM - JULHO', 'DDR_2011'),
+        ('PUs dos títulos públicos 30/06/2026', 'DDR_2011'),
+        ('COLUNA: DDRs - 16/07/2026 e 17/07/2026', 'DDR_2011'),
+    ]
+    for assunto, esperado in casos:
+        r = _classificar(assunto)
+        assert esperado in r['categorias'], \
+            f"Assunto '{assunto}': {esperado} ausente após C43; obtido {r['categorias']}"

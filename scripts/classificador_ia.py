@@ -89,7 +89,7 @@ _DDR_PADROES = [
     r'OP\.\s*SELIC',
     r'POSI[CÇ][AÃ][OÃ] DE C[AÂ]MBIO',
     r'\bPU[S]?\b',
-    r'\bVMTM\b',
+    # C43: VMTM removido — sigla de cálculo que aparece em suporte; nenhuma thread DDR depende dele
     r'CADASTRO DE A[ÇC][OÕ]ES E OP[ÇC][OÕ]ES',
     r'REMITLY\s*:\s*MOVIMENTO',  # C37: só o padrão DDR diário "REMITLY : Movimento DD.MM.AAAA"
     r'PI EXPOSURE',
