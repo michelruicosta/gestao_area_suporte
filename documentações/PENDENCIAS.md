@@ -8,16 +8,16 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ---
 
-## 🔧 CLASSIFICADOR DETERMINÍSTICO — 33 erros restantes (placar: 735/768)
+## 🔧 CLASSIFICADOR DETERMINÍSTICO — 27 erros restantes (placar: 741/768)
 
 > Mapeado em 13/08/2026. Atacar grupo por grupo; ao concluir um grupo, remover daqui e gravar no REGISTRO_CORRECOES.md.
-> Dois RETORNO (Sinal 6b) já estão corretos em produção — aparecem aqui só porque a validação usa corpo truncado.
+> C40–C46 resolvidos em 14/08/2026 — ver REGISTRO_CORRECOES.md para detalhes.
 
-### ✅ RETORNO_BACEN — resolvido (2 erros restantes só na validação truncada)
+### ✅ RETORNO_BACEN — resolvido (corrigido em 14/08/2026 pela C46)
 
-Esses dois estão corretos em produção (Sinal 6b detecta VCRD no corpo completo). Só aparecem como erro na validação com 600 chars porque o "VCRD" está além desse corte.
-- `RES: ARQUIVO DRM - AZUMI` → RETORNO_BACEN (atual: DRM_2060)
-- `RES: Erro do DRM e DLO` → RETORNO_BACEN (atual: DLO+DRM)
+Sinal 6b agora usa `corpo.upper()` (não `cu`) — VCRD em linhas citadas do BACEN é sinal válido e volta a ser detectado.
+- `RES: ARQUIVO DRM - AZUMI` → RETORNO_BACEN ✅
+- `RES: Erro do DRM e DLO` → RETORNO_BACEN ✅
 
 ---
 
@@ -52,16 +52,15 @@ Dois e-mails de suporte técnico sobre o sistema VMTM (componente de cálculo do
 
 ### ⚠️ Casos sem correção viável — CADOC citado no corpo como contexto de pergunta (sub-padrão 2d) (13/08/2026)
 
-Quatro e-mails de suporte têm código CADOC mencionado no **corpo** como contexto de uma dúvida ou pedido de acesso. O classificador os confunde com entrega real porque não há como distinguir deterministicamente "cita o código" de "entrega o arquivo".
+Três e-mails de suporte têm código CADOC mencionado no **corpo** como contexto de uma dúvida ou pedido de acesso. *(UNVERIFIED SENDER PR foi corrigido pelo C46 em 14/08/2026.)*
 
 - `MIRAE ASSET - BASILEIA - JUNHO DE 2026` → esperado SUPORTE, obtido DLO_2061 (corpo diz "aguardando o DLO/LEC de Junho")
-- `RES: **UNVERIFIED SENDER** Re: PR` → esperado SUPORTE, obtido DLO_2061+SCD (corpo pede confirmação de envio de DLO e SaldosContábeis)
 - `RES: Dados para o relatório` → esperado SUPORTE, obtido DLO_2061+S5 (corpo pergunta se COS4010 está disponível — dúvida, não entrega)
 - `Re: **UNVERIFIED SENDER** Re: Solicitação de orientação técnica` → esperado SUPORTE, obtido DLO_2061 (corpo é dúvida sobre tratamento prudencial no DLO)
 
 **Por que não foi corrigido:** padrão indistinguível deterministicamente. O CADOC no corpo pode ser tanto entrega real quanto contexto de pergunta — sem sinal estrutural que diferencie os casos.
 
-**Impacto:** 4 threads (0,5% do total). Registrado como não-corrigível neste ciclo.
+**Impacto:** 3 threads (0,4% do total). Registrado como não-corrigível neste ciclo.
 
 ---
 
@@ -91,22 +90,23 @@ Placar parcial do Grupo B: 713 → 720/767 acertos.
 
 ---
 
-### 🔴 Grupo D — Categoria extra adicionada indevidamente (10 threads)
+### 🔴 Grupo D — Categoria extra adicionada indevidamente (itens restantes)
 
 O classificador acerta as categorias certas mas adiciona uma categoria a mais que não pertence.
+*(C41–C46 corrigiram alguns itens em 14/08/2026 — confirmados na simulação 741/768.)*
 
-| Thread | Esperado | Obtido (errado) |
-|---|---|---|
-| Re: Planilha DRL-LEC Junho/2026 | DLI+DLO | DDR+DLI+DLO+DRL |
-| Re: REMITLY - Encaminhar COS4010 e LEC maio/2026 | DLI+DLO | DDR+DLI+DLO |
-| RES: VIS : STA - DDR2011 e demais não disponíveis | DDR | DDR+DLI+DLO |
-| duvidas finaud | DLO | DDR+DLO |
-| Re: Arquivo 2061 e 2062. Segue o DLI. ACCREDITO. | DLI | DLI+DLO |
-| Re: COS4016 DE 06-2026. Segue o 4111. FAIRWAY | SCD | DLO+SCD |
-| Saldos do dia 20/07 até 22/07 | SCD | DDR+SCD |
-| Saldos do dia 27/07 (retificação) e 28/07 | SCD | DDR+SCD |
-| Pendencias BACEN - 2011 ref. 30/01/2026 | SCD | DDR |
-| Remitly CC - 4010/4016 - 06/2026 | DLO | DDR |
+| Thread | Esperado | Obtido (errado) | Situação |
+|---|---|---|---|
+| ~~Re: Planilha DRL-LEC Junho/2026~~ | ~~DLI+DLO~~ | ~~DDR+DLI+DLO+DRL~~ | ✅ C42 |
+| ~~Re: REMITLY - Encaminhar COS4010 e LEC maio/2026~~ | ~~DLI+DLO~~ | ~~DDR+DLI+DLO~~ | ✅ C42+C46 gabarito |
+| RES: VIS : STA - DDR2011 e demais não disponíveis | DDR | DDR+DLI+DLO | 🔴 Pendente |
+| duvidas finaud | DLO | DDR+DLO | 🔴 Pendente |
+| ~~Re: Arquivo 2061 e 2062. Segue o DLI. ACCREDITO.~~ | ~~DLI~~ | ~~DLI+DLO~~ | ✅ C41 |
+| Re: COS4016 DE 06-2026. Segue o 4111. FAIRWAY | SCD | DLO+SCD | 🔴 Pendente |
+| Saldos do dia 20/07 até 22/07 | SCD | DDR+SCD | 🔴 Pendente |
+| Saldos do dia 27/07 (retificação) e 28/07 | SCD | DDR+SCD | 🔴 Pendente (ver C37) |
+| Pendencias BACEN - 2011 ref. 30/01/2026 | SCD | DDR | 🔴 Pendente |
+| Remitly CC - 4010/4016 - 06/2026 | DLO | DDR | 🔴 Pendente |
 
 ---
 
@@ -124,18 +124,16 @@ Classificador detecta o CADOC corretamente mas não reconhece que o e-mail tamb�
 
 ---
 
-### 🔴 Grupo F — Casos individuais a avaliar (8 threads)
+### 🔴 Grupo F — Casos individuais a avaliar (4 threads restantes)
+
+*(FREEX COS4010, Executive Corretora S5 e VBS SCD corrigidos em 14/08/2026 — C44, C45, C46.)*
 
 | Thread | Esperado | Obtido | Situação |
 |---|---|---|---|
-| INDICIO 2061 - DLO MAIO | DLO_2061 | RETORNO_BACEN | ⚠️ Pendente: "INDICIO" no assunto dispara RETORNO — Michel decide se a regra deve ser especificada |
+| INDICIO 2061 - DLO MAIO | DLO_2061 | RETORNO_BACEN | ⚠️ "INDICIO" no assunto dispara RETORNO — Michel decide se a regra deve ser especificada |
 | ENC: Risk Driver - CV INVESTIMENTOS | DLO+SUPORTE | RETORNO_BACEN | Falso RETORNO — verificar sinal disparado |
-| Divulgação Instrução Normativa BCB nº 761 | INTERNO | SUPORTE | Categoria INTERNO não existe no classificador atual — avaliar se deve ser criada |
-| Re: Encaminhar COS4010 jan a maio/2026. FREEX | S5 | DLO | S5 não detectado |
+| Divulgação Instrução Normativa BCB nº 761 | INTERNO | SUPORTE | Categoria INTERNO não existe no classificador — avaliar se deve ser criada |
 | Re: Solicitação de treinamento – FREEX | S5 | DLO | S5 não detectado |
-| RE: Executive Corretora - Demonstrativo S5 | DLO | S5 | DLO não detectado |
-| Re: COS4010 06/2026 - VBS SCD (VECTOR) | S5 | DLO+S5 | DLO a mais |
-| Saldos do dia 20/07 até 22/07 (ver Grupo D) | — | — | — |
 
 ---
 

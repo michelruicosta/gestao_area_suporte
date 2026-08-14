@@ -8,73 +8,73 @@
 
 ---
 
-## 📓 Diário da sessão (2026-08-12) — Gabarito v2.0 + campo orientação + normalização SCD_4111
+## 📓 Diário da sessão (2026-08-14) — Correções C40–C46 do classificador determinístico
 
-### Resumo do que foi feito
+### Resumo do que foi feito hoje
 
-- **Backup dos dados antigos (gabarito v1.x):** movidos 33 arquivos de resultados de validação, 3 arquivos de IDs e 8 backups soltos para `data/backups/20260812_1450_dados_gabarito_v1/`. Pasta de dados limpa.
+**Contexto:** após o /fechar de 12/08, sessões em 13/08 e 14/08 continuaram as correções do classificador determinístico, atacando os grupos D e F do mapeamento de erros.
 
-- **Limpeza de testes do projeto antigo:** 41 arquivos de teste da arquitetura antiga (pipeline de 16 scripts) removidos de `tests/` e backupados em `data/backups/20260812_1455_testes_projeto_antigo/`. Ficaram só: `__init__.py`, `conftest.py`, `test_classificador_ia.py`.
+**C40 — DDR2011 colado no assunto detectado:**
+Assuntos como "DDR2011 - mês/2026" sem espaço não disparavam DDR. Regex ajustada.
 
-- **Normalização SCD_4111 → SALDOS_CONTABEIS_DIARIOS_4111:** 116 threads no `registro_definitivo_threads.json` tinham o nome antigo. Todas corrigidas para o nome canônico. 1 thread adicional tinha categorias como string `"DDR_2011, DRM_2060"` em vez de lista — corrigida para `["DDR_2011", "DRM_2060"]`. Backup em `data/backups/20260812_1510_normalizacao_scd4111/`.
+**C41 — DLO+DLI no assunto mas DLI era referência, não entrega:**
+Quando o assunto tem DLI+DLO mas só DLI aparece explicitamente, 2061 era referência de arquivo. Guard adicionado na Camada 1b.
+Thread corrigida: "Re: Arquivo 2061 e 2062. Segue o DLI. ACCREDITO."
 
-- **Campo `orientacao` no classificador:** quando o GPT retorna vazio ou INCERTO, agora explica o motivo e orienta como ajudá-lo a classificar. Campo adicionado ao `_SISTEMA` em `scripts/classificador_ia.py`. Novo teste `test_orientacao_no_sistema` — suite: 13/13 passando.
+**C42 — DRL-LEC no assunto é template DLO, não entrega DRL:**
+LEC com lookbehind detectado: "DRL-LEC" remove a categoria DRL indevida. 
+Thread corrigida: "Re: Planilha DRL-LEC Junho/2026".
 
-- **`chat_ensino.py` corrigido:** função `_formatar_gabarito_completo()` ainda lia o formato antigo (`exemplos`). Atualizada para v2.0 (`regras` + `gabaritos`).
+**C43 — VMTM removido de _DDR_PADROES:**
+VMTM é componente de cálculo, não entrega de CADOC. Removido para evitar falsos DDR.
+(Sub-padrão 2a do Grupo A: VMTM no corpo gera DDR indevido — documentado como não corrigível.)
 
-- **Gabarito v2.0 — "Usuário Ativo":** palavras genéricas `usuário`, `permissão`, `login`, `reset` adicionadas à instrução do classificador. SUPORTE Gabarito 11 ("Usuário Ativo") adicionado ao `gabarito.json`. SUPORTE Regra 01 removida (redundante com o gabarito, conforme regra de não duplicar).
+**C44 — COS4016 no corpo de e-mail S5 não dispara DLO:**
+COS4016 mencionado como referência histórica ("reimportar COS4016 retroativos") estava disparando DLO indevidamente. Guard S5+DLO na Camada 1b e 2b.
+Thread corrigida: FREEX COS4010 jan–maio/2026.
 
-- **Amostra de controle rodada:** 15/20 corretas, 2 INCERTO, 3 erradas → **REPROVADA**.
-  - "Usuário Ativo" permanece INCERTO na amostra, mas já é CONFIRMADA no registro — em produção, o GPT é bypassado e ela retorna SUPORTE corretamente. O gabarito ancora e-mails futuros similares.
-  - 3 casos pendentes de investigação (um por vez):
-    1. "[CV INVEST] DLO - 05/2026" — esperado DLO, obtido DLO+DLI
-    2. "2026.07.07 - FLUXO DE CAIXA - ZIIN" — esperado DDR_2011+SALDOS, obtido só SALDOS
-    3. "Erro do DRM e DLO" — esperado DLO+DRM+RETORNO_BACEN, obtido DLO+DRM
+**C45 — S5 no assunto: a entrega é S5, DLO não coexiste:**
+Regra de Michel: "não existe DLO e S5 ao mesmo tempo." Guard: se assunto tem \bS5\b e resultado tem S5+DLO_2061 → remove DLO.
+Gabarito Executive Corretora corrigido de ['DLO_2061'] para ['S5'].
 
-### Sessões anteriores (07–11/08/2026)
+**C46 — Strip de citações antes da detecção CADOC:**
+Linhas iniciadas por '>' (histórico citado) removidas do corpo antes de detectar CADOC. Helper `_corpo_sem_citacoes()` adicionado. Sinal 6b (VCRD do BACEN em texto citado) preservado usando `corpo.upper()` diretamente.
+Gabaritos corrigidos: ZIIN → ['SUPORTE'], REMITLY LEC → ['DLO_2061'].
+Threads fixadas: UNVERIFIED SENDER PR, VBS SCD VECTOR, CNPJ Alfanumérico.
+
+### Sessões anteriores (07–12/08/2026)
 
 - Criado `data/registro_definitivo_threads.json` — 768 threads (634 confirmadas / 134 incertas).
-- `chat_ensino.py` reescrito para usar o registro.
-- Gabarito v2.0 criado: 18 regras + 24 gabaritos, integrado ao prompt do classificador.
-- Classificador consulta registro antes do GPT — threads confirmadas não chamam API.
+- `chat_ensino.py` reescrito para usar o registro. Gabarito v2.0 criado e integrado.
+- Classificador consulta registro antes do GPT. Campo `orientacao` adicionado.
 - B1 concluído: 136 IDs em `ids_incertos.txt`. Rodada 6 é o baseline (134 incertos, 17,4%).
+- Grupo D mapeado em 13/08 (10 threads com categoria extra). Grupos A, B, C concluídos.
 
 ---
 
 ### Estado atual
 
-**Registro definitivo:** `data/registro_definitivo_threads.json` — 768 threads (634 confirmadas / 134 incertas)  
+**Placar classificador determinístico:** 741/768 (27 erros). Método: corpo com strip de citações + limite 2000 chars/mensagem.  
+**Suite de testes:** 177/177 passando.  
+**Registro definitivo:** `data/registro_definitivo_threads.json` — 768 threads  
 **Gabarito:** `documentações/gabarito.json` v2.0 — 18 regras + 24 gabaritos  
 **Classificador:** consulta registro antes do GPT — threads confirmadas não chamam API  
-**Campo `orientacao`:** GPT explica o motivo quando fica INCERTO ou retorna vazio  
-**chat_ensino.py:** usa registro + lê gabarito v2.0 corretamente  
-**Suite de testes:** 13/13 passando  
 **GitHub:** `github.com/michelruicosta/gestao_area_suporte` — branch `main`
 
 ---
 
 ### Próximos passos
 
-**🔴 PRÓXIMO — Investigar os 3 casos da amostra (um por vez):**
+**🔴 PRÓXIMO — Continuar Grupo D (threads com categoria extra ainda abertas):**
 
-Cada caso segue o ciclo: analisar → corrigir spec ou gabarito → rodar amostra → aprovar → commitar.
+Ver `documentações/PENDENCIAS.md` → seção Grupo D. Atacar um caso por vez: analisar qual sinal dispara a categoria errada → guard ou ajuste → pytest → amostra → commitar.
 
-**Caso 1:** "[CV INVEST] DLO - 05/2026"
-- Esperado: `[DLO_2061]` → Obtido: `[DLO_2061, DLI_2062]`
-- Investigar: por que o GPT adicionou DLI? O corpo menciona 4010/4016?
+**Depois do Grupo D:** Grupo E (5 threads onde falta SUPORTE ao lado do CADOC).
 
-**Caso 2:** "2026.07.07 - FLUXO DE CAIXA - ZIIN"
-- Esperado: `[DDR_2011, SALDOS_CONTABEIS_DIARIOS_4111]` → Obtido: `[SALDOS_CONTABEIS_DIARIOS_4111]`
-- Investigar: por que DDR_2011 sumiu? "FLUXO DE CAIXA" está nas keywords DDR?
+**Depois do Grupo E:** Grupo F — casos individuais remanescentes (INDICIO 2061, CV INVESTIMENTOS, INTERNO, FREEX treinamento S5).
 
-**Caso 3:** "Erro do DRM e DLO"
-- Esperado: `[DLO_2061, DRM_2060, RETORNO_BACEN]` → Obtido: `[DLO_2061, DRM_2060]`
-- Investigar: por que RETORNO_BACEN sumiu? O corpo menciona crítica do BACEN?
+**Objetivo:** chegar a ≥ 750/768 para iniciar a fase de sessões de ensino com `chat_ensino.py`.
 
-**Depois dos 3 casos:** rodar amostra de controle com resultado ≤ 1 INCERTO e 0 erros para aprovar o gabarito v2.0 e commitar com tag `gabarito-v2-estavel`.
-
-**Depois:** continuar sessões de ensino com `chat_ensino.py` para resolver os 134 incertos restantes.
-
-Último /fechar: 2026-08-12 — memórias revisadas ✅
+Último /fechar: 2026-08-14 — memórias revisadas ✅
 
 ---
