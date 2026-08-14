@@ -916,3 +916,21 @@ def test_correcao33_4016_no_anexo_nao_adiciona_dlo():
                      ['17312661_4016_062026.zip'])
     assert 'DLO_2061' not in r['categorias'], \
         f"DLO indevido; obtido {r['categorias']}"
+
+
+def test_correcao34b_ddr_enviado_no_corpo_adiciona_ddr():
+    """C34b — assunto com DRM, corpo diz 'Enviado o DDR' → DDR_2011 adicionado."""
+    r = _classificar('RE: DRM 05.2026',
+                     'Enviado o DDR de 29/05 ajustado e DRM referente a 05/2026 de substituição.',
+                     [])
+    assert 'DDR_2011' in r['categorias'], f"DDR ausente; obtido {r['categorias']}"
+    assert 'DRM_2060' in r['categorias'], f"DRM ausente; obtido {r['categorias']}"
+
+
+def test_correcao34b_ddr_citado_sem_verbo_ativo_nao_adiciona():
+    """C34b — DDR citado no corpo como pergunta/contexto sem verbo ativo de entrega não dispara."""
+    r = _classificar('Re: DLO JUNHO 2026',
+                     'Gostaria de saber se o DDR de junho deve ser enviado junto com o DLO.',
+                     [])
+    assert 'DDR_2011' not in r['categorias'], \
+        f"DDR indevido; obtido {r['categorias']}"
