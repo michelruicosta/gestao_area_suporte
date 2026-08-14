@@ -146,8 +146,17 @@ def _detectar_cadoc(texto_u: str) -> list[str]:
 
     # SALDOS_CONTABEIS_DIARIOS_4111
     # "CADOC" sem número de 4 dígitos imediatamente após = uso coloquial para SALDOS (Correção 12)
+    # C35: excluir 'SALDOS CONT' quando seguido de nome de mês + /ano — é frequência mensal,
+    # não diária. SCD = Saldos Contábeis DIÁRIOS. Ex.: "saldos contábeis de junho/2026" ≠ SCD.
+    _SALDOS_MENSAL = re.compile(
+        r'SALDOS CONT\w*\b.{0,30}\b'
+        r'(?:JANEIRO|FEVEREIRO|MAR[CÇ]O|ABRIL|MAIO|JUNHO|JULHO|AGOSTO'
+        r'|SETEMBRO|OUTUBRO|NOVEMBRO|DEZEMBRO)\b.{0,10}/\d{4}',
+        re.DOTALL
+    )
+    _saldos_cont_mensal = bool(_SALDOS_MENSAL.search(texto_u))
     if (re.search(r'\b4111\b', texto_u)
-            or 'SALDOS CONT' in texto_u
+            or ('SALDOS CONT' in texto_u and not _saldos_cont_mensal)
             or 'FLUXO DE CAIXA' in texto_u
             or re.search(r'\bCADOC\b(?!\s{0,4}\d{4})', texto_u)):
         cats.add('SALDOS_CONTABEIS_DIARIOS_4111')

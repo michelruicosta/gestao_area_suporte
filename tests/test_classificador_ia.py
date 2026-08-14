@@ -957,3 +957,22 @@ def test_correcao34c_so_drm_no_corpo_nao_adiciona_drl():
     )
     assert 'DRL_2160' not in r['categorias'], \
         f"DRL indevido; obtido {r['categorias']}"
+
+
+def test_correcao35_saldos_contabeis_mensal_nao_dispara_scd():
+    """C35 — 'saldos contábeis de junho/2026' (mensal) não deve acionar SCD (que é diário)."""
+    r = _classificar(
+        'Prévia dos saldos contábeis de junho/2026 para gerar a remessa DRM (2060).',
+        'Conforme falamos, o cálculo do DRM é com base na posição do último dia útil.',
+        []
+    )
+    assert 'SALDOS_CONTABEIS_DIARIOS_4111' not in r['categorias'], \
+        f"SCD indevido (saldos mensais); obtido {r['categorias']}"
+    assert 'DRM_2060' in r['categorias'], f"DRM ausente; obtido {r['categorias']}"
+
+
+def test_correcao35_saldos_contabeis_sem_mes_ainda_dispara_scd():
+    """C35 — 'saldos contábeis' sem mês/ano na sequência continua acionando SCD."""
+    r = _classificar('Saldos contábeis diários referente ao arquivo', '', [])
+    assert 'SALDOS_CONTABEIS_DIARIOS_4111' in r['categorias'], \
+        f"SCD ausente; obtido {r['categorias']}"
