@@ -1097,3 +1097,30 @@ def test_correcao40_ddr_colado_nao_afeta_drsa_2030():
     r = _classificar('DRSAC -2030', '', [])
     assert 'DDR_2011' not in r['categorias'], \
         f"DDR indevido em thread DRSAC; obtido {r['categorias']}"
+
+
+def test_correcao41_dli_explicito_sem_dlo_remove_dlo_indevido():
+    """C41 — assunto tem DLI explícito mas não DLO; 2061 mencionado como referência de arquivo.
+    Ex.: 'Arquivo 2061 e 2062. Segue o DLI junho/2026.' — DLO prometido para depois, não entregue.
+    """
+    r = _classificar(
+        'Re: Arquivo 2061 e 2062. Segue o DLI junho/2026. ACCREDITO.',
+        'Segue anexo a remessa DLI (2062) 06/2026. Enviaremos em breve o DLO.',
+        ['37715993_2062_202606_I_1_4016.zip']
+    )
+    assert 'DLI_2062' in r['categorias'], \
+        f"DLI ausente; obtido {r['categorias']}"
+    assert 'DLO_2061' not in r['categorias'], \
+        f"DLO indevido (assunto diz DLI; DLO prometido para depois); obtido {r['categorias']}"
+
+
+def test_correcao41_assunto_com_dlo_explicito_mantem_dlo():
+    """C41 — se o assunto menciona DLO explicitamente, DLO é mantido mesmo com DLI também presente."""
+    r = _classificar(
+        'DLO e DLI de junho/2026. Arquivo 2061 e 2062.',
+        '', []
+    )
+    assert 'DLO_2061' in r['categorias'], \
+        f"DLO removido indevidamente quando DLO está explícito no assunto; obtido {r['categorias']}"
+    assert 'DLI_2062' in r['categorias'], \
+        f"DLI ausente; obtido {r['categorias']}"

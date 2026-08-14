@@ -387,6 +387,26 @@ Mantido: bypass do registro (thread confirmada → retorna salvo sem reprocessar
 
 ---
 
+### Correção 41 — 14/08/2026 — Classificador: DLO+DLI no assunto mas só DLI explícito → 2061 era referência, DLO removido
+
+**🔎 Em miúdos:** quando o assunto mencionava o número "2061" (código DLO) ao lado do "2062" (código DLI), o classificador adicionava DLO mesmo que o assunto dissesse "Segue o DLI" e não "Segue o DLO". A correção: se o assunto tem DLI explícito mas não DLO, e o DLO veio do número 2061 no assunto (não de um complemento do corpo), remove-se o DLO.
+
+**Problema:** "Re: Arquivo 2061 e 2062. Segue o DLI junho/2026. ACCREDITO." — `\b2061\b` no assunto → DLO adicionado por `_detectar_cadoc(au)`. O corpo dizia "Enviaremos em breve o DLO" (promessa futura). Esperado: só DLI_2062.
+
+**Correção:**
+1. Salvar `cats_au_original = frozenset(cats)` logo após `cats = set(_detectar_cadoc(au))`.
+2. Ao final do bloco `if cats:` (antes do `return`): se DLO e DLI estão em cats, DLO estava em `cats_au_original` (veio do assunto, não do complemento), e assunto tem `\bDLI\b` mas não `\bDLO\b` → remover DLO.
+
+Colocado por último para sobrepor o complemento DLI→DLO (que adicionaria DLO se "DLO" aparece no corpo como promessa futura). 2 testes novos adicionados.
+
+**Arquivos alterados:** `scripts/classificador_ia.py` (C41 no bloco `if cats:`), `tests/test_classificador_ia.py` (2 testes novos).
+
+**Varredura:** +1 ganho, 0 regressões (768 threads).
+
+**Placar:** 741/768 acertos (27 erros). `pytest tests/ -q` → 170 passed. ✅
+
+---
+
 ### Correção 34c — 14/08/2026 — Classificador: DRM e DRL mencionados juntos no corpo → ambos adicionados
 
 **🔎 Em miúdos:** quando o corpo do e-mail menciona DRM e DRL ao mesmo tempo dentro de um contexto de entrega CADOC (Camada 1b), o classificador agora adiciona os dois. O par é específico o suficiente: em todo o corpus, nenhuma thread com DRM sem DRL (ou vice-versa) foi afetada.

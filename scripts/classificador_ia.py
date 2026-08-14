@@ -273,6 +273,7 @@ def _classificar_deterministico(
 
     # Camada 1b — CADOC pelo assunto
     cats = set(_detectar_cadoc(au))
+    cats_au_original = frozenset(cats)  # C41: guarda cats antes de qualquer complemento
     # '\bS5\b' só no assunto — no corpo é tamanho de instituição BACEN (S1–S5), não entrega CADOC
     if re.search(r'\bS5\b', au):
         cats.add('S5')
@@ -376,6 +377,14 @@ def _classificar_deterministico(
         # Sinal 6b: VCRD no corpo completo (inclui citações) — crítica de VCRD encaminhada no histórico
         if any(s in cu for s in _RETORNO_SINAIS_VCRD):
             return _ok(['RETORNO_BACEN'], 'sinal VCRD no corpo completo', 'RETORNO - Regra 01')
+        # C41: DLO e DLI ambos em cats, DLO veio do assunto (não do complemento), mas assunto
+        # menciona DLI explicitamente sem DLO → 2061 era referência de arquivo, não entrega.
+        # Colocado por último para sobrepor o complemento DLI→DLO (corpo pode mencionar DLO
+        # como promessa futura "Enviaremos em breve o DLO" — que o complemento capturaria).
+        if ('DLO_2061' in cats and 'DLI_2062' in cats
+                and 'DLO_2061' in cats_au_original  # DLO veio do assunto, não do complemento
+                and re.search(r'\bDLI\b', au) and not re.search(r'\bDLO\b', au)):
+            cats.discard('DLO_2061')
         cats = sorted(cats)
         return _ok(cats, f'sinal de CADOC no assunto ({", ".join(cats)})', None)
 
