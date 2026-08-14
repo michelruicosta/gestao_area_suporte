@@ -319,6 +319,24 @@ Mantido: bypass do registro (thread confirmada → retorna salvo sem reprocessar
 
 ---
 
+### Correção 37 — 14/08/2026 — Gabarito + Classificador: REMITLY estreitado; Saldos 27/07 era SCD+DDR
+
+**🔎 Em miúdos:** (1) O gabarito do thread "Saldos do dia 27/07" dizia só SCD, mas o corpo do e-mail enviou explicitamente SCD (4111) e DDR (2011) juntos — gabarito corrigido. (2) O padrão `\bREMITLY\b` nos detectores de DDR era amplo demais: detectava DDR em qualquer e-mail que mencionasse a Remitly, mesmo quando o thread era sobre DLO ou DLI. O discriminador real é o padrão "REMITLY : Movimento DD.MM.AAAA" — os DDR diários da Remitly têm exatamente esse formato no assunto.
+
+**Problema:** Três threads da Remitly (DLO/DLI) recebiam DDR_2011 indevidamente porque `\bREMITLY\b` aparecia no assunto. Ao mesmo tempo, 23 threads "REMITLY : Movimento AAAA.MM.DD" precisavam do padrão para detecção correta.
+
+**Correção:**
+- Gabarito: `['SALDOS_CONTABEIS_DIARIOS_4111']` → `['DDR_2011', 'SALDOS_CONTABEIS_DIARIOS_4111']` para TID `19fb420e38dd7e44`. Backup em `data/backups/20260814_1238_gabarito_saldos27jul_e_c37_remitly/`.
+- Classificador: em `_DDR_PADROES`, `\bREMITLY\b` → `REMITLY\s*:\s*MOVIMENTO`. 2 testes novos adicionados.
+
+**Arquivos alterados:** `data/registro_definitivo_threads.json` (gabarito), `scripts/classificador_ia.py`, `tests/test_classificador_ia.py`.
+
+**Varredura:** +3 ganhos, 0 regressões (768 threads). Placar: 732 → 735 acertos.
+
+**Placar:** 735/768 acertos (33 erros). `pytest tests/ -q` → 160 passed. ✅
+
+---
+
 ### Correção 34c — 14/08/2026 — Classificador: DRM e DRL mencionados juntos no corpo → ambos adicionados
 
 **🔎 Em miúdos:** quando o corpo do e-mail menciona DRM e DRL ao mesmo tempo dentro de um contexto de entrega CADOC (Camada 1b), o classificador agora adiciona os dois. O par é específico o suficiente: em todo o corpus, nenhuma thread com DRM sem DRL (ou vice-versa) foi afetada.

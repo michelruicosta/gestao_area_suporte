@@ -992,3 +992,17 @@ def test_correcao36_cos4010_ausente_nao_adiciona_dlo_indevido():
     r = _classificar('Segue a remessa DRM (2060) junho/2026', '', ['12392983_2060_20260630.zip'])
     assert 'DLO_2061' not in r['categorias'], \
         f"DLO indevido sem COS4010 no anexo; obtido {r['categorias']}"
+
+
+def test_correcao37_remitly_movimento_detecta_ddr():
+    """C37 — 'REMITLY : Movimento' no assunto → DDR_2011 (padrão DDR diário Remitly)."""
+    r = _classificar('REMITLY : Movimento 2026.07.03', '', [])
+    assert 'DDR_2011' in r['categorias'], \
+        f"DDR ausente para REMITLY Movimento; obtido {r['categorias']}"
+
+
+def test_correcao37_remitly_sem_movimento_nao_detecta_ddr():
+    """C37 — 'Remitly CC - 4010/4016' no assunto NÃO dispara DDR (thread DLO, não DDR diário)."""
+    r = _classificar('Remitly CC - 4010/4016 - 06/2026', '', [])
+    assert 'DDR_2011' not in r['categorias'], \
+        f"DDR indevido em assunto Remitly sem 'Movimento'; obtido {r['categorias']}"

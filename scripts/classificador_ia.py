@@ -91,7 +91,7 @@ _DDR_PADROES = [
     r'\bPU[S]?\b',
     r'\bVMTM\b',
     r'CADASTRO DE A[ÇC][OÕ]ES E OP[ÇC][OÕ]ES',
-    r'\bREMITLY\b',
+    r'REMITLY\s*:\s*MOVIMENTO',  # C37: só o padrão DDR diário "REMITLY : Movimento DD.MM.AAAA"
     r'PI EXPOSURE',
     r'\bRD\b',              # Remessa Diária — arquivos RD_MOEDA, RD_LFT, RD_NTN etc.
     r'SALDOS 4111 E POSI[CÇ][AÃ][OÃ] LFT',  # planilha ZIIN com DDR + SALDOS no mesmo arquivo
