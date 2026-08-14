@@ -898,3 +898,21 @@ def test_correcao32_4111_sem_saldos_no_nome_nao_adiciona_scd():
                       '00806535_2061_20260601_4066_I.zip'])
     assert 'SALDOS_CONTABEIS_DIARIOS_4111' not in r['categorias'], \
         f"SCD indevido; obtido {r['categorias']}"
+
+
+def test_correcao33_4010_no_anexo_adiciona_dlo():
+    """C33 — assunto com DRM, anexo com código 4010 (COS DLO) → DLO_2061 é adicionado."""
+    r = _classificar('RELATÓRIO DRM 06/2026 - AMARIL FRANKLIN',
+                     'Segue o relatório de junho.',
+                     ['17312661_4010_062026.xml'])
+    assert 'DLO_2061' in r['categorias'], f"DLO ausente; obtido {r['categorias']}"
+    assert 'DRM_2060' in r['categorias'], f"DRM ausente; obtido {r['categorias']}"
+
+
+def test_correcao33_4016_no_anexo_nao_adiciona_dlo():
+    """C33 — 4016 em nome de arquivo não adiciona DLO (código DLI no padrão MIRAE)."""
+    r = _classificar('Re: Segue a remessa DLI (2062) junho/2026. MIRAE.',
+                     'Segue a remessa DLI de junho.',
+                     ['17312661_4016_062026.zip'])
+    assert 'DLO_2061' not in r['categorias'], \
+        f"DLO indevido; obtido {r['categorias']}"

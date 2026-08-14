@@ -313,6 +313,10 @@ def _classificar_deterministico(
         if 'SALDOS_CONTABEIS_DIARIOS_4111' not in cats:
             if re.search(r'\b4111\b', xu_norm) and 'SALDOS' in xu_norm:
                 cats.add('SALDOS_CONTABEIS_DIARIOS_4111')
+        # C33: 4010 no nome do arquivo → DLO_2061 (padrão CNPJ_4010_DATA.xml = envio via COS4010)
+        # Não incluir 4016: em testes, 4016 aparece em arquivos DLI (MIRAE), não DLO.
+        if 'DLO_2061' not in cats and re.search(r'\b4010\b', xu_norm):
+            cats.add('DLO_2061')
         # Sinal D: corpo principal (sem citações) pode ter crítica do BACEN mesmo com CADOC no assunto
         corpo_principal_u = _extrair_corpo_principal(corpo).upper()
         if _tem_retorno_bacen('', corpo_principal_u) or 'RETORNO DO STA' in corpo_principal_u:
