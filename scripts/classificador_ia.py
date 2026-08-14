@@ -297,6 +297,22 @@ def _classificar_deterministico(
         if 'SALDOS_CONTABEIS_DIARIOS_4111' in cats and 'DDR_2011' not in cats:
             if re.search(r'SALDOS 4111 E POSI[CÇ][AÃ][OÃ] LFT', texto_resto):
                 cats.add('DDR_2011')
+        # C32: complemento de código pelos nomes dos arquivos (padrão BACEN CNPJ_CÓDIGO_DATA)
+        # Quando o assunto detectou um ou mais CADOCs, checar se os anexos têm arquivos de
+        # outros CADOCs pelo código numérico no nome (2011=DDR, 2060=DRM, 2061=DLO, 2062=DLI).
+        # 'SALDOS+4111' exige as duas palavras juntas — evita falso positivo em nomes como
+        # 'DLI CV - MAIO _ 4111 CV' (4111 como referência interna, não arquivo SCD).
+        if 'DDR_2011' not in cats and re.search(r'\b2011\b', xu_norm):
+            cats.add('DDR_2011')
+        if 'DRM_2060' not in cats and re.search(r'\b2060\b', xu_norm):
+            cats.add('DRM_2060')
+        if 'DLO_2061' not in cats and re.search(r'\b2061\b', xu_norm):
+            cats.add('DLO_2061')
+        if 'DLI_2062' not in cats and re.search(r'\b2062\b', xu_norm):
+            cats.add('DLI_2062')
+        if 'SALDOS_CONTABEIS_DIARIOS_4111' not in cats:
+            if re.search(r'\b4111\b', xu_norm) and 'SALDOS' in xu_norm:
+                cats.add('SALDOS_CONTABEIS_DIARIOS_4111')
         # Sinal D: corpo principal (sem citações) pode ter crítica do BACEN mesmo com CADOC no assunto
         corpo_principal_u = _extrair_corpo_principal(corpo).upper()
         if _tem_retorno_bacen('', corpo_principal_u) or 'RETORNO DO STA' in corpo_principal_u:

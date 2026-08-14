@@ -858,3 +858,43 @@ def test_correcao31_cos_espaco_no_corpo_nao_dispara_dlo():
                      'Segue CADOC 4111. Quanto ao balancete COS 4010, verificar com contabilidade.',
                      ['62280490_4111_20260630.zip'])
     assert 'DLO_2061' not in r['categorias'], f"DLO_2061 indevido; obtido {r['categorias']}"
+
+
+# ── Correção 32 — código CADOC nos nomes dos arquivos complementa Camada 1b ──
+
+
+def test_correcao32_codigo_2011_no_anexo_adiciona_ddr():
+    """C32 — assunto com DLO+DLI, anexo com código 2011 → DDR_2011 é adicionado."""
+    r = _classificar('Re: DLO E DLI - JUNHO. Seguem as remessas.',
+                     'Seguem as remessas de junho a serem transmitidas ao BC.',
+                     ['00806535_2062_202606_I_1_4016.zip',
+                      '00806535_2011_20260630_S_2.zip',
+                      '00806535_2061_20260601_4066_I.zip'])
+    assert 'DDR_2011' in r['categorias'], f"DDR_2011 esperado; obtido {r['categorias']}"
+
+
+def test_correcao32_codigo_2060_no_anexo_adiciona_drm():
+    """C32 — assunto com DLO+DLI, anexo com código 2060 → DRM_2060 é adicionado."""
+    r = _classificar('Re: DLO E DLI - JUNHO. Seguem as remessas.',
+                     'Seguem as remessas de junho a serem transmitidas ao BC.',
+                     ['00806535_2060_20260630_A.zip',
+                      '00806535_2061_20260601_4066_I.zip'])
+    assert 'DRM_2060' in r['categorias'], f"DRM_2060 esperado; obtido {r['categorias']}"
+
+
+def test_correcao32_saldos_4111_no_anexo_adiciona_scd():
+    """C32 — assunto com DRM, arquivo 'Saldos 4111.xlsx' no anexo → SCD é adicionado."""
+    r = _classificar('DRM 2060 Traders',
+                     'Segue o arquivo ref. 06/2026',
+                     ['Saldos 4111.xlsx'])
+    assert 'SALDOS_CONTABEIS_DIARIOS_4111' in r['categorias'], f"SCD esperado; obtido {r['categorias']}"
+
+
+def test_correcao32_4111_sem_saldos_no_nome_nao_adiciona_scd():
+    """C32 — '4111' no nome do arquivo sem 'Saldos' não adiciona SCD (ex.: 'DLI CV 4111 CV')."""
+    r = _classificar('Re: DLO E DLI - JUNHO. Seguem as remessas.',
+                     'Seguem as remessas.',
+                     ['DLI CV - MAIO _ 4111 CV.zip',
+                      '00806535_2061_20260601_4066_I.zip'])
+    assert 'SALDOS_CONTABEIS_DIARIOS_4111' not in r['categorias'], \
+        f"SCD indevido; obtido {r['categorias']}"
