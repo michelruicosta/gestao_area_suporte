@@ -331,7 +331,7 @@ def _classificar_deterministico(
         # assunto menciona só DRM. Padrão exige verbo explícito de envio próximo de DDR (≤60 chars)
         # para não disparar em corpos que apenas citam DDR como contexto ou referência.
         _DDR_ENVIADO = re.compile(
-            r'(?:ENVIADO|ENCAMINHADO|SEGUE|SEGUEM|ENVIANDO)\b.{0,60}\bDDR\b',
+            r'(?:ENVIADO|ENCAMINHADO|ENVIANDO)\b.{0,60}\bDDR\b',
             re.DOTALL
         )
         if 'DDR_2011' not in cats and _DDR_ENVIADO.search(cu):
