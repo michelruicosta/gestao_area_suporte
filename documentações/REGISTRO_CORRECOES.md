@@ -473,6 +473,49 @@ if ('DRL_2160' in cats and 'DLO_2061' in cats and 'DLI_2062' in cats
 
 ---
 
+### Correção 45 — 14/08/2026 — Classificador: S5 no assunto indica entrega do relatório S5 — DLO não coexiste
+
+**🔎 Em miúdos:** quando o assunto do e-mail menciona explicitamente "S5", a entrega é o relatório S5 — mesmo que o corpo cite COS4010/COS4016 (que fazem parte desse relatório). O classificador estava marcando DLO_2061 nesses casos, mas Michel esclareceu: "não existe DLO e S5 ao mesmo tempo; se o assunto tem S5, é S5."
+
+**Problema:** a thread da Executive Corretora ("RELATÓRIO DE RESULTADO QUANTITATIVO S5 - EXEC CORRETORA") tinha COS4016 no corpo e S5 no resultado — mas o classificador mantinha DLO_2061 junto com S5. O gabarito também estava errado: registrado como ['DLO_2061'] em vez de ['S5'].
+
+**Thread afetada:**
+- `19fc821ab964b004` "RELATÓRIO DE RESULTADO QUANTITATIVO S5 - EXEC CORRETORA" — extra DLO_2061 (esperado só S5)
+
+**Correção:** guard C45 adicionado na Camada 1b: se `DLO_2061` e `S5` coexistem no resultado E o assunto tem `\bS5\b` → remove `DLO_2061`. Gabarito corrigido de `['DLO_2061']` para `['S5']` no `registro_definitivo_threads.json`.
+
+**Arquivos alterados:** `scripts/classificador_ia.py` (guard C45 em Camada 1b), `data/registro_definitivo_threads.json` (gabarito Executive Corretora).
+
+**Varredura:** incluída na C46 (ver abaixo). `pytest tests/ -q` → 177 passed. ✅
+
+---
+
+### Correção 46 — 14/08/2026 — Classificador: texto citado (linhas '>') removido antes da detecção CADOC
+
+**🔎 Em miúdos:** e-mails de resposta carregam o histórico da conversa colado no corpo (aquelas linhas que começam com '>'), e o classificador estava lendo essas linhas como se fossem do e-mail atual. Resultado: categorias "herdadas" de mensagens antigas, sem ter nada a ver com o e-mail que chegou.
+
+**Problema:** 3 threads tinham categorias extras que vinham só do texto citado:
+- UNVERIFIED SENDER PR (`19fcdfc3d2d7f01f`) — CADOC detectado em histórico citado; esperado SUPORTE
+- VBS SCD Vector (`19f6706418720db8`) — DLO extra originado de texto de novembro/2025 embutido na thread; esperado só DLO_2061
+- CNPJ Alfanumérico (`19f2916ccf831eca`) — CADOC detectado em histórico citado; esperado SUPORTE
+
+Dois gabaritos estavam errados por causa do mesmo problema: ZIIN (`19f71c34de2418fe`) → ['SUPORTE'] (sem anexos capturados, corpo principal é só "segue os anexos"); REMITLY LEC (`19f377bf7408e3c3`) → ['DLO_2061'] (DLI estava só no texto citado).
+
+**Correção:**
+- `_corpo_sem_citacoes(corpo)` — novo helper que remove linhas iniciadas por `>` antes da detecção CADOC
+- `cu = _corpo_sem_citacoes(corpo).upper()` (no início de `_classificar_deterministico`) substitui `corpo.upper()` direto
+- Limite de 2000 chars por mensagem aplicado no caller (simulação e produção) para evitar falsos positivos de texto muito antigo embutido
+- Sinal 6b (VCRD do BACEN em texto citado) mantido: usa `corpo.upper()` em vez de `cu` — VCRD em `>` de resposta do BACEN é sinal real e intencional (C21 preservado)
+- Gabaritos corrigidos: ZIIN → `['SUPORTE']`, REMITLY → `['DLO_2061']`
+
+**Arquivos alterados:** `scripts/classificador_ia.py` (`_corpo_sem_citacoes`, `cu` em Camada 1, sinal 6b usa `corpo.upper()`), `tests/test_classificador_ia.py` (2 novos testes C46), `data/registro_definitivo_threads.json` (gabaritos ZIIN e REMITLY).
+
+**Varredura:** +3 ganhos (UNVERIFIED, VBS SCD, CNPJ Alfanumérico), 0 regressões (768 threads). `pytest tests/ -q` → 177 passed. ✅
+
+**Placar real:** 741/768 acertos (27 erros). *(Nota: placar da C44 estava calculado sobre simulação com truncagem — 741 é o número correto após gabaritos ajustados e strip aplicado.)*
+
+---
+
 ### Correção 34c — 14/08/2026 — Classificador: DRM e DRL mencionados juntos no corpo → ambos adicionados
 
 **🔎 Em miúdos:** quando o corpo do e-mail menciona DRM e DRL ao mesmo tempo dentro de um contexto de entrega CADOC (Camada 1b), o classificador agora adiciona os dois. O par é específico o suficiente: em todo o corpus, nenhuma thread com DRM sem DRL (ou vice-versa) foi afetada.

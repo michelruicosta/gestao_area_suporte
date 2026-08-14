@@ -1214,3 +1214,41 @@ def test_correcao44_dlo_valido_com_s5_nao_removido_se_assunto_tem_sinal():
     )
     assert 'DLO_2061' in r['categorias'], \
         f"C44: DLO_2061 deve ser mantido quando assunto tem COS4016; obtido {r['categorias']}"
+
+
+def test_correcao46_cadoc_em_texto_citado_ignorado():
+    """C46 — linhas citadas ('> ...') não disparam detecção de CADOC.
+
+    E-mails de resposta citam o texto anterior; se o e-mail citado menciona DLI
+    o classificador NÃO deve adicionar DLI à entrega atual (que é só DLO).
+    """
+    r = _classificar(
+        assunto='Re: DLO junho/2026.',
+        corpo=(
+            'Segue o arquivo COS4010 conforme solicitado.\n'
+            '\n'
+            '> Em seg., 6 de jul. escreveu:\n'
+            '> Prezados, segue a remessa DLI (2062) e DLO (2061) de março/2026.\n'
+            '> Atenciosamente.'
+        ),
+        nomes_anexos=[]
+    )
+    assert 'DLO_2061' in r['categorias'], \
+        f"C46: DLO_2061 deveria ser detectado pelo assunto; obtido {r['categorias']}"
+    assert 'DLI_2062' not in r['categorias'], \
+        f"C46: DLI_2062 não deveria ser adicionado de texto citado; obtido {r['categorias']}"
+
+
+def test_correcao46_cadoc_no_corpo_principal_detectado_normalmente():
+    """C46 — CADOC no corpo principal (sem '>') é detectado normalmente."""
+    r = _classificar(
+        assunto='Envio junho/2026.',
+        corpo=(
+            'Segue a remessa DLI (2062) referente ao período.\n'
+            '\n'
+            '> Em seg. alguém escreveu: informação sem CADOC.\n'
+        ),
+        nomes_anexos=[]
+    )
+    assert 'DLI_2062' in r['categorias'], \
+        f"C46: DLI_2062 do corpo principal não deveria ser removido; obtido {r['categorias']}"

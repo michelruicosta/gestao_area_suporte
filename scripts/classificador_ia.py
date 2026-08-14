@@ -248,13 +248,36 @@ def _ok(cats: list[str], motivo: str, regra_usada: str | None) -> dict:
     }
 
 
+# ── Pré-processamento de corpo ────────────────────────────────────────────────
+
+def _corpo_sem_citacoes(corpo: str) -> str:
+    """Remove linhas citadas de e-mails anteriores (iniciadas por '>').
+
+    E-mails de resposta carregam o texto citado do remetente anterior. Esses
+    trechos podem conter nomes de CADOC de entregas antigas que nada têm a ver
+    com a entrega atual — e causam falsos positivos. Removê-los garante que a
+    detecção de CADOC analisa só o texto da mensagem corrente.
+
+    Nota para quem chama esta função: e-mails muito longos com histórico embutido
+    como texto plano (sem '>') ainda podem carregar sinais antigos. Recomenda-se
+    limitar cada mensagem a ~2000 chars antes de concatenar o corpo.
+    """
+    return '\n'.join(
+        linha for linha in corpo.split('\n')
+        if not linha.strip().startswith('>')
+    )
+
+
 # ── Classificação determinística ──────────────────────────────────────────────
 
 def _classificar_deterministico(
     assunto: str, corpo: str, anexos: str
 ) -> dict:
     au = assunto.upper()
-    cu = corpo.upper()
+    # C46: remover linhas citadas ('> ...') antes da detecção — texto de e-mails
+    # anteriores pode conter nomes de CADOC de entregas antigas que causam
+    # falsos positivos na mensagem atual.
+    cu = _corpo_sem_citacoes(corpo).upper()
     # xu_norm aqui: _ e . viram espaço para que \bDRM\b encontre "DRM" em "DRM_2060.xml"
     xu_norm = anexos.upper().replace('_', ' ').replace('.', ' ')
 
@@ -375,7 +398,8 @@ def _classificar_deterministico(
                 or any(s in xu_norm for s in _SINAIS_ANEXO_EXTRA)):
             return _ok(['RETORNO_BACEN'], 'sinal de RETORNO_BACEN nos nomes dos anexos', 'RETORNO - Regra 01')
         # Sinal 6b: VCRD no corpo completo (inclui citações) — crítica de VCRD encaminhada no histórico
-        if any(s in cu for s in _RETORNO_SINAIS_VCRD):
+        # Usa corpo.upper() e não cu (cu tem citações removidas pelo C46; VCRD em '>' é sinal real)
+        if any(s in corpo.upper() for s in _RETORNO_SINAIS_VCRD):
             return _ok(['RETORNO_BACEN'], 'sinal VCRD no corpo completo', 'RETORNO - Regra 01')
         # C41: DLO e DLI ambos em cats, DLO veio do assunto (não do complemento), mas assunto
         # menciona DLI explicitamente sem DLO → 2061 era referência de arquivo, não entrega.
@@ -410,11 +434,18 @@ def _classificar_deterministico(
             )
             if _au_sem_dlo and _cu_sem_dlo_forte and 'COS4016' in cu:
                 cats.discard('DLO_2061')
+        # C45: S5 no assunto indica entrega do relatório S5 — COS4010/4016 anexados são
+        # componentes desse relatório, não entrega DLO separada. DLO e S5 nunca coexistem
+        # numa entrega real; quando o cliente menciona S5, a categoria é só S5.
+        if 'DLO_2061' in cats and 'S5' in cats and re.search(r'\bS5\b', au):
+            cats.discard('DLO_2061')
         cats = sorted(cats)
         return _ok(cats, f'sinal de CADOC no assunto ({", ".join(cats)})', None)
 
-    # Camada 2a — RETORNO_BACEN pelo corpo (cliente encaminhando e-mail do BACEN)
-    if _tem_retorno_bacen('', cu):
+    # Camada 2a — RETORNO_BACEN pelo corpo (cliente encaminhando e-mail do BACEN).
+    # Usa corpo completo (não stripped): VCRD/crítica do BACEN em texto citado é sinal
+    # real — o BACEN respondeu com erro, independente de aparecer em trecho '> ...'.
+    if _tem_retorno_bacen('', corpo.upper()):
         return _ok(['RETORNO_BACEN'], 'sinal de RETORNO_BACEN no corpo', 'RETORNO - Regra 01')
 
     # Camada 2b — CADOC pelo corpo
