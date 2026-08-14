@@ -183,6 +183,90 @@ Mantido: bypass do registro (thread confirmada → retorna salvo sem reprocessar
 
 ---
 
+### Gabarito — 14/08/2026 — Correção de gabarito: 'RES: Norma BCB - Risco de Liquidez e LCR' → SUPORTE
+
+**🔎 Em miúdos:** um e-mail que tratava de norma do BACEN sobre risco de liquidez estava salvo no gabarito como DRL_2160. Michel revisou o conteúdo e confirmou que é SUPORTE — a norma foi encaminhada como informação, sem entrega do relatório DRL.
+
+**Problema:** thread "RES: Norma BCB - Risco de Liquidez e LCR" tinha `categorias: ['DRL_2160']` no gabarito. O conteúdo é encaminhamento de norma regulatória do BACEN para conhecimento da equipe, sem envio do relatório DRL — portanto SUPORTE.
+
+**Correção:** `data/registro_definitivo_threads.json` — thread `19f28dcdfa5070d9` alterada de `['DRL_2160']` para `['SUPORTE']`. Backup em `data/backups/20260814_1045_correcao_gabarito_norma_bcb/` com `CONTEXTO.md`.
+
+**Validação:** ✅ VALIDADO — placar 713 → 714 acertos após correção do gabarito (thread antes contava como erro e passou a contar como acerto). `pytest tests/ -q` — nenhum teste afetado (gabarito é dado, não código).
+
+---
+
+### Correção 27 — 14/08/2026 — Classificador: 'CADASTRO' + 'RISKDRIVER' no assunto → DDR_2011
+
+**🔎 Em miúdos:** e-mails cujo assunto fala em "cadastro" de fundos ou operações no sistema RiskDriver agora são reconhecidos como DDR. O cadastro no RiskDriver é a etapa que precede toda entrega DDR — sem o cadastro, o sistema não gera o arquivo.
+
+**Problema:** "CADASTRO DOS FUNDOS NO SISTEMA - RISKDRIVER" estava sendo classificado como SUPORTE porque não havia o código DDR, 2011 ou qualquer outro sinal DDR no assunto. O classificador não reconhecia que cadastro no RiskDriver = setup para DDR.
+
+**Correção:** adicionado padrão `r'CADASTRO.*RISKDRIVER|RISKDRIVER.*CADASTRO'` à lista `_DDR_PADROES` em `scripts/classificador_ia.py`. Padrão aplica sobre texto em maiúsculo. 2 testes novos adicionados.
+
+**Varredura:** +1 ganho, 0 regressões (767 threads confirmadas). Placar: 714 → 715 acertos.
+
+**Placar:** 715/767 acertos (52 erros). `pytest tests/ -q` → 137 passed. ✅
+
+---
+
+### Correção 28 — 14/08/2026 — Classificador: 'POSICAO' + data (DD.MM.AAAA) no assunto → DDR_2011
+
+**🔎 Em miúdos:** quando o assunto do e-mail traz a palavra "POSICAO" seguida de uma data no formato DD.MM.AAAA ou DD/MM/AAAA (ex.: "ENC: POSICAO 10.07.2026"), o classificador agora entende que é envio de posição DDR — não um e-mail genérico.
+
+**Problema:** "ENC: POSICAO 10.07.2026" (Fair Corretora) estava como SUPORTE. "Posição" com data é um padrão de envio de relatório DDR de posição cambial ou carteira — o contexto de negócio foi confirmado por Michel.
+
+**Correção:** adicionado padrão `r'POSICAO\s+\d{2}[./]\d{2}[./]\d{4}'` à lista `_DDR_PADROES`. O texto já está em maiúsculo quando os padrões são aplicados, então "POSIÇÃO" → "POSICAO" sem acento. 2 testes novos adicionados.
+
+**Varredura:** +1 ganho, 0 regressões (767 threads confirmadas). Placar: 715 → 716 acertos.
+
+**Placar:** 716/767 acertos (51 erros). `pytest tests/ -q` → 139 passed. ✅
+
+---
+
+### Correção 29 — 14/08/2026 — Classificador: 'EXTRATOS' no assunto → DDR_2011
+
+**🔎 Em miúdos:** quando o assunto do e-mail contém "EXTRATOS" (plural), o classificador agora entende como envio de extrato DDR — relatório periódico de compromissadas e posições. Confirmado por Michel: no contexto deste projeto, extrato = DDR.
+
+**Problema:** "EXTRATOS - JUNHO-2026 - ATUAL" estava como SUPORTE. Extratos neste contexto são arquivos de entrega DDR (extrato de compromissadas, de posições, etc.).
+
+**Correção:** adicionado padrão `r'\bEXTRATO[S]?\b'` à lista `_DDR_PADROES` (captura tanto EXTRATO quanto EXTRATOS). 1 teste novo adicionado.
+
+**Varredura:** +1 ganho, 0 regressões (767 threads confirmadas). Placar: 716 → 717 acertos.
+
+**Placar:** 717/767 acertos (50 erros). `pytest tests/ -q` → 140 passed. ✅
+
+---
+
+### Correção 30 — 14/08/2026 — Classificador: números 4010/4016/4060/4066 sozinhos no assunto → DLO_2061
+
+**🔎 Em miúdos:** quando o assunto do e-mail tem apenas um número de código COS (4010, 4016, 4060 ou 4066) sem a sigla "COS" junto (ex.: "4010 Trinus" ou "COSIF'S 4010 JUN/2026"), o classificador agora detecta como entrega DLO. Antes só reconhecia com "COS" na frente.
+
+**Problema:** dois e-mails com código COS no assunto sem o prefixo "COS" ficavam como SUPORTE: "4010 Trinus" e "RES: COSIF'S 4010 JUN/2026 - BANVOX DTVM". A função `_detectar_cadoc` exigia "COS" explícito para disparar DLO_2061.
+
+**Correção:** adicionado check explícito na Camada 1b: `if re.search(r'\b(?:4010|4016|4060|4066)\b', au): cats.add('DLO_2061')`. Só aplica sobre o assunto (variável `au`) — no corpo esses números podem aparecer como contexto de pergunta. 2 testes novos adicionados.
+
+**Varredura:** +2 ganhos, 0 regressões (767 threads confirmadas). Placar: 717 → 719 acertos.
+
+**Placar:** 719/767 acertos (48 erros). `pytest tests/ -q` → 142 passed. ✅
+
+---
+
+### Correção 31 — 14/08/2026 — Classificador: 'COS 4010' (com espaço) nos nomes de arquivo → DLO_2061
+
+**🔎 Em miúdos:** nomes de arquivo como "EXECUTIVE CORRETORA - COS 4010 06_2026.zip" (com espaço entre COS e o número) não eram reconhecidos como entrega DLO. A detecção existente exigia "COS4010" sem espaço. Corrigido só para nomes de arquivo — no corpo do e-mail, "COS 4010" pode ser menção contextual e não dispara.
+
+**Problema:** "Arquivo COS" (assunto) com anexo "EXECUTIVE CORRETORA - COS 4010 06_2026.zip" ficava como SUPORTE. A função `_detectar_cadoc` testava `COS4010` (sem espaço) nos nomes de arquivo; com espaço, o padrão não batia.
+
+**Correção:** adicionado check explícito na Camada 3 (após `_detectar_cadoc`): `if re.search(r'COS\s*(?:4010|4016|4060|4066)', xu_norm): cats_set.add('DLO_2061')`. `xu_norm` é a string de nomes de arquivo normalizada (maiúsculo, `_` e `.` viram espaço). 2 testes novos adicionados.
+
+**Por que só nos anexos:** no corpo, "COS 4010" aparece em frases como "quanto ao balancete COS 4010, verificar com contabilidade" — contexto de pergunta, não entrega. Em nomes de arquivo, "COS 4010" é sempre o arquivo real sendo enviado.
+
+**Varredura:** +1 ganho, 0 regressões (767 threads confirmadas). Placar: 719 → 720 acertos.
+
+**Placar:** 720/767 acertos (47 erros). `pytest tests/ -q` → 144 passed. ✅
+
+---
+
 ### Correção 26 — 13/08/2026 — Classificador: 'Instrução Normativa' sem CADOC no assunto → SUPORTE
 
 **🔎 Em miúdos:** quando o assunto do e-mail menciona "Instrução Normativa" (circular regulatória do BACEN) mas não tem nenhum código CADOC junto, o classificador agora retorna SUPORTE. Se tiver código CADOC no assunto também (ex.: "Instrução Normativa BCB nº 721/26 - DLI 2062"), mantém a detecção normal do CADOC.

@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Oráculo 360 Finaud
 
-**Atualizado:** 2026-08-12
+**Atualizado:** 2026-08-14
 **Organização:** por etapa que bloqueia — reorganizado em 03/08/2026 para seguir as fases sem brechas.
 **Regra:** este arquivo lista **só o que ainda falta** (aberto / aguardando decisão / backlog).
 Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada no
@@ -8,7 +8,7 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ---
 
-## 🔧 CLASSIFICADOR DETERMINÍSTICO — 54 erros restantes (placar: 713/767)
+## 🔧 CLASSIFICADOR DETERMINÍSTICO — 47 erros restantes (placar: 720/767)
 
 > Mapeado em 13/08/2026. Atacar grupo por grupo; ao concluir um grupo, remover daqui e gravar no REGISTRO_CORRECOES.md.
 > Dois RETORNO (Sinal 6b) já estão corretos em produção — aparecem aqui só porque a validação usa corpo truncado.
@@ -72,19 +72,16 @@ Quatro e-mails de suporte têm código CADOC mencionado no **corpo** como contex
 
 ---
 
-### 🔴 Grupo B — CADOC real não detectado, fica em SUPORTE (7 threads)
+### ✅ Grupo B — CADOC real não detectado, fica em SUPORTE — concluído (14/08/2026)
 
-E-mails que são claramente entrega de CADOC mas o classificador não reconhece e cai em SUPORTE.
-
-| Thread | Esperado | Obtido (errado) |
-|---|---|---|
-| 4010 Trinus | DLO_2061 | SUPORTE |
-| Arquivo COS | DLO_2061 | SUPORTE |
-| CADASTRO DOS FUNDOS NO SISTEMA - RISKDRIVER | DDR_2011 | SUPORTE |
-| ENC: POSICAO 10.07.2026 | DDR_2011 | SUPORTE |
-| EXTRATOS - JUNHO-2026 - ATUAL | DDR_2011 | SUPORTE |
-| RES: COSIF'S 4010 JUN/2026 - BANVOX DTVM | DLO_2061 | SUPORTE |
-| RES: Norma BCB - Risco de Liquidez e LCR | DRL_2160 | SUPORTE |
+Todos os 7 casos resolvidos:
+- C27: CADASTRO+RISKDRIVER → DDR_2011 (+1 ganho)
+- C28: POSICAO+data → DDR_2011 (+1 ganho)
+- C29: EXTRATOS → DDR_2011 (+1 ganho)
+- C30: 4010/4016 no assunto → DLO_2061 (+2 ganhos: "4010 Trinus" + "COSIF'S 4010")
+- C31: COS+espaço nos anexos → DLO_2061 (+1 ganho: "Arquivo COS")
+- Gabarito: "RES: Norma BCB - Risco de Liquidez e LCR" corrigido para SUPORTE (+1 ganho)
+Placar parcial do Grupo B: 713 → 720/767 acertos.
 
 ---
 
