@@ -1006,3 +1006,70 @@ def test_correcao37_remitly_sem_movimento_nao_detecta_ddr():
     r = _classificar('Remitly CC - 4010/4016 - 06/2026', '', [])
     assert 'DDR_2011' not in r['categorias'], \
         f"DDR indevido em assunto Remitly sem 'Movimento'; obtido {r['categorias']}"
+
+
+# ── Correção 38 — COS4010 em texto livre não dispara DLO ─────────────────────
+
+
+def test_correcao38_cos4010_no_assunto_nao_dispara_dlo():
+    """C38 — 'COS4010' no assunto como referência de dados (ex.: S5) não aciona DLO_2061.
+    COS4010 em texto livre ≠ entrega DLO; sinal válido só em nome de arquivo (C36).
+    """
+    r = _classificar(
+        'Re: COS4010 06/2026 - VBS SCD (VECTOR). Segue o Resultado Quantitativo S5.',
+        '', []
+    )
+    assert 'DLO_2061' not in r['categorias'], \
+        f"DLO indevido (COS4010 no assunto como referência); obtido {r['categorias']}"
+    assert 'S5' in r['categorias'], \
+        f"S5 ausente; obtido {r['categorias']}"
+
+
+def test_correcao38_cos4010_no_corpo_como_referencia_nao_dispara_dlo():
+    """C38 — 'COS4010' mencionado no corpo como previsão/referência não aciona DLO_2061.
+    O entregável é DRL 2160; COS4010 aparece como 'Previsão para receber' (contexto, não entrega).
+    """
+    r = _classificar(
+        'COLUNA - ENVIAR PLANILHA DRL2160 - JUN2026',
+        'Segue a planilha DRL 2160 de julho/2026. Previsão para receber o COS4010 na sexta-feira.',
+        []
+    )
+    assert 'DLO_2061' not in r['categorias'], \
+        f"DLO indevido (COS4010 no corpo como previsão); obtido {r['categorias']}"
+    assert 'DRL_2160' in r['categorias'], \
+        f"DRL ausente; obtido {r['categorias']}"
+
+
+def test_correcao38_cos4010_no_anexo_ainda_dispara_dlo():
+    """C38 — COS4010 no NOME DO ARQUIVO ainda aciona DLO via C36 (regra de complemento)."""
+    r = _classificar('Segue a remessa DRM (2060) junho/2026', '', ['COS4010_2026-06-I.zip'])
+    assert 'DLO_2061' in r['categorias'], \
+        f"DLO ausente com COS4010 em nome de arquivo; obtido {r['categorias']}"
+
+
+def test_correcao39_cos4016_com_4111_no_assunto_nao_dispara_dlo():
+    """C39 — COS4016 + 4111 no mesmo assunto → 4111 (SCD) é o entregável; COS4016 é referência.
+    Caso real: 'COS4016 DE 06-2026. Segue o 4111 30/06/2026 de Substituição. FAIRWAY'.
+    """
+    r = _classificar(
+        'Re: COS4016 DE 06-2026. Segue o 4111 30/06/2026 de Substituição. FAIRWAY',
+        '', []
+    )
+    assert 'DLO_2061' not in r['categorias'], \
+        f"DLO indevido (COS4016 com 4111 no assunto); obtido {r['categorias']}"
+    assert 'SALDOS_CONTABEIS_DIARIOS_4111' in r['categorias'], \
+        f"SCD ausente; obtido {r['categorias']}"
+
+
+def test_correcao39_cos4016_sem_4111_ainda_dispara_dlo():
+    """C39 — COS4016 sozinho (sem 4111 no mesmo texto) ainda aciona DLO_2061 normalmente."""
+    r = _classificar('DTVM - COS4016 DE JUNHO/2026', '', [])
+    assert 'DLO_2061' in r['categorias'], \
+        f"DLO ausente com COS4016 sem 4111; obtido {r['categorias']}"
+
+
+def test_correcao39_cos4016_com_4111_e_dlo_explicito_mantém_dlo():
+    """C39 — se 'DLO' está explícito no assunto junto com COS4016 e 4111, DLO é mantido."""
+    r = _classificar('DLO COS4016 e 4111 - JUNHO/2026', '', [])
+    assert 'DLO_2061' in r['categorias'], \
+        f"DLO removido indevidamente quando DLO está explícito; obtido {r['categorias']}"

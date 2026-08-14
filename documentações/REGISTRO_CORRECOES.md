@@ -337,6 +337,40 @@ Mantido: bypass do registro (thread confirmada → retorna salvo sem reprocessar
 
 ---
 
+### Correção 38 — 14/08/2026 — Classificador: COS4010 em texto livre não dispara DLO
+
+**🔎 Em miúdos:** o classificador parava de associar DLO a qualquer e-mail que mencionasse "COS4010" no assunto ou corpo — mesmo quando era só um dado de entrada ou uma previsão futura. Agora, "COS4010" em texto livre não aciona DLO; só conta quando está no nome de arquivo (tratado pelo C36).
+
+**Problema:** dois casos com DLO indevido, ambos causados por `'COS4010' in texto_u` dentro de `_detectar_cadoc`:
+- "COS4010 06/2026 - VBS SCD (VECTOR). Segue o Resultado Quantitativo S5." — COS4010 no assunto como referência de dados de entrada para cálculo S5 → DLO adicionado indevidamente; esperado: só S5.
+- "COLUNA - ENVIAR PLANILHA DRL2160 - JUN2026" — corpo dizia "Previsão para receber o COS4010 somente na sexta-feira" (futuro, não entrega) → DLO adicionado indevidamente; esperado: só DRL_2160.
+
+**Correção:** removido `or 'COS4010' in texto_u` do cálculo de `tem_dlo` em `_detectar_cadoc`. A detecção via nome de arquivo (C36: `'COS4010' in xu_norm`) permanece intacta. 3 testes novos adicionados (assunto, corpo e nome de arquivo).
+
+**Arquivos alterados:** `scripts/classificador_ia.py` (linha C38 em `_detectar_cadoc`), `tests/test_classificador_ia.py` (3 testes novos).
+
+**Varredura:** +3 ganhos, 0 regressões (768 threads). Placar: 735 → 738 acertos.
+
+**Placar:** 738/768 acertos (30 erros). `pytest tests/ -q` → 163 passed. ✅
+
+---
+
+### Correção 39 — 14/08/2026 — Classificador: COS4016 + 4111 no mesmo texto não dispara DLO
+
+**🔎 Em miúdos:** o classificador adicionava DLO a e-mails que tinham "COS4016" no assunto mesmo quando o assunto deixava claro que o entregável era o arquivo 4111 (SCD) — COS4016 aparecia como referência de contexto, não como entrega DLO.
+
+**Problema:** "Re: COS4016 DE 06-2026. Segue o 4111 30/06/2026 de Substituição. FAIRWAY" — `COS4016` no assunto causava `tem_dlo = True` em `_detectar_cadoc`, adicionando DLO indevidamente. Esperado: só SCD (4111). Obtido: DLO + SCD.
+
+**Correção:** alterada a condição de `COS4016` em `tem_dlo` de `'COS4016' in texto_u` para `('COS4016' in texto_u and not re.search(r'\b4111\b', texto_u))`. Quando 4111 está presente no mesmo texto, COS4016 é tratado como referência de contexto, não como sinal de entrega DLO. 3 testes novos adicionados.
+
+**Arquivos alterados:** `scripts/classificador_ia.py` (linha C39 em `_detectar_cadoc`), `tests/test_classificador_ia.py` (3 testes novos).
+
+**Varredura (junto com C38):** simulação combinada: +3 ganhos (C38 contribuiu 2, C39 contribuiu 1), 0 regressões (768 threads).
+
+**Placar:** 739/768 acertos (29 erros). `pytest tests/ -q` → 166 passed. ✅
+
+---
+
 ### Correção 34c — 14/08/2026 — Classificador: DRM e DRL mencionados juntos no corpo → ambos adicionados
 
 **🔎 Em miúdos:** quando o corpo do e-mail menciona DRM e DRL ao mesmo tempo dentro de um contexto de entrega CADOC (Camada 1b), o classificador agora adiciona os dois. O par é específico o suficiente: em todo o corpus, nenhuma thread com DRM sem DRL (ou vice-versa) foi afetada.

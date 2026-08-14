@@ -177,12 +177,15 @@ def _detectar_cadoc(texto_u: str) -> list[str]:
 
     # DLO_2061 e DLI_2062 — sub-regra de distinção
     # LEC com lookbehind: não dispara DLO em "DRL-LEC" (LEC é componente do DRL, não DLO)
+    # C38: COS4010 removido — mencionado em texto livre (assunto/corpo) não indica entrega DLO;
+    # o sinal correto é COS4010 em NOME DE ARQUIVO, tratado pelo C36 no bloco `if cats:`.
+    # C39: COS4016 + \b4111\b no mesmo texto → 4111 é o entregável; COS4016 é referência, não DLO.
+    # Ex.: "COS4016 DE 06-2026. Segue o 4111 30/06/2026" → SCD, não DLO+SCD.
     tem_dlo = bool(
         re.search(r'\bDLO\b', texto_u)
         or re.search(r'\b2061\b', texto_u)
         or re.search(r'(?<!DRL-)\bLEC\b', texto_u)
-        or 'COS4010' in texto_u
-        or 'COS4016' in texto_u
+        or ('COS4016' in texto_u and not re.search(r'\b4111\b', texto_u))
         or 'COS4060' in texto_u
         or 'COS4066' in texto_u
     )
