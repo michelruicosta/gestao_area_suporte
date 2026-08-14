@@ -267,6 +267,38 @@ Mantido: bypass do registro (thread confirmada → retorna salvo sem reprocessar
 
 ---
 
+### Correção 34c — 14/08/2026 — Classificador: DRM e DRL mencionados juntos no corpo → ambos adicionados
+
+**🔎 Em miúdos:** quando o corpo do e-mail menciona DRM e DRL ao mesmo tempo dentro de um contexto de entrega CADOC (Camada 1b), o classificador agora adiciona os dois. O par é específico o suficiente: em todo o corpus, nenhuma thread com DRM sem DRL (ou vice-versa) foi afetada.
+
+**Problema:** "RES: DLO - 06/2026 - Encaminhar a composição do fundo" — assunto detectava DLO+DLI, mas o corpo dizia "Falta ainda algo para fazer o DRM e o DRL?" — ambos mencionados como parte do processo de entrega, mas não capturados.
+
+**Correção:** dentro do bloco `if cats:` da Camada 1b, após C34b: se `\bDRM\b` e `\bDRL\b` aparecem no corpo (`cu`), adicionar DRM_2060 e DRL_2160. 2 testes novos adicionados.
+
+**Arquivos alterados:** `scripts/classificador_ia.py`, `tests/test_classificador_ia.py`.
+
+**Varredura:** +1 ganho, 0 regressões (767 threads). Placar: 728 → 729 acertos.
+
+**Placar:** 729/767 acertos (38 erros). `pytest tests/ -q` → 154 passed. ✅
+
+---
+
+### Correção 34b — 14/08/2026 — Classificador: verbo de entrega + DDR no corpo → DDR_2011
+
+**🔎 Em miúdos:** quando o corpo do e-mail diz explicitamente que o DDR foi "enviado" ou "encaminhado" (verbo ativo de entrega seguido de DDR em até 60 caracteres), o classificador agora adiciona DDR ao resultado. Padrão estreito — não dispara quando DDR aparece só como contexto ou pergunta.
+
+**Problema:** "RE: DRM 05.2026" — assunto detectava DRM, corpo dizia "Enviado o DDR de 29/05 ajustado e DRM referente a 05/2026 de substituição" — duas entregas numa mesma mensagem, mas só DRM era capturado pelo assunto.
+
+**Correção:** regex `r'(?:ENVIADO|ENCAMINHADO|SEGUE|SEGUEM|ENVIANDO)\b.{0,60}\bDDR\b'` aplicado sobre `cu` dentro do bloco `if cats:` da Camada 1b. Exige verbo ativo antes de DDR (≤60 chars). 2 testes novos adicionados.
+
+**Arquivos alterados:** `scripts/classificador_ia.py`, `tests/test_classificador_ia.py`.
+
+**Varredura:** +1 ganho, 0 regressões (767 threads). Placar: 727 → 728 acertos.
+
+**Placar:** 728/767 acertos (39 erros). `pytest tests/ -q` → 152 passed. ✅
+
+---
+
 ### Correção 32 — 14/08/2026 — Classificador: códigos BACEN (2011/2060/2061/2062) nos nomes de arquivo complementam a detecção pelo assunto
 
 **🔎 Em miúdos:** quando um e-mail entrega mais de um CADOC ao mesmo tempo, o assunto normalmente menciona só um (ex.: "DLO e DLI"), mas os arquivos enviados têm o código BACEN no nome (ex.: `00806535_2011_20260630_S_2.zip`). O classificador agora lê esses códigos nos nomes de arquivo para completar a lista de categorias detectadas.
