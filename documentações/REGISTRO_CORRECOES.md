@@ -371,6 +371,22 @@ Mantido: bypass do registro (thread confirmada → retorna salvo sem reprocessar
 
 ---
 
+### Correção 40 — 14/08/2026 — Classificador: "DDR2011" colado no assunto (sem espaço) não disparava DDR
+
+**🔎 Em miúdos:** quando o assunto escrevia "DDR2011" sem espaço (DDR e o código juntos), o classificador não reconhecia como DDR — passava direto para o corpo do e-mail, que citava DDR, DLO e DLI como "não disponíveis" e os adicionava todos indevidamente.
+
+**Problema:** os padrões `\bDDR\b` e `\b2011\b` precisam de fronteira de palavra entre as partes. Em "DDR2011", a transição R→2 é palavra→palavra — sem fronteira. Logo, assunto "VIS : STA - DDR2011 e demais não disponíveis" retornava `cats_au = []` → Camada 2b (corpo) → `_detectar_cadoc(cu)` detectava DDR + DLO + DLI do e-mail encadeado (Monica citando os 3 CADOCs como indisponíveis). Esperado: apenas DDR_2011.
+
+**Correção:** adicionado `r'(?<!\w)DDR\d{4}(?!\w)'` a `_DDR_PADROES`. Detecta "DDR" seguido diretamente de 4 dígitos. Com o assunto agora detectando DDR, o fluxo entra no bloco `if cats:` da Camada 1b, que não adiciona DLO/DLI (nenhum sinal nos anexos). 2 testes novos adicionados.
+
+**Arquivos alterados:** `scripts/classificador_ia.py` (`_DDR_PADROES`), `tests/test_classificador_ia.py` (2 testes novos).
+
+**Varredura:** +1 ganho, 0 regressões (768 threads).
+
+**Placar:** 740/768 acertos (28 erros). `pytest tests/ -q` → 168 passed. ✅
+
+---
+
 ### Correção 34c — 14/08/2026 — Classificador: DRM e DRL mencionados juntos no corpo → ambos adicionados
 
 **🔎 Em miúdos:** quando o corpo do e-mail menciona DRM e DRL ao mesmo tempo dentro de um contexto de entrega CADOC (Camada 1b), o classificador agora adiciona os dois. O par é específico o suficiente: em todo o corpus, nenhuma thread com DRM sem DRL (ou vice-versa) foi afetada.

@@ -1073,3 +1073,27 @@ def test_correcao39_cos4016_com_4111_e_dlo_explicito_mantém_dlo():
     r = _classificar('DLO COS4016 e 4111 - JUNHO/2026', '', [])
     assert 'DLO_2061' in r['categorias'], \
         f"DLO removido indevidamente quando DLO está explícito; obtido {r['categorias']}"
+
+
+def test_correcao40_ddr_colado_sem_espaco_detectado_no_assunto():
+    """C40 — 'DDR2011' colado (sem espaço) no assunto deve disparar DDR_2011.
+    Caso real: 'VIS : STA - DDR2011 e demais não disponíveis' — \\bDDR\\b e \\b2011\\b
+    não batem em 'DDR2011' (sem fronteira entre R e 2); novo padrão DDR\\d{4} resolve.
+    """
+    r = _classificar(
+        'RES: VIS : STA - DDR2011 e demais não disponíveis.',
+        'Agora vai. Pode tentar, por favor.', []
+    )
+    assert 'DDR_2011' in r['categorias'], \
+        f"DDR ausente com 'DDR2011' colado no assunto; obtido {r['categorias']}"
+    assert 'DLO_2061' not in r['categorias'], \
+        f"DLO indevido (corpo citado menciona DLO como indisponível); obtido {r['categorias']}"
+    assert 'DLI_2062' not in r['categorias'], \
+        f"DLI indevido (corpo citado menciona DLI como indisponível); obtido {r['categorias']}"
+
+
+def test_correcao40_ddr_colado_nao_afeta_drsa_2030():
+    """C40 — padrão DDR\\d{4} não deve casar com 'DRSAC' (começa com 'DRSA', não 'DDR')."""
+    r = _classificar('DRSAC -2030', '', [])
+    assert 'DDR_2011' not in r['categorias'], \
+        f"DDR indevido em thread DRSAC; obtido {r['categorias']}"

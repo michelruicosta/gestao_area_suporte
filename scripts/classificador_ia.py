@@ -98,6 +98,7 @@ _DDR_PADROES = [
     r'CADASTRO.*RISKDRIVER|RISKDRIVER.*CADASTRO',  # cadastro de fundos no Risk Driver = entrega DDR (C27)
     r'POSICAO\s+\d{2}[./]\d{2}[./]\d{4}',          # 'POSICAO DD.MM.AAAA' no assunto = arquivo de posição DDR (C28)
     r'\bEXTRATO[S]?\b',                             # extratos de conta/câmbio/aplicações = insumo DDR (C29)
+    r'(?<!\w)DDR\d{4}(?!\w)',                       # C40: "DDR2011" colado (sem espaço/fronteira) — ex.: "VIS STA - DDR2011 e demais não disponíveis"
 ]
 
 # Marcadores de início de texto citado/encaminhado no corpo do e-mail
