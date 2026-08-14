@@ -1124,3 +1124,33 @@ def test_correcao41_assunto_com_dlo_explicito_mantem_dlo():
         f"DLO removido indevidamente quando DLO está explícito no assunto; obtido {r['categorias']}"
     assert 'DLI_2062' in r['categorias'], \
         f"DLI ausente; obtido {r['categorias']}"
+
+
+# ── Correção 42 — 'DRL-LEC' no assunto é nome do template, não entrega DRL ──
+
+def test_correcao42_drl_lec_com_dli_dlo_remove_drl():
+    """C42 — assunto 'Re: Planilha DRL-LEC Junho/2026. Transmitir DLI e DLO' tem DRL
+    apenas como prefixo 'DRL-' (nome do template); DLI+DLO são as entregas → DRL removido.
+    Caso real: REMITLY reply pedindo transmissão DLI+DLO; DRL herdado do subject chain.
+    """
+    r = _classificar(
+        'Re: Planilha DRL-LEC Junho/2026. Transmitir o DLI e o DLO via STA. REMITLY',
+        'Solicito transmitir as remessas DLI (2062) e DLO (2061) junho 2026.',
+        []
+    )
+    assert 'DLI_2062' in r['categorias'], \
+        f"DLI ausente; obtido {r['categorias']}"
+    assert 'DLO_2061' in r['categorias'], \
+        f"DLO ausente; obtido {r['categorias']}"
+    assert 'DRL_2160' not in r['categorias'], \
+        f"DRL indevido (assunto tem 'DRL-LEC' como template, não entrega DRL); obtido {r['categorias']}"
+
+
+def test_correcao42_drl_solo_no_assunto_mantem_drl():
+    """C42 — assunto com DRL standalone (não prefixo) mantém DRL_2160 mesmo com DLI+DLO."""
+    r = _classificar(
+        'DRL e DLI e DLO - Junho/2026',
+        '', []
+    )
+    assert 'DRL_2160' in r['categorias'], \
+        f"DRL removido indevidamente quando DRL está explícito no assunto; obtido {r['categorias']}"

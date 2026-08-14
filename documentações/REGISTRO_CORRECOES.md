@@ -407,6 +407,33 @@ Colocado por último para sobrepor o complemento DLI→DLO (que adicionaria DLO 
 
 ---
 
+### Correção 42 — 14/08/2026 — Classificador: 'DRL-LEC' no assunto é nome do template, não entrega DRL
+
+**🔎 Em miúdos:** o assunto "Re: Planilha DRL-LEC Junho/2026. Transmitir o DLI e o DLO via STA. REMITLY" é uma resposta pedindo para transmitir DLI e DLO. O DRL que aparecia no resultado vinha só de "DRL-LEC" no assunto herdado do reply — "DRL-LEC" é o nome do template da planilha, não um entregável DRL.
+
+**Problema:** o padrão `\bDRL\b` casa com a palavra "DRL" dentro de "DRL-LEC" porque o hífen é fronteira de palavra no regex. Resultado: DRL_2160 entrava junto com DLI+DLO quando não havia nenhum conteúdo DRL na thread.
+
+**Thread afetada:** `19f9072056476d58` — assunto com "DRL-LEC" herdado + "Transmitir o DLI e o DLO". Obtido: `['DLI_2062', 'DLO_2061', 'DRL_2160']`. Esperado: `['DLI_2062', 'DLO_2061']`.
+
+**Thread vizinha não afetada:** `19f4237ce0245617` "Planilha DRL-LEC Junho/2026" — gabarito `['DRL_2160']`. Não é afetada porque o guard exige DLO+DLI+DRL todos em cats; nessa thread há só DRL.
+
+**Correção:** guard no bloco `if cats:` da Camada 1b, após C41 e antes de `cats = sorted(cats)`:
+```python
+# C42: 'DRL-LEC' no assunto é nome do template DLO, não entrega DRL_2160.
+if ('DRL_2160' in cats and 'DLO_2061' in cats and 'DLI_2062' in cats
+        and re.search(r'\bDRL-', au)
+        and not re.search(r'\bDRL\b(?!-)', au)):
+    cats.discard('DRL_2160')
+```
+
+**Arquivos alterados:** `scripts/classificador_ia.py` (C42 no bloco `if cats:`), `tests/test_classificador_ia.py` (2 testes novos).
+
+**Varredura:** +1 ganho, 0 regressões (768 threads). `pytest tests/ -q` → 172 passed. ✅
+
+**Placar:** 741/768 acertos (27 erros).
+
+---
+
 ### Correção 34c — 14/08/2026 — Classificador: DRM e DRL mencionados juntos no corpo → ambos adicionados
 
 **🔎 Em miúdos:** quando o corpo do e-mail menciona DRM e DRL ao mesmo tempo dentro de um contexto de entrega CADOC (Camada 1b), o classificador agora adiciona os dois. O par é específico o suficiente: em todo o corpus, nenhuma thread com DRM sem DRL (ou vice-versa) foi afetada.

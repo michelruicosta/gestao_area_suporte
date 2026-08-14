@@ -385,6 +385,13 @@ def _classificar_deterministico(
                 and 'DLO_2061' in cats_au_original  # DLO veio do assunto, não do complemento
                 and re.search(r'\bDLI\b', au) and not re.search(r'\bDLO\b', au)):
             cats.discard('DLO_2061')
+        # C42: 'DRL-LEC' no assunto é nome do template DLO, não entrega DRL_2160.
+        # Se DRL+DLO+DLI estão em cats e DRL vem só de prefixo 'DRL-' (sem DRL solo)
+        # → DRL_2160 é ruído do nome do template herdado pelo reply chain.
+        if ('DRL_2160' in cats and 'DLO_2061' in cats and 'DLI_2062' in cats
+                and re.search(r'\bDRL-', au)
+                and not re.search(r'\bDRL\b(?!-)', au)):
+            cats.discard('DRL_2160')
         cats = sorted(cats)
         return _ok(cats, f'sinal de CADOC no assunto ({", ".join(cats)})', None)
 
