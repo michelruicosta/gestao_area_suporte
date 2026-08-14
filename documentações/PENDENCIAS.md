@@ -8,7 +8,7 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ---
 
-## 🔧 CLASSIFICADOR DETERMINÍSTICO — 37 erros restantes (placar: 730/767)
+## 🔧 CLASSIFICADOR DETERMINÍSTICO — 36 erros restantes (placar: 732/768)
 
 > Mapeado em 13/08/2026. Atacar grupo por grupo; ao concluir um grupo, remover daqui e gravar no REGISTRO_CORRECOES.md.
 > Dois RETORNO (Sinal 6b) já estão corretos em produção — aparecem aqui só porque a validação usa corpo truncado.
@@ -85,14 +85,9 @@ Placar parcial do Grupo B: 713 → 720/767 acertos.
 
 ---
 
-### 🔴 Grupo C — Faltam categorias — 5 restantes (9 de 14 resolvidos)
+### ✅ Grupo C — Concluído (14 de 14 resolvidos)
 
-✅ Resolvidos: PLANNER, DLO MAIO, ATUAL CORRETORA, DLI MAIO (C32) + Guru CTVM, COS 4010 junho, DRM 2060 Traders (C32) + AMARIL FRANKLIN 06 e 07 (C33) + DRM 05.2026 (C34b: "Enviado o DDR" no corpo) + Encaminhar composição fundo (C34c: DRM+DRL juntos no corpo)
-
-| Thread | Esperado | Obtido atual | Sinal faltante |
-|---|---|---|---|
-| Re: Arquivo 2061. Segue o DLO 05/2026. ACCREDITO. | DLI+DLO | DLO | Nenhum sinal de DLI no corpo nem nos anexos — possível erro de gabarito |
-| Segue a remessa DRM (2060) junho/2026. MIRAE. | DRM+SCD | DRM | "saldos contábeis" no corpo (sem 4111/SALDOS nos anexos) |
+✅ Resolvidos: PLANNER, DLO MAIO, ATUAL CORRETORA, DLI MAIO (C32) + Guru CTVM, COS 4010 junho, DRM 2060 Traders (C32) + AMARIL FRANKLIN 06 e 07 (C33) + DRM 05.2026 (C34b: "Enviado o DDR" no corpo) + Encaminhar composição fundo (C34c: DRM+DRL juntos no corpo) + Arquivo 2061. Segue o DLO 05/2026 (C35b: erro de gabarito — DLI removido) + MIRAE DRM junho/2026 (C36: gabarito DRM+DLO + COS4010 no anexo → DLO)
 
 ---
 

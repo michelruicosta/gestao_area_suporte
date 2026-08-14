@@ -285,6 +285,40 @@ Mantido: bypass do registro (thread confirmada → retorna salvo sem reprocessar
 
 ---
 
+### Correção 35b — 14/08/2026 — Gabarito: "Arquivo 2061. Segue o DLO 05/2026" tinha DLI_2062 indevido
+
+**🔎 Em miúdos:** o gabarito desta thread incluía DLI (Demonstrativo de Liquidação por Instrumento) sem nenhuma menção a DLI no e-mail. Removido. O classificador já retornava só DLO, que é o correto.
+
+**Problema:** Thread "Re: Arquivo 2061. Segue anexo o DLO 05/2026. ACCREDITO." (TID `19f3d08417ad4b48`) — gabarito tinha `['DLO_2061', 'DLI_2062']` mas o corpo dizia apenas "Segue anexo a remessa DLO (2061) 05/2026" e o único anexo era `37715993_2061_20260501_4010_I.zip`. DLI não mencionado em nenhum lugar. Erro puro de gabarito.
+
+**Correção:** Gabarito: `['DLO_2061', 'DLI_2062']` → `['DLO_2061']` para TID `19f3d08417ad4b48`. Nenhuma alteração no código — o classificador já retornava o valor correto. Backup em `data/backups/20260814_1208_correcao_gabarito_arquivo2061_dlo/`.
+
+**Arquivos alterados:** `data/registro_definitivo_threads.json` (gabarito apenas).
+
+**Varredura:** +1 ganho, 0 regressões (768 threads). Placar: 730 → 731 acertos.
+
+**Placar:** 731/768 acertos (37 erros). `pytest tests/ -q` → 156 passed. ✅
+
+---
+
+### Correção 36 — 14/08/2026 — Gabarito + Classificador: MIRAE — DRM + DLO (não SCD); COS4010 no anexo → DLO
+
+**🔎 Em miúdos:** (1) O gabarito desta thread dizia que a MIRAE entregou DRM e SCD — mas Michel confirmou que é DRM e DLO: a MIRAE enviou o arquivo COS4010 que é o arquivo DLO, não SCD. Gabarito corrigido. (2) O classificador não detectava o DLO porque o arquivo chama-se `COS4010_2026-06-I.zip` — a regra C33 usa `\b4010\b` que não bate em `COS4010` (sem fronteira de palavra antes do 4). Regra nova C36 corrige isso.
+
+**Problema:** Thread "Segue a remessa DRM (2060) junho/2026. MIRAE." (TID `19f3df579af9adae`) — gabarito tinha `['DRM_2060', 'SALDOS_CONTABEIS_DIARIOS_4111']` (SCD errado); classificador retornava só `['DRM_2060']` (DLO ausente).
+
+**Correção:**
+- Gabarito: `['DRM_2060', 'SALDOS_CONTABEIS_DIARIOS_4111']` → `['DRM_2060', 'DLO_2061']` para TID `19f3df579af9adae`. Backup em `data/backups/20260814_1227_correcao_gabarito_mirae_drm_dlo/`.
+- Classificador: dentro do bloco `if cats:` da Camada 1b, após C33: se `'COS4010' in xu_norm` e DLO ainda não está em cats → adicionar DLO_2061. 2 testes novos adicionados.
+
+**Arquivos alterados:** `data/registro_definitivo_threads.json` (gabarito), `scripts/classificador_ia.py`, `tests/test_classificador_ia.py`.
+
+**Varredura:** +1 ganho, 0 regressões (768 threads). Placar: 731 → 732 acertos.
+
+**Placar:** 732/768 acertos (36 erros). `pytest tests/ -q` → 158 passed. ✅
+
+---
+
 ### Correção 34c — 14/08/2026 — Classificador: DRM e DRL mencionados juntos no corpo → ambos adicionados
 
 **🔎 Em miúdos:** quando o corpo do e-mail menciona DRM e DRL ao mesmo tempo dentro de um contexto de entrega CADOC (Camada 1b), o classificador agora adiciona os dois. O par é específico o suficiente: em todo o corpus, nenhuma thread com DRM sem DRL (ou vice-versa) foi afetada.

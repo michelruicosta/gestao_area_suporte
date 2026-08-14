@@ -976,3 +976,19 @@ def test_correcao35_saldos_contabeis_sem_mes_ainda_dispara_scd():
     r = _classificar('Saldos contábeis diários referente ao arquivo', '', [])
     assert 'SALDOS_CONTABEIS_DIARIOS_4111' in r['categorias'], \
         f"SCD ausente; obtido {r['categorias']}"
+
+
+def test_correcao36_cos4010_no_anexo_adiciona_dlo():
+    """C36 — assunto com DRM, anexo nomeado 'COS4010_...' → DLO_2061 adicionado.
+    C33 usa \\b4010\\b que não bate em 'COS4010'; C36 complementa para esse padrão de nome.
+    """
+    r = _classificar('Segue a remessa DRM (2060) junho/2026', '', ['COS4010_2026-06-I.zip'])
+    assert 'DLO_2061' in r['categorias'], \
+        f"DLO ausente com COS4010 no anexo; obtido {r['categorias']}"
+
+
+def test_correcao36_cos4010_ausente_nao_adiciona_dlo_indevido():
+    """C36 — sem COS4010 no nome do anexo, DLO não é adicionado apenas pelo assunto DRM."""
+    r = _classificar('Segue a remessa DRM (2060) junho/2026', '', ['12392983_2060_20260630.zip'])
+    assert 'DLO_2061' not in r['categorias'], \
+        f"DLO indevido sem COS4010 no anexo; obtido {r['categorias']}"

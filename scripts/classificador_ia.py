@@ -326,6 +326,11 @@ def _classificar_deterministico(
         # Não incluir 4016: em testes, 4016 aparece em arquivos DLI (MIRAE), não DLO.
         if 'DLO_2061' not in cats and re.search(r'\b4010\b', xu_norm):
             cats.add('DLO_2061')
+        # C36: COS4010 no nome do arquivo → DLO_2061
+        # C33 usa \b4010\b que não bate em 'COS4010' (sem fronteira de palavra antes do 4).
+        # Ex.: MIRAE envia 'COS4010_2026-06-I.zip' para validação do DRM — arquivo DLO.
+        if 'DLO_2061' not in cats and 'COS4010' in xu_norm:
+            cats.add('DLO_2061')
         # C34b: verbo de entrega + DDR no corpo → DDR_2011
         # Ex.: "Enviado o DDR de 29/05 ajustado e DRM" — duas entregas num mesmo e-mail cujo
         # assunto menciona só DRM. Padrão exige verbo explícito de envio próximo de DDR (≤60 chars)
