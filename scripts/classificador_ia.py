@@ -392,6 +392,24 @@ def _classificar_deterministico(
                 and re.search(r'\bDRL-', au)
                 and not re.search(r'\bDRL\b(?!-)', au)):
             cats.discard('DRL_2160')
+        # C44: COS4016 no corpo de e-mail S5 (resultado quantitativo) é referência histórica,
+        # não entrega DLO. Guard: só remove DLO quando S5 e DLO coexistem, assunto não tem
+        # sinal DLO genuíno, e corpo não tem outro sinal DLO além de COS4016.
+        if 'DLO_2061' in cats and 'S5' in cats:
+            _au_sem_dlo = not (
+                re.search(r'\bDLO\b', au) or re.search(r'\b2061\b', au)
+                or re.search(r'(?<!DRL-)\bLEC\b', au)
+                or re.search(r'\b(?:4016|4060|4066)\b', au)
+                or any(c in au for c in ('COS4016', 'COS4060', 'COS4066'))
+                or re.search(r'\bDLI\b', au)
+            )
+            _cu_sem_dlo_forte = not (
+                re.search(r'\bDLO\b', cu) or re.search(r'\b2061\b', cu)
+                or re.search(r'(?<!DRL-)\bLEC\b', cu)
+                or 'COS4060' in cu or 'COS4066' in cu
+            )
+            if _au_sem_dlo and _cu_sem_dlo_forte and 'COS4016' in cu:
+                cats.discard('DLO_2061')
         cats = sorted(cats)
         return _ok(cats, f'sinal de CADOC no assunto ({", ".join(cats)})', None)
 
@@ -400,8 +418,26 @@ def _classificar_deterministico(
         return _ok(['RETORNO_BACEN'], 'sinal de RETORNO_BACEN no corpo', 'RETORNO - Regra 01')
 
     # Camada 2b — CADOC pelo corpo
-    cats = _detectar_cadoc(cu)
+    cats = set(_detectar_cadoc(cu))
     if cats:
+        # C44: COS4016 no corpo de e-mail S5 (resultado quantitativo) é referência histórica,
+        # não entrega DLO. Guard espelha o da Camada 1b.
+        if 'DLO_2061' in cats and 'S5' in cats:
+            _au_sem_dlo = not (
+                re.search(r'\bDLO\b', au) or re.search(r'\b2061\b', au)
+                or re.search(r'(?<!DRL-)\bLEC\b', au)
+                or re.search(r'\b(?:4016|4060|4066)\b', au)
+                or any(c in au for c in ('COS4016', 'COS4060', 'COS4066'))
+                or re.search(r'\bDLI\b', au)
+            )
+            _cu_sem_dlo_forte = not (
+                re.search(r'\bDLO\b', cu) or re.search(r'\b2061\b', cu)
+                or re.search(r'(?<!DRL-)\bLEC\b', cu)
+                or 'COS4060' in cu or 'COS4066' in cu
+            )
+            if _au_sem_dlo and _cu_sem_dlo_forte and 'COS4016' in cu:
+                cats.discard('DLO_2061')
+        cats = sorted(cats)
         return _ok(cats, f'sinal de CADOC no corpo ({", ".join(cats)})', None)
 
     # Camada 3 — CADOC pelos nomes dos anexos

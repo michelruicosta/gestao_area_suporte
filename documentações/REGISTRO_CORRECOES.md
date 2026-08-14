@@ -454,6 +454,25 @@ if ('DRL_2160' in cats and 'DLO_2061' in cats and 'DLI_2062' in cats
 
 ---
 
+### Correção 44 — 14/08/2026 — Classificador: COS4016 no corpo de e-mail de resultado quantitativo (S5) não dispara DLO
+
+**🔎 Em miúdos:** quando um cliente encaminhava o resultado quantitativo (S5) e mencionava no corpo do e-mail que seria necessário reimportar dados COS4010/COS4016 retroativos, o sistema classificava como DLO_2061 — mas o assunto era S5 e não havia entrega de DLO real.
+
+**Problema:** `COS4016` em `tem_dlo` dentro de `_detectar_cadoc` capturava qualquer menção de COS4016 no corpo do e-mail, mesmo quando a menção era puramente referencial ("nova importação dos COS4016 retroativos"). No thread FREEX (`19f677533830f8c1`), o corpo dizia "haverá necessidade de uma nova importação dos COS4010 e COS4016 retroativos" — COS4016 era histórico, não entrega.
+
+**Thread afetada:**
+- `19f677533830f8c1` "Re: Encaminhar os COS4010 jan a maio/2026. FREEX Cambio." — extra DLO_2061 (esperado só S5)
+
+**Correção:** guard C44 adicionado nas Camadas 1b e 2b: se `DLO_2061` e `S5` coexistem no resultado, assunto não tem sinal DLO genuíno, corpo não tem outro sinal DLO além de COS4016 → remove DLO_2061. O guard S5+DLO evita remoções indevidas em threads onde COS4016 é genuinamente entrega DLO (sem S5, o guard não dispara).
+
+**Arquivos alterados:** `scripts/classificador_ia.py` (guard C44 em Camada 1b e 2b), `tests/test_classificador_ia.py` (2 testes novos).
+
+**Varredura:** +1 ganho, 0 regressões (768 threads). `pytest tests/ -q` → 175 passed. ✅
+
+**Placar:** 744/768 acertos (24 erros).
+
+---
+
 ### Correção 34c — 14/08/2026 — Classificador: DRM e DRL mencionados juntos no corpo → ambos adicionados
 
 **🔎 Em miúdos:** quando o corpo do e-mail menciona DRM e DRL ao mesmo tempo dentro de um contexto de entrega CADOC (Camada 1b), o classificador agora adiciona os dois. O par é específico o suficiente: em todo o corpus, nenhuma thread com DRM sem DRL (ou vice-versa) foi afetada.

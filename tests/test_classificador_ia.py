@@ -1186,3 +1186,31 @@ def test_correcao43_threads_ddr_reais_nao_regridem():
         r = _classificar(assunto)
         assert esperado in r['categorias'], \
             f"Assunto '{assunto}': {esperado} ausente após C43; obtido {r['categorias']}"
+
+
+def test_correcao44_cos4016_corpo_resultado_quantitativo_remove_dlo():
+    """C44 — COS4016 no corpo de e-mail de resultado quantitativo (S5) é referência, não entrega DLO."""
+    r = _classificar(
+        assunto='Re: Encaminhar os COS4010 jan a maio/2026. FREEX Cambio.',
+        corpo=(
+            'Prezados, segue o resultado quantitativo (S5) referente ao período solicitado. '
+            'Haverá necessidade de uma nova importação dos COS4010 e COS4016 retroativos '
+            'de maio/24 a dezembro/2025.'
+        ),
+        nomes_anexos=[]
+    )
+    assert 'DLO_2061' not in r['categorias'], \
+        f"C44: DLO_2061 não deveria estar presente; obtido {r['categorias']}"
+    assert 'S5' in r['categorias'], \
+        f"C44: S5 deveria permanecer; obtido {r['categorias']}"
+
+
+def test_correcao44_dlo_valido_com_s5_nao_removido_se_assunto_tem_sinal():
+    """C44 — DLO+S5 coexistindo não remove DLO quando assunto tem sinal DLO genuíno (4016)."""
+    r = _classificar(
+        assunto='COS4016 E RESULTADO QUANTITATIVO JUNHO/2026',
+        corpo='Resultado quantitativo e entrega do DLO período junho.',
+        nomes_anexos=[]
+    )
+    assert 'DLO_2061' in r['categorias'], \
+        f"C44: DLO_2061 deve ser mantido quando assunto tem COS4016; obtido {r['categorias']}"
