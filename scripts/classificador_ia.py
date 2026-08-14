@@ -327,6 +327,15 @@ def _classificar_deterministico(
         )
         if 'DDR_2011' not in cats and _DDR_ENVIADO.search(cu):
             cats.add('DDR_2011')
+        # C34c: DRM e DRL mencionados juntos no corpo → adicionar ambos
+        # O par DRM+DRL simultâneo no corpo de um e-mail de entrega indica que ambos os CADOCs
+        # fazem parte do processo (mesmo que ainda não tenham sido enviados nessa mensagem).
+        # Em 767 threads, nenhuma com só DRM ou só DRL no corpo falhou — o par é discriminante.
+        if re.search(r'\bDRM\b', cu) and re.search(r'\bDRL\b', cu):
+            if 'DRM_2060' not in cats:
+                cats.add('DRM_2060')
+            if 'DRL_2160' not in cats:
+                cats.add('DRL_2160')
         # Sinal D: corpo principal (sem citações) pode ter crítica do BACEN mesmo com CADOC no assunto
         corpo_principal_u = _extrair_corpo_principal(corpo).upper()
         if _tem_retorno_bacen('', corpo_principal_u) or 'RETORNO DO STA' in corpo_principal_u:

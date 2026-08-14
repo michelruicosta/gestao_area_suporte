@@ -934,3 +934,26 @@ def test_correcao34b_ddr_citado_sem_verbo_ativo_nao_adiciona():
                      [])
     assert 'DDR_2011' not in r['categorias'], \
         f"DDR indevido; obtido {r['categorias']}"
+
+
+def test_correcao34c_drm_e_drl_juntos_no_corpo_adiciona_ambos():
+    """C34c — DRM e DRL mencionados juntos no corpo de e-mail Camada 1b → ambos adicionados."""
+    r = _classificar(
+        'RES: DLO - 06/2026 - Encaminhar a composição do fundo',
+        'Já enviei o 4010 e 4016 para DLI. Falta algo para fazer o DRM e o DRL?',
+        []
+    )
+    assert 'DRM_2060' in r['categorias'], f"DRM ausente; obtido {r['categorias']}"
+    assert 'DRL_2160' in r['categorias'], f"DRL ausente; obtido {r['categorias']}"
+    assert 'DLO_2061' in r['categorias'], f"DLO ausente; obtido {r['categorias']}"
+
+
+def test_correcao34c_so_drm_no_corpo_nao_adiciona_drl():
+    """C34c — somente DRM no corpo (sem DRL) não adiciona DRL ao resultado."""
+    r = _classificar(
+        'Re: DLO JUNHO 2026',
+        'Precisamos verificar o envio do DRM de junho.',
+        []
+    )
+    assert 'DRL_2160' not in r['categorias'], \
+        f"DRL indevido; obtido {r['categorias']}"
