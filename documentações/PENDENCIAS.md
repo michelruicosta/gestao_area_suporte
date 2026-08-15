@@ -110,17 +110,17 @@ O classificador acertava as categorias certas mas adicionava uma categoria extra
 
 ---
 
-### 🔴 Grupo E — Falta SUPORTE ao lado do CADOC (5 threads)
+### ✅ Grupo E — SUPORTE indevido no gabarito (RESOLVIDO em 15/08/2026)
 
-Classificador detecta o CADOC corretamente mas não reconhece que o e-mail também é de suporte.
+Michel revisou as 5 threads e confirmou que todas são entregas simples de CADOC — o classificador estava certo; o gabarito é que tinha SUPORTE errado.
 
-| Thread | Esperado | Obtido (errado) |
+| Thread | Gabarito corrigido para | Situação |
 |---|---|---|
-| Posição de Câmbio CAM0050 BACEN... | DDR+SUPORTE | DDR |
-| Erro - 2060 DRM | DRM+SUPORTE | DRM |
-| Re: DLO - 30.06.2026. ATUAL Corretora de Câmbio | DLO+SUPORTE | DLO |
-| Re: Risk Driver - Guru Corretora de Títulos | DLO+SUPORTE | DLO |
-| DRL - Jun/26 | DRL+SUPORTE | DRL |
+| ~~Posição de Câmbio CAM0050 BACEN 28/07~~ | ~~DDR~~ | ✅ Gabarito corrigido |
+| ~~Erro - 2060 DRM~~ | ~~DRM~~ | ✅ Gabarito corrigido |
+| ~~Re: DLO - 30.06.2026. ATUAL Corretora~~ | ~~DLO~~ | ✅ Gabarito corrigido |
+| ~~Re: Risk Driver - Guru~~ | ~~DLO~~ | ✅ Gabarito corrigido |
+| ~~DRL - Jun/26~~ | ~~DRL~~ | ✅ Gabarito corrigido |
 
 ---
 

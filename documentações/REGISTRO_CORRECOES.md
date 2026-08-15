@@ -559,6 +559,29 @@ Com isso, a classificação cai na Camada 3 (nomes dos anexos) → `_detectar_ca
 
 ---
 
+### Gabarito — 15/08/2026 — Grupo E: SUPORTE removido de 5 threads que são entregas simples de CADOC
+
+**🔎 Em miúdos:** 5 threads estavam salvas no gabarito como "CADOC + SUPORTE" — mas Michel revisou e confirmou que todas são só entregas de CADOC, sem elemento de suporte técnico. O classificador estava certo; o gabarito é que estava errado.
+
+**Threads corrigidas (SUPORTE removido):**
+| Thread | Antes | Depois |
+|---|---|---|
+| Posição de Câmbio CAM0050 BACEN 28/07/2026 | DDR+SUPORTE | DDR |
+| Erro - 2060 DRM | DRM+SUPORTE | DRM (entrega com erro; Finaud auxiliou a corrigir) |
+| DRL - Jun/26 | DRL+SUPORTE | DRL (cliente solicita submissão; ainda é entrega DRL) |
+| Re: Risk Driver - Guru... DLO - Situação | DLO+SUPORTE | DLO (pergunta sobre situação = DLO, não SUPORTE) |
+| Re: DLO - 30.06.2026 . Segue o da ATUAL | DLO+SUPORTE | DLO (entrega simples em andamento) |
+
+**Arquivo alterado:** `data/registro_definitivo_threads.json` (5 entradas). Sem mudança de código.
+
+**Backup em:** `data/backups/20260815_0928_correcao_gabarito_grupo_e/`
+
+**Varredura:** +5 ganhos, 0 regressões (767 threads). `pytest tests/ -q` → 181 passed. ✅
+
+**Placar:** 752/767 acertos (15 erros).
+
+---
+
 ### Correção 34c — 14/08/2026 — Classificador: DRM e DRL mencionados juntos no corpo → ambos adicionados
 
 **🔎 Em miúdos:** quando o corpo do e-mail menciona DRM e DRL ao mesmo tempo dentro de um contexto de entrega CADOC (Camada 1b), o classificador agora adiciona os dois. O par é específico o suficiente: em todo o corpus, nenhuma thread com DRM sem DRL (ou vice-versa) foi afetada.
