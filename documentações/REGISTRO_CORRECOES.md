@@ -582,6 +582,51 @@ Com isso, a classificação cai na Camada 3 (nomes dos anexos) → `_detectar_ca
 
 ---
 
+### Correção 49 — 15/08/2026 — Classificador: DDR\d{4} colado restrito ao assunto; corpo ignorado
+
+**🔎 Em miúdos:** quando o e-mail encaminhado ("ENC: PR") trazia "DDRs" no corpo do e-mail original, o classificador entendia que era uma entrega de DDR. Agora o padrão `DDR + número de 4 dígitos` só vale quando está no assunto — no corpo pode ser referência histórica ou contexto, não entrega.
+
+**Problema:** o padrão `r'(?<!\w)DDR\d{4}(?!\w)'` estava dentro de `_DDR_PADROES` (lista lida pela Camada 2b para corpo). Um e-mail encaminhado com "DDRs" no corpo original era detectado como DDR_2011 mesmo sem qualquer entrega real.
+
+**Correção:**
+- Removido `r'(?<!\w)DDR\d{4}(?!\w)'` de `_DDR_PADROES`
+- Adicionado diretamente à Camada 1b (assunto apenas):
+  ```python
+  if re.search(r'(?<!\w)DDR\d{4}(?!\w)', au):
+      cats.add('DDR_2011')
+  ```
+
+**Arquivos alterados:** `scripts/classificador_ia.py` (`_DDR_PADROES` e Camada 1b), `tests/test_classificador_ia.py` (2 testes C49).
+
+**Varredura:** 0 regressões (767 threads). `pytest tests/ -q` → 183 passed. ✅
+
+**Placar:** 752/767 acertos (15 erros). *(Melhoria defensiva — thread "ENC: PR" ainda errava por outro padrão `\bDDRS?\b`; resolvida na C50.)*
+
+---
+
+### Correção 50 — 15/08/2026 — Classificador: blocos encaminhados no formato Outlook removidos do corpo antes da detecção CADOC
+
+**🔎 Em miúdos:** quando um e-mail é encaminhado pelo Outlook, ele inclui o corpo inteiro do e-mail original abaixo da linha "De: fulano / Enviada em: ontem". O classificador lia esse conteúdo antigo como se fosse o e-mail atual. C50 ensinou o classificador a parar de ler quando encontrar esse cabeçalho de encaminhamento.
+
+**Problema:** "ENC: PR — Pentest Report" — Outlook incluía no corpo o texto do e-mail original, que continha "DDRs". `_corpo_sem_citacoes` só removia linhas com `>` (citações Gmail); blocos Outlook sem `>` passavam inteiros e disparavam `\bDDRS?\b` → DDR_2011. Resultado: `['DDR_2011', 'SUPORTE']` quando esperado era `['SUPORTE']`.
+
+**Correção:** `_corpo_sem_citacoes` estendida para também truncar ao encontrar cabeçalho Outlook:
+```python
+if re.match(r'^De:\s+\S', stripped, re.IGNORECASE):
+    trecho = '\n'.join(l.strip() for l in linhas[i:i + 6]).upper()
+    if 'ENVIADA EM:' in trecho or 'SENT:' in trecho:
+        break
+```
+Conteúdo antes do cabeçalho é preservado; o bloco encaminhado é descartado.
+
+**Arquivos alterados:** `scripts/classificador_ia.py` (`_corpo_sem_citacoes`), `tests/test_classificador_ia.py` (2 testes C50).
+
+**Varredura:** +1 ganho ("ENC: PR"), 0 regressões (767 threads). `pytest tests/ -q` → 185 passed. ✅
+
+**Placar:** 753/767 acertos (14 erros).
+
+---
+
 ### Correção 34c — 14/08/2026 — Classificador: DRM e DRL mencionados juntos no corpo → ambos adicionados
 
 **🔎 Em miúdos:** quando o corpo do e-mail menciona DRM e DRL ao mesmo tempo dentro de um contexto de entrega CADOC (Camada 1b), o classificador agora adiciona os dois. O par é específico o suficiente: em todo o corpus, nenhuma thread com DRM sem DRL (ou vice-versa) foi afetada.

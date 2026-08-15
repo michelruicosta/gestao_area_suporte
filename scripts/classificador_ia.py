@@ -250,21 +250,32 @@ def _ok(cats: list[str], motivo: str, regra_usada: str | None) -> dict:
 # ── Pré-processamento de corpo ────────────────────────────────────────────────
 
 def _corpo_sem_citacoes(corpo: str) -> str:
-    """Remove linhas citadas de e-mails anteriores (iniciadas por '>').
+    """Remove linhas citadas ('>') e blocos encaminhados Outlook ('De:...Enviada em:').
 
     E-mails de resposta carregam o texto citado do remetente anterior. Esses
     trechos podem conter nomes de CADOC de entregas antigas que nada têm a ver
     com a entrega atual — e causam falsos positivos. Removê-los garante que a
     detecção de CADOC analisa só o texto da mensagem corrente.
 
-    Nota para quem chama esta função: e-mails muito longos com histórico embutido
-    como texto plano (sem '>') ainda podem carregar sinais antigos. Recomenda-se
-    limitar cada mensagem a ~2000 chars antes de concatenar o corpo.
+    C50: além das linhas '>', também trunca no início de blocos encaminhados
+    no formato Outlook ('De: X\n...\nEnviada em: Y'). Esses blocos não usam '>'
+    mas carregam o corpo completo do e-mail original — inclusive menções a
+    CADOC que são contexto histórico, não entrega atual.
     """
-    return '\n'.join(
-        linha for linha in corpo.split('\n')
-        if not linha.strip().startswith('>')
-    )
+    linhas = corpo.split('\n')
+    resultado = []
+    for i, linha in enumerate(linhas):
+        stripped = linha.strip()
+        if stripped.startswith('>'):
+            continue
+        # C50: linha começa com 'De: ' → verificar se é cabeçalho Outlook
+        # (seguido por 'Enviada em:' ou 'Sent:' nas próximas 6 linhas)
+        if re.match(r'^De:\s+\S', stripped, re.IGNORECASE):
+            trecho = '\n'.join(l.strip() for l in linhas[i:i + 6]).upper()
+            if 'ENVIADA EM:' in trecho or 'SENT:' in trecho:
+                break
+        resultado.append(linha)
+    return '\n'.join(resultado)
 
 
 # ── Classificação determinística ──────────────────────────────────────────────

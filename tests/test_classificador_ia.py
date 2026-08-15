@@ -1333,3 +1333,36 @@ def test_correcao49_ddr2011_colado_no_assunto_ainda_detectado():
     r = _classificar('RES: VIS : STA - DDR2011 e demais nao disponiveis', 'Sem DDR no corpo.', [])
     assert 'DDR_2011' in r['categorias'], \
         f"C49: DDR ausente — 'DDR2011' no assunto deve continuar disparando; obtido {r['categorias']}"
+
+
+def test_correcao50_outlook_forward_nao_dispara_cadoc():
+    """C50 — corpo encaminhado no formato Outlook ('De: X\\nEnviada em: Y') é truncado.
+    Caso real: 'ENC: PR' — e-mail de suporte encaminha mensagem anterior que menciona
+    'DDRs para o banco central'; esse texto não deve disparar DDR.
+    """
+    corpo_com_forward = (
+        'Por gentileza, poderia nos ajudar?\n\n'
+        'De: Caroline Costa <c.costa@globalexchange.br.com>\n'
+        'Enviada em: sexta-feira, 10 de julho de 2026 11:03\n'
+        'Para: Monica Macedo <monica@finaud.com.br>\n'
+        'Assunto: RE: PR\n\n'
+        'Lembrando que estamos com pendencia de relatorios de DDRs para o banco central.'
+    )
+    r = _classificar('ENC: PR', corpo_com_forward, [])
+    assert 'DDR_2011' not in r['categorias'], \
+        f"C50: DDR indevido — veio do corpo do forward Outlook; obtido {r['categorias']}"
+
+
+def test_correcao50_entrega_real_antes_do_forward_preservada():
+    """C50 — conteúdo antes do marcador Outlook ainda é detectado normalmente.
+    Assunto genérico → Camada 2b lê o corpo; DDR mencionado antes do forward deve ser mantido.
+    """
+    corpo = (
+        'Segue o DDR 2011 de junho.\n\n'
+        'De: Remetente <r@example.com>\n'
+        'Enviada em: ontem\n\n'
+        'Isso aqui e antigo e nao deve ser lido.'
+    )
+    r = _classificar('Arquivo junho 2026', corpo, [])
+    assert 'DDR_2011' in r['categorias'], \
+        f"C50: DDR perdido — sinal antes do forward deve ser preservado; obtido {r['categorias']}"
