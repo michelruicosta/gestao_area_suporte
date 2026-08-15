@@ -1312,3 +1312,24 @@ def test_correcao48_bacen_sem_pendencias_nao_afetado():
     r = _classificar('RES: DDR BACEN - JULHO 2026')
     assert 'DDR_2011' in r['categorias'], \
         f"C48: DDR removido indevidamente (sem PENDENCIAS no assunto); obtido {r['categorias']}"
+
+
+def test_correcao49_ddr2011_colado_no_corpo_nao_dispara_ddr():
+    """C49 — 'DDR2011' colado no corpo é referência ao relatório, não entrega.
+    Caso real: 'ENC: PR' — cliente menciona 'nosso relatório de DDR2011' no corpo,
+    mas o assunto é genérico ('ENC: PR') e não há entrega de DDR.
+    """
+    r = _classificar(
+        'ENC: PR',
+        'Essa informação é importante pois incluímos em nosso relatório de DDR2011.',
+        []
+    )
+    assert 'DDR_2011' not in r['categorias'], \
+        f"C49: DDR indevido — 'DDR2011' no corpo é referência, não entrega; obtido {r['categorias']}"
+
+
+def test_correcao49_ddr2011_colado_no_assunto_ainda_detectado():
+    """C49 — 'DDR2011' colado no assunto ainda dispara DDR_2011 (C40 preservado no assunto)."""
+    r = _classificar('RES: VIS : STA - DDR2011 e demais nao disponiveis', 'Sem DDR no corpo.', [])
+    assert 'DDR_2011' in r['categorias'], \
+        f"C49: DDR ausente — 'DDR2011' no assunto deve continuar disparando; obtido {r['categorias']}"

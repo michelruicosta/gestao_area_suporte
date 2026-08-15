@@ -98,7 +98,6 @@ _DDR_PADROES = [
     r'CADASTRO.*RISKDRIVER|RISKDRIVER.*CADASTRO',  # cadastro de fundos no Risk Driver = entrega DDR (C27)
     r'POSICAO\s+\d{2}[./]\d{2}[./]\d{4}',          # 'POSICAO DD.MM.AAAA' no assunto = arquivo de posição DDR (C28)
     r'\bEXTRATO[S]?\b',                             # extratos de conta/câmbio/aplicações = insumo DDR (C29)
-    r'(?<!\w)DDR\d{4}(?!\w)',                       # C40: "DDR2011" colado (sem espaço/fronteira) — ex.: "VIS STA - DDR2011 e demais não disponíveis"
 ]
 
 # Marcadores de início de texto citado/encaminhado no corpo do e-mail
@@ -308,6 +307,10 @@ def _classificar_deterministico(
     # Códigos COS DLO solo no assunto (ex.: '4010 Trinus', 'COSIF'S 4010') — no corpo podem ser contexto (C30)
     if re.search(r'\b(?:4010|4016|4060|4066)\b', au):
         cats.add('DLO_2061')
+    # C40: "DDR2011" colado (sem espaço) no assunto — ex.: "VIS STA - DDR2011 e demais não disponíveis"
+    # No corpo pode ser referência ao relatório do cliente ("nosso relatório de DDR2011") — restrito ao assunto
+    if re.search(r'(?<!\w)DDR\d{4}(?!\w)', au):
+        cats.add('DDR_2011')
     # C47: 'Saldos do dia DD/MM' no assunto = envio de saldos diários → SCD
     # No corpo, 'saldos do dia' pode aparecer como contexto/pedido — restrito ao assunto
     if re.search(r'SALDOS DO DIA\b', au):
