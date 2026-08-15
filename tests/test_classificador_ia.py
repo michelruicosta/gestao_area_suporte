@@ -1252,3 +1252,37 @@ def test_correcao46_cadoc_no_corpo_principal_detectado_normalmente():
     )
     assert 'DLI_2062' in r['categorias'], \
         f"C46: DLI_2062 do corpo principal não deveria ser removido; obtido {r['categorias']}"
+
+
+# ── Correção 47 — 'Saldos do dia' no assunto → SCD (não DDR pelo corpo) ──────
+
+
+def test_correcao47_saldos_do_dia_no_assunto_retorna_scd():
+    """C47 — assunto 'Saldos do dia DD/MM' = envio de saldos diários → SCD.
+    Caso real: 'Saldos do dia 20/07 até 22/07' — corpo menciona '2011' como pedido;
+    SCD detectado no assunto impede que DDR seja adicionado indevidamente.
+    """
+    r = _classificar(
+        'Saldos do dia 20/07 até 22/07',
+        'Sarah, faltou o 2011 desses dias tbm.',
+        []
+    )
+    assert 'SALDOS_CONTABEIS_DIARIOS_4111' in r['categorias'], \
+        f"C47: SCD ausente no assunto 'Saldos do dia'; obtido {r['categorias']}"
+    assert 'DDR_2011' not in r['categorias'], \
+        f"C47: DDR indevido (2011 no corpo é pedido, não entrega); obtido {r['categorias']}"
+
+
+def test_correcao47_saldos_do_dia_com_2011_no_anexo_mantem_ddr():
+    """C47 — 'Saldos do dia' no assunto + arquivo 2011 nos anexos → DDR+SCD (ambos entregues).
+    Caso real: 'Saldos do dia 27/07 (retificação) e 28/07' com arquivos 2011 anexados.
+    """
+    r = _classificar(
+        'Saldos do dia 27/07 (retificação) e 28/07',
+        'Segue saldos 27 e 28/07.',
+        ['62280490_2011_20260727_S_2.zip', '62280490_4111_20260727_S_2.zip']
+    )
+    assert 'SALDOS_CONTABEIS_DIARIOS_4111' in r['categorias'], \
+        f"C47: SCD ausente; obtido {r['categorias']}"
+    assert 'DDR_2011' in r['categorias'], \
+        f"C47: DDR ausente (arquivo 2011 nos anexos indica entrega real); obtido {r['categorias']}"

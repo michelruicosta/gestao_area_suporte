@@ -307,6 +307,10 @@ def _classificar_deterministico(
     # Códigos COS DLO solo no assunto (ex.: '4010 Trinus', 'COSIF'S 4010') — no corpo podem ser contexto (C30)
     if re.search(r'\b(?:4010|4016|4060|4066)\b', au):
         cats.add('DLO_2061')
+    # C47: 'Saldos do dia DD/MM' no assunto = envio de saldos diários → SCD
+    # No corpo, 'saldos do dia' pode aparecer como contexto/pedido — restrito ao assunto
+    if re.search(r'SALDOS DO DIA\b', au):
+        cats.add('SALDOS_CONTABEIS_DIARIOS_4111')
     # 'INSTRUÇÃO NORMATIVA' sem CADOC no assunto = circular regulatória encaminhada, não entrega CADOC
     # (se o assunto também tiver código CADOC, ex.: 'DLI 2062', mantém a detecção normal)
     if not cats and ('INSTRUÇÃO NORMATIVA' in au or 'INSTRUCAO NORMATIVA' in au):
