@@ -1286,3 +1286,29 @@ def test_correcao47_saldos_do_dia_com_2011_no_anexo_mantem_ddr():
         f"C47: SCD ausente; obtido {r['categorias']}"
     assert 'DDR_2011' in r['categorias'], \
         f"C47: DDR ausente (arquivo 2011 nos anexos indica entrega real); obtido {r['categorias']}"
+
+
+# ── Correção 48 — 'Pendencias BACEN' no assunto → corpo/anexos decide categoria ─
+
+
+def test_correcao48_pendencias_bacen_assunto_nao_dispara_ddr_pelo_assunto():
+    """C48 — 'Pendencias BACEN - 2011' no assunto = pendência, não entrega DDR.
+    O CADOC mencionado é contexto; a categoria vem do que foi enviado no corpo/anexo.
+    Caso real: cliente envia SCD (4111) para resolver pendência de DDR 2011.
+    """
+    r = _classificar(
+        'Pendencias BACEN  - 2011 ref. 30/01/2026',
+        'Saldos de Janeiro em anexo.',
+        ['4111 - Janeiro2026.xlsx']
+    )
+    assert 'DDR_2011' not in r['categorias'], \
+        f"C48: DDR indevido (2011 no assunto é contexto de pendência); obtido {r['categorias']}"
+    assert 'SALDOS_CONTABEIS_DIARIOS_4111' in r['categorias'], \
+        f"C48: SCD ausente (arquivo 4111 no anexo é o que foi entregue); obtido {r['categorias']}"
+
+
+def test_correcao48_bacen_sem_pendencias_nao_afetado():
+    """C48 — assunto com BACEN mas sem PENDENCIAS não é suprimido."""
+    r = _classificar('RES: DDR BACEN - JULHO 2026')
+    assert 'DDR_2011' in r['categorias'], \
+        f"C48: DDR removido indevidamente (sem PENDENCIAS no assunto); obtido {r['categorias']}"

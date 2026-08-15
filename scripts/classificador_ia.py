@@ -295,6 +295,7 @@ def _classificar_deterministico(
         return _ok(['RETORNO_BACEN'], "'CRITICAS AO' no assunto", 'RETORNO - Regra 01')
 
     # Camada 1b — CADOC pelo assunto
+    _pendencia_bacen = False  # C48: flag para suprimir Camada 2b quando assunto indica pendência
     cats = set(_detectar_cadoc(au))
     cats_au_original = frozenset(cats)  # C41: guarda cats antes de qualquer complemento
     # '\bS5\b' só no assunto — no corpo é tamanho de instituição BACEN (S1–S5), não entrega CADOC
@@ -311,6 +312,13 @@ def _classificar_deterministico(
     # No corpo, 'saldos do dia' pode aparecer como contexto/pedido — restrito ao assunto
     if re.search(r'SALDOS DO DIA\b', au):
         cats.add('SALDOS_CONTABEIS_DIARIOS_4111')
+    # C48: 'PENDENCIAS BACEN' no assunto → o CADOC mencionado é contexto de pendência, não entrega.
+    # Ex.: "Pendencias BACEN - 2011 ref. 30/01/2026" = DDR com pendência no BACEN; quem decide
+    # a categoria é o que foi enviado no corpo/anexos (ex.: SCD para resolver a pendência).
+    if cats and ('BACEN' in au) and ('PENDENCIAS' in au or 'PENDÊNCIA' in au or 'PENDÊNCIAS' in au):
+        cats = set()
+        cats_au_original = frozenset()
+        _pendencia_bacen = True  # C48: corpo também menciona o CADOC da pendência — suprimir Camada 2b
     # 'INSTRUÇÃO NORMATIVA' sem CADOC no assunto = circular regulatória encaminhada, não entrega CADOC
     # (se o assunto também tiver código CADOC, ex.: 'DLI 2062', mantém a detecção normal)
     if not cats and ('INSTRUÇÃO NORMATIVA' in au or 'INSTRUCAO NORMATIVA' in au):
@@ -453,7 +461,8 @@ def _classificar_deterministico(
         return _ok(['RETORNO_BACEN'], 'sinal de RETORNO_BACEN no corpo', 'RETORNO - Regra 01')
 
     # Camada 2b — CADOC pelo corpo
-    cats = set(_detectar_cadoc(cu))
+    # C48: quando assunto indica pendência BACEN, corpo cita o CADOC por contexto — pular detecção
+    cats = set() if _pendencia_bacen else set(_detectar_cadoc(cu))
     if cats:
         # C44: COS4016 no corpo de e-mail S5 (resultado quantitativo) é referência histórica,
         # não entrega DLO. Guard espelha o da Camada 1b.
