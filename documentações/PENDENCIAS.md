@@ -90,23 +90,23 @@ Placar parcial do Grupo B: 713 → 720/767 acertos.
 
 ---
 
-### 🔴 Grupo D — Categoria extra adicionada indevidamente (itens restantes)
+### ✅ Grupo D — Categoria extra adicionada indevidamente (RESOLVIDO em 15/08/2026)
 
-O classificador acerta as categorias certas mas adiciona uma categoria a mais que não pertence.
-*(C41–C46 corrigiram alguns itens em 14/08/2026 — confirmados na simulação 741/768.)*
+O classificador acertava as categorias certas mas adicionava uma categoria extra.
+*(Todos os 10 itens resolvidos — 7 por C40–C46, 1 por C47, 1 por C48, 1 por gabarito C37.)*
 
-| Thread | Esperado | Obtido (errado) | Situação |
-|---|---|---|---|
-| ~~Re: Planilha DRL-LEC Junho/2026~~ | ~~DLI+DLO~~ | ~~DDR+DLI+DLO+DRL~~ | ✅ C42 |
-| ~~Re: REMITLY - Encaminhar COS4010 e LEC maio/2026~~ | ~~DLI+DLO~~ | ~~DDR+DLI+DLO~~ | ✅ C42+C46 gabarito |
-| RES: VIS : STA - DDR2011 e demais não disponíveis | DDR | DDR+DLI+DLO | 🔴 Pendente |
-| duvidas finaud | DLO | DDR+DLO | 🔴 Pendente |
-| ~~Re: Arquivo 2061 e 2062. Segue o DLI. ACCREDITO.~~ | ~~DLI~~ | ~~DLI+DLO~~ | ✅ C41 |
-| Re: COS4016 DE 06-2026. Segue o 4111. FAIRWAY | SCD | DLO+SCD | 🔴 Pendente |
-| Saldos do dia 20/07 até 22/07 | SCD | DDR+SCD | 🔴 Pendente |
-| Saldos do dia 27/07 (retificação) e 28/07 | SCD | DDR+SCD | 🔴 Pendente (ver C37) |
-| Pendencias BACEN - 2011 ref. 30/01/2026 | SCD | DDR | 🔴 Pendente |
-| Remitly CC - 4010/4016 - 06/2026 | DLO | DDR | 🔴 Pendente |
+| Thread | Esperado | Situação |
+|---|---|---|
+| ~~Re: Planilha DRL-LEC Junho/2026~~ | ~~DLI+DLO~~ | ✅ C42 |
+| ~~Re: REMITLY - Encaminhar COS4010 e LEC maio/2026~~ | ~~DLI+DLO~~ | ✅ C42+C46 gabarito |
+| ~~RES: VIS : STA - DDR2011 e demais não disponíveis~~ | ~~DDR~~ | ✅ C40 (varredura 15/08) |
+| ~~duvidas finaud~~ | ~~DLO~~ | ✅ C40–C46 (varredura 15/08) |
+| ~~Re: Arquivo 2061 e 2062. Segue o DLI. ACCREDITO.~~ | ~~DLI~~ | ✅ C41 |
+| ~~Re: COS4016 DE 06-2026. Segue o 4111. FAIRWAY~~ | ~~SCD~~ | ✅ C39/C38 (varredura 15/08) |
+| ~~Saldos do dia 20/07 até 22/07~~ | ~~SCD~~ | ✅ C47 |
+| ~~Saldos do dia 27/07 (retificação) e 28/07~~ | ~~DDR+SCD~~ | ✅ C37 (gabarito correto era DDR+SCD — ambos os arquivos presentes) |
+| ~~Pendencias BACEN - 2011 ref. 30/01/2026~~ | ~~SCD~~ | ✅ C48 |
+| ~~Remitly CC - 4010/4016 - 06/2026~~ | ~~DLO~~ | ✅ C40/C43 (varredura 15/08) |
 
 ---
 

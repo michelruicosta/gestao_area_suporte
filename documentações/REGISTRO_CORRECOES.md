@@ -516,6 +516,49 @@ Dois gabaritos estavam errados por causa do mesmo problema: ZIIN (`19f71c34de241
 
 ---
 
+### Correção 47 — 15/08/2026 — Classificador: 'Saldos do dia DD/MM' no assunto → SCD (restrito ao assunto)
+
+**🔎 Em miúdos:** quando o assunto do e-mail diz "Saldos do dia 20/07" (com data), o classificador agora entende que é envio de saldos contábeis diários (SCD) — sem precisar ver o corpo ou os anexos. Antes, só detectava SCD se o número 4111 aparecesse — e quando o corpo mencionava "2011" (ex.: "faltou o 2011 desses dias"), o DDR era adicionado indevidamente.
+
+**Problema:** "Saldos do dia 20/07 até 22/07" — assunto não tinha 4111; corpo dizia "Sarah, faltou o 2011 desses dias tbm." — `\b2011\b` no corpo (Camada 2b) disparava DDR. Resultado: `['DDR_2011']` quando esperado era `['SALDOS_CONTABEIS_DIARIOS_4111']`.
+
+A frase "saldos do dia" no corpo é perigosa — pode aparecer como pedido ou contexto, não como entrega. Restringindo ao assunto, o sinal é discriminante e seguro.
+
+**Correção:** dentro da Camada 1b (após checks COS), acrescentado:
+```python
+if re.search(r'SALDOS DO DIA\b', au):
+    cats.add('SALDOS_CONTABEIS_DIARIOS_4111')
+```
+Quando cats não era vazio antes de C48, entra no bloco `if cats:` — complemento C32 (Camada 1b) ainda verifica `\b2011\b` nos nomes de arquivo para adicionar DDR quando necessário. Resultado: "Saldos 20/07" (sem 2011 no anexo) → SCD; "Saldos 27/07" (com `62280490_2011_20260727_S_2.zip`) → DDR+SCD. 4 testes novos adicionados.
+
+**Arquivos alterados:** `scripts/classificador_ia.py` (Camada 1b — C47), `tests/test_classificador_ia.py` (4 testes novos).
+
+**Varredura:** +5 ganhos (todas as threads "Saldos do dia" agora detectadas pelo assunto), 0 regressões (767 threads). `pytest tests/ -q` → 181 passed. ✅
+
+**Placar:** 746/767 acertos (21 erros).
+
+---
+
+### Correção 48 — 15/08/2026 — Classificador: 'PENDENCIAS BACEN' no assunto suprime detecção de CADOC pelo assunto e pelo corpo
+
+**🔎 Em miúdos:** quando o assunto diz "Pendencias BACEN - 2011 ref. 30/01/2026", o número 2011 é o CADOC que está em aberto (uma pendência não resolvida), não o que está sendo entregue. O classificador estava detectando DDR porque leu o 2011 — mas o que foi entregue é o que está no anexo (no caso, um arquivo 4111 = SCD).
+
+**Problema:** "Pendencias BACEN - 2011 ref. 30/01/2026" — `\b2011\b` no assunto disparava DDR na Camada 1b. Limpar `cats` na Camada 1b não resolvia: o corpo do e-mail também mencionava "2011" (contexto da pendência), e a Camada 2b o detectava e retornava DDR. Resultado: `['DDR_2011']` quando esperado era `['SALDOS_CONTABEIS_DIARIOS_4111']` (SCD detectado no anexo).
+
+**Correção em dois passos:**
+1. Na Camada 1b: quando `cats` tem algo E o assunto contém "BACEN" + "PENDENCIAS" → zerar `cats` e `cats_au_original`, e marcar `_pendencia_bacen = True`
+2. Na Camada 2b: substituir `cats = set(_detectar_cadoc(cu))` por `cats = set() if _pendencia_bacen else set(_detectar_cadoc(cu))` — body detection pulada quando assunto indica pendência
+
+Com isso, a classificação cai na Camada 3 (nomes dos anexos) → `_detectar_cadoc(xu_norm)` sobre "4111 - Janeiro2026.xlsx" → SCD detectado corretamente. 2 testes existentes para C48 confirmados passando.
+
+**Arquivos alterados:** `scripts/classificador_ia.py` (flag `_pendencia_bacen` em Camada 1b e Camada 2b), `tests/test_classificador_ia.py` (2 testes C48).
+
+**Varredura:** +1 ganho ("Pendencias BACEN - 2011 ref. 30/01/2026"), 0 regressões (767 threads). `pytest tests/ -q` → 181 passed. ✅
+
+**Placar:** 747/767 acertos (20 erros).
+
+---
+
 ### Correção 34c — 14/08/2026 — Classificador: DRM e DRL mencionados juntos no corpo → ambos adicionados
 
 **🔎 Em miúdos:** quando o corpo do e-mail menciona DRM e DRL ao mesmo tempo dentro de um contexto de entrega CADOC (Camada 1b), o classificador agora adiciona os dois. O par é específico o suficiente: em todo o corpus, nenhuma thread com DRM sem DRL (ou vice-versa) foi afetada.
