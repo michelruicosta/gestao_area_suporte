@@ -2410,3 +2410,27 @@ Cache lazy-load: o registro é lido do disco uma vez por processo e mantido em m
 
 **Placar:** 755/767 acertos (12 erros). *(Sem ganho de placar — thread #5 ainda erra por DLO indevido; mas o SCD falso foi corrigido.)*
 
+---
+
+### Correção 53 — 16/08/2026 — Classificador: código COS no assunto + 4111 no corpo → SCD adicionado na Camada 1b
+
+**🔎 Em miúdos:** quando o assunto dizia "COS 4010" (código do sistema de envio do arquivo DLO) e o corpo falava em "retificação do 4111", o classificador não adicionava os Saldos Contábeis Diários. Corrigido: se o assunto tem código COS (4010, 4016, 4060 ou 4066) e o corpo menciona "4111", o SCD é adicionado junto ao DLO.
+
+**Problema:** thread "COS 4010 junho/2026" — assunto detecta DLO via código 4010 (linha 319 da Camada 1b) e retorna imediatamente com `['DLO_2061']`, sem nunca ler o corpo onde está "para retificação do Doc 4111". A Camada 2b (que detectaria o SCD pelo corpo) nunca é executada quando a Camada 1b já encontrou um resultado.
+
+**Varredura prévia:** 40 threads confirmadas com padrão CADOC-no-assunto + 4111-no-corpo + SCD-no-gabarito; 39 delas já têm SCD detectado pelo próprio assunto. 7 candidatos a falso positivo: 5 são RETORNO_BACEN (capturados em Camada 1a, antes da Camada 1b) e os 2 restantes não têm código COS no assunto → 0 regressões esperadas.
+
+**Correção:** no bloco `if cats:` da Camada 1b, após a detecção C32 de SCD por anexo:
+```python
+# C53: código COS DLO no assunto + 4111 no corpo = retificação de SCD junto com DLO
+if 'SALDOS_CONTABEIS_DIARIOS_4111' not in cats:
+    if re.search(r'\b(?:4010|4016|4060|4066)\b', au) and re.search(r'\b4111\b', cu):
+        cats.add('SALDOS_CONTABEIS_DIARIOS_4111')
+```
+
+**Arquivos alterados:** `scripts/classificador_ia.py` (Camada 1b, bloco C53), `tests/test_classificador_ia.py` (2 testes C53).
+
+**Varredura:** +1 ganho ("COS 4010 junho/2026"), 0 regressões (767 threads). `pytest tests/ -q` → 191 passed. ✅
+
+**Placar:** 756/767 acertos (11 erros).
+

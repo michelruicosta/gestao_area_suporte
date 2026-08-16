@@ -1415,3 +1415,27 @@ def test_correcao52_4111_no_corpo_ainda_dispara_scd():
     r = _classificar('Guru CTVM: Informações Diárias', corpo, [])
     assert 'SALDOS_CONTABEIS_DIARIOS_4111' in r['categorias'], \
         f"C52: '4111' no corpo não detectou SCD; obtido {r['categorias']}"
+
+
+# ---------------------------------------------------------------------------
+# C53 — código COS DLO no assunto + 4111 no corpo → SCD adicionado na Camada 1b
+# ---------------------------------------------------------------------------
+
+def test_correcao53_cos4010_assunto_4111_corpo_adiciona_scd():
+    """C53 — assunto com código COS (4010) + '4111' no corpo → DLO + SCD."""
+    corpo = 'Segue COS de junho/2026 para retificação do Doc 4111 do dia 30/06/2026.'
+    r = _classificar('COS 4010 junho/2026', corpo, ['COS4010_2026-06-I FAIR.XML'])
+    assert 'DLO_2061' in r['categorias'], \
+        f"C53: DLO ausente; obtido {r['categorias']}"
+    assert 'SALDOS_CONTABEIS_DIARIOS_4111' in r['categorias'], \
+        f"C53: SCD ausente com 4111 no corpo e COS 4010 no assunto; obtido {r['categorias']}"
+
+
+def test_correcao53_cos_sem_4111_no_corpo_nao_adiciona_scd():
+    """C53 — assunto com código COS mas sem '4111' no corpo não gera SCD indevidamente."""
+    corpo = 'Segue o arquivo DLO de junho/2026 para sua análise.'
+    r = _classificar('COS 4010 junho/2026', corpo, ['COS4010_2026-06-I.XML'])
+    assert 'DLO_2061' in r['categorias'], \
+        f"C53: DLO ausente; obtido {r['categorias']}"
+    assert 'SALDOS_CONTABEIS_DIARIOS_4111' not in r['categorias'], \
+        f"C53: SCD indevido sem 4111 no corpo; obtido {r['categorias']}"

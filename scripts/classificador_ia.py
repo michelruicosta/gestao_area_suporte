@@ -376,6 +376,11 @@ def _classificar_deterministico(
         if 'SALDOS_CONTABEIS_DIARIOS_4111' not in cats:
             if re.search(r'\b4111\b', xu_norm) and 'SALDOS' in xu_norm:
                 cats.add('SALDOS_CONTABEIS_DIARIOS_4111')
+        # C53: código COS DLO no assunto + 4111 no corpo = retificação de SCD junto com DLO
+        # Ex.: "COS 4010 junho/2026" → DLO detectado do assunto; corpo diz "retificação do Doc 4111"
+        if 'SALDOS_CONTABEIS_DIARIOS_4111' not in cats:
+            if re.search(r'\b(?:4010|4016|4060|4066)\b', au) and re.search(r'\b4111\b', cu):
+                cats.add('SALDOS_CONTABEIS_DIARIOS_4111')
         # C33: 4010 no nome do arquivo → DLO_2061 (padrão CNPJ_4010_DATA.xml = envio via COS4010)
         # Não incluir 4016: em testes, 4016 aparece em arquivos DLI (MIRAE), não DLO.
         if 'DLO_2061' not in cats and re.search(r'\b4010\b', xu_norm):
