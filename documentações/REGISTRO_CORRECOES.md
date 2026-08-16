@@ -559,6 +559,22 @@ Com isso, a classificação cai na Camada 3 (nomes dos anexos) → `_detectar_ca
 
 ---
 
+### Gabarito — 16/08/2026 — 'RES: Dados para o relatório' corrigido de SUPORTE para S5
+
+**🔎 Em miúdos:** essa thread é sobre uma corretora que migrou para o segmento S5 e está pedindo ajuda para gerar o Resultado Quantitativo de Basileia. O classificador acertou ao dizer S5 — o gabarito é que estava errado ao dizer SUPORTE.
+
+**Motivo:** a conversa envolve a geração do Resultado Quantitativo (relatório S5), mesmo que a entrega ainda não tivesse ocorrido nessa thread. A categoria S5 reflete o trabalho que a thread originou.
+
+**Thread corrigida:** `19fa47e4e5ca5bc2` — `['SUPORTE']` → `['S5']`
+
+**Arquivo alterado:** `data/registro_definitivo_threads.json` (1 entrada). Sem mudança de código.
+
+**Backup em:** `data/backups/20260816_1027_correcao_gabarito_erro3_s5/`
+
+**Placar:** 754/767 acertos (13 erros).
+
+---
+
 ### Gabarito — 15/08/2026 — Grupo E: SUPORTE removido de 5 threads que são entregas simples de CADOC
 
 **🔎 Em miúdos:** 5 threads estavam salvas no gabarito como "CADOC + SUPORTE" — mas Michel revisou e confirmou que todas são só entregas de CADOC, sem elemento de suporte técnico. O classificador estava certo; o gabarito é que estava errado.
