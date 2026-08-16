@@ -1366,3 +1366,29 @@ def test_correcao50_entrega_real_antes_do_forward_preservada():
     r = _classificar('Arquivo junho 2026', corpo, [])
     assert 'DDR_2011' in r['categorias'], \
         f"C50: DDR perdido — sinal antes do forward deve ser preservado; obtido {r['categorias']}"
+
+
+# ---------------------------------------------------------------------------
+# C51 — sinal "VARIAÇÃO RELEVANTE" restrito ao título exato do comunicado BACEN
+# ---------------------------------------------------------------------------
+
+def test_correcao51_variacao_relevante_sozinha_nao_dispara_retorno():
+    """C51 — cliente mencionando 'variação relevante' no corpo NÃO gera RETORNO_BACEN."""
+    corpo = (
+        'Olá, notamos que houve uma variação relevante no saldo DLO '
+        'em relação ao mês anterior. Poderíamos analisar as causas?'
+    )
+    r = _classificar('ENC: Risk Driver - CV INVESTIMENTOS DTVM LTDA', corpo, [])
+    assert 'RETORNO_BACEN' not in r['categorias'], \
+        f"C51: 'variação relevante' isolada gerou RETORNO_BACEN indevidamente; obtido {r['categorias']}"
+
+
+def test_correcao51_comunicacao_variacao_relevante_dispara_retorno():
+    """C51 — título exato 'COMUNICAÇÃO DE VARIAÇÃO RELEVANTE' ainda detecta RETORNO_BACEN."""
+    corpo = (
+        'Seguem informações referentes à COMUNICAÇÃO DE VARIAÇÃO RELEVANTE '
+        'encaminhada pelo BACEN conforme ofício recebido.'
+    )
+    r = _classificar('Assunto generico', corpo, [])
+    assert 'RETORNO_BACEN' in r['categorias'], \
+        f"C51: 'COMUNICAÇÃO DE VARIAÇÃO RELEVANTE' não disparou RETORNO_BACEN; obtido {r['categorias']}"

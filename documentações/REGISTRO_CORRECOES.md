@@ -2363,3 +2363,32 @@ Cache lazy-load: o registro é lido do disco uma vez por processo e mantido em m
 
 **Validação:** ✅ VALIDADO — `pytest tests/test_classificador_ia.py -v`: 12/12 passando, incluindo 2 novos testes: `test_registro_thread_confirmada_nao_chama_gpt` e `test_registro_thread_incerta_chama_gpt`.
 
+---
+
+### Correção 51 — 16/08/2026 — Classificador: sinal "VARIAÇÃO RELEVANTE" restrito ao título exato do comunicado BACEN
+
+**🔎 Em miúdos:** quando um cliente mencionava no corpo do e-mail que havia notado uma "variação relevante" nos dados, o classificador entendia que era um retorno formal do BACEN. Corrigido: agora só o título oficial exato "COMUNICAÇÃO DE VARIAÇÃO RELEVANTE" dispara essa detecção.
+
+**Problema:** thread "ENC: Risk Driver - CV INVESTIMENTOS DTVM LTDA" — o cliente descrevia no corpo que havia observado variação relevante no saldo DLO. O sinal `'VARIAÇÃO RELEVANTE'` na lista `_RETORNO_SINAIS_FORTES` era amplo demais e disparava `RETORNO_BACEN` para qualquer uso coloquial da expressão. Resultado: `['RETORNO_BACEN']` quando o esperado era `['DLO_2061']`.
+
+**Varredura prévia:** 2 threads com "VARIAÇÃO RELEVANTE" no corpus confirmado: 1 RETORNO_BACEN real (já capturado por "REITERAÇÃO" no assunto — não depende deste sinal), 1 DLO_2061 (falso positivo que gerava o erro).
+
+**Correção:** em `scripts/classificador_ia.py`, `_RETORNO_SINAIS_FORTES` (linhas 73-74):
+```python
+# Antes:
+'VARIACAO RELEVANTE',
+'VARIAÇÃO RELEVANTE',
+
+# Depois:
+'COMUNICACAO DE VARIACAO RELEVANTE',   # C51: título exato do comunicado BACEN
+'COMUNICAÇÃO DE VARIAÇÃO RELEVANTE',   # idem com acento
+```
+
+**Gabarito corrigido:** thread `19f8f2168f362d1e` — `['DLO_2061', 'SUPORTE']` → `['DLO_2061']`. *(SUPORTE é categoria residual que o classificador determinístico nunca gera junto com DLO — era inconsistência no gabarito manual.)*
+
+**Arquivos alterados:** `scripts/classificador_ia.py` (`_RETORNO_SINAIS_FORTES`), `tests/test_classificador_ia.py` (2 testes C51), `data/registro_definitivo_threads.json` (gabarito thread 19f8f2168f362d1e).
+
+**Varredura:** +1 ganho (erro #4 resolvido), 0 regressões (767 threads). `pytest tests/ -q` → 187 passed. ✅
+
+**Placar:** 755/767 acertos (12 erros).
+

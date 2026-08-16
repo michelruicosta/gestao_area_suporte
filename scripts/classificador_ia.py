@@ -70,8 +70,8 @@ _RETORNO_SINAIS_FORTES = [
     'COMUNICAÇÃO DE INCONSISTÊNCIA',
     'INDICIO DE PROBLEMA DE QUALIDADE',
     'INDÍCIO DE PROBLEMA DE QUALIDADE',
-    'VARIACAO RELEVANTE',           # comunicado BACEN de variação acima da média
-    'VARIAÇÃO RELEVANTE',           # idem com acento
+    'COMUNICACAO DE VARIACAO RELEVANTE',   # C51: título exato do comunicado BACEN
+    'COMUNICAÇÃO DE VARIAÇÃO RELEVANTE',   # idem com acento
     'REITERACAO',                   # 1ª/2ª reiteração de comunicado BACEN
     'REITERAÇÃO',                   # idem com acento
 ]
