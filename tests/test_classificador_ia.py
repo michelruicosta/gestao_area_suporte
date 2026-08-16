@@ -1392,3 +1392,26 @@ def test_correcao51_comunicacao_variacao_relevante_dispara_retorno():
     r = _classificar('Assunto generico', corpo, [])
     assert 'RETORNO_BACEN' in r['categorias'], \
         f"C51: 'COMUNICAÇÃO DE VARIAÇÃO RELEVANTE' não disparou RETORNO_BACEN; obtido {r['categorias']}"
+
+
+# ---------------------------------------------------------------------------
+# C52 — 'SALDOS CONT' removido de _detectar_cadoc (nunca detectou SCD real)
+# ---------------------------------------------------------------------------
+
+def test_correcao52_saldos_contabeis_no_corpo_nao_dispara_scd():
+    """C52 — 'saldos contábeis' mencionado no corpo como contexto NÃO gera SCD."""
+    corpo = (
+        'O reconhecimento do direito de uso passou a compor os saldos contábeis '
+        'utilizados na elaboração dos arquivos DLO, gostaríamos de confirmar o impacto.'
+    )
+    r = _classificar('RES: Orientação técnica', corpo, [])
+    assert 'SALDOS_CONTABEIS_DIARIOS_4111' not in r['categorias'], \
+        f"C52: 'saldos contábeis' no corpo gerou SCD indevidamente; obtido {r['categorias']}"
+
+
+def test_correcao52_4111_no_corpo_ainda_dispara_scd():
+    """C52 — '4111' no corpo ainda detecta SCD normalmente."""
+    corpo = 'Segue o arquivo CADOC 4111 referente ao dia 14/07/2026.'
+    r = _classificar('Guru CTVM: Informações Diárias', corpo, [])
+    assert 'SALDOS_CONTABEIS_DIARIOS_4111' in r['categorias'], \
+        f"C52: '4111' no corpo não detectou SCD; obtido {r['categorias']}"

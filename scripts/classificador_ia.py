@@ -477,6 +477,13 @@ def _classificar_deterministico(
     # Camada 2b — CADOC pelo corpo
     # C48: quando assunto indica pendência BACEN, corpo cita o CADOC por contexto — pular detecção
     cats = set() if _pendencia_bacen else set(_detectar_cadoc(cu))
+    # C52: 'SALDOS CONT' no corpo é contexto explicativo, não entrega — remover SCD se for
+    # o único gatilho (4111, FLUXO DE CAIXA e CADOC continuam válidos no corpo)
+    if 'SALDOS_CONTABEIS_DIARIOS_4111' in cats:
+        if not (re.search(r'\b4111\b', cu)
+                or 'FLUXO DE CAIXA' in cu
+                or re.search(r'\bCADOC\b(?!\s{0,4}\d{4})', cu)):
+            cats.discard('SALDOS_CONTABEIS_DIARIOS_4111')
     if cats:
         # C44: COS4016 no corpo de e-mail S5 (resultado quantitativo) é referência histórica,
         # não entrega DLO. Guard espelha o da Camada 1b.

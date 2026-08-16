@@ -2392,3 +2392,21 @@ Cache lazy-load: o registro é lido do disco uma vez por processo e mantido em m
 
 **Placar:** 755/767 acertos (12 erros).
 
+---
+
+### Correção 52 — 16/08/2026 — Classificador: "SALDOS CONT" no corpo não dispara mais SCD
+
+**🔎 Em miúdos:** quando um cliente citava "saldos contábeis" no corpo do e-mail para explicar um impacto contábil nos dados do DLO, o classificador entendia que era uma entrega de Saldos Contábeis Diários. Corrigido: "saldos contábeis" no corpo agora é ignorado para detecção de SCD — só `4111`, `FLUXO DE CAIXA` e `CADOC` continuam válidos.
+
+**Problema:** thread "RES: **UNVERIFIED SENDER** Re: PR" — cliente explicava que "o reconhecimento passou a compor os saldos contábeis utilizados na elaboração dos arquivos DLO". O sinal `'SALDOS CONT'` em `_detectar_cadoc` casou com "SALDOS CONTÁBEIS" e adicionou `SALDOS_CONTABEIS_DIARIOS_4111` indevidamente. Resultado: `['DLO_2061', 'SALDOS_CONTABEIS_DIARIOS_4111']` quando apenas `['DLO_2061']` seria obtido (thread de SUPORTE por outro motivo).
+
+**Varredura prévia:** 0/117 threads SCD confirmadas dependem de "SALDOS CONT" como sinal no corpo; 6 threads não-SCD têm "SALDOS CONT" no corpo em contexto explicativo. Nenhuma entrega real de SCD usa esse padrão — todas usam `4111`, `SALDOS DO DIA`, `FLUXO DE CAIXA` ou `CADOC`.
+
+**Correção:** filtro pós-detecção adicionado na Camada 2b (corpo) em `_classificar_deterministico`. Após `_detectar_cadoc(cu)`, se SCD está em `cats` mas não há `4111`, `FLUXO DE CAIXA` ou `CADOC` no corpo, SCD é descartado. O sinal `'SALDOS CONT'` continua ativo para o assunto (Camada 1b), onde é legítimo.
+
+**Arquivos alterados:** `scripts/classificador_ia.py` (Camada 2b, bloco C52), `tests/test_classificador_ia.py` (2 testes C52).
+
+**Varredura:** 0 regressões (767 threads). `pytest tests/ -q` → 189 passed. ✅
+
+**Placar:** 755/767 acertos (12 erros). *(Sem ganho de placar — thread #5 ainda erra por DLO indevido; mas o SCD falso foi corrigido.)*
+
