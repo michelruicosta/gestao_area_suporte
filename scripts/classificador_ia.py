@@ -655,8 +655,13 @@ def classificar_banco() -> dict:
         resultado  = classificar_thread(thread)
         categorias = resultado.get('categorias', [])
         categoria  = categorias[0] if categorias else 'SUPORTE'
+        motivo     = resultado.get('motivo', '')
 
-        atualizar_classificacao(thread_id, 'principal', categoria=categoria)
+        atualizar_classificacao(
+            thread_id, 'principal',
+            categoria=categoria,
+            motivo_classificacao=motivo,
+        )
         contagens['principal'] += 1
         print(f'  [OK] {row["assunto"][:55]} → {categoria}')
 

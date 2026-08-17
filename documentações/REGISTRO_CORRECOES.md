@@ -10,6 +10,29 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-08-17 — Lógica de status automático: implementação do §8.3 Concluída
+
+### 17/08 — Status agora detecta Concluída automaticamente
+
+**🔎 Em miúdos:** antes, o sistema só sabia dizer "está esperando a Finaud" ou "está esperando o cliente" — nunca marcava uma conversa como Concluída sozinho. Agora ele lê o conteúdo do último e-mail e decide se a conversa pode ser encerrada.
+
+**Problema:** `_status_por_ultimo_remetente()` olhava apenas quem enviou o último e-mail, sem ler o conteúdo. Uma thread onde o cliente disse "obrigado" ficava como "Aguardando Finaud" indefinidamente.
+
+**Correção — `scripts/banco_threads.py`:**
+- Substituída `_status_por_ultimo_remetente()` por `_determinar_status()` com lógica completa do §8.3
+- Adicionados `_extrair_texto_novo()` (remove histórico citado) e `_so_cortesia()` (detecta mensagens de encerramento cortês)
+- `atualizar_classificacao()` atualizada: ao classificar uma thread pela primeira vez, o status inicial é calculado por `_determinar_status()` (não mais fixo como "Aguardando Finaud")
+
+**Regras implementadas:**
+1. "transmitido no BACEN" no texto novo → Concluída (qualquer remetente)
+2. Finaud + "RES:" no assunto, ou anexo, ou frase conclusiva → Concluída
+3. Cliente + apenas cortesia ("obrigado", "ok", "de acordo") sem conteúdo real → Concluída
+4. Veto: cliente mandou pergunta ou conteúdo novo → Aguardando Finaud
+
+**Validação:** ✅ VALIDADO — 24 testes novos em `tests/test_banco_threads.py` + 230 testes totais passando (era 206).
+
+---
+
 ## 2026-08-12 — Gabarito v2.0: campo orientação + normalização SCD_4111 + limpeza
 
 ### 12/08 14:50 — Backup dos dados do gabarito v1.x e limpeza da pasta de dados

@@ -7,6 +7,7 @@ O que faz: cria e gerencia o banco de dados SQLite do Oráculo 360 —
 
 import json
 import os
+import re
 import sqlite3
 from datetime import datetime
 
@@ -30,18 +31,19 @@ def criar_banco() -> None:
     with _conectar() as conn:
         conn.executescript("""
             CREATE TABLE IF NOT EXISTS threads (
-                thread_id           TEXT PRIMARY KEY,
-                assunto             TEXT,
-                qtd_mensagens       INTEGER,
-                data_primeira_msg   TEXT,
-                data_ultima_msg     TEXT,
-                remetente_principal TEXT,
-                mensagens_json      TEXT,
-                destino             TEXT,
-                categoria           TEXT,
-                status_workflow     TEXT,
-                motivo_descarte     TEXT,
-                ultima_sync         TEXT
+                thread_id              TEXT PRIMARY KEY,
+                assunto                TEXT,
+                qtd_mensagens          INTEGER,
+                data_primeira_msg      TEXT,
+                data_ultima_msg        TEXT,
+                remetente_principal    TEXT,
+                mensagens_json         TEXT,
+                destino                TEXT,
+                categoria              TEXT,
+                status_workflow        TEXT,
+                motivo_descarte        TEXT,
+                motivo_classificacao   TEXT,
+                ultima_sync            TEXT
             );
 
             CREATE TABLE IF NOT EXISTS controle_sync (
@@ -55,6 +57,12 @@ def criar_banco() -> None:
             CREATE INDEX IF NOT EXISTS idx_data_ultima
                 ON threads (data_ultima_msg);
         """)
+        # Migração segura: adiciona colunas novas sem recriar o banco
+        for col_def in ['motivo_classificacao TEXT']:
+            try:
+                conn.execute(f'ALTER TABLE threads ADD COLUMN {col_def}')
+            except Exception:
+                pass  # coluna já existe
     print(f'Banco criado/verificado: {BANCO}')
 
 
@@ -64,15 +72,103 @@ def _agora() -> str:
     return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 
+# ── Helpers de detecção de status (§8.1, §8.2, §8.3 da spec) ─────────────────
+
+_SEP_HISTORICO = re.compile(
+    r'^(-{3,}|_{3,}|from:|de:|on\s.{3,120}wrote:|em\s.{3,120}escreveu:)',
+    re.IGNORECASE,
+)
+
+_CORTESIA = re.compile(
+    r'\b(obrigad[ao]s?|muito\s+obrigad[ao]s?|ok|de\s+acordo|concordo|recebido|'
+    r'perfeito|valeu|confirmado|certo|entendido|tudo\s+bem|sem\s+problemas|'
+    r'bom\s+dia|boa\s+tarde|boa\s+noite|at[ée]\s+mais|abraços?|att)\b',
+    re.IGNORECASE,
+)
+
+_FRASES_CONCLUSIVAS_FINAUD = (
+    'segue em anexo',
+    'conforme solicitado',
+    'procedemos com',
+)
+
+
+def _extrair_texto_novo(corpo: str) -> str:
+    """Remove histórico citado do corpo do e-mail; retorna só o texto novo."""
+    if not corpo:
+        return ''
+    linhas = corpo.split('\n')
+    resultado = []
+    for linha in linhas:
+        stripped = linha.strip()
+        if stripped.startswith('>'):
+            continue
+        if _SEP_HISTORICO.match(stripped):
+            break
+        resultado.append(linha)
+    return '\n'.join(resultado).strip()
+
+
+def _so_cortesia(texto: str) -> bool:
+    """True se o texto novo contém apenas frases de cortesia, sem conteúdo substantivo."""
+    if not texto.strip():
+        return True
+    if '?' in texto:
+        return False
+    restante = _CORTESIA.sub('', texto.lower())
+    restante = re.sub(r'[\s,!.;:\-\n\r]+', '', restante)
+    return len(restante) < 15
+
+
+def _determinar_status(msgs: list[dict]) -> str:
+    """
+    Determina o status de workflow com base no §8.3 da spec.
+    Olha sempre o último e-mail e apenas o texto novo (sem histórico citado).
+
+    Retorna: 'Aguardando Finaud' | 'Aguardando Cliente' | 'Concluída'
+    """
+    if not msgs:
+        return 'Aguardando Finaud'
+
+    ultimo      = msgs[-1]
+    remetente   = (ultimo.get('remetente')   or '').lower()
+    assunto     = (ultimo.get('assunto')     or '')
+    corpo_raw   = (ultimo.get('corpo_texto') or '')
+    tem_anexo   = bool(ultimo.get('nomes_anexos'))
+    eh_finaud   = '@finaud.com.br' in remetente or '@finaudtec.com.br' in remetente
+
+    texto_novo  = _extrair_texto_novo(corpo_raw)
+    texto_lower = texto_novo.lower()
+
+    # Regra especial §8.3: "transmitido no BACEN" encerra independente de quem mandou
+    if 'transmitido no bacen' in texto_lower or 'transmitida no bacen' in texto_lower:
+        return 'Concluída'
+
+    if eh_finaud:
+        if (assunto.strip().upper().startswith('RES:')
+                or tem_anexo
+                or any(f in texto_lower for f in _FRASES_CONCLUSIVAS_FINAUD)):
+            return 'Concluída'
+        return 'Aguardando Cliente'
+
+    # Remetente externo (cliente)
+    # Veto: qualquer conteúdo real → Aguardando Finaud; só cortesia → Concluída
+    if _so_cortesia(texto_novo):
+        return 'Concluída'
+    return 'Aguardando Finaud'
+
+
 def salvar_thread(thread: dict) -> None:
     """
     Insere ou atualiza uma thread no banco.
-    Em caso de conflito (thread já existe), atualiza os campos do Gmail mas
-    preserva destino, categoria, status e motivo_descarte — que são definidos
-    pelo classificador ou pelo Michel, não pelo coletor.
+    - Nova thread: salva os campos do Gmail; destino/categoria/status ficam NULL.
+    - Thread existente: atualiza campos do Gmail e, se já classificada
+      (destino='principal'), atualiza status_workflow automaticamente baseado
+      em quem enviou a última mensagem.
     """
     msgs = thread.get('mensagens', [])
     remetente = msgs[0].get('remetente', '') if msgs else ''
+    novo_status = _determinar_status(msgs)
 
     with _conectar() as conn:
         conn.execute("""
@@ -97,6 +193,11 @@ def salvar_thread(thread: dict) -> None:
             json.dumps(msgs, ensure_ascii=False),
             _agora(),
         ))
+        # Atualiza status automaticamente apenas em threads já na Tela Principal
+        conn.execute("""
+            UPDATE threads SET status_workflow = ?
+            WHERE thread_id = ? AND destino = 'principal'
+        """, (novo_status, thread['thread_id']))
 
 
 def salvar_threads(threads: list[dict]) -> None:
@@ -112,22 +213,34 @@ def atualizar_classificacao(
     destino: str,
     categoria: str | None = None,
     motivo_descarte: str | None = None,
+    motivo_classificacao: str | None = None,
 ) -> None:
     """
     Grava o resultado do classificador no banco.
     destino: 'principal' | 'revisao' | 'descartes'
     Threads que vão para 'principal' começam como 'Aguardando Finaud'.
+    motivo_classificacao: a regra que determinou a categoria (exibida no tooltip).
     """
-    status = 'Aguardando Finaud' if destino == 'principal' else None
+    if destino == 'principal':
+        with _conectar() as conn:
+            row = conn.execute(
+                "SELECT mensagens_json FROM threads WHERE thread_id = ?", (thread_id,)
+            ).fetchone()
+        msgs = json.loads(row['mensagens_json']) if row and row['mensagens_json'] else []
+        status = _determinar_status(msgs)
+    else:
+        status = None
+
     with _conectar() as conn:
         conn.execute("""
             UPDATE threads
-            SET destino         = ?,
-                categoria       = ?,
-                status_workflow = ?,
-                motivo_descarte = ?
+            SET destino              = ?,
+                categoria            = ?,
+                status_workflow      = ?,
+                motivo_descarte      = ?,
+                motivo_classificacao = ?
             WHERE thread_id = ?
-        """, (destino, categoria, status, motivo_descarte, thread_id))
+        """, (destino, categoria, status, motivo_descarte, motivo_classificacao, thread_id))
 
 
 def classificar_manual(thread_id: str, categoria: str) -> None:
@@ -174,7 +287,8 @@ def buscar_por_destino(destino: str) -> list[dict]:
         rows = conn.execute("""
             SELECT thread_id, assunto, qtd_mensagens, data_primeira_msg,
                    data_ultima_msg, remetente_principal,
-                   destino, categoria, status_workflow, motivo_descarte
+                   destino, categoria, status_workflow,
+                   motivo_descarte, motivo_classificacao
             FROM   threads
             WHERE  destino = ?
             ORDER  BY data_ultima_msg DESC
