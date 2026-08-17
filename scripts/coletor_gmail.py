@@ -1,27 +1,19 @@
 """
 coletor_gmail.py
-O que faz: conecta na caixa oraculo@finaud.com.br via Gmail API (service account),
-           extrai TODAS as threads do histórico com os campos do §7 da spec,
-           e salva em data/json/pipeline/01_extração_dados_brutos_gmail.json.
-
-Saída por thread:
-  thread_id, assunto, qtd_mensagens, data_primeira_msg, data_ultima_msg
-  mensagens[]: remetente, reply_to, destinatarios, cc, assunto,
-               corpo_texto, nomes_anexos, data
-
-Uso: python scripts/coletor_gmail.py
+O que faz: conecta na caixa de coleta do Oráculo 360 via Gmail API (service account),
+           importa TODAS as threads na primeira vez e, nas rodadas seguintes,
+           busca apenas o que é novo ou foi atualizado. Salva diretamente no banco SQLite.
 """
 
 import os
 import sys
-import json
 import base64
 import time
 from email.utils import parsedate_to_datetime
 from email.header import decode_header as _decode_header
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from paths import F_EMAILS_BRUTOS, backup_pre_carga, limpar_nome_arquivo
+from banco_threads import criar_banco, salvar_thread, get_controle_sync, set_controle_sync
 
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -32,12 +24,12 @@ BASE_DIR    = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CREDENCIAIS = os.path.join(BASE_DIR, 'oraculo-ia-coleta.json')
 CONTA       = 'coleta.oraculo@finaud.com.br'
 SCOPES      = ['https://www.googleapis.com/auth/gmail.readonly']
-CHECKPOINT  = 50   # salva a cada N threads processadas
+CHECKPOINT  = 50   # imprime progresso a cada N threads
 
 
 # ── Autenticação ───────────────────────────────────────────────────────────────
 
-def _conectar():
+def _conectar_gmail():
     creds = service_account.Credentials.from_service_account_file(
         CREDENCIAIS, scopes=SCOPES
     ).with_subject(CONTA)
@@ -65,7 +57,6 @@ def _decodificar(valor: str) -> str:
 # ── Extração de corpo texto ────────────────────────────────────────────────────
 
 def _extrair_texto(payload: dict) -> str:
-    """Percorre o payload recursivamente e retorna o melhor texto disponível."""
     mime = payload.get('mimeType', '')
 
     if mime == 'text/plain':
@@ -75,11 +66,9 @@ def _extrair_texto(payload: dict) -> str:
         return ''
 
     if mime == 'text/html':
-        # guarda como fallback — texto puro é preferido
         data = payload.get('body', {}).get('data', '')
         return '[somente HTML]' if data else ''
 
-    # multipart: percorre parts em busca de texto puro primeiro
     texto_plain = ''
     texto_html  = ''
     for part in payload.get('parts', []):
@@ -105,12 +94,11 @@ def _extrair_texto(payload: dict) -> str:
 # ── Extração de nomes de anexos ────────────────────────────────────────────────
 
 def _extrair_anexos(payload: dict) -> list[str]:
-    """Retorna lista de nomes de arquivos anexados (só nomes, sem download)."""
     nomes = []
     for part in payload.get('parts', []):
-        nome = part.get('filename', '')
+        nome = _decodificar(part.get('filename', ''))
         if nome:
-            nomes.append(limpar_nome_arquivo(_decodificar(nome)))
+            nomes.append(nome)
         if part.get('mimeType', '').startswith('multipart/'):
             nomes.extend(_extrair_anexos(part))
     return nomes
@@ -143,35 +131,47 @@ def _processar_mensagem(msg: dict) -> dict:
     }
 
 
-# ── Gravação com checkpoint ───────────────────────────────────────────────────
+# ── Processamento de uma thread completa ──────────────────────────────────────
 
-def _salvar(dados: list, silencioso: bool = False) -> None:
-    os.makedirs(os.path.dirname(F_EMAILS_BRUTOS), exist_ok=True)
-    tmp = F_EMAILS_BRUTOS + '.tmp'
-    with open(tmp, 'w', encoding='utf-8') as f:
-        json.dump(dados, f, ensure_ascii=False, indent=2)
-    os.replace(tmp, F_EMAILS_BRUTOS)
-    if not silencioso:
-        print(f'   💾 Checkpoint: {len(dados)} threads salvas.')
+def _processar_thread(service, thread_id: str) -> dict | None:
+    """Busca e monta os dados de uma thread completa do Gmail."""
+    try:
+        thread   = service.users().threads().get(
+            userId='me', id=thread_id, format='full'
+        ).execute()
+        mensagens = thread.get('messages', [])
+        if not mensagens:
+            return None
+
+        msgs = [_processar_mensagem(m) for m in mensagens]
+
+        return {
+            'thread_id'      : thread_id,
+            'assunto'        : msgs[0]['assunto'],
+            'qtd_mensagens'  : len(mensagens),
+            'data_primeira_msg': msgs[0]['data'],
+            'data_ultima_msg': msgs[-1]['data'],
+            'mensagens'      : msgs,
+        }
+    except HttpError as e:
+        print(f'  [ERRO] Thread {thread_id}: {e}')
+        time.sleep(1)
+        return None
 
 
-# ── Coleta principal ──────────────────────────────────────────────────────────
+# ── Importação histórica completa (primeira vez) ──────────────────────────────
 
-def coletar() -> None:
-    print('=' * 60)
-    print('COLETOR GMAIL — oraculo@finaud.com.br')
-    print('Extraindo histórico completo...')
-    print('=' * 60)
+def _importar_historico(service) -> str | None:
+    """
+    Percorre TODAS as threads da caixa de coleta e salva no banco.
+    Retorna o historyId mais recente (para sincronizações futuras).
+    """
+    print('Modo: importação histórica completa...')
 
-    service = _conectar()
-
-    # Backup do arquivo atual antes de sobrescrever
-    backup_pre_carga('coleta_historico')
-
-    threads_json: list[dict] = []
-    page_token = None
-    total      = 0
-    erros      = 0
+    page_token     = None
+    total          = 0
+    erros          = 0
+    ultimo_hist_id = None
 
     while True:
         params: dict = {'userId': 'me', 'maxResults': 500}
@@ -182,7 +182,7 @@ def coletar() -> None:
             resultado      = service.users().threads().list(**params).execute()
             threads_pagina = resultado.get('threads', [])
         except HttpError as e:
-            print(f'\n[ERRO] Falha ao listar threads: {e}')
+            print(f'[ERRO] Falha ao listar threads: {e}')
             break
 
         if not threads_pagina:
@@ -192,48 +192,117 @@ def coletar() -> None:
             thread_id = info['id']
             total    += 1
 
-            try:
-                thread   = service.users().threads().get(
-                    userId='me', id=thread_id, format='full'
-                ).execute()
-                mensagens = thread.get('messages', [])
+            # O historyId da listagem é suficiente para rastrear a posição mais recente
+            hist_id = info.get('historyId')
+            if hist_id and (not ultimo_hist_id or int(hist_id) > int(ultimo_hist_id)):
+                ultimo_hist_id = hist_id
 
-                if not mensagens:
-                    continue
-
-                msgs = [_processar_mensagem(m) for m in mensagens]
-
-                threads_json.append({
-                    'thread_id'      : thread_id,
-                    'assunto'        : msgs[0]['assunto'],
-                    'qtd_mensagens'  : len(mensagens),
-                    'data_primeira_msg': msgs[0]['data'],
-                    'data_ultima_msg': msgs[-1]['data'],
-                    'mensagens'      : msgs,
-                })
-
-                print(f'  [{total:>4}] {msgs[0]["assunto"][:65]}')
-
-            except HttpError as e:
+            thread_data = _processar_thread(service, thread_id)
+            if thread_data:
+                salvar_thread(thread_data)
+                print(f'  [{total:>4}] {thread_data["assunto"][:65]}')
+            else:
                 erros += 1
-                print(f'  [ERRO] Thread {thread_id}: {e}')
-                time.sleep(1)   # aguarda 1 s antes de continuar após erro de API
 
             if total % CHECKPOINT == 0:
-                _salvar(threads_json)
+                print(f'  ... {total} threads salvas no banco')
 
         page_token = resultado.get('nextPageToken')
         if not page_token:
             break
 
-    _salvar(threads_json)
+        time.sleep(0.1)
+
+    print(f'\nImportação concluída: {total} threads | {erros} erros')
+    return str(ultimo_hist_id) if ultimo_hist_id else None
+
+
+# ── Sincronização incremental (rodadas seguintes) ─────────────────────────────
+
+def _sincronizar_incremental(service, start_history_id: str) -> str | None:
+    """
+    Usa a API de histórico do Gmail para buscar apenas threads que mudaram
+    desde a última sincronização. Muito mais rápido que reimportar tudo.
+
+    Retorna o novo historyId, ou None se o historyId expirou (nesse caso o
+    chamador refaz a importação histórica).
+    """
+    print(f'Modo: sincronização incremental (desde historyId {start_history_id})...')
+
+    thread_ids_novas: set = set()
+    page_token           = None
+    novo_hist_id         = start_history_id
+
+    while True:
+        params: dict = {
+            'userId'        : 'me',
+            'startHistoryId': start_history_id,
+            'historyTypes'  : ['messageAdded'],
+        }
+        if page_token:
+            params['pageToken'] = page_token
+
+        try:
+            resultado = service.users().history().list(**params).execute()
+        except HttpError as e:
+            if 'invalidHistoryId' in str(e) or e.resp.status == 404:
+                print('[AVISO] historyId expirou. Será feita importação histórica completa.')
+                return None
+            print(f'[ERRO] Falha na sincronização incremental: {e}')
+            return start_history_id  # mantém o historyId anterior
+
+        for entrada in resultado.get('history', []):
+            for msg_info in entrada.get('messagesAdded', []):
+                thread_ids_novas.add(msg_info['message']['threadId'])
+            hist_atual = entrada.get('id')
+            if hist_atual and int(hist_atual) > int(novo_hist_id):
+                novo_hist_id = hist_atual
+
+        page_token = resultado.get('nextPageToken')
+        if not page_token:
+            break
+
+    if not thread_ids_novas:
+        print('Nenhuma thread nova desde a última sincronização.')
+        return novo_hist_id
+
+    print(f'{len(thread_ids_novas)} thread(s) nova(s)/atualizada(s). Salvando...')
+    for thread_id in thread_ids_novas:
+        thread_data = _processar_thread(service, thread_id)
+        if thread_data:
+            salvar_thread(thread_data)
+            print(f'  Atualizada: {thread_data["assunto"][:65]}')
+
+    return novo_hist_id
+
+
+# ── Ponto de entrada ──────────────────────────────────────────────────────────
+
+def coletar() -> None:
+    print('=' * 60)
+    print('COLETOR GMAIL — caixa de coleta do Oráculo 360')
+    print('=' * 60)
+
+    criar_banco()
+    service = _conectar_gmail()
+
+    start_hist_id = get_controle_sync('last_history_id')
+
+    if start_hist_id:
+        novo_hist_id = _sincronizar_incremental(service, start_hist_id)
+        if novo_hist_id is None:
+            # historyId expirou: reimporta tudo
+            novo_hist_id = _importar_historico(service)
+    else:
+        novo_hist_id = _importar_historico(service)
+
+    if novo_hist_id:
+        set_controle_sync('last_history_id', str(novo_hist_id))
+        print(f'Marcador de sincronização atualizado: {novo_hist_id}')
 
     print()
     print('=' * 60)
-    print(f'✅ Coleta concluída!')
-    print(f'   Threads extraídas : {len(threads_json)}')
-    print(f'   Erros             : {erros}')
-    print(f'   Arquivo           : {F_EMAILS_BRUTOS}')
+    print('Coleta concluída.')
     print('=' * 60)
 
 

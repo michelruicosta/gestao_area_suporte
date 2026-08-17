@@ -40,7 +40,7 @@ Thread `19f71c34de2418fe` ("Re: Arquivos Regulatórios - ZIIN") confirmada como 
 **Suite de testes:** 206/206 passando.
 **Registro definitivo:** `data/registro_definitivo_threads.json` — 768 threads confirmadas (ignorado pelo git)
 **Commits desta sessão:** C55 (`5e227ce`), C57 (`393d529`), docs residuais (`60bba3c`), §4 filtro (`f2601e0`)
-**GitHub:** `github.com/michelruicosta/gestao_area_suporte` — branch `main` (1 commit não pushado)
+**GitHub:** repositório privado — branch `main` (1 commit não pushado)
 
 **Os 4 residuais (para Fase 3):**
 1. `Re: Arquivos Regulatórios - ZIIN` → DLO_2061 esperado / SUPORTE obtido

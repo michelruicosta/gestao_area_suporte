@@ -1722,7 +1722,7 @@ melhoria de +25 threads em relação ao estado anterior (582/767 = 75,9%).
 
 **Arquivos alterados:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — §8.3, bloco "Regra adicional exclusiva do RETORNO_BACEN".
 
-**Validação:** ✅ Confirmado por Michel em 05/08/2026. Threads reais varridos: 4 threads RETORNO_BACEN na caixa oraculo@finaud.com.br.
+**Validação:** ✅ Confirmado por Michel em 05/08/2026. Threads reais varridos: 4 threads RETORNO_BACEN na caixa de coleta do Oráculo 360.
 
 ---
 
@@ -2309,11 +2309,11 @@ Regras transversais confirmadas durante o processo:
 **Correção:**
 - `documentações/indício-qualidade.xlsx` adicionado ao `.gitignore` (dados sensíveis de clientes)
 - Branch local renomeada de `master` para `main` (padrão GitHub)
-- Remote `origin` apontado para `github.com/michelruicosta/gestao_area_suporte`
+- Remote `origin` apontado para o repositório no GitHub
 - 57 commits do histórico enviados ao GitHub
 - 98 arquivos novos commitados e enviados (sistema atual + nova arquitetura + testes + CI)
 
-**Validação:** ✅ Push confirmado no GitHub — `github.com/michelruicosta/gestao_area_suporte`; `.xlsx` não aparece no repositório remoto.
+**Validação:** ✅ Push confirmado no GitHub; `.xlsx` não aparece no repositório remoto.
 
 ---
 

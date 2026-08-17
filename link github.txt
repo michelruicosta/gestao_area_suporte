@@ -1,1 +1,1 @@
-https://github.com/michelruicosta/gestao_area_suporte.git
+https://github.com/gestao_area_suporte.git

@@ -45,7 +45,7 @@ O Oráculo 360 monitora os e-mails trocados entre a Finaud e seus clientes. O si
 
 ### O que o sistema faz
 
-- Monitora todas as conversas na caixa oraculo@finaud.com.br
+- Monitora todas as conversas na caixa coleta.oraculo@finaud.com.br
 - Identifica automaticamente a qual categoria cada e-mail pertence (pode ser mais de uma)
 - Define o status de cada conversa — aguardando ou concluído
 - Monitora prazos regulatórios
@@ -134,7 +134,7 @@ O sistema descarta automaticamente estes remetentes antes de classificar. A list
 
 ## 5. Como os e-mails chegam ao sistema
 
-A conta `oraculo@finaud.com.br` recebe os e-mails por dois caminhos independentes:
+A conta `coleta.oraculo@finaud.com.br` recebe os e-mails por dois caminhos independentes:
 
 **Caminho 1 — Grupo de suporte**
 A conta oraculo@ é membro do grupo `suporte@finaud.com.br`. Isso significa que todo e-mail enviado para suporte@finaud.com.br chega automaticamente também na caixa do oraculo@, da mesma forma que chega para qualquer outro membro do grupo.
@@ -392,7 +392,7 @@ E-mails que o sistema descarta automaticamente sem processar. No sistema atual e
 ---
 
 **Caso 1 — Finaud não aparece no Para:**
-`victor@miraeinvest.com.br` → `rafael@miraeinvest.com.br` (CC: `oraculo@finaud.com.br`)
+`victor@miraeinvest.com.br` → `rafael@miraeinvest.com.br` (CC: `coleta.oraculo@finaud.com.br`)
 → sistema não encontra Finaud no Para → verifica CC → encontra Finaud → thread monitorada; quem age é o destinatário do Para
 
 **Caso 2 — Para está vazio:**
@@ -2026,7 +2026,7 @@ O padrão `CNPJ_CADOC_DATA.zip` é universal — aparece em todos os CADOCs. O n
 
 ## 11. Exemplos reais de threads (T01–T19)
 
-Exemplos coletados durante a Fase 0 (22/07/2026) com leitura direta de 25+ threads reais da caixa `oraculo@finaud.com.br`. Cada exemplo documenta um tipo de fluxo com mensagens reais, participantes identificados e critério de conclusão.
+Exemplos coletados durante a Fase 0 (22/07/2026) com leitura direta de 25+ threads reais da caixa `coleta.oraculo@finaud.com.br`. Cada exemplo documenta um tipo de fluxo com mensagens reais, participantes identificados e critério de conclusão.
 
 > **Nota de desenvolvimento:** estes exemplos foram coletados via Gmail MCP (ferramenta de análise, não produção). O campo `sender` da ferramenta de busca pode mostrar `suporte@finaud.com.br` mesmo quando o remetente real é outro — em todos os casos abaixo o corpo do e-mail foi lido para confirmar o remetente real. Em produção, a Gmail API direta (Campo 1 e Campo 4 em §7) resolve isso automaticamente.
 
@@ -2521,7 +2521,7 @@ As quatro decisões fundacionais da arquitetura estão explicadas em detalhes no
 
 ### Como a Fase 0 foi feita
 
-**Método:** leitura direta de 25+ threads reais da caixa `oraculo@finaud.com.br` via Gmail MCP (ferramenta de análise e desenvolvimento). Cada thread foi documentada com 8 dimensões:
+**Método:** leitura direta de 25+ threads reais da caixa `coleta.oraculo@finaud.com.br` via Gmail MCP (ferramenta de análise e desenvolvimento). Cada thread foi documentada com 8 dimensões:
 
 | Dimensão | O que foi registrado |
 |---|---|
@@ -2688,9 +2688,9 @@ Definições dos termos usados ao longo desta especificação, em linguagem simp
 |---|---|
 | **Mensagem (e-mail)** | Um único e-mail enviado de A para B. Uma caixa com "970 e-mails" tem 970 mensagens individuais. |
 | **Thread (conversa)** | Conjunto de mensagens que o Gmail agrupa como uma mesma conversa (pelo assunto e histórico de respostas). Uma conversa com 10 e-mails de ida e volta = 1 thread, não 10. Uma caixa com 201 threads pode ter quase 1.000 mensagens. |
-| **oraculo@finaud.com.br** | Conta de monitoramento usada exclusivamente pelo Oráculo 360 para leitura e classificação. Os colaboradores não respondem por ela — ela recebe cópias automáticas de tudo que passa pelo suporte@. |
-| **suporte@finaud.com.br** | Caixa operacional da equipe. É onde os clientes escrevem e onde os colaboradores respondem. O Oráculo 360 não lê esta caixa diretamente — lê o oraculo@ que recebe as cópias. |
-| **Caminho 2** | Regra configurada no Google Workspace da Finaud que envia automaticamente uma cópia de cada e-mail do suporte@ para o oraculo@. Acontece em tempo real, sem ação humana. |
+| **coleta.oraculo@finaud.com.br** | Caixa monitorada exclusivamente pelo Oráculo 360 para leitura e classificação. Os colaboradores não respondem por ela — ela recebe cópias automáticas de tudo que passa pelo suporte@. |
+| **suporte@finaud.com.br** | Caixa operacional da equipe. É onde os clientes escrevem e onde os colaboradores respondem. O Oráculo 360 não lê esta caixa diretamente — lê a coleta.oraculo@ que recebe as cópias. |
+| **Caminho 2** | Regra configurada no Google Workspace da Finaud que envia automaticamente uma cópia de cada e-mail do suporte@ para a coleta.oraculo@. Acontece em tempo real, sem ação humana. |
 | **Remessa (CADOC)** | O arquivo gerado pela Finaud e entregue ao cliente (ou diretamente ao BACEN). Formato típico: ZIP com o código do CADOC no nome — ex.: `32648370_2011_20260727.zip`. |
 | **Competência** | O período de referência de um relatório — pode ser dia (DDR diário), mês (DRM), semestre (DLO/DLI) ou trimestre (PVCA). Diferente da data de envio: um DDR de competência 27/07 pode ser enviado ao BACEN em 30/07. |
 | **Camada 1 — Comunicação** | O nível de conversa: o thread como um todo, com status único (Aguardando / Concluído). |

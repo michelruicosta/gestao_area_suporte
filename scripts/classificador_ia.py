@@ -603,3 +603,71 @@ def _extrair_texto_ocr(caminhos: list) -> str:
         except Exception:
             pass
     return '\n\n'.join(partes)
+
+
+# ── Classificação de produção (lê do banco, grava resultado de volta) ─────────
+
+def classificar_banco() -> dict:
+    """
+    Lê todas as threads não classificadas do banco SQLite, aplica o filtro §4
+    e o classificador determinístico, e grava o resultado de volta no banco.
+
+    Retorna um resumo com as contagens de cada destino.
+    """
+    import json as _json
+    from banco_threads import buscar_sem_classificar, atualizar_classificacao
+
+    try:
+        from validador_classificacao import eh_automatico
+    except ImportError:
+        def eh_automatico(t):  # fallback se o módulo não estiver disponível
+            return None
+
+    threads = buscar_sem_classificar()
+
+    if not threads:
+        print('Nenhuma thread nova para classificar.')
+        return {'principal': 0, 'revisao': 0, 'descartes': 0}
+
+    contagens = {'principal': 0, 'revisao': 0, 'descartes': 0}
+
+    print(f'Classificando {len(threads)} thread(s)...')
+
+    for row in threads:
+        thread_id = row['thread_id']
+
+        # Reconstrói o dict completo (mensagens ficam em JSON no banco)
+        thread = dict(row)
+        if thread.get('mensagens_json'):
+            thread['mensagens'] = _json.loads(thread['mensagens_json'])
+        else:
+            thread['mensagens'] = []
+
+        # § 4 — filtro de automáticos
+        motivo_descarte = eh_automatico(thread)
+        if motivo_descarte:
+            atualizar_classificacao(thread_id, 'descartes', motivo_descarte=motivo_descarte)
+            contagens['descartes'] += 1
+            print(f'  [DESCARTE] {row["assunto"][:55]} → {motivo_descarte}')
+            continue
+
+        # Classificador determinístico
+        resultado  = classificar_thread(thread)
+        categorias = resultado.get('categorias', [])
+        categoria  = categorias[0] if categorias else 'SUPORTE'
+
+        atualizar_classificacao(thread_id, 'principal', categoria=categoria)
+        contagens['principal'] += 1
+        print(f'  [OK] {row["assunto"][:55]} → {categoria}')
+
+    total = sum(contagens.values())
+    print(f'\nClassificação concluída: {total} thread(s)')
+    print(f'  Principal : {contagens["principal"]}')
+    print(f'  Descartes : {contagens["descartes"]}')
+    print(f'  Revisão   : {contagens["revisao"]}')
+    return contagens
+
+
+if __name__ == '__main__':
+    contagens = classificar_banco()
+

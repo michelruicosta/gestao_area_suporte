@@ -46,7 +46,7 @@ Antes de criar qualquer nome — função, arquivo, variável, campo, classe, co
 
 | Nome proposto | O que significa em linguagem simples |
 |---|---|
-| `coletor_gmail.py` | "lê os e-mails da caixa oraculo@finaud.com.br" |
+| `coletor_gmail.py` | "lê os e-mails da caixa de coleta do Oráculo 360" |
 | ... | ... |
 
 O Michel escolhe ou sugere um nome alternativo antes de qualquer linha de código ser escrita.
