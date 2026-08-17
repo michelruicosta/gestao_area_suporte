@@ -62,6 +62,9 @@ def criar_banco() -> None:
             'motivo_classificacao TEXT',
             'motivo_status TEXT',
             'destinatario_principal TEXT',
+            'remetente_ultima_msg TEXT',
+            'destinatario_ultima_msg TEXT',
+            'reply_to_ultima_msg TEXT',
         ]:
             try:
                 conn.execute(f'ALTER TABLE threads ADD COLUMN {col_def}')
@@ -136,12 +139,32 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     if not msgs:
         return 'Aguardando Finaud', 'Sem mensagens registradas'
 
-    ultimo      = msgs[-1]
-    remetente   = (ultimo.get('remetente')   or '').lower()
-    assunto     = (ultimo.get('assunto')     or '')
-    corpo_raw   = (ultimo.get('corpo_texto') or '')
-    tem_anexo   = bool(ultimo.get('nomes_anexos'))
-    eh_finaud   = '@finaud.com.br' in remetente or '@finaudtec.com.br' in remetente
+    ultimo        = msgs[-1]
+    remetente     = (ultimo.get('remetente')     or '').lower()
+    reply_to      = (ultimo.get('reply_to')      or '').lower()
+    destinatario  = (ultimo.get('destinatarios') or '')
+    assunto       = (ultimo.get('assunto')       or '')
+    corpo_raw     = (ultimo.get('corpo_texto')   or '')
+    tem_anexo     = bool(ultimo.get('nomes_anexos'))
+
+    def _eh_finaud_addr(addr: str) -> bool:
+        a = addr.lower()
+        return '@finaud.com.br' in a or '@finaudtec.com.br' in a
+
+    def _todos_destinatarios_finaud(campo: str) -> bool:
+        """True somente se TODOS os endereços do campo To são @finaud / @finaudtec."""
+        if not campo.strip():
+            return False
+        emails = re.findall(r'<([^>]+)>', campo)
+        if not emails:
+            emails = [e.strip() for e in re.split(r'[,;]', campo) if e.strip()]
+        return bool(emails) and all(_eh_finaud_addr(e) for e in emails)
+
+    eh_finaud_raw = _eh_finaud_addr(remetente)
+    # Se From=suporte@ mas Reply-To é externo → é cliente enviando via suporte (§7)
+    via_suporte = (eh_finaud_raw and reply_to and not _eh_finaud_addr(reply_to))
+    eh_finaud   = eh_finaud_raw and not via_suporte
+    para_finaud = _todos_destinatarios_finaud(destinatario)
 
     texto_novo  = _extrair_texto_novo(corpo_raw)
     texto_lower = texto_novo.lower()
@@ -151,6 +174,10 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         return 'Concluída', 'Confirmação de entrega no BACEN'
 
     if eh_finaud:
+        # Finaud → Finaud (e-mail interno): ação ainda é da Finaud
+        if para_finaud:
+            return 'Aguardando Finaud', 'E-mail interno — aguarda ação da Finaud'
+        # Finaud → Cliente
         if tem_anexo:
             return 'Concluída', 'Finaud enviou arquivo ao cliente'
         if assunto.strip().upper().startswith('RES:'):
@@ -160,7 +187,6 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         return 'Aguardando Cliente', 'Finaud escreveu — aguarda retorno do cliente'
 
     # Remetente externo (cliente)
-    # Veto: qualquer conteúdo real → Aguardando Finaud; só cortesia → Concluída
     if _so_cortesia(texto_novo):
         return 'Concluída', 'Cliente confirmou — sem pendência'
     return 'Aguardando Finaud', 'Cliente escreveu — aguarda resposta da Finaud'
@@ -175,8 +201,11 @@ def salvar_thread(thread: dict) -> None:
       em quem enviou a última mensagem.
     """
     msgs = thread.get('mensagens', [])
-    remetente    = msgs[0].get('remetente', '')    if msgs else ''
-    destinatario = msgs[0].get('destinatarios', '') if msgs else ''
+    remetente_primeiro    = msgs[0].get('remetente', '')     if msgs else ''
+    destinatario_primeiro = msgs[0].get('destinatarios', '') if msgs else ''
+    remetente_ultimo      = msgs[-1].get('remetente', '')    if msgs else ''
+    destinatario_ultimo   = msgs[-1].get('destinatarios', '') if msgs else ''
+    reply_to_ultimo       = msgs[-1].get('reply_to', '')     if msgs else ''
     novo_status, novo_motivo = _determinar_status(msgs)
 
     with _conectar() as conn:
@@ -184,24 +213,31 @@ def salvar_thread(thread: dict) -> None:
             INSERT INTO threads
                 (thread_id, assunto, qtd_mensagens, data_primeira_msg,
                  data_ultima_msg, remetente_principal, destinatario_principal,
+                 remetente_ultima_msg, destinatario_ultima_msg, reply_to_ultima_msg,
                  mensagens_json, ultima_sync)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(thread_id) DO UPDATE SET
-                assunto                = excluded.assunto,
-                qtd_mensagens          = excluded.qtd_mensagens,
-                data_ultima_msg        = excluded.data_ultima_msg,
-                remetente_principal    = excluded.remetente_principal,
-                destinatario_principal = excluded.destinatario_principal,
-                mensagens_json         = excluded.mensagens_json,
-                ultima_sync            = excluded.ultima_sync
+                assunto                 = excluded.assunto,
+                qtd_mensagens           = excluded.qtd_mensagens,
+                data_ultima_msg         = excluded.data_ultima_msg,
+                remetente_principal     = excluded.remetente_principal,
+                destinatario_principal  = excluded.destinatario_principal,
+                remetente_ultima_msg    = excluded.remetente_ultima_msg,
+                destinatario_ultima_msg = excluded.destinatario_ultima_msg,
+                reply_to_ultima_msg     = excluded.reply_to_ultima_msg,
+                mensagens_json          = excluded.mensagens_json,
+                ultima_sync             = excluded.ultima_sync
         """, (
             thread['thread_id'],
             thread.get('assunto', ''),
             thread.get('qtd_mensagens', len(msgs)),
             thread.get('data_primeira_msg', ''),
             thread.get('data_ultima_msg', ''),
-            remetente,
-            destinatario,
+            remetente_primeiro,
+            destinatario_primeiro,
+            remetente_ultimo,
+            destinatario_ultimo,
+            reply_to_ultimo,
             json.dumps(msgs, ensure_ascii=False),
             _agora(),
         ))
@@ -287,16 +323,23 @@ def recalcular_status_todos() -> int:
     atualizadas = 0
     for row in rows:
         msgs = json.loads(row['mensagens_json']) if row['mensagens_json'] else []
-        status, motivo  = _determinar_status(msgs)
-        destinatario    = msgs[0].get('destinatarios', '') if msgs else ''
+        status, motivo      = _determinar_status(msgs)
+        dest_primeiro       = msgs[0].get('destinatarios', '')  if msgs else ''
+        rem_ultimo          = msgs[-1].get('remetente', '')      if msgs else ''
+        dest_ultimo         = msgs[-1].get('destinatarios', '')  if msgs else ''
+        reply_to_ultimo     = msgs[-1].get('reply_to', '')       if msgs else ''
         with _conectar() as conn:
             conn.execute("""
                 UPDATE threads
-                SET status_workflow        = ?,
-                    motivo_status          = ?,
-                    destinatario_principal = ?
+                SET status_workflow         = ?,
+                    motivo_status           = ?,
+                    destinatario_principal  = ?,
+                    remetente_ultima_msg    = ?,
+                    destinatario_ultima_msg = ?,
+                    reply_to_ultima_msg     = ?
                 WHERE thread_id = ?
-            """, (status, motivo, destinatario, row['thread_id']))
+            """, (status, motivo, dest_primeiro,
+                  rem_ultimo, dest_ultimo, reply_to_ultimo, row['thread_id']))
         atualizadas += 1
     return atualizadas
 
@@ -330,6 +373,7 @@ def buscar_por_destino(destino: str) -> list[dict]:
         rows = conn.execute("""
             SELECT thread_id, assunto, qtd_mensagens, data_primeira_msg,
                    data_ultima_msg, remetente_principal, destinatario_principal,
+                   remetente_ultima_msg, destinatario_ultima_msg, reply_to_ultima_msg,
                    destino, categoria, status_workflow, motivo_status,
                    motivo_descarte, motivo_classificacao
             FROM   threads
