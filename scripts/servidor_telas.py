@@ -76,6 +76,15 @@ def _extrair_nome(raw: str) -> str:
     return raw.strip()
 
 
+def _extrair_email(raw: str) -> str:
+    """'Nome <email>' → 'email'; 'email@dominio' → 'email@dominio'."""
+    m = _RE_EMAIL.search(raw.strip())
+    if m:
+        return m.group(1).strip()
+    s = raw.strip()
+    return s if '@' in s else s
+
+
 def _eh_suporte(raw: str) -> bool:
     return 'suporte@finaud.com.br' in raw.lower()
 
@@ -218,8 +227,8 @@ def api_categoria(cat_id: str):
         {
             'thread_id':            t['thread_id'],
             'assunto':              t.get('assunto') or '(sem assunto)',
-            'de':                   _extrair_nome(t.get('remetente_principal') or ''),
-            'para':                 _extrair_nome(t.get('destinatario_principal') or ''),
+            'de':                   _extrair_email(t.get('remetente_principal') or ''),
+            'para':                 _extrair_email(t.get('destinatario_principal') or ''),
             'data':                 _formatar_data(t.get('data_ultima_msg')),
             'qtd_mensagens':        t.get('qtd_mensagens', 0),
             'status':               t.get('status_workflow') or 'Aguardando Finaud',
