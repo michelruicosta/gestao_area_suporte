@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestão de E-mail | Oráculo 360</title>
+<style>
+:root {
+  --marca: #3333a8;
+  --bg: #f0f2f5;
+  --sidebar-bg: #1e2a3b;
+  --sidebar-active-bg: #2d3f5c;
+  --sidebar-hover-bg: #263449;
+  --card-bg: #fff;
+  --border: #e2e5ea;
+  --text: #1e293b;
+  --muted: #64748b;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+*, *::before, *::after { box-sizing: inherit; }
+body { margin: 0; background: var(--bg); display: flex; min-height: 100vh; }
+
+/* ─── Sidebar ──────────────────────────────────────────────────────── */
+.sidebar {
+  width: 240px; flex-shrink: 0;
+  background: var(--sidebar-bg); color: #e2e8f0;
+  display: flex; flex-direction: column;
+}
+.sidebar-logo {
+  padding: 1.1rem 1.25rem; font-weight: 700; font-size: 1rem; color: #fff;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  display: flex; align-items: center; gap: 0.5rem; min-height: 3.5rem;
+}
+.sidebar-logo-ico { font-size: 1.1rem; }
+.sidebar-nav { padding: 0.75rem 0; flex: 1; }
+.nav-label {
+  padding: 0.85rem 1.25rem 0.35rem;
+  font-size: 0.71rem; text-transform: uppercase; letter-spacing: 0.04em; color: #94a3b8;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 0.6rem;
+  width: 100%; padding: 0.65rem 1.25rem;
+  border: none; background: none; cursor: pointer;
+  color: #cbd5e1; font: inherit; font-size: 0.91rem; text-align: left;
+  transition: background 0.12s, color 0.12s;
+}
+.nav-item:hover { background: var(--sidebar-hover-bg); color: #fff; }
+.nav-item.ativo {
+  background: var(--sidebar-active-bg); color: #fff;
+  border-left: 3px solid var(--marca); padding-left: calc(1.25rem - 3px);
+}
+.nav-ico { width: 1.1rem; text-align: center; opacity: 0.85; }
+.nav-badge {
+  margin-left: auto; background: rgba(255,255,255,0.12); color: #cbd5e1;
+  font-size: 0.73rem; font-weight: 700; padding: 0.1rem 0.5rem; border-radius: 999px;
+}
+.nav-badge.alerta { background: #e53e3e; color: #fff; }
+.sidebar-footer {
+  padding: 0.85rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.07);
+  font-size: 0.78rem; color: #64748b;
+}
+
+/* ─── Main ─────────────────────────────────────────────────────────── */
+.main-wrap { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.topbar {
+  height: 56px; background: #fff; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 1rem;
+  padding: 0 1.5rem; flex-shrink: 0;
+}
+.topbar-titulo { font-size: 0.92rem; font-weight: 700; color: var(--text); white-space: nowrap; flex: 1; min-width: 0; }
+.topbar-direita { display: flex; align-items: center; gap: 0.85rem; flex-shrink: 0; }
+.refresh-info { font-size: 0.8rem; color: var(--muted); }
+.refresh-spinner { display: none; width: 14px; height: 14px; border: 2px solid #e2e5ea; border-top-color: var(--marca); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.user-chip {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.35rem 0.75rem; border: 1px solid var(--border); border-radius: 8px;
+  font-size: 0.85rem; color: var(--text); text-decoration: none;
+}
+.user-avatar {
+  width: 28px; height: 28px; border-radius: 50%; background: var(--marca);
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  font-size: 0.72rem; font-weight: 700; flex-shrink: 0;
+}
+.btn-sair { font-size: 0.82rem; color: var(--muted); text-decoration: none; }
+.btn-sair:hover { color: #b4233a; }
+
+.content { flex: 1; padding: 1.5rem 1.75rem 2rem; overflow-y: auto; }
+.page { display: none; }
+.page.ativa { display: block; }
+
+/* ─── Cabeçalho de página ──────────────────────────────────────────── */
+.page-header { display: flex; align-items: baseline; justify-content: space-between; gap: 1.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.page-titulo { margin: 0 0 0.2rem; font-size: 1.25rem; color: var(--text); }
+.page-sub    { margin: 0; font-size: 0.88rem; color: var(--muted); }
+.page-header-left { min-width: 0; }
+
+/* ─── Tabela ────────────────────────────────────────────────────────── */
+.tabela-wrap { background: #fff; border: 1px solid var(--border); border-radius: 10px; overflow-x: auto; }
+.tabela { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.tabela th, .tabela td { padding: 0.65rem 0.85rem; border-bottom: 1px solid #eef0f2; text-align: left; vertical-align: middle; }
+.tabela th { background: #f8f9fa; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; color: #64748b; font-weight: 600; }
+.tabela tr:last-child td { border-bottom: 0; }
+.tabela tbody tr { cursor: pointer; }
+.tabela tbody tr:hover td { background: #f8faff; }
+.tabela .num { text-align: right; font-variant-numeric: tabular-nums; }
+.tabela .tfoot td { font-weight: 700; background: #f8f9fa; border-top: 2px solid #e2e5ea; border-bottom: 0; }
+
+/* Chips de status */
+.chip {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  padding: 0.22rem 0.6rem; border-radius: 999px; font-size: 0.78rem; font-weight: 600; white-space: nowrap;
+}
+.chip-af { background: #fff0c2; color: #8a5b00; }
+.chip-ac { background: #e7f5ff; color: #1864ab; }
+.chip-co { background: #dff3e6; color: #168a43; }
+
+/* Contadores coloridos na tabela */
+.n-af { color: #8a5b00; font-weight: 700; }
+.n-ac { color: #1864ab; font-weight: 700; }
+.n-co { color: #168a43; font-weight: 700; }
+.n-zero { color: #c0c9d5; }
+
+.pct { font-size: 0.8rem; color: var(--muted); }
+
+/* Tooltip no chip de motivo */
+[title] { position: relative; cursor: help; }
+
+/* Botão classificar */
+.btn-classificar {
+  padding: 0.35rem 0.75rem; background: var(--marca); color: #fff;
+  border: none; border-radius: 6px; font: inherit; font-size: 0.8rem; cursor: pointer;
+}
+.btn-classificar:hover { background: #2828a0; }
+
+/* ─── Modais ────────────────────────────────────────────────────────── */
+.modal-backdrop {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  background: rgba(15,23,42,0.48);
+  align-items: flex-start; justify-content: center; padding: 2.5rem 1rem;
+}
+.modal-backdrop.aberto { display: flex; }
+.modal {
+  background: #fff; border: 1px solid #d9e0ea; border-radius: 10px;
+  box-shadow: 0 24px 80px rgba(15,23,42,0.28);
+  width: min(900px, 100%); max-height: calc(100vh - 5rem);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.modal-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: 1rem 1.25rem; border-bottom: 1px solid #e6ebf2; background: #f8fafc; flex-shrink: 0;
+}
+.modal-head h2 { margin: 0; font-size: 1.1rem; color: var(--text); }
+.modal-fechar {
+  width: 2rem; height: 2rem; border: 1px solid #cfd6df; border-radius: 6px;
+  background: #fff; color: #334155; cursor: pointer; font-size: 1.3rem; line-height: 1;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.modal-fechar:hover { background: #eef2ff; color: var(--marca); }
+.modal-body { overflow-y: auto; padding: 1.1rem 1.25rem; }
+
+/* Thread messages */
+.msg-card {
+  border: 1px solid #e2e5ea; border-radius: 8px; margin-bottom: 0.75rem; overflow: hidden;
+}
+.msg-head {
+  background: #f8f9fa; padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid #eef0f2;
+  display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem;
+  font-size: 0.83rem; color: var(--muted);
+}
+.msg-head strong { color: var(--text); }
+.msg-body { padding: 0.85rem; font-size: 0.88rem; white-space: pre-wrap; line-height: 1.6; max-height: 14rem; overflow-y: auto; }
+.msg-anexos { padding: 0.35rem 0.85rem 0.65rem; font-size: 0.8rem; color: var(--muted); }
+.msg-anexos span { background: #f0f2f5; padding: 0.18rem 0.5rem; border-radius: 4px; margin-right: 0.35rem; }
+
+/* Modal classificar */
+.modal-class { width: min(480px, 100%); }
+.select-cat { width: 100%; padding: 0.6rem 0.75rem; border: 1px solid #c5cad3; border-radius: 8px; font: inherit; background: #fff; color: var(--text); margin-bottom: 1rem; }
+.modal-class-acoes { display: flex; justify-content: flex-end; gap: 0.75rem; }
+.btn-sec { padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 6px; background: #fff; color: var(--text); font: inherit; cursor: pointer; }
+.btn-prim { padding: 0.5rem 1rem; border: none; border-radius: 6px; background: var(--marca); color: #fff; font: inherit; cursor: pointer; }
+.btn-prim:hover { background: #2828a0; }
+
+/* ─── Vazio ─────────────────────────────────────────────────────────── */
+.vazio { text-align: center; color: var(--muted); padding: 3rem 1rem; font-size: 0.92rem; }
+</style>
+</head>
+<body>
+
+<!-- ─────────────────────── SIDEBAR ─────────────────────────────────── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span class="sidebar-logo-ico">📧</span>
+    Gestão de E-mail
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-label">E-mails</div>
+
+    <button class="nav-item ativo" data-pagina="classificados" onclick="navegar(this)">
+      <span class="nav-ico">📊</span>
+      Classificação e Status
+    </button>
+
+    <button class="nav-item" data-pagina="nao-classificados" onclick="navegar(this)">
+      <span class="nav-ico">📥</span>
+      Não classificados
+      <span class="nav-badge" id="badge-nao-class">—</span>
+    </button>
+
+    <button class="nav-item" data-pagina="bloqueados" onclick="navegar(this)">
+      <span class="nav-ico">🚫</span>
+      Bloqueados por filtro
+      <span class="nav-badge" id="badge-bloqueados">—</span>
+    </button>
+  </nav>
+
+  <div class="sidebar-footer">Oráculo 360 · v1.0</div>
+</aside>
+
+<!-- ─────────────────────── MAIN ─────────────────────────────────────── -->
+<div class="main-wrap">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <span class="topbar-titulo" id="topbar-titulo">Classificação e Status</span>
+    <div class="topbar-direita">
+      <span class="refresh-spinner" id="spinner"></span>
+      <a href="/sair" class="btn-sair">Sair</a>
+      <div class="user-chip">
+        <div class="user-avatar" id="user-av">?</div>
+        <span id="user-email">{{ email }}</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Conteúdo -->
+  <main class="content">
+
+    <!-- ── Página 1: Classificação e Status ───────────────────────── -->
+    <section class="page ativa" id="pag-classificados">
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1 class="page-titulo">Classificação e Status</h1>
+          <p class="page-sub">Agrupadas por categoria · atualizadas a cada 5 minutos</p>
+        </div>
+        <span class="refresh-info" id="refresh-info" style="font-size:0.8rem;color:#94a3b8;white-space:nowrap;flex-shrink:0;"></span>
+      </div>
+
+      <div class="tabela-wrap">
+        <table class="tabela" id="tbl-resumo">
+          <thead>
+            <tr>
+              <th>Categoria</th>
+              <th class="num">%</th>
+              <th class="num">Ag. Finaud</th>
+              <th class="num">Ag. Cliente</th>
+              <th class="num">Concluídas</th>
+              <th class="num">Total</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-resumo">
+            <tr><td colspan="6" class="vazio">Carregando…</td></tr>
+          </tbody>
+          <tfoot id="tfoot-resumo"></tfoot>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── Página 2: Não classificados ────────────────────────────── -->
+    <section class="page" id="pag-nao-classificados">
+      <div class="page-header">
+        <div>
+          <h1 class="page-titulo">Não classificados</h1>
+          <p class="page-sub">Threads aguardando classificação manual</p>
+        </div>
+      </div>
+
+      <div class="tabela-wrap">
+        <table class="tabela" id="tbl-nao-class">
+          <thead>
+            <tr>
+              <th>Assunto</th>
+              <th>Remetente</th>
+              <th>Data</th>
+              <th class="num">Msgs</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tbody-nao-class">
+            <tr><td colspan="5" class="vazio">Carregando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── Página 3: Bloqueados ────────────────────────────────────── -->
+    <section class="page" id="pag-bloqueados">
+      <div class="page-header">
+        <div>
+          <h1 class="page-titulo">Bloqueados por filtro</h1>
+          <p class="page-sub">Threads descartadas pelo filtro §4 — não chegam à classificação</p>
+        </div>
+      </div>
+
+      <div class="tabela-wrap">
+        <table class="tabela" id="tbl-bloq">
+          <thead>
+            <tr>
+              <th>Assunto</th>
+              <th>Remetente</th>
+              <th>Data</th>
+              <th class="num">Msgs</th>
+              <th>Motivo</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-bloq">
+            <tr><td colspan="5" class="vazio">Carregando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ─────────────────────── MODAIS ───────────────────────────────────── -->
+
+<!-- Modal: lista de threads de uma categoria -->
+<div class="modal-backdrop" id="modal-cat">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modal-cat-titulo">Categoria</h2>
+      <button class="modal-fechar" onclick="fecharModal('modal-cat')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="tabela-wrap">
+        <table class="tabela">
+          <thead>
+            <tr>
+              <th>Assunto</th>
+              <th>Data</th>
+              <th class="num">Msgs</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-cat"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: thread completa -->
+<div class="modal-backdrop" id="modal-thread">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2 id="modal-thread-assunto">Assunto</h2>
+        <div id="modal-thread-meta" style="font-size:0.82rem;color:#64748b;margin-top:0.2rem;"></div>
+      </div>
+      <button class="modal-fechar" onclick="fecharModal('modal-thread')">×</button>
+    </div>
+    <div class="modal-body" id="modal-thread-body"></div>
+  </div>
+</div>
+
+<!-- Modal: classificar manualmente -->
+<div class="modal-backdrop" id="modal-class">
+  <div class="modal modal-class">
+    <div class="modal-head">
+      <h2>Classificar thread</h2>
+      <button class="modal-fechar" onclick="fecharModal('modal-class')">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin:0 0 1rem;font-size:0.9rem;color:#334155;" id="modal-class-assunto"></p>
+      <select class="select-cat" id="select-cat">
+        <option value="">— Selecione a categoria —</option>
+      </select>
+      <div class="modal-class-acoes">
+        <button class="btn-sec" onclick="fecharModal('modal-class')">Cancelar</button>
+        <button class="btn-prim" onclick="confirmarClassificacao()">Classificar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Estado ────────────────────────────────────────────────────────────
+const CATEGORIAS = {{ categorias_json | tojson | safe if categorias_json is defined else '[]' }};
+
+const _CATS = [
+  ['DDR_2011','DDR 2011'],['SALDOS_CONTABEIS_DIARIOS_4111','Saldos Contábeis 4111'],
+  ['DRM_2060','DRM 2060'],['DLO_2061','DLO 2061'],['DLI_2062','DLI 2062'],
+  ['DRL_2160','DRL 2160'],['S5','S5'],['RETORNO_BACEN','Retorno BACEN'],
+  ['FORCAPITAL','ForCapital'],['DRSAC_2030','DRSAC 2030'],['PVCA_6209','PVCA 6209'],
+  ['CADOC','CADOC'],['SUPORTE','Suporte'],['INTERNO','Interno'],
+];
+
+// Popula select de categorias
+(function() {
+  const sel = document.getElementById('select-cat');
+  _CATS.forEach(([id,nome]) => {
+    const o = document.createElement('option');
+    o.value = id; o.textContent = nome; sel.appendChild(o);
+  });
+})();
+
+// Avatar
+(function() {
+  const email = document.getElementById('user-email').textContent.trim();
+  document.getElementById('user-av').textContent = email.slice(0,2).toUpperCase();
+})();
+
+let _threadParaClassificar = null;
+
+// ── Navegação ─────────────────────────────────────────────────────────
+function navegar(btn) {
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('ativo'));
+  btn.classList.add('ativo');
+  const pag = btn.dataset.pagina;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('ativa'));
+  document.getElementById('pag-' + pag).classList.add('ativa');
+  const titulos = {
+    'classificados':    'Classificação e Status',
+    'nao-classificados':'Não classificados',
+    'bloqueados':       'Bloqueados por filtro'
+  };
+  document.getElementById('topbar-titulo').textContent = titulos[pag] || '';
+  if (pag === 'nao-classificados') carregarNaoClassificados();
+  if (pag === 'bloqueados') carregarBloqueados();
+}
+
+// ── Auto-refresh ──────────────────────────────────────────────────────
+let _proxRefresh = 300, _timer = null;
+
+function _tick() {
+  _proxRefresh--;
+  if (_proxRefresh <= 0) {
+    carregarResumo();
+    _proxRefresh = 300;
+  }
+  const m = Math.floor(_proxRefresh / 60), s = _proxRefresh % 60;
+  document.getElementById('refresh-info').textContent =
+    `Próxima atualização em ${m}:${String(s).padStart(2,'0')}`;
+}
+
+// ── Fetch helpers ─────────────────────────────────────────────────────
+async function _get(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
+}
+
+function _spinner(show) {
+  document.getElementById('spinner').style.display = show ? 'inline-block' : 'none';
+}
+
+// ── Resumo (página 1) ─────────────────────────────────────────────────
+async function carregarResumo() {
+  _spinner(true);
+  try {
+    const d = await _get('/api/resumo');
+    const now = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+
+    // Badges sidebar
+    document.getElementById('badge-nao-class').textContent  = d.nao_class  || '0';
+    document.getElementById('badge-bloqueados').textContent = d.bloqueados || '0';
+    if ((d.nao_class || 0) > 0)   document.getElementById('badge-nao-class').classList.add('alerta');
+    if ((d.bloqueados || 0) > 0)  document.getElementById('badge-bloqueados').classList.add('alerta');
+
+    // Tabela
+    const tot = d.totais.total || 1;
+    const tbody = document.getElementById('tbody-resumo');
+    if (!d.categorias.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="vazio">Nenhuma thread classificada ainda.</td></tr>';
+    } else {
+      tbody.innerHTML = d.categorias.map(c => {
+        const pct = tot > 0 ? ((c.total / tot) * 100).toFixed(1) : '0.0';
+        const af  = c.af ? `<span class="n-af">${c.af}</span>` : '<span class="n-zero">—</span>';
+        const ac  = c.ac ? `<span class="n-ac">${c.ac}</span>` : '<span class="n-zero">—</span>';
+        const co  = c.co ? `<span class="n-co">${c.co}</span>` : '<span class="n-zero">—</span>';
+        return `<tr onclick="abrirCategoria('${c.id}','${escHtml(c.nome)}')">
+          <td>${escHtml(c.nome)}</td>
+          <td class="num pct">${pct}%</td>
+          <td class="num">${af}</td>
+          <td class="num">${ac}</td>
+          <td class="num">${co}</td>
+          <td class="num"><strong>${c.total}</strong></td>
+        </tr>`;
+      }).join('');
+    }
+
+    // Rodapé
+    const t = d.totais;
+    const afT = t.af ? `<span class="n-af">${t.af}</span>` : '<span class="n-zero">—</span>';
+    const acT = t.ac ? `<span class="n-ac">${t.ac}</span>` : '<span class="n-zero">—</span>';
+    const coT = t.co ? `<span class="n-co">${t.co}</span>` : '<span class="n-zero">—</span>';
+    document.getElementById('tfoot-resumo').innerHTML =
+      `<tr class="tfoot">
+        <td>Total</td><td class="num">100%</td>
+        <td class="num">${afT}</td><td class="num">${acT}</td>
+        <td class="num">${coT}</td>
+        <td class="num">${t.total}</td>
+      </tr>`;
+
+    document.getElementById('refresh-info').textContent =
+      `Atualizado às ${now}`;
+  } catch (e) {
+    document.getElementById('refresh-info').textContent = 'Erro ao carregar';
+  } finally { _spinner(false); }
+}
+
+// ── Categoria → threads ────────────────────────────────────────────────
+async function abrirCategoria(catId, catNome) {
+  document.getElementById('modal-cat-titulo').textContent = catNome;
+  document.getElementById('tbody-cat').innerHTML =
+    '<tr><td colspan="4" class="vazio">Carregando…</td></tr>';
+  abrirModal('modal-cat');
+  try {
+    const d = await _get('/api/categoria/' + encodeURIComponent(catId));
+    if (!d.threads.length) {
+      document.getElementById('tbody-cat').innerHTML =
+        '<tr><td colspan="4" class="vazio">Nenhuma thread.</td></tr>';
+      return;
+    }
+    document.getElementById('tbody-cat').innerHTML = d.threads.map(t => {
+      const chipCls = t.status === 'Aguardando Finaud' ? 'chip-af'
+                    : t.status === 'Aguardando Cliente' ? 'chip-ac' : 'chip-co';
+      const motivo = t.motivo_classificacao ? ` title="${escHtml(t.motivo_classificacao)}"` : '';
+      return `<tr onclick="abrirThread('${escHtml(t.thread_id)}')">
+        <td>${escHtml(t.assunto)}</td>
+        <td>${escHtml(t.data)}</td>
+        <td class="num">${t.qtd_mensagens}</td>
+        <td><span class="chip ${chipCls}"${motivo}>${escHtml(t.status)}</span></td>
+      </tr>`;
+    }).join('');
+  } catch (e) {
+    document.getElementById('tbody-cat').innerHTML =
+      '<tr><td colspan="4" class="vazio">Erro ao carregar.</td></tr>';
+  }
+}
+
+// ── Thread completa ────────────────────────────────────────────────────
+async function abrirThread(threadId) {
+  document.getElementById('modal-thread-assunto').textContent = 'Carregando…';
+  document.getElementById('modal-thread-body').innerHTML = '';
+  abrirModal('modal-thread');
+  try {
+    const t = await _get('/api/thread/' + encodeURIComponent(threadId));
+    document.getElementById('modal-thread-assunto').textContent = t.assunto;
+    const chipCls = t.status === 'Aguardando Finaud' ? 'chip-af'
+                  : t.status === 'Aguardando Cliente' ? 'chip-ac' : 'chip-co';
+    const motivoAttr = t.motivo_classificacao
+      ? ` title="Motivo: ${escHtml(t.motivo_classificacao)}"` : '';
+    document.getElementById('modal-thread-meta').innerHTML =
+      `<span class="chip ${chipCls}"${motivoAttr}>${escHtml(t.status)}</span>
+       &nbsp;<span style="color:#94a3b8;">·</span>&nbsp;
+       ${escHtml(t.categoria_nome)}`;
+
+    document.getElementById('modal-thread-body').innerHTML =
+      t.mensagens.map(m => {
+        const anexos = m.anexos.length
+          ? `<div class="msg-anexos">📎 ${m.anexos.map(a => `<span>${escHtml(a)}</span>`).join('')}</div>`
+          : '';
+        return `<div class="msg-card">
+          <div class="msg-head">
+            <span><strong>De:</strong> ${escHtml(m.de)}</span>
+            <span><strong>Para:</strong> ${escHtml(m.para)}</span>
+            <span>${escHtml(m.data)}</span>
+          </div>
+          <div class="msg-body">${escHtml(m.corpo || '(sem conteúdo)')}</div>
+          ${anexos}
+        </div>`;
+      }).join('');
+  } catch (e) {
+    document.getElementById('modal-thread-body').innerHTML =
+      '<p class="vazio">Erro ao carregar a thread.</p>';
+  }
+}
+
+// ── Página 2: Não classificados ────────────────────────────────────────
+async function carregarNaoClassificados() {
+  document.getElementById('tbody-nao-class').innerHTML =
+    '<tr><td colspan="5" class="vazio">Carregando…</td></tr>';
+  try {
+    const d = await _get('/api/nao-classificados');
+    if (!d.threads.length) {
+      document.getElementById('tbody-nao-class').innerHTML =
+        '<tr><td colspan="5" class="vazio">Nenhuma thread pendente. ✓</td></tr>';
+      return;
+    }
+    document.getElementById('tbody-nao-class').innerHTML = d.threads.map(t =>
+      `<tr>
+        <td>${escHtml(t.assunto)}</td>
+        <td>${escHtml(t.remetente)}</td>
+        <td>${escHtml(t.data)}</td>
+        <td class="num">${t.qtd_mensagens}</td>
+        <td><button class="btn-classificar" onclick="abrirClassificar('${escHtml(t.thread_id)}','${escHtml(t.assunto).replace(/'/g,"\\'")}')">Classificar</button></td>
+      </tr>`
+    ).join('');
+  } catch (e) {
+    document.getElementById('tbody-nao-class').innerHTML =
+      '<tr><td colspan="5" class="vazio">Erro ao carregar.</td></tr>';
+  }
+}
+
+// ── Página 3: Bloqueados ──────────────────────────────────────────────
+async function carregarBloqueados() {
+  document.getElementById('tbody-bloq').innerHTML =
+    '<tr><td colspan="5" class="vazio">Carregando…</td></tr>';
+  try {
+    const d = await _get('/api/bloqueados');
+    if (!d.threads.length) {
+      document.getElementById('tbody-bloq').innerHTML =
+        '<tr><td colspan="5" class="vazio">Nenhuma thread bloqueada.</td></tr>';
+      return;
+    }
+    document.getElementById('tbody-bloq').innerHTML = d.threads.map(t => {
+      const motivo = t.motivo_descarte
+        ? `<span class="chip" style="background:#f0f0f0;color:#475569;" title="${escHtml(t.motivo_descarte)}">${escHtml(t.motivo_descarte.substring(0,40))}${t.motivo_descarte.length > 40 ? '…' : ''}</span>`
+        : '<span class="n-zero">—</span>';
+      return `<tr>
+        <td>${escHtml(t.assunto)}</td>
+        <td>${escHtml(t.remetente)}</td>
+        <td>${escHtml(t.data)}</td>
+        <td class="num">${t.qtd_mensagens}</td>
+        <td>${motivo}</td>
+      </tr>`;
+    }).join('');
+  } catch (e) {
+    document.getElementById('tbody-bloq').innerHTML =
+      '<tr><td colspan="5" class="vazio">Erro ao carregar.</td></tr>';
+  }
+}
+
+// ── Classificação manual ──────────────────────────────────────────────
+function abrirClassificar(threadId, assunto) {
+  _threadParaClassificar = threadId;
+  document.getElementById('modal-class-assunto').textContent = assunto;
+  document.getElementById('select-cat').value = '';
+  abrirModal('modal-class');
+}
+
+async function confirmarClassificacao() {
+  const cat = document.getElementById('select-cat').value;
+  if (!cat) { alert('Selecione uma categoria.'); return; }
+  try {
+    const r = await fetch('/api/classificar/' + encodeURIComponent(_threadParaClassificar), {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({categoria: cat})
+    });
+    if (!r.ok) throw new Error();
+    fecharModal('modal-class');
+    await carregarNaoClassificados();
+    await carregarResumo();
+  } catch (e) {
+    alert('Erro ao classificar. Tente novamente.');
+  }
+}
+
+// ── Controle de modais ────────────────────────────────────────────────
+function abrirModal(id) { document.getElementById(id).classList.add('aberto'); }
+function fecharModal(id) { document.getElementById(id).classList.remove('aberto'); }
+
+document.querySelectorAll('.modal-backdrop').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('aberto'); });
+});
+
+// ── Escape HTML ───────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ── Inicialização ─────────────────────────────────────────────────────
+carregarResumo();
+_timer = setInterval(_tick, 1000);
+</script>
+</body>
+</html>
