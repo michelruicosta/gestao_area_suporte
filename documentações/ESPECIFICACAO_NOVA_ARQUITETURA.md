@@ -62,25 +62,24 @@ O sistema ficará em execução permanente, atualizando automaticamente quando c
 
 ### Por que estas escolhas — decisões fundacionais
 
-Quatro escolhas definem toda a arquitetura. Quem for implementar, manter ou evoluir o sistema precisa entendê-las antes de tudo.
+Três escolhas definem toda a arquitetura. Quem for implementar, manter ou evoluir o sistema precisa entendê-las antes de tudo.
 
 **1. Gmail API direta — por que não uma exportação manual ou agendada?**
 Qualquer e-mail novo chega ao sistema em segundos — sem intervenção humana, sem exportação periódica, sem janela de atraso. Obrigações regulatórias têm prazo: um e-mail que chega à tarde e só é visto no dia seguinte pode significar entrega atrasada ao BACEN.
 
-**2. IA classificadora — por que não regras fixas?**
-Os clientes descrevem a mesma situação de dezenas de formas diferentes: "temos uma crítica do BACEN no DRM", "o BACEN rejeitou nossa remessa 2060", "segue retorno da crítica". Regras fixas precisariam cobrir cada variação manualmente — e quebrariam na primeira frase que ninguém previu. A IA generaliza: entende todas essas frases como a mesma coisa sem regra explícita para cada uma.
+**2. Classificador determinístico agora, IA no futuro**
+O sistema usa um classificador baseado em regras (sem custo de API, sem latência, sem incerteza aleatória) para classificar todos os e-mails. As regras cobrem 99,5% dos casos do histórico real (764 de 768 threads). Quando o classificador não consegue determinar a categoria, o e-mail vai para a Tela de Revisão — Michel classifica manualmente e a regra é aprendida.
 
-**3. 99% de confiança mínima — por que um limiar tão alto?**
-Um erro de classificação não é só um dado errado na tela — é uma obrigação regulatória (CADOC) tratada pelo sistema como se fosse outra coisa. O BACEN multa por entrega errada ou fora do prazo. Prefere-se reter para revisão humana do que classificar errado com "90% de certeza".
+A IA (GPT-4o-mini) entra em fase futura, quando houver volume suficiente de casos manuais para treinar e validar. O classificador determinístico é o ponto de partida: estável, auditável e sem custo por uso.
 
-**4. Duas camadas — por que separar classificação de rastreamento?**
+**3. Duas camadas — por que separar classificação de rastreamento?**
 Um único e-mail pode mencionar DDR, DRM e DLO ao mesmo tempo: "segue o material de março — DDR, DRM e DLI". Se o sistema rastreasse por e-mail, teria que inventar uma categoria "misturada". Com duas camadas, a Camada 1 identifica as categorias presentes no e-mail e a Camada 2 rastreia o ciclo de vida de cada entrega separadamente — cada CADOC tem seu próprio estado, independente dos outros.
 
 ---
 
 ## 3. As 12 categorias de e-mail e seus fluxos
 
-O sistema trata 12 categorias distintas de e-mail. Cada categoria tem suas próprias regras, prazo regulatório e fluxo — o que a IA precisa saber sobre cada uma está no §10 (Catálogo de categorias) e os exemplos reais estão no §11.
+O sistema trata 12 categorias distintas de e-mail. Cada categoria tem suas próprias regras, prazo regulatório e fluxo — as regras de classificação estão no §10 (Catálogo de categorias) e os exemplos reais estão no §11.
 
 | Categoria | O que é |
 |---|---|
@@ -477,17 +476,16 @@ CC vazio (e Para também estava vazio):
 
 **Para que o sistema usa:** ajudar a IA a identificar a categoria da thread. O assunto **não** é usado para descartar e-mails — filtragem é responsabilidade exclusiva do Campo 1 (remetente) e Campo 4 (Reply-To).
 
-> **Regra (05/08/2026):** o assunto sozinho nunca descarta um e-mail. Os e-mails automáticos ("Risk Driver -", "Relatório do Serviço", "FogBugz" etc.) são descartados pelo remetente que os gera — `riskdriver@finaud.com.br`, `contato@finaud.com.br`, `do-not-reply@finaud.fogbugz.com`, `comunicacao@comunicacao.bcb.gov.br`. Um cliente que encaminha ou responde um desses e-mails chega com um remetente diferente e **não é descartado** — segue normalmente para a IA.
+> **Regra (05/08/2026):** o assunto sozinho nunca descarta um e-mail. Os e-mails automáticos ("Risk Driver -", "Relatório do Serviço", "FogBugz" etc.) são descartados pelo remetente que os gera — `riskdriver@finaud.com.br`, `contato@finaud.com.br`, `do-not-reply@finaud.fogbugz.com`, `comunicacao@comunicacao.bcb.gov.br`. Um cliente que encaminha ou responde um desses e-mails chega com um remetente diferente e **não é descartado** — segue normalmente para o classificador.
 
 **Como o sistema processa — passo a passo:**
 
 | Passo | Condição | Ação |
 |---|---|---|
-| 1 | Assunto está vazio | IA usa corpo e anexos para tentar classificar — se atingir 99% de confiança, classifica normalmente; se não atingir → **Retenção** com alerta para Michel |
-| 2 | Assunto passou nos filtros de remetente (Campo 1 + Campo 4) | Continua processamento — Campo 6 (corpo) será lido |
-| 3 | Assunto contém código CADOC explícito (DDR, DRM, DLO, DLI, DRL, 4111, 2011, 2060, 2061, 2062, 2160) | IA classifica com alta confiança; corpo complementa com detalhes |
-| 4 | Assunto não contém código CADOC | IA lê o corpo completo para determinar a categoria |
-| 5 | IA processa assunto + corpo e não atinge 99% de confiança | **Retenção** com notificação imediata para Michel |
+| 1 | Assunto passou nos filtros de remetente (Campo 1 + Campo 4) | Continua processamento — Campo 6 (corpo) será lido |
+| 2 | Assunto contém código CADOC explícito (DDR, DRM, DLO, DLI, DRL, 4111, 2011, 2060, 2061, 2062, 2160) | Classificador determina a categoria pelo assunto; corpo complementa |
+| 3 | Assunto não contém código CADOC | Classificador lê o corpo completo para determinar a categoria |
+| 4 | Classificador não consegue determinar a categoria | E-mail vai para a **Tela de Revisão** — Michel classifica manualmente |
 
 ---
 
@@ -495,11 +493,11 @@ CC vazio (e Para também estava vazio):
 
 | O assunto tem | Casos no histórico | O que acontece |
 |---|---|---|
-| Código CADOC explícito (DDR, DRM, DLO, DLI, DRL, 4111, 2011, 2060, 2061, 2062, 2160) | 4.088 (46,3%) | IA classifica com alta confiança pelo assunto |
-| Sem código explícito | 2.843 (32,2%) | IA lê o corpo completo (Campo 6) para classificar |
-| IA processa assunto + corpo e não atinge 99% de confiança | Quantificação pendente (produção) | **Retenção** — notificação para Michel |
+| Código CADOC explícito (DDR, DRM, DLO, DLI, DRL, 4111, 2011, 2060, 2061, 2062, 2160) | 4.088 (46,3%) | Classificador determina a categoria pelo assunto |
+| Sem código explícito | 2.843 (32,2%) | Classificador lê o corpo completo para determinar |
+| Classificador não consegue determinar | Estimado < 1% (baseado em 764/768 no histórico) | **Tela de Revisão** — Michel classifica manualmente |
 
-**Assunto vazio:** não ocorreu em nenhum dos 8.825 e-mails do histórico. Se ocorrer → Retenção.
+**Assunto vazio:** não ocorreu em nenhum dos 8.825 e-mails do histórico. Se ocorrer → Tela de Revisão.
 
 ---
 
@@ -507,7 +505,7 @@ CC vazio (e Para também estava vazio):
 
 **O que é:** o texto escrito que está dentro do e-mail — o conteúdo que a pessoa digitou, não os anexos nem o assunto.
 
-**Para que o sistema usa:** criar uma **cópia limpa** do texto para a IA classificar — o e-mail original é sempre preservado intacto no sistema. A cópia limpa remove tudo que não é conteúdo novo (assinatura, histórico antigo, rodapé automático, imagens decorativas). O §8 (status da thread) e o Campo 4 (identificação do colaborador) leem o e-mail original diretamente — nunca a cópia. A IA recebe apenas a cópia limpa.
+**Para que o sistema usa:** criar uma **cópia limpa** do texto para o classificador usar — o e-mail original é sempre preservado intacto no sistema. A cópia limpa remove tudo que não é conteúdo novo (assinatura, histórico antigo, rodapé automático). O §8 (status da thread) e o Campo 4 (identificação do colaborador) leem o e-mail original diretamente — nunca a cópia. O classificador recebe apenas a cópia limpa.
 
 **Como o sistema processa — passo a passo:**
 
@@ -516,9 +514,9 @@ CC vazio (e Para também estava vazio):
 | 1 | Gmail entrega o corpo em HTML ou texto puro |
 | 2 | Sistema converte HTML → texto puro (se necessário) |
 | 3 | SE `From = suporte@finaud.com.br` E Reply-To vazio: extrai o e-mail do colaborador da assinatura **antes** de limpar (Campo 4 precisa dessa informação — se limpar primeiro, perde para sempre) |
-| 4 | Aplica regras L1–L8 em ordem: remove assinatura, histórico citado, rodapé automático e imagens decorativas |
-| 5 | Se corpo ficar vazio após L1–L6 e OCR (texto e imagens ambos vazios) → aplicar regra L8: (a) thread existente — mantém a classificação já registrada; §8 atualiza o status lendo o texto original; (b) thread nova — **Retenção** com alerta para Michel |
-| 6 | Texto limpo vai para a IA |
+| 4 | Aplica regras L1–L5 e L7–L8 em ordem: remove assinatura, histórico citado, rodapé automático e marcadores de imagem *(OCR — leitura de imagens — entra em fase futura; ver §13-Futuro)* |
+| 5 | Se corpo ficar vazio após limpeza: (a) thread existente — mantém a classificação já registrada; §8 atualiza o status lendo o texto original; (b) thread nova — vai para **Tela de Revisão** |
+| 6 | Texto limpo vai para o classificador |
 
 > **Regra obrigatória — extrair colaborador antes de limpar (Campo 4):** quando De = `suporte@finaud.com.br` e Reply-To está vazio, o sistema extrai o e-mail do colaborador da assinatura do corpo **antes** de aplicar as regras de limpeza. Só então remove a assinatura. Se a extração acontecer depois da limpeza, a informação do responsável se perde para sempre.
 
@@ -617,8 +615,8 @@ A IA recebe apenas o **texto novo** de cada e-mail — sem assinatura, sem hist�
 **Regra de ouro — imagens:**  
 Nenhuma imagem é descartada silenciosamente. O único critério de descarte sem OCR é o nome do arquivo conter palavra conhecida de decorativo (L5). Para todo o resto, o sistema tenta OCR. Se o OCR falhar (L6), o e-mail entra em fila de revisão humana — a IA não classifica até o revisor confirmar o conteúdo.
 
-**Atenção — RETORNO_BACEN:**  
-Nesta categoria as imagens não são decorativas — são prints de tela com erros do BACEN e são o conteúdo principal do e-mail. O OCR é obrigatório e pré-requisito para o classificador funcionar. Ver pendência "OCR — RETORNO_BACEN" em `documentações/PENDENCIAS.md`.
+**Atenção — RETORNO_BACEN (fase futura):**  
+Nesta categoria as imagens não são decorativas — são prints de tela com erros do BACEN e são o conteúdo principal do e-mail. Na fase atual, o classificador identifica RETORNO_BACEN pelo assunto e corpo textual. A leitura das imagens por OCR fica para fase futura — quando implementado, permitirá extrair o código da crítica, prazo de resposta e dados específicos do erro.
 
 **Pendência L1 — variação de assinatura:**  
 A palavra `Abraço` (singular, sem "s") não está no detector atual. Identificada na categoria DLI_2062. Adicionar antes de construir o módulo de limpeza. Ver `documentações/PENDENCIAS.md`.
@@ -2509,21 +2507,17 @@ As quatro decisões fundacionais da arquitetura estão explicadas em detalhes no
 
 | Fase | Nome | O que acontece | Status |
 |---|---|---|---|
-| **0** | Catálogo de tipos | Olhar Gmail real e mapear todos os tipos de e-mail que aparecem | **Concluído** — 19 tipos documentados em §11; T04 confirmado por Michel (03/08/2026) |
-| **1** | Protótipo | Construir as 3 peças com dados reais, sem IA ainda | Aguardando |
-| **2** | Validação | Michel testa: o que o sistema classificou está certo? | Aguardando |
-| **3** | IA | Ligar a IA assistente com os casos validados | Aguardando |
-| **4** | Histórico | Importar casos anteriores do sistema atual para a IA aprender | Aguardando |
-| **5** | Produção | Publicar em servidor, liberar para a equipe | Aguardando |
+| **0** | Catálogo e validação | Mapear tipos de e-mail + validar classificador determinístico (768 threads, 99,5% de acerto) | **Concluído** — 17/08/2026 |
+| **1** | Produção | Escrever `coletor_gmail.py` + pipeline determinístico + 3 telas (principal, revisão, descartes) | **Próximo passo** |
+| **Futura** | IA e OCR | Ligar o GPT-4o-mini para casos que o determinístico não cobre; OCR para imagens do RETORNO_BACEN; IA Assistente de aprendizado | A definir |
 
 **Decisões de implantação:**
 
 | Decisão | Justificativa |
 |---|---|
-| OCR mantido | Muitos erros do BACEN chegam como imagem (print de tela) |
-| Prazos reutilizados do JSON atual | Já testados e corretos; não precisa reescrever |
-| Histórico importado só na Fase 4 (depois dos testes) | Não contaminar o aprendizado da IA com dados não validados |
-| Sistema rodando em servidor, não na máquina do Michel | A equipe precisa de acesso independente |
+| Classificador determinístico na Fase 1, IA no futuro | Cobre 99,5% dos casos sem custo de API, sem latência, sem incerteza. A IA entra quando houver volume suficiente de classificações manuais para treinar e validar. |
+| OCR na fase futura | RETORNO_BACEN é classificado pelo assunto/corpo na fase atual. OCR das imagens (para extrair código da crítica, prazo, etc.) fica para quando a IA for conectada. |
+| Sistema rodando em servidor, não na máquina do Michel | A equipe precisa de acesso independente. |
 
 ### Como a Fase 0 foi feita
 
@@ -2555,31 +2549,94 @@ Este catálogo é o guia de todas as fases seguintes. Fase 0 concluída — T04 
 
 ## 14. Telas do sistema
 
-### Tela 1 — Painel Operacional
+O sistema tem 3 telas principais. Todo e-mail que chega passa por um de três destinos — e cada destino tem sua tela.
 
-Lista de threads ativas, organizada por prazo, com destaque visual:
+**Fluxo geral:**
+```
+E-mail chega
+    │
+    ▼
+[§4 Filtro automático]
+    │
+    ├── É automático → Tela de Descartes
+    │
+    └── Não é automático → [Classificador determinístico]
+            │
+            ├── Conseguiu classificar → Tela Principal
+            │
+            └── Não conseguiu → Tela de Revisão
+```
 
-| Cor | Urgência | Critério |
-|---|---|---|
-| 🔴 Urgente | Vence em até 3 dias | |
-| 🟡 Atenção | Vence em até 7 dias | |
-| 🟢 Normal | Mais de 7 dias | |
+---
 
-Cada linha mostra: **cliente · categoria · lado (Finaud/cliente) · prazo · última mensagem**
+### Tela 1 — Principal (threads classificadas)
 
-**Threads do mesmo cliente — agrupamento automático (confirmado por Michel, 05/08/2026):**
-Quando um cliente tem mais de um thread aberto ao mesmo tempo, o painel agrupa todos em um bloco único, exibindo-os lado a lado. Regras:
-- Cada thread fecha pelo seu próprio sinal (ZIP ou conversa) — de forma independente.
-- O sistema não cria vínculo automático entre threads do mesmo cliente.
-- O operador vê o contexto completo e decide como agir.
-- O grupo desaparece do painel quando todos os threads do cliente estiverem Concluídos.
-- Thread Concluída some imediatamente do painel (não fica visível por período de carência).
+**O que é:** a tela do dia a dia — mostra todas as threads que o classificador conseguiu classificar, com categoria e status atualizados automaticamente.
 
-### Tela 2 — Gestão de Filtros (Remetente)
+**O que cada linha mostra:**
 
-Tela de configuração onde Michel (ou a equipe) pode adicionar, editar ou remover endereços e assuntos filtrados sem precisar de intervenção técnica. Ver lista completa de filtros em §7 (Campo 1).
+| Campo | O que aparece |
+|---|---|
+| Cliente | Nome da empresa + contato principal |
+| Categoria | DDR · DRM · DLO · DLI · DRL · SCD · S5 · RETORNO_BACEN · SUPORTE · FORCAPITAL · DRSAC · PVCA |
+| Status | Aguardando Finaud · Aguardando Cliente · Concluído |
+| Última mensagem | Data e hora do último e-mail na thread |
+| Colaborador Finaud | Quem está responsável do lado Finaud |
 
-> **Decisão confirmada por Michel (23/07/2026).**
+**Organização:**
+
+As threads ficam separadas em 3 grupos:
+1. **Aguardando Finaud** — a bola está com a equipe; requer ação
+2. **Aguardando Cliente** — a bola está com o cliente; aguardando resposta
+3. **Concluídas** — thread encerrada (por ZIP, confirmação ou regra de encerramento do §8)
+
+**Atualização automática:** quando chega um novo e-mail numa thread, o status atualiza imediatamente — sem precisar recarregar a tela.
+
+**Threads do mesmo cliente:** quando um cliente tem mais de uma thread aberta, o painel agrupa todas em bloco único. Cada thread fecha pelo seu próprio sinal — de forma independente.
+
+---
+
+### Tela 2 — Revisão (threads sem categoria)
+
+**O que é:** fila de threads que o classificador não conseguiu classificar. Michel entra aqui, lê o e-mail e escolhe a categoria manualmente.
+
+**O que cada linha mostra:**
+
+| Campo | O que aparece |
+|---|---|
+| Assunto | Assunto do e-mail |
+| Remetente | Quem enviou |
+| Data | Quando chegou |
+| Corpo (prévia) | Primeiras linhas do e-mail |
+
+**O que Michel faz:**
+1. Clica na thread para ler o e-mail completo
+2. Escolhe a categoria no menu (lista das 12 categorias)
+3. Confirma — thread sai desta tela e entra na Tela Principal com a categoria escolhida
+
+> **Decisão (17/08/2026):** a categoria escolhida manualmente fica registrada. Em fase futura, esses registros alimentam o aprendizado da IA.
+
+---
+
+### Tela 3 — Descartes (e-mails barrados pelo filtro)
+
+**O que é:** lista de todos os e-mails que o filtro §4 barrou. Michel pode revisar se algum foi barrado por engano.
+
+**O que cada linha mostra:**
+
+| Campo | O que aparece |
+|---|---|
+| Remetente | Endereço de e-mail + nome |
+| Assunto | Assunto do e-mail |
+| Motivo do descarte | Qual regra do §4 disparou (ex.: "noreply no endereço", "via Microsoft no nome") |
+| Data | Quando chegou |
+
+**O que Michel pode fazer:**
+- **Revisar:** ler o e-mail completo para ver se faz sentido ter sido descartado
+- **Reclassificar:** se foi barrado por engano → escolhe a categoria e manda para a Tela Principal
+- **Ajustar a regra:** se um tipo de remetente está sendo barrado incorretamente → edita a regra de descarte (sem mexer no código)
+
+> **Nota:** e-mails automáticos legítimos (FogBugz, Risk Driver, etc.) aparecem aqui mas não precisam de ação — são descartados corretamente. A tela serve principalmente para capturar casos onde a regra foi ampla demais.
 
 ---
 

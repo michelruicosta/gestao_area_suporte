@@ -52,12 +52,15 @@ Thread `19f71c34de2418fe` ("Re: Arquivos Regulatórios - ZIIN") confirmada como 
 
 ### Próximo passo
 
-**🟢 INICIAR §13 — Especificação das telas do sistema**
+**🟢 INICIAR FASE 1 — Escrever o código de produção**
 
-Todas as pendências de threads foram resolvidas. Classificador determinístico estável em 764/768.
-Próximo passo: definir as telas do sistema (§13 da spec) — painel do gestor, fila de threads, alertas, filtros.
+Escopo redefinido em 17/08/2026: sem IA por enquanto. O sistema usa só o classificador determinístico.
+Spec e PENDENCIAS atualizados para refletir:
+- 3 telas definidas em §14: Principal, Revisão, Descartes
+- IA/OCR movidos para fase futura
+- Próximo passo real: `coletor_gmail.py` + pipeline + telas
 
-Ver `documentações/PENDENCIAS.md` → seção "ANTES DAS TELAS" para os itens a definir.
+Ver `documentações/PENDENCIAS.md` → seção "ETAPA ATUAL — Construir a Fase 1".
 
 Último /fechar: pendente desta sessão
 

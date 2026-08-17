@@ -118,11 +118,12 @@ Michel revisou as 5 threads e confirmou que todas são entregas simples de CADOC
 
 ---
 
-## ⏭ ETAPA ATUAL — Reduzir os 134 incertos com chat_ensino.py
+## ⏭ ETAPA ATUAL — Construir a Fase 1 (produção)
 
-> **✅ Objetivo ≥750/767 superado: 764/767 (99,6%) em 17/08/2026. Classificador determinístico estável.**
-> Próximo passo: iniciar sessões de ensino com `chat_ensino.py` para resolver os 134 incertos.
-> Cada confirmação entra no `registro_definitivo_threads.json` e melhora o desempenho.
+> **✅ Classificador determinístico concluído: 764/768 (99,5%) em 17/08/2026.**
+> **Escopo redefinido em 17/08/2026:** sem IA por enquanto. O classificador determinístico é o único classificador.
+> Próximo passo: escrever o código de produção — `coletor_gmail.py` + pipeline + 3 telas (§14 da spec).
+> A IA (GPT-4o-mini, OCR, IA Assistente) fica para fase futura — ver seção ao final deste arquivo.
 
 ### ✅ AMOSTRA — Resolvido em 17/08/2026
 
@@ -156,19 +157,17 @@ Determinístico classifica 134/134 threads que o R6 retornou como INCERTO. Todos
 
 ---
 
-### 🟡 SPEC — Definir comportamento do classificador em produção: threads novas vs. já classificadas (identificado 07/08/2026)
+### 🟡 SPEC — Definir comportamento em produção: threads novas vs. já classificadas (identificado 07/08/2026)
 
-**Contexto:** o projeto não é só as 768 threads de teste — em produção, novas threads chegam diariamente. A spec precisa definir como o classificador trata esse cenário antes de ir para produção.
+**Contexto:** em produção, novas threads chegam diariamente e threads existentes recebem novos e-mails. O sistema precisa saber o que fazer em cada caso.
 
 **O que precisa ser definido:**
-- Thread nova (nunca processada) → classifica e grava a categoria
-- Thread já classificada → não reclassifica; usa o que está gravado
-- Thread que recebeu nova resposta → reclassifica? Só se ainda estiver em aberto?
-- Como o sistema sabe o que já foi processado → lista ou banco de IDs já classificados
+- Thread nova (nunca vista) → classifica e grava a categoria
+- Thread já classificada + novo e-mail chegou → reclassifica? Ou atualiza só o status?
+- Thread classificada manualmente (Tela de Revisão) → protege da reclassificação automática?
+- Como o sistema sabe o que já foi processado → banco de Thread IDs já vistos
 
-**Por que importa:** sem essa regra, rodar o classificador duas vezes pode sobrescrever classificações corretas com resultados diferentes — mesmo com `temperature=0`, mudanças na spec geram resultados diferentes.
-
-**Onde documentar:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — seção de ciclo de vida das threads (a definir).
+**Onde documentar:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — §8 ou nova seção de ciclo de vida.
 
 ---
 
@@ -325,7 +324,11 @@ Durante a revisão dos casos da validação, Michel observou que a IA e ele aind
 
 ---
 
-### 🔴 OCR — RETORNO_BACEN depende 100% das imagens para classificação e aprendizado (identificado 30/07/2026 · Caso 3 AMOSTRA movido aqui em 17/08/2026)
+### ⏸ OCR — RETORNO_BACEN — FASE FUTURA (movido em 17/08/2026)
+
+> **Escopo atual:** o classificador identifica RETORNO_BACEN pelo assunto e corpo textual. OCR de imagens fica para quando a IA for conectada.
+
+### ~~🔴 OCR — RETORNO_BACEN depende 100% das imagens para classificação e aprendizado~~ (identificado 30/07/2026 · Caso 3 AMOSTRA movido aqui em 17/08/2026)
 
 Na análise do RETORNO_BACEN (1.298 e-mails), os elementos `[image:]` (36,3%) e `[cid:]` (41,0%) são os mais altos de todas as 12 categorias. Nesta categoria, o cliente envia **prints de tela** com as mensagens de erro do BACEN — o texto do e-mail diz apenas:
 
@@ -355,7 +358,7 @@ Decisão tomada por Michel: qualquer e-mail com invite.ics ou link de reunião (
 
 ---
 
-### 🟡 IA ASSISTENTE — Como preservar o histórico completo para aprendizado (identificado 30/07/2026)
+### ⏸ IA ASSISTENTE — Como preservar o histórico completo para aprendizado — FASE FUTURA (identificado 30/07/2026)
 
 O Passo 3 da limpeza remove o histórico citado (`>` e `---`) antes de passar o texto para a IA classificadora — correto para classificação. Mas a IA Assistente de Aprendizado precisa do histórico completo da thread para entender como cada caso foi resolvido.
 
@@ -373,7 +376,10 @@ O Passo 3 da limpeza remove o histórico citado (`>` e `---`) antes de passar o 
 
 ---
 
-## ANTES DAS TELAS — Especificar §13 (Telas do sistema)
+## ✅ TELAS — §14 especificado em 17/08/2026
+
+> As 3 telas foram definidas na spec (§14): Tela Principal, Tela de Revisão e Tela de Descartes.
+> O design visual detalhado e a implementação fazem parte da Fase 1.
 
 ### 🟡 PRAZOS — Visualização de itens atrasados e perto de vencer (identificado 04/08/2026)
 
@@ -424,9 +430,23 @@ Ideias levantadas por Michel para evoluir o painel:
 
 ---
 
+## ⏸ FASE FUTURA — IA e funcionalidades avançadas
+
+> Itens abaixo ficam fora do escopo da Fase 1. Entram em discussão quando o sistema determinístico estiver rodando em produção.
+
+| Item | O que é | Por que depois |
+|---|---|---|
+| GPT-4o-mini | Classificador de IA para casos que o determinístico não cobre | Precisamos de volume de classificações manuais (Tela de Revisão) para treinar e validar |
+| OCR de imagens | Leitura de prints de erro do BACEN em RETORNO_BACEN | Depende da IA estar conectada; sem IA o OCR não traz benefício de classificação |
+| IA Assistente de aprendizado | IA que aprende como cada caso foi resolvido e ajuda a responder | Depende de histórico classificado e validado |
+| Preservação do histórico para aprendizado | Como guardar o corpo completo (com histórico citado) antes de limpar | Depende da IA Assistente estar definida |
+| §10 — 3 distinções não resolvidas | Entrega vs SUPORTE, SUPORTE vs RETORNO_BACEN, 4016 DLO vs DLI | O determinístico cobre esses casos com as regras atuais; refinar só quando a IA precisar |
+
+---
+
 ## APÓS A FASE 1 ESTAR RODANDO
 
-> Fazer depois que o protótipo (coletor + classificador sem IA) estiver funcionando.
+> Fazer depois que o sistema (coletor + classificador + 3 telas) estiver funcionando em produção.
 
 ---
 
