@@ -2513,3 +2513,10 @@ if re.search(r'RESULTADO[S]?\s+QUANTITATIVO[S]?', texto_u):
 
 **Validação:** `pytest tests/ -q` → 195 passed ✅ — placar 759→764 (3 erros residuais).
 
+**Residuais confirmados por Michel (17/08/2026):**
+- `INDICIO 2061 - DLO MAIO` → RETORNO_BACEN: "INDICIO" sempre = RETORNO_BACEN (decisão 17/08)
+- `RES: Erro do DRM e DLO` → RETORNO_BACEN: erro de layout ao enviar DRM ao BACEN; frase informal no corpo não é detectável deterministicamente
+- `RES: ARQUIVO DRM - AZUMI` → RETORNO_BACEN: "era erro do próprio Bc." — erro do BACEN ao receber DRM; mesmo motivo
+
+**Placar final: 764/767 (99,6% de acerto). Revisão de erros concluída.**
+
