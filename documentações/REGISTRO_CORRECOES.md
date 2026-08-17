@@ -2434,3 +2434,28 @@ if 'SALDOS_CONTABEIS_DIARIOS_4111' not in cats:
 
 **Placar:** 756/767 acertos (11 erros).
 
+---
+
+### Correção 54 — 17/08/2026 — Classificador: plural "Resultados Quantitativos" adicionado ao sinal S5
+
+**🔎 Em miúdos:** quando o corpo do e-mail dizia "para o cálculo dos Resultados Quantitativos" (plural), o classificador não reconhecia como S5. Chegava até os anexos (COS4010), detectava DLO e retornava o resultado errado. Corrigido para aceitar tanto o singular quanto o plural.
+
+**Problema:** thread "Re: Solicitação de treinamento – Encaminhar os COS4010 jan a maio/2026" — Andrea (Finaud) pede à Freex Câmbio que envie os COS4010 para o cálculo do S5. O corpo usa a forma plural "Resultados Quantitativos". O check `'RESULTADO QUANTITATIVO' in texto_u` não casava com o plural → S5 não detectado na Camada 2b → classificador chegava na Camada 3 (anexos `COS4010_*.XML` → regra C36 → DLO). Resultado: `['DLO_2061']` quando esperado era `['S5']`.
+
+**Varredura prévia:** 5 threads S5 confirmadas com "RESULTADO(S) QUANTITATIVO(S)" no corpo; 0 threads não-S5 com essa expressão → 0 risco de falso positivo.
+
+**Correção:** em `_detectar_cadoc`, substituição de:
+```python
+if 'RESULTADO QUANTITATIVO' in texto_u:
+```
+por:
+```python
+if re.search(r'RESULTADO[S]?\s+QUANTITATIVO[S]?', texto_u):
+```
+
+**Arquivos alterados:** `scripts/classificador_ia.py` (`_detectar_cadoc`, sinal S5), `tests/test_classificador_ia.py` (2 testes C54).
+
+**Varredura:** +1 ganho, 0 regressões (767 threads). `pytest tests/ -q` → 193 passed. ✅
+
+**Placar:** 757/767 acertos (10 erros).
+

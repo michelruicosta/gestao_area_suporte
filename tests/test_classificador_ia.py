@@ -1439,3 +1439,23 @@ def test_correcao53_cos_sem_4111_no_corpo_nao_adiciona_scd():
         f"C53: DLO ausente; obtido {r['categorias']}"
     assert 'SALDOS_CONTABEIS_DIARIOS_4111' not in r['categorias'], \
         f"C53: SCD indevido sem 4111 no corpo; obtido {r['categorias']}"
+
+
+# ---------------------------------------------------------------------------
+# C54 — variante plural de RESULTADO QUANTITATIVO detecta S5
+# ---------------------------------------------------------------------------
+
+def test_correcao54_resultados_quantitativos_plural_detecta_s5():
+    """C54 — 'Resultados Quantitativos' (plural) no corpo detecta S5."""
+    corpo = 'Solicitamos encaminhar os COS4010 jan a maio/2026 para o cálculo dos Resultados Quantitativos.'
+    r = _classificar('Re: Solicitação de treinamento – Encaminhar os COS4010 jan a maio/2026.', corpo, [])
+    assert 'S5' in r['categorias'], \
+        f"C54: S5 ausente com 'Resultados Quantitativos' no corpo; obtido {r['categorias']}"
+
+
+def test_correcao54_resultado_quantitativo_singular_ainda_detecta_s5():
+    """C54 — singular 'RESULTADO QUANTITATIVO' continua detectando S5 normalmente."""
+    corpo = 'Segue o Resultado Quantitativo de junho/2026 conforme solicitado.'
+    r = _classificar('Re: Arquivo COS. Resultado Quantitativo 06/2026.', corpo, [])
+    assert 'S5' in r['categorias'], \
+        f"C54: S5 ausente com singular 'Resultado Quantitativo'; obtido {r['categorias']}"

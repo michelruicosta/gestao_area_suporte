@@ -204,7 +204,8 @@ def _detectar_cadoc(texto_u: str) -> list[str]:
     # S5 — somente via 'RESULTADO QUANTITATIVO' em qualquer contexto;
     # '\bS5\b' é verificado separadamente só no assunto (Camada 1b),
     # pois no corpo 'S5' indica tamanho de instituição BACEN, não entrega CADOC
-    if 'RESULTADO QUANTITATIVO' in texto_u:
+    # C54: plural 'RESULTADOS QUANTITATIVOS' adicionado — ex.: "cálculo dos Resultados Quantitativos"
+    if re.search(r'RESULTADO[S]?\s+QUANTITATIVO[S]?', texto_u):
         cats.add('S5')
 
     # FORCAPITAL — somente via assunto (Camada 1b);
