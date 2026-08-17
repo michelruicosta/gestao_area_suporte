@@ -8,51 +8,57 @@
 
 ---
 
-## 📓 Diário da sessão (2026-08-17) — C55, C57 e conclusão da revisão de erros
+## 📓 Diário da sessão (2026-08-17) — C55, C57, §4 filtro, ZIIN e fechamento da fase de threads
 
 ### Resumo do que foi feito hoje
 
-**Contexto:** continuação da revisão de erros do classificador determinístico. Sessões anteriores (15–16/08) fizeram C51–C54 (758/767). Esta sessão concluiu a revisão.
+**Contexto:** sessão de continuação. Início: /fechar da sessão anterior (764/767). Esta sessão finalizou TODAS as pendências de threads antes de avançar para as telas.
 
 **C55 — "Divulgação Instrução Normativa" no assunto → INTERNO:**
-A regra "INSTRUÇÃO NORMATIVA → SUPORTE" da Camada 1b disparava antes da Camada 4 (detecção INTERNO). Adicionado padrão `DIVULGAÇÃO INSTRUÇÃO NORMATIVA` a `_INTERNO_PADROES_ASSUNTO` + guarda `and not _eh_interno(assunto)` na regra. Thread "Divulgação Instrução Normativa BCB nº 761 - PLD/CFT" corrigida: SUPORTE → INTERNO. Placar: 758→759/767.
+Placar: 758→759/767.
 
-**C57 — Nova regra: menção a CADOC = categoria CADOC; SUPORTE só quando nenhum CADOC é mencionado:**
-Michel propôs simplificação: qualquer thread que mencione um CADOC vai para essa categoria. SUPORTE fica reservado para threads sem qualquer menção a CADOC. Três regras removidas do classificador:
-- "REUNIÃO + CADOC no assunto → SUPORTE"
-- "INSTRUÇÃO NORMATIVA sem CADOC no assunto → SUPORTE"
-- "ERRO no início + só DDR → SUPORTE"
+**C57 — Nova regra: menção a CADOC = categoria CADOC:**
+8 gabaritos corrigidos. Placar: 759→764/767. 3 residuais confirmados.
 
-8 gabaritos atualizados de SUPORTE para o CADOC respectivo. Placar: 759→764/767.
+**§4 filtro — 2 novos padrões:**
+- "Código de verificação" no assunto → descarte automático
+- "via Microsoft/Google/LinkedIn/Apple" no nome do remetente → descarte automático
+11 testes novos. Arquivo criado: `tests/test_validador_filtro.py`. 206 testes passando.
 
-**Residuais confirmados por Michel:**
-- `INDICIO 2061 - DLO MAIO` → RETORNO_BACEN (regra "INDICIO = sempre RETORNO_BACEN" mantida)
-- `RES: Erro do DRM e DLO` → RETORNO_BACEN (cliente com erro de layout ao enviar DRM)
-- `RES: ARQUIVO DRM - AZUMI` → RETORNO_BACEN ("era erro do próprio Bc")
+**134 incertos (R6) verificados:** todos os 134 já estavam no registro como "confirmada". Determinístico cobre 100% deles.
 
-**Resultado final:** 764/767 — 99,6% de acerto. Objetivo ≥ 750/767 **superado**.
+**ZIIN gabarito confirmado:**
+Thread `19f71c34de2418fe` ("Re: Arquivos Regulatórios - ZIIN") confirmada como DLO_2061 por Michel. Experimento com corpus de 1.200 chars: não resolveu ZIIN (DLO está além de 1.200 chars) e causou 2 regressões. Revertido. ZIIN aceito como 4º residual.
+
+**Decisão final de Michel:** aceitar 4 residuais e passar para telas (§13).
 
 ---
 
 ### Estado atual
 
-**Placar classificador determinístico:** 764/767 (3 residuais confirmados). ✅ Objetivo ≥750 alcançado.
-**Suite de testes:** 195/195 passando.
-**Registro definitivo:** `data/registro_definitivo_threads.json` — 767 threads confirmadas
-**Commits desta sessão:** C55 (`5e227ce`), C57 (`393d529`), registro residuais (`60bba3c`)
-**GitHub:** `github.com/michelruicosta/gestao_area_suporte` — branch `main`
+**Placar classificador determinístico:** 764/768 (4 residuais confirmados). ✅ Objetivo ≥750 alcançado.
+**Suite de testes:** 206/206 passando.
+**Registro definitivo:** `data/registro_definitivo_threads.json` — 768 threads confirmadas (ignorado pelo git)
+**Commits desta sessão:** C55 (`5e227ce`), C57 (`393d529`), docs residuais (`60bba3c`), §4 filtro (`f2601e0`)
+**GitHub:** `github.com/michelruicosta/gestao_area_suporte` — branch `main` (1 commit não pushado)
+
+**Os 4 residuais (para Fase 3):**
+1. `Re: Arquivos Regulatórios - ZIIN` → DLO_2061 esperado / SUPORTE obtido
+2. `INDICIO 2061 - DLO MAIO` → DLO_2061 esperado / RETORNO_BACEN obtido
+3. `RES: Erro do DRM e DLO` → RETORNO_BACEN esperado / DLO+DRM obtido
+4. `RES: ARQUIVO DRM - AZUMI` → RETORNO_BACEN esperado / DRM obtido
 
 ---
 
 ### Próximo passo
 
-**🔴 INICIAR SESSÕES DE ENSINO COM `chat_ensino.py` — reduzir os 134 incertos**
+**🟢 INICIAR §13 — Especificação das telas do sistema**
 
-O objetivo de 750/767 foi superado (764/767). O classificador determinístico está estável.
-O próximo passo é abrir o `chat_ensino.py` e começar as sessões de ensino para resolver os 134 threads ainda incertos — cada confirmação entra no `registro_definitivo_threads.json` e o classificador melhora.
+Todas as pendências de threads foram resolvidas. Classificador determinístico estável em 764/768.
+Próximo passo: definir as telas do sistema (§13 da spec) — painel do gestor, fila de threads, alertas, filtros.
 
-Ver `documentações/PENDENCIAS.md` → seção "ETAPA ATUAL" para detalhe.
+Ver `documentações/PENDENCIAS.md` → seção "ANTES DAS TELAS" para os itens a definir.
 
-Último /fechar: 2026-08-17 — memórias revisadas ✅
+Último /fechar: pendente desta sessão
 
 ---

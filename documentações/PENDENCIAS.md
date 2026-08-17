@@ -8,17 +8,19 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ---
 
-## ✅ CLASSIFICADOR DETERMINÍSTICO — CONCLUÍDO (placar: 764/767 — 99,6%)
+## ✅ CLASSIFICADOR DETERMINÍSTICO — CONCLUÍDO (placar: 764/768 — 99,5%)
 
-> Ciclo de revisão completo em 17/08/2026. C40–C57 aplicados. Objetivo ≥750/767 **superado**.
-> 3 residuais confirmados por Michel (ver seção abaixo). Sem novos erros identificados.
+> Ciclo de revisão completo em 17/08/2026. C40–C57 aplicados. Objetivo ≥750/768 **superado**.
+> 4 residuais confirmados por Michel (ver seção abaixo). Sem novos erros identificados.
 
-### ⚠️ RETORNO_BACEN — 2 residuais confirmados por Michel (17/08/2026)
+### ⚠️ RESIDUAIS — 4 confirmados por Michel (17/08/2026)
 
-Threads com menção informal a erros do BACEN que não disparam nenhum sinal detectável deterministicamente. Classificador retorna DRM_2060 / DLO_2061 (CADOC detectado no assunto), mas o tema real é erro do BACEN. Michel confirmou: deixar como RETORNO_BACEN no gabarito, aceitar como residual.
+Threads sem correção viável com as ferramentas atuais. Determinístico erra em todas as 4. Aceitos por Michel; serão abordados na Fase 3 (OCR + leitura profunda).
 
-- `RES: ARQUIVO DRM - AZUMI` → RETORNO_BACEN (gabarito) vs. DRM_2060 (obtido) — "era erro do próprio Bc"
-- `RES: Erro do DRM e DLO` → RETORNO_BACEN (gabarito) vs. DLO_2061+DRM_2060 (obtido) — cliente com erro de layout ao enviar DRM
+- `INDICIO 2061 - DLO MAIO` → DLO_2061 (gabarito) vs. RETORNO_BACEN (obtido) — "INDICIO" sempre = RETORNO_BACEN (decisão Michel, 17/08)
+- `RES: Erro do DRM e DLO` → RETORNO_BACEN (gabarito) vs. DLO_2061+DRM_2060 (obtido) — erro do BACEN em imagem; corpo textual menciona só DRM/DLO
+- `RES: ARQUIVO DRM - AZUMI` → RETORNO_BACEN (gabarito) vs. DRM_2060 (obtido) — mesmo motivo
+- `Re: Arquivos Regulatórios - ZIIN` → DLO_2061 (gabarito) vs. SUPORTE (obtido) — "DLO (2061)" em texto citado, além do limite de leitura do determinístico
 
 ---
 
@@ -109,7 +111,7 @@ Michel revisou as 5 threads e confirmou que todas são entregas simples de CADOC
 
 | Thread | Esperado | Situação |
 |---|---|---|
-| INDICIO 2061 - DLO MAIO | DLO_2061 | ⚠️ RESIDUAL confirmado 17/08: regra "INDICIO = RETORNO_BACEN" mantida; Michel decidiu que INDICIO sempre = RETORNO |
+| INDICIO 2061 - DLO MAIO | DLO_2061 | ⚠️ RESIDUAL — ver seção de residuais acima |
 | ENC: Risk Driver - CV INVESTIMENTOS | DLO+SUPORTE | ✅ Resolvido em C51–C54 (15–16/08) |
 | Divulgação Instrução Normativa BCB nº 761 | INTERNO | ✅ C55 (17/08): padrão DIVULGAÇÃO INSTRUÇÃO NORMATIVA adicionado → INTERNO detectado |
 | Re: Solicitação de treinamento – FREEX | S5 | ✅ Resolvido em C44–C46 (14/08) |
@@ -333,9 +335,10 @@ O que está dentro da imagem é o erro real: código de crítica, conta contábi
 
 **Impacto sem OCR:** a IA classifica como RETORNO_BACEN genérico sem entender o problema específico; o aprendizado da IA Assistente fica cego para o conteúdo mais importante desta categoria.
 
-**Casos concretos que dependem de OCR para classificação correta:**
-- `RES: Erro do DRM e DLO` → determinístico retorna DLO+DRM; gabarito é RETORNO_BACEN (erro do BACEN em imagem)
+**Casos concretos que dependem de solução na Fase 3:**
+- `RES: Erro do DRM e DLO` → determinístico retorna DLO+DRM; gabarito é RETORNO_BACEN (erro do BACEN em imagem — corpo informal sem sinal detectável em 600 chars)
 - `RES: ARQUIVO DRM - AZUMI` → determinístico retorna DRM_2060; gabarito é RETORNO_BACEN (idem)
+- `Re: Arquivos Regulatórios - ZIIN` → determinístico retorna SUPORTE; gabarito é DLO_2061 (menção ao DLO em texto citado, além do limite de leitura mesmo com 1.200 chars)
 
 **O que decidir antes da Fase 3:**
 1. Garantir que OCR está implementado antes de qualquer classificação de RETORNO_BACEN

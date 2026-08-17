@@ -2520,3 +2520,56 @@ if re.search(r'RESULTADO[S]?\s+QUANTITATIVO[S]?', texto_u):
 
 **Placar final: 764/767 (99,6% de acerto). Revisão de erros concluída.**
 
+---
+
+### 17/08 — §4 filtro: dois novos padrões de e-mail automático
+
+**🔎 Em miúdos:** e-mails com "código de verificação" no assunto e e-mails enviados por plataformas via outra conta (ex.: "conta.com via Microsoft") não estavam sendo barrados. Agora são descartados antes de chegar à IA.
+
+**Problema:** o filtro `eh_automatico()` não reconhecia dois tipos de e-mail automático:
+1. E-mails de verificação de conta (assunto: "Seu código de verificação") — chegavam roteados via `suporte@finaud.com.br`; o campo de e-mail era a Finaud, não a Microsoft.
+2. Notificações de plataformas que assinam como "nome_empresa via Microsoft" no campo remetente.
+
+**Correção:** adicionados 2 blocos à função `eh_automatico()` em `scripts/validador_classificacao.py`:
+- Padrões de assunto: `CÓDIGO DE VERIFICAÇÃO`, `CÓDIGO DE ACESSO`, `CÓDIGO DE SEGURANÇA`, `VERIFICATION CODE`
+- Padrões de nome do remetente: `via Microsoft`, `via Google`, `via LinkedIn`, `via Apple`
+
+**Testes:** 11 novos testes em `tests/test_validador_filtro.py` (arquivo criado nesta sessão). 206/206 passando.
+
+**Validação:** ✅ `pytest tests/ -q` → 206 passed.
+
+---
+
+### 17/08 — ZIIN: gabarito confirmado como DLO_2061 (4º residual identificado)
+
+**🔎 Em miúdos:** uma thread chamada "Re: Arquivos Regulatórios - ZIIN" estava sem gabarito definido (incerta). Michel confirmou que é DLO — o nome do arquivo DLO (2061) aparece dentro do texto citado do e-mail. Classificador continua errando porque não lê tão fundo no corpo.
+
+**Situação:**
+- Thread ID: `19f71c34de2418fe`
+- Gabarito confirmado por Michel (17/08): `DLO_2061`
+- Determinístico retorna: `SUPORTE` — a menção "DLO (2061)" está no texto citado (reply history), além de 600 chars do corpo
+
+**Experimento de correção tentado:** extendemos o limite de leitura do corpo de 600 para 1.200 chars. Resultado: ZIIN continuou errado (DLO está além de 1.200 chars), E dois outros e-mails regrediram — o texto citado introduzia categorias erradas. Revertido para 600 chars.
+
+**Decisão (Michel, 17/08):** aceitar ZIIN como 4º residual. Placar sobe de 764/767 para 764/768 (nova confirmada, ainda errada pelo determinístico).
+
+**Arquivo alterado:** `data/registro_definitivo_threads.json` — status `incerta` → `confirmada DLO_2061`. (Arquivo ignorado pelo git — atualização apenas no disco.)
+
+**Validação:** ✅ `pytest tests/ -q` → 206 passed. Placar: 764/768 (99,5%).
+
+---
+
+### 17/08 — Decisão: 4 residuais aceitos; próxima etapa = telas (§13)
+
+**🔎 Em miúdos:** terminamos a revisão de todos os erros do classificador. Quatro casos não têm correção viável com as ferramentas atuais — foram aceitos como residuais para a Fase 3. Próximo passo: especificar as telas do sistema (§13 da spec).
+
+**Os 4 residuais (764/768 = 99,5%):**
+1. `Re: Arquivos Regulatórios - ZIIN` → DLO_2061 esperado, SUPORTE obtido — DLO está em texto citado, além do limite de leitura
+2. `INDICIO 2061 - DLO MAIO` → DLO_2061 esperado, RETORNO_BACEN obtido — INDICIO sempre = RETORNO_BACEN (decisão Michel)
+3. `RES: Erro do DRM e DLO` → RETORNO_BACEN esperado, DLO+DRM obtido — erro do BACEN em imagem; sem OCR não há sinal
+4. `RES: ARQUIVO DRM - AZUMI` → RETORNO_BACEN esperado, DRM obtido — mesmo motivo
+
+**Nota:** erros 3 e 4 são corrigíveis com 1.200 chars, mas isso causa regressões em outros 2 e-mails. Problema raiz: texto citado na faixa 600–1.200 chars introduz categorias erradas em outras threads. Solução requer abordagem direcionada (Fase 3).
+
+**Validação:** ✅ Placar final: 764/768 (99,5%). 206 testes passando.
+
