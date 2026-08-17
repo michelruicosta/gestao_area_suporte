@@ -335,17 +335,7 @@ def _classificar_deterministico(
         cats = set()
         cats_au_original = frozenset()
         _pendencia_bacen = True  # C48: corpo também menciona o CADOC da pendência — suprimir Camada 2b
-    # 'INSTRUÇÃO NORMATIVA' sem CADOC no assunto = circular regulatória encaminhada, não entrega CADOC
-    # (se o assunto também tiver código CADOC, ex.: 'DLI 2062', mantém a detecção normal)
-    if not cats and ('INSTRUÇÃO NORMATIVA' in au or 'INSTRUCAO NORMATIVA' in au) and not _eh_interno(assunto):
-        return _ok(['SUPORTE'], "'instrução normativa' no assunto sem código CADOC — circular regulatória, não entrega", None)
     if cats:
-        # 'REUNIÃO' + CADOC no assunto = pauta/convite de reunião sobre o CADOC → SUPORTE, não entrega
-        if 'REUNI' in au:
-            return _ok(['SUPORTE'], "'reunião' + CADOC no assunto — pauta/convite, não entrega", None)
-        # 'ERRO' no início + só DDR no assunto = pedido de suporte sobre erro de cálculo DDR, não entrega
-        if au.startswith('ERRO') and cats == {'DDR_2011'}:
-            return _ok(['SUPORTE'], "'erro' no início do assunto com só DDR — pedido de suporte, não entrega", None)
         # Complemento DLO/DLI: se o assunto tem um mas não o outro,
         # busca só a metade faltante no corpo+anexos — evita falsos positivos
         # de outros CADOCs citados no contexto do e-mail.

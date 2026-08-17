@@ -684,28 +684,30 @@ def test_correcao21_sinal6b_vcrd_no_corpo_dispara_retorno():
     assert r['categorias'] == ['RETORNO_BACEN'], f"RETORNO esperado; obtido {r['categorias']}"
 
 
-# ── Correção 22 — 'REUNIÃO' no assunto → SUPORTE ─────────────────────────────
+# ── Correção 22 — regra REUNIÃO → SUPORTE removida (C57) ─────────────────────
+# Nova regra: menção a CADOC = categoria CADOC, independente de ser reunião
 
 
-def test_correcao22_reuniao_no_assunto_retorna_suporte():
-    """Correção 22 — 'REUNIÃO' no assunto → SUPORTE (não entrega de CADOC)."""
+def test_correcao22_reuniao_com_cadoc_retorna_cadoc():
+    """C57 — 'REUNIÃO' no assunto com CADOC → retorna o CADOC (não SUPORTE)."""
     r = _classificar('Reunião - Demandas BACEN - DLO Junho (Antecipações)')
-    assert r['categorias'] == ['SUPORTE'], f"SUPORTE esperado; obtido {r['categorias']}"
+    assert r['categorias'] == ['DLO_2061'], f"DLO_2061 esperado; obtido {r['categorias']}"
 
 
 def test_correcao22_reuniao_sem_cadoc_retorna_suporte():
-    """Correção 22 — 'Reunião' no assunto sem CADOC também → SUPORTE."""
+    """Correção 22 — 'Reunião' no assunto sem CADOC → ainda SUPORTE (nenhum CADOC mencionado)."""
     r = _classificar('Reunião sobre processos internos')
     assert r['categorias'] == ['SUPORTE'], f"SUPORTE esperado; obtido {r['categorias']}"
 
 
-# ── Correção 23 — 'ERRO' no início + só DDR no assunto → SUPORTE ─────────────
+# ── Correção 23 — regra ERRO+DDR → SUPORTE removida (C57) ────────────────────
+# Nova regra: menção a CADOC = categoria CADOC, mesmo que assunto comece com ERRO
 
 
-def test_correcao23_erro_ddr_no_assunto_retorna_suporte():
-    """Correção 23 — 'ERRO' no início + só DDR no assunto → pedido de suporte, não entrega."""
+def test_correcao23_erro_ddr_no_assunto_retorna_ddr():
+    """C57 — 'ERRO' no início + DDR no assunto → DDR_2011 (CADOC mencionado)."""
     r = _classificar('ERRO -- Taxa Referencial DDR')
-    assert r['categorias'] == ['SUPORTE'], f"SUPORTE esperado; obtido {r['categorias']}"
+    assert r['categorias'] == ['DDR_2011'], f"DDR_2011 esperado; obtido {r['categorias']}"
 
 
 def test_correcao23_erro_vmtm_retorna_suporte():
@@ -771,14 +773,15 @@ def test_correcao25_projecao_capital_no_assunto_detecta():
     assert 'FORCAPITAL' in r['categorias'], f"FORCAPITAL esperado; obtido {r['categorias']}"
 
 
-# ── Correção 26 — 'Instrução Normativa' sem CADOC no assunto → SUPORTE ────────
+# ── Correção 26 — regra INSTRUÇÃO NORMATIVA → SUPORTE removida (C57) ──────────
+# Nova regra: menção a CADOC no corpo → categoria CADOC, mesmo que assunto seja circular
 
 
-def test_correcao26_instrucao_normativa_sem_cadoc_retorna_suporte():
-    """Correção 26 — circular regulatória encaminhada sem CADOC no assunto → SUPORTE."""
+def test_correcao26_instrucao_normativa_com_cadoc_no_corpo_retorna_cadoc():
+    """C57 — 'INSTRUÇÃO NORMATIVA' no assunto com CADOC no corpo → retorna o CADOC."""
     r = _classificar('ENC: INSTRUÇÃO NORMATIVA BCB Nº 749',
                      'O sistema já está parametrizado para as alterações do DLI 2062?')
-    assert r['categorias'] == ['SUPORTE'], f"SUPORTE esperado; obtido {r['categorias']}"
+    assert 'DLI_2062' in r['categorias'], f"DLI_2062 esperado; obtido {r['categorias']}"
 
 
 def test_correcao26_instrucao_normativa_com_cadoc_no_assunto_mantem_cadoc():
@@ -1472,8 +1475,8 @@ def test_correcao55_divulgacao_instrucao_normativa_e_interno():
         f"C55: esperado INTERNO, obtido {r['categorias']}"
 
 
-def test_correcao55_enc_instrucao_normativa_ainda_e_suporte():
-    """C55 — 'ENC: INSTRUÇÃO NORMATIVA' (encaminhamento de cliente) continua SUPORTE."""
+def test_correcao55_enc_instrucao_normativa_sem_cadoc_e_suporte():
+    """C55/C57 — 'ENC: INSTRUÇÃO NORMATIVA' sem CADOC no corpo → SUPORTE (nenhum CADOC mencionado)."""
     r = _classificar('ENC: INSTRUÇÃO NORMATIVA BCB Nº 749', '', [])
     assert r['categorias'] == ['SUPORTE'], \
-        f"C55: esperado SUPORTE para encaminhamento, obtido {r['categorias']}"
+        f"C55: esperado SUPORTE para encaminhamento sem CADOC no corpo, obtido {r['categorias']}"

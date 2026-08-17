@@ -2486,3 +2486,30 @@ if re.search(r'RESULTADO[S]?\s+QUANTITATIVO[S]?', texto_u):
 
 **Validação:** `pytest tests/ -q` → 195 passed ✅ — placar 758→759 (8 erros).
 
+---
+
+### 17/08 — C57: nova regra de classificação — menção a CADOC = categoria CADOC
+
+**🔎 Em miúdos:** simplificação da filosofia de classificação: qualquer thread que mencione um CADOC (seja no assunto, no corpo ou nos anexos) vai para a categoria daquele CADOC. A categoria SUPORTE fica reservada para threads onde nenhum CADOC é mencionado em lugar nenhum.
+
+**Problema:** 3 regras antigas desviavam threads para SUPORTE mesmo quando havia um CADOC claramente mencionado — tentavam distinguir "falar sobre o CADOC" de "entregar o CADOC", o que é difícil de fazer deterministicamente e não reflete como Michel quer usar a classificação.
+
+**Regras removidas do `classificador_ia.py`:**
+- `'REUNIÃO' + CADOC no assunto → SUPORTE` — reunião sobre DLO agora é DLO_2061
+- `'INSTRUÇÃO NORMATIVA' sem CADOC no assunto → SUPORTE` — circular com CADOC no corpo agora é o CADOC
+- `'ERRO' no início + só DDR no assunto → SUPORTE` — "ERRO -- Taxa Referencial DDR" agora é DDR_2011
+
+**Gabaritos atualizados (8 threads):**
+- ENC: INSTRUÇÃO NORMATIVA BCB Nº 749: SUPORTE → DLI_2062
+- ERRO -- Taxa Referencial DDR: SUPORTE → DDR_2011
+- Re: Solicitação de orientação técnica (DLO): SUPORTE → DLO_2061
+- MIRAE ASSET - BASILEIA - JUNHO DE 2026: SUPORTE → DLO_2061
+- Reunião - Demandas BACEN - DLO Junho (Antecipações): SUPORTE → DLO_2061
+- RES: PR (Direito de Uso / DLO): SUPORTE → DLO_2061
+- DLO (convite Teams): SUPORTE → DLO_2061
+- (assunto vazio, corpo com DLO): SUPORTE → DLO_2061
+
+**Testes:** 3 testes atualizados + 1 renomeado para refletir nova semântica. 195 passed ✅
+
+**Validação:** `pytest tests/ -q` → 195 passed ✅ — placar 759→764 (3 erros residuais).
+
