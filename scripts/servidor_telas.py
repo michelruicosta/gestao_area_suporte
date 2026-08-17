@@ -85,8 +85,24 @@ def _extrair_email(raw: str) -> str:
     return s if '@' in s else s
 
 
+def _eh_finaud_addr(raw: str) -> bool:
+    a = (raw or '').lower()
+    return '@finaud.com.br' in a or '@finaudtec.com.br' in a
+
+
 def _eh_suporte(raw: str) -> bool:
     return 'suporte@finaud.com.br' in raw.lower()
+
+
+def _primeiro_finaud_ou_primeiro(raw: str) -> str:
+    """De uma lista de destinatários, retorna o primeiro @finaud; senão, o primeiro da lista."""
+    emails = _RE_EMAIL.findall(raw)
+    if not emails:
+        emails = [e.strip() for e in re.split(r'[,;]', raw) if '@' in e.strip()]
+    for e in emails:
+        if '@finaud' in e.lower() or '@finaudtec' in e.lower():
+            return e.strip()
+    return emails[0].strip() if emails else raw.strip()
 
 
 def _resolver_de(msg: dict) -> str:
@@ -233,7 +249,13 @@ def api_categoria(cat_id: str):
                            and (t.get('reply_to_ultima_msg') or '')
                         else t.get('remetente_ultima_msg') or ''
                     ),
-            'para': _extrair_email(t.get('destinatario_ultima_msg') or ''),
+            'para': (
+                _primeiro_finaud_ou_primeiro(t.get('destinatario_ultima_msg') or '')
+                if _eh_suporte(t.get('remetente_ultima_msg') or '')
+                   and not _eh_finaud_addr(t.get('reply_to_ultima_msg') or '')
+                   and (t.get('reply_to_ultima_msg') or '')
+                else _extrair_email(t.get('destinatario_ultima_msg') or '')
+            ),
             'data':                 _formatar_data(t.get('data_ultima_msg')),
             'qtd_mensagens':        t.get('qtd_mensagens', 0),
             'status':               t.get('status_workflow') or 'Aguardando Finaud',
