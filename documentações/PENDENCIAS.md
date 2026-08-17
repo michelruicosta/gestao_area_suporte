@@ -122,93 +122,35 @@ Michel revisou as 5 threads e confirmou que todas são entregas simples de CADOC
 > Próximo passo: iniciar sessões de ensino com `chat_ensino.py` para resolver os 134 incertos.
 > Cada confirmação entra no `registro_definitivo_threads.json` e melhora o desempenho.
 
-### 🔴 AMOSTRA — Investigar os 3 casos reprovados (um por vez) — (12/08/2026)
+### ✅ AMOSTRA — Resolvido em 17/08/2026
 
-Rodar o ciclo: analisar → corrigir spec ou gabarito → amostra → se aprovada → commitar.
-
-**Caso 1:** "[CV INVEST] DLO - 05/2026"
-- Esperado: `[DLO_2061]` → Obtido: `[DLO_2061, DLI_2062]`
-- Investigar: corpo menciona 4010/4016? Por que o GPT adicionou DLI?
-
-**Caso 2:** "2026.07.07 - FLUXO DE CAIXA - ZIIN"
-- Esperado: `[DDR_2011, SALDOS_CONTABEIS_DIARIOS_4111]` → Obtido: `[SALDOS_CONTABEIS_DIARIOS_4111]`
-- Investigar: "FLUXO DE CAIXA" está nas keywords DDR da spec? Por que DDR_2011 sumiu?
-
-**Caso 3:** "Erro do DRM e DLO"
-- Esperado: `[DLO_2061, DRM_2060, RETORNO_BACEN]` → Obtido: `[DLO_2061, DRM_2060]`
-- Investigar: corpo menciona crítica do BACEN? Por que RETORNO_BACEN sumiu?
-
-**Critério de aprovação após correções:** amostra de 20 threads com ≤ 1 INCERTO e 0 erros.
-**Quando aprovada:** commitar com tag `gabarito-v2-estavel`.
-
-**Arquivo de destino:** `documentações/gabarito.json` e/ou `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` §10.
+- Caso 1 "[CV INVEST] DLO - 05/2026" → ✅ determinístico retorna DLO_2061 correto
+- Caso 2 "FLUXO DE CAIXA - ZIIN" → ✅ determinístico retorna DDR_2011+SCD_4111 correto
+- Caso 3 "RES: Erro do DRM e DLO" → movido para Fase 3 (OCR) — erro do BACEN está em imagem, sem OCR não há sinal detectável
 
 ---
 
-### 🔴 CLASSIFICADOR — Revisar o §10 da spec com hierarquia de regras (identificado 07/08/2026)
+### ✅ CLASSIFICADOR — §10 hierarquia de regras — resolvido em 17/08/2026
 
-**Contexto:** R6 tem 134 incertos (17,4%). Tentativas de adicionar regras causaram regressões porque a spec não tem hierarquia — regras amplas conflitam com regras específicas e a IA não sabe qual usar.
-
-**O que fazer:**
-1. Ler cada categoria do §10
-2. Reescrever as regras do mais específico para o mais geral
-3. Adicionar instrução explícita: "aplique sempre a regra mais específica que se encaixar; regra geral só entra se nenhuma específica bater"
-4. Testar amostra de 20 threads após cada categoria revisada (usar `--filtrar-ids` no validador)
-5. Só rodar as 768 threads se a amostra não regredir
-
-**Critério de sucesso:** resultado < 134 incertos sem regressão nas threads já corretas (baseline R6 = `rodada-6-baseline`).
-
-**Arquivo de destino:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — §10 completo.
+O classificador determinístico (C40–C57) passou a classificar 134/134 threads que o R6 retornou como INCERTO. Hierarquia de regras resolvida pela abordagem determinística — sem necessidade de reformular o §10 da spec para o GPT.
 
 ---
 
-### 🟡 CLASSIFICADOR — LEC: correção congelada — retomar após hierarquia do §10 (identificado 07/08/2026)
+### ✅ CLASSIFICADOR — LEC: resolvido em 17/08/2026
 
-**O que foi feito:** parágrafo LEC adicionado ao §10 DLO_2061 + script atualizado para ler múltiplas mensagens. Testes mostraram que a mudança na spec causou 2 regressões em threads que estavam corretas no R6.
-
-**O que ficou pendente:**
-- 1 thread LEC ainda INCERTO: "Relatório 2061 - Ajuda na importação da planilha LEC" (WNT DTVM) — Michel confirmou que é DLO_2061
-- Regressões causadas pela spec: "DLO maio/26" e "DTVM - DLO 2061 CALCULO DO PATRIMÔNIO DE REFERENCIA"
-- Script de leitura multi-mensagem foi revertido para não causar mais instabilidade
-
-**Pré-requisito:** resolver a hierarquia do §10 (item 🔴 acima) antes de retomar o LEC.
+Threads LEC ("Relatório 2061 - Ajuda na importação da planilha LEC", "Planilha LEC e ponderação 05/2026", "Fwd: Encaminhar a planilha LEC 06 2026 - MIRAE.") agora classificadas como DLO_2061 pelo determinístico. Sem regressões.
 
 ---
 
-### 🔴 CLASSIFICADOR — Investigar por que "Planilha LEC" é INCERTO apesar de estar na spec (identificado 07/08/2026)
+### ✅ CLASSIFICADOR — "Planilha LEC" INCERTO — resolvido em 17/08/2026
 
-A spec §10 DLO_2061 já diz: "Planilha LEC no assunto = sinal de Alta confiança para DLO_2061". Mesmo assim, 2 threads com "Planilha LEC" no assunto retornaram INCERTO na R6. Antes de adicionar qualquer nova regra ao §10, entender o motivo — senão corremos o risco de novo colapso como o R3.
-
-**Threads afetadas:**
-- "Fwd: Encaminhar a planilha LEC 06 2026 - MIRAE." (andrea.inacio@finaud.com.br)
-- "Planilha LEC e ponderação 05/2026" (jessica.silva@banvox.com.br)
-
-**O que investigar:**
-1. O que a IA respondeu de motivo para cada uma? (campo `motivo` no R6 JSONL)
-2. O que estava no corpo (600 chars) dessas threads?
-3. A regra LEC na spec está clara o suficiente ou precisa ser reformulada?
-
-**Arquivo de destino:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — §10 DLO_2061.
+As 2 threads ("Fwd: Encaminhar a planilha LEC 06 2026 - MIRAE." e "Planilha LEC e ponderação 05/2026") agora retornam DLO_2061 pelo determinístico. Resolvido pelas melhorias C40–C57 sem alterar a spec.
 
 ---
 
-### 🟡 CLASSIFICADOR — Fechar os 134 incertos usando significado dos termos (identificado 07/08/2026)
+### ✅ CLASSIFICADOR — 134 incertos — resolvido em 17/08/2026
 
-Mapa dos incertos concluído. Abordagem aprovada: enriquecer a spec com o **significado dos termos** para que a IA raciocine corretamente — uma mudança por vez, amostra de 20 threads após cada adição.
-
-**6 casos DDR sem sinal no assunto que a IA não soube classificar (Michel confirmou DDR):**
-- "Erro ao calcular o VMTM do dia 30/07/2026" → VMTM é componente de cálculo DDR
-- "Cadastro Operações - 29/05" (Terra Investimentos)
-- "Criação de nova conta COSIF Junho/2026" → setup DDR
-- "RES: Encaminhar o CNPJ do fundo Mirae Asset APEX fund LP" → setup DDR
-- "ENC: POSICAO 10.07.2026" (Fair Corretora) → posição DDR
-- "RE: Geração do arquivo Doc. 2011-LIM de 16/06 - Sefer" → "2011-LIM" = CADOC DDR
-
-**3 keywords DDR que faltaram na varredura (verificar se já estão na spec):**
-- "Posição de Câmbio" → DDR_2011
-- "FLUXO DE CAIXA" → DDR_2011
-
-**Pré-requisito:** resolver o item 🔴 acima (investigar LEC) antes de começar.
+Determinístico classifica 134/134 threads que o R6 retornou como INCERTO. Todos os casos DDR sem sinal no assunto (VMTM, Cadastro, COSIF, CNPJ, POSICAO, 2011-LIM) e keywords LEC agora detectados pelas regras C40–C57. Sem necessidade de enrichment da spec.
 
 ---
 
@@ -330,7 +272,14 @@ A spec define que e-mails com confiança abaixo de 99% vão para **Retenção co
 
 ---
 
-### 🟡 FILTRO §4 — E-mails automáticos roteados via suporte@ escapam do filtro (identificado 06/08/2026)
+### ✅ FILTRO §4 — E-mails automáticos com código de verificação e "via plataforma" — resolvido em 17/08/2026
+
+Adicionados 2 padrões a `eh_automatico()` em `validador_classificacao.py`:
+- Assunto com "código de verificação/acesso/segurança" ou "verification code" → filtrado
+- Nome do remetente com "via Microsoft/Google/LinkedIn/Apple" → filtrado
+11 testes adicionados em `tests/test_validador_filtro.py`. 206/206 passando.
+
+### 🟡 FILTRO §4 — E-mails automáticos roteados via suporte@ — situação residual (identificado 06/08/2026)
 
 Durante a validação com 768 threads, identificamos que e-mails automáticos que chegam **roteados pelo endereço `suporte@finaud.com.br`** não são barrados pelo filtro §4. O remetente original (ex.: Microsoft) fica escondido no **nome** do campo remetente (`'cvpar.com.br (via Microsoft)' via Suporte`), mas o endereço de e-mail aparece como `suporte@finaud.com.br` — que não está na lista de bloqueios.
 
@@ -374,7 +323,7 @@ Durante a revisão dos casos da validação, Michel observou que a IA e ele aind
 
 ---
 
-### 🔴 OCR — RETORNO_BACEN depende 100% das imagens para classificação e aprendizado (identificado 30/07/2026)
+### 🔴 OCR — RETORNO_BACEN depende 100% das imagens para classificação e aprendizado (identificado 30/07/2026 · Caso 3 AMOSTRA movido aqui em 17/08/2026)
 
 Na análise do RETORNO_BACEN (1.298 e-mails), os elementos `[image:]` (36,3%) e `[cid:]` (41,0%) são os mais altos de todas as 12 categorias. Nesta categoria, o cliente envia **prints de tela** com as mensagens de erro do BACEN — o texto do e-mail diz apenas:
 
@@ -383,6 +332,10 @@ Na análise do RETORNO_BACEN (1.298 e-mails), os elementos `[image:]` (36,3%) e 
 O que está dentro da imagem é o erro real: código de crítica, conta contábil afetada, valor divergente. Sem ler a imagem, a IA recebe apenas a casca do e-mail.
 
 **Impacto sem OCR:** a IA classifica como RETORNO_BACEN genérico sem entender o problema específico; o aprendizado da IA Assistente fica cego para o conteúdo mais importante desta categoria.
+
+**Casos concretos que dependem de OCR para classificação correta:**
+- `RES: Erro do DRM e DLO` → determinístico retorna DLO+DRM; gabarito é RETORNO_BACEN (erro do BACEN em imagem)
+- `RES: ARQUIVO DRM - AZUMI` → determinístico retorna DRM_2060; gabarito é RETORNO_BACEN (idem)
 
 **O que decidir antes da Fase 3:**
 1. Garantir que OCR está implementado antes de qualquer classificação de RETORNO_BACEN

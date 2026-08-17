@@ -96,6 +96,14 @@ def eh_automatico(thread: dict) -> str | None:
         return 'IT Service Desk'
     if assunto.startswith('Aceito:'):
         return 'aceite de convite de calendário'
+    assunto_u = assunto.upper()
+    if any(p in assunto_u for p in ('CÓDIGO DE VERIFICAÇÃO', 'CODIGO DE VERIFICACAO',
+                                     'CÓDIGO DE ACESSO', 'CODIGO DE ACESSO',
+                                     'VERIFICATION CODE', 'CÓDIGO DE SEGURANÇA',
+                                     'CODIGO DE SEGURANCA')):
+        return 'código de verificação automático'
+    if any(p in nome for p in ('via Microsoft', 'via Google', 'via LinkedIn', 'via Apple')):
+        return f'notificação automática de plataforma: {nome}'
     return None
 
 
