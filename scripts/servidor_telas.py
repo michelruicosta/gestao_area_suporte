@@ -251,9 +251,10 @@ def api_categoria(cat_id: str):
                     ),
             'para': (
                 _primeiro_finaud_ou_primeiro(t.get('destinatario_ultima_msg') or '')
-                if _eh_suporte(t.get('remetente_ultima_msg') or '')
-                   and not _eh_finaud_addr(t.get('reply_to_ultima_msg') or '')
-                   and (t.get('reply_to_ultima_msg') or '')
+                if (not _eh_finaud_addr(t.get('remetente_ultima_msg') or ''))
+                   or (_eh_suporte(t.get('remetente_ultima_msg') or '')
+                       and (t.get('reply_to_ultima_msg') or '')
+                       and not _eh_finaud_addr(t.get('reply_to_ultima_msg') or ''))
                 else _extrair_email(t.get('destinatario_ultima_msg') or '')
             ),
             'data':                 _formatar_data(t.get('data_ultima_msg')),
