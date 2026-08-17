@@ -1459,3 +1459,21 @@ def test_correcao54_resultado_quantitativo_singular_ainda_detecta_s5():
     r = _classificar('Re: Arquivo COS. Resultado Quantitativo 06/2026.', corpo, [])
     assert 'S5' in r['categorias'], \
         f"C54: S5 ausente com singular 'Resultado Quantitativo'; obtido {r['categorias']}"
+
+
+# ---------------------------------------------------------------------------
+# C55 — 'Divulgação Instrução Normativa' no assunto → INTERNO (não SUPORTE)
+# ---------------------------------------------------------------------------
+
+def test_correcao55_divulgacao_instrucao_normativa_e_interno():
+    """C55 — 'Divulgação Instrução Normativa' no assunto identifica e-mail interno da Finaud."""
+    r = _classificar('Divulgação Instrução Normativa BCB nº 761 - PLD/CFT', '', [])
+    assert r['categorias'] == ['INTERNO'], \
+        f"C55: esperado INTERNO, obtido {r['categorias']}"
+
+
+def test_correcao55_enc_instrucao_normativa_ainda_e_suporte():
+    """C55 — 'ENC: INSTRUÇÃO NORMATIVA' (encaminhamento de cliente) continua SUPORTE."""
+    r = _classificar('ENC: INSTRUÇÃO NORMATIVA BCB Nº 749', '', [])
+    assert r['categorias'] == ['SUPORTE'], \
+        f"C55: esperado SUPORTE para encaminhamento, obtido {r['categorias']}"

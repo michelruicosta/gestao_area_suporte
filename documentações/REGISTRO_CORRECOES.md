@@ -2459,3 +2459,30 @@ if re.search(r'RESULTADO[S]?\s+QUANTITATIVO[S]?', texto_u):
 
 **Placar:** 757/767 acertos (10 erros).
 
+---
+
+### 17/08 — Gabarito ENC: DLI MAIO — SCD removido (era instituição, não CADOC)
+
+**🔎 Em miúdos:** o gabarito dessa thread tinha "Saldos Contábeis Diários" como uma das categorias, mas o "SCD" no nome do arquivo (`SCD_4010_042026.xml`) refere-se à **Sociedade de Crédito Direto** — uma instituição financeira, não o CADOC 4111. O classificador estava certo; o gabarito estava errado.
+
+**Correção:** gabarito thread `19f5d87558b90a5d` de `['DLI_2062', 'DLO_2061', 'SALDOS_CONTABEIS_DIARIOS_4111']` → `['DLI_2062', 'DLO_2061']`. Backup em `data/backups/AAAAMMDD_HHMM_gabarito_enc_dli_maio/`.
+
+**Validação:** ✅ VALIDADO — placar 757→758 (9 erros).
+
+---
+
+### 17/08 — C55: "Divulgação Instrução Normativa" no assunto → INTERNO
+
+**🔎 Em miúdos:** quando a Finaud envia uma circular regulatória do BACEN para dentro da empresa, o assunto começa com "Divulgação Instrução Normativa...". O sistema estava devolvendo SUPORTE porque uma regra antiga interceptava qualquer e-mail com "Instrução Normativa" no assunto antes de chegar na detecção de e-mail interno.
+
+**Problema:** a regra "INSTRUÇÃO NORMATIVA → SUPORTE" na Camada 1b disparava antes da Camada 4 (detecção de INTERNO). O classificador não distinguia entre encaminhamentos de clientes ("ENC: INSTRUÇÃO NORMATIVA...") e divulgações internas da Finaud ("Divulgação Instrução Normativa...").
+
+**Correção:**
+- `_INTERNO_PADROES_ASSUNTO`: adicionado padrão `r'DIVULGA[CÇ][AÃ]O\s+INSTRU[CÇ][AÃ]O NORMATIVA'`
+- Regra Camada 1b (linha 339): adicionada guarda `and not _eh_interno(assunto)` — se o assunto já vai ser detectado como INTERNO, a regra não dispara
+- `tests/test_classificador_ia.py`: 2 testes C55
+
+**Varredura pré-correção:** 6 threads com "INSTRUÇÃO NORMATIVA" ou "DIVULGAÇÃO" no assunto — todas verificadas; nenhuma regressão.
+
+**Validação:** `pytest tests/ -q` → 195 passed ✅ — placar 758→759 (8 erros).
+

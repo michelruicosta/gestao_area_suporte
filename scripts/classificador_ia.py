@@ -116,6 +116,7 @@ _INTERNO_PADROES_ASSUNTO = [
     r'CONVIDOU VOC[EÊ]',
     r'INGRESSAR.*TEAMS',
     r'VISITA FINAUD',
+    r'DIVULGA[CÇ][AÃ]O\s+INSTRU[CÇ][AÃ]O NORMATIVA',  # C55: Finaud divulgando norma internamente
 ]
 
 
@@ -336,7 +337,7 @@ def _classificar_deterministico(
         _pendencia_bacen = True  # C48: corpo também menciona o CADOC da pendência — suprimir Camada 2b
     # 'INSTRUÇÃO NORMATIVA' sem CADOC no assunto = circular regulatória encaminhada, não entrega CADOC
     # (se o assunto também tiver código CADOC, ex.: 'DLI 2062', mantém a detecção normal)
-    if not cats and ('INSTRUÇÃO NORMATIVA' in au or 'INSTRUCAO NORMATIVA' in au):
+    if not cats and ('INSTRUÇÃO NORMATIVA' in au or 'INSTRUCAO NORMATIVA' in au) and not _eh_interno(assunto):
         return _ok(['SUPORTE'], "'instrução normativa' no assunto sem código CADOC — circular regulatória, não entrega", None)
     if cats:
         # 'REUNIÃO' + CADOC no assunto = pauta/convite de reunião sobre o CADOC → SUPORTE, não entrega
