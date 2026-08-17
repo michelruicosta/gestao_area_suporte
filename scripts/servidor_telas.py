@@ -218,9 +218,12 @@ def api_categoria(cat_id: str):
         {
             'thread_id':            t['thread_id'],
             'assunto':              t.get('assunto') or '(sem assunto)',
+            'de':                   _extrair_nome(t.get('remetente_principal') or ''),
+            'para':                 _extrair_nome(t.get('destinatario_principal') or ''),
             'data':                 _formatar_data(t.get('data_ultima_msg')),
             'qtd_mensagens':        t.get('qtd_mensagens', 0),
             'status':               t.get('status_workflow') or 'Aguardando Finaud',
+            'motivo_status':        t.get('motivo_status') or '',
             'motivo_classificacao': t.get('motivo_classificacao') or '',
         }
         for t in threads

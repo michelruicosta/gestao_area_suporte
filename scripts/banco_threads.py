@@ -58,7 +58,11 @@ def criar_banco() -> None:
                 ON threads (data_ultima_msg);
         """)
         # Migração segura: adiciona colunas novas sem recriar o banco
-        for col_def in ['motivo_classificacao TEXT']:
+        for col_def in [
+            'motivo_classificacao TEXT',
+            'motivo_status TEXT',
+            'destinatario_principal TEXT',
+        ]:
             try:
                 conn.execute(f'ALTER TABLE threads ADD COLUMN {col_def}')
             except Exception:
@@ -120,15 +124,17 @@ def _so_cortesia(texto: str) -> bool:
     return len(restante) < 15
 
 
-def _determinar_status(msgs: list[dict]) -> str:
+def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     """
     Determina o status de workflow com base no §8.3 da spec.
     Olha sempre o último e-mail e apenas o texto novo (sem histórico citado).
 
-    Retorna: 'Aguardando Finaud' | 'Aguardando Cliente' | 'Concluída'
+    Retorna: (status, motivo)
+      status: 'Aguardando Finaud' | 'Aguardando Cliente' | 'Concluída'
+      motivo: texto amigável para exibição na tela
     """
     if not msgs:
-        return 'Aguardando Finaud'
+        return 'Aguardando Finaud', 'Sem mensagens registradas'
 
     ultimo      = msgs[-1]
     remetente   = (ultimo.get('remetente')   or '').lower()
@@ -142,20 +148,22 @@ def _determinar_status(msgs: list[dict]) -> str:
 
     # Regra especial §8.3: "transmitido no BACEN" encerra independente de quem mandou
     if 'transmitido no bacen' in texto_lower or 'transmitida no bacen' in texto_lower:
-        return 'Concluída'
+        return 'Concluída', 'Confirmação de entrega no BACEN'
 
     if eh_finaud:
-        if (assunto.strip().upper().startswith('RES:')
-                or tem_anexo
-                or any(f in texto_lower for f in _FRASES_CONCLUSIVAS_FINAUD)):
-            return 'Concluída'
-        return 'Aguardando Cliente'
+        if tem_anexo:
+            return 'Concluída', 'Finaud enviou arquivo ao cliente'
+        if assunto.strip().upper().startswith('RES:'):
+            return 'Concluída', 'Finaud respondeu ao cliente'
+        if any(f in texto_lower for f in _FRASES_CONCLUSIVAS_FINAUD):
+            return 'Concluída', 'Finaud encerrou a conversa'
+        return 'Aguardando Cliente', 'Finaud escreveu — aguarda retorno do cliente'
 
     # Remetente externo (cliente)
     # Veto: qualquer conteúdo real → Aguardando Finaud; só cortesia → Concluída
     if _so_cortesia(texto_novo):
-        return 'Concluída'
-    return 'Aguardando Finaud'
+        return 'Concluída', 'Cliente confirmou — sem pendência'
+    return 'Aguardando Finaud', 'Cliente escreveu — aguarda resposta da Finaud'
 
 
 def salvar_thread(thread: dict) -> None:
@@ -167,22 +175,25 @@ def salvar_thread(thread: dict) -> None:
       em quem enviou a última mensagem.
     """
     msgs = thread.get('mensagens', [])
-    remetente = msgs[0].get('remetente', '') if msgs else ''
-    novo_status = _determinar_status(msgs)
+    remetente    = msgs[0].get('remetente', '')    if msgs else ''
+    destinatario = msgs[0].get('destinatarios', '') if msgs else ''
+    novo_status, novo_motivo = _determinar_status(msgs)
 
     with _conectar() as conn:
         conn.execute("""
             INSERT INTO threads
                 (thread_id, assunto, qtd_mensagens, data_primeira_msg,
-                 data_ultima_msg, remetente_principal, mensagens_json, ultima_sync)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                 data_ultima_msg, remetente_principal, destinatario_principal,
+                 mensagens_json, ultima_sync)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(thread_id) DO UPDATE SET
-                assunto             = excluded.assunto,
-                qtd_mensagens       = excluded.qtd_mensagens,
-                data_ultima_msg     = excluded.data_ultima_msg,
-                remetente_principal = excluded.remetente_principal,
-                mensagens_json      = excluded.mensagens_json,
-                ultima_sync         = excluded.ultima_sync
+                assunto                = excluded.assunto,
+                qtd_mensagens          = excluded.qtd_mensagens,
+                data_ultima_msg        = excluded.data_ultima_msg,
+                remetente_principal    = excluded.remetente_principal,
+                destinatario_principal = excluded.destinatario_principal,
+                mensagens_json         = excluded.mensagens_json,
+                ultima_sync            = excluded.ultima_sync
         """, (
             thread['thread_id'],
             thread.get('assunto', ''),
@@ -190,14 +201,15 @@ def salvar_thread(thread: dict) -> None:
             thread.get('data_primeira_msg', ''),
             thread.get('data_ultima_msg', ''),
             remetente,
+            destinatario,
             json.dumps(msgs, ensure_ascii=False),
             _agora(),
         ))
         # Atualiza status automaticamente apenas em threads já na Tela Principal
         conn.execute("""
-            UPDATE threads SET status_workflow = ?
+            UPDATE threads SET status_workflow = ?, motivo_status = ?
             WHERE thread_id = ? AND destino = 'principal'
-        """, (novo_status, thread['thread_id']))
+        """, (novo_status, novo_motivo, thread['thread_id']))
 
 
 def salvar_threads(threads: list[dict]) -> None:
@@ -227,9 +239,10 @@ def atualizar_classificacao(
                 "SELECT mensagens_json FROM threads WHERE thread_id = ?", (thread_id,)
             ).fetchone()
         msgs = json.loads(row['mensagens_json']) if row and row['mensagens_json'] else []
-        status = _determinar_status(msgs)
+        status, motivo_status = _determinar_status(msgs)
     else:
         status = None
+        motivo_status = None
 
     with _conectar() as conn:
         conn.execute("""
@@ -237,10 +250,12 @@ def atualizar_classificacao(
             SET destino              = ?,
                 categoria            = ?,
                 status_workflow      = ?,
+                motivo_status        = ?,
                 motivo_descarte      = ?,
                 motivo_classificacao = ?
             WHERE thread_id = ?
-        """, (destino, categoria, status, motivo_descarte, motivo_classificacao, thread_id))
+        """, (destino, categoria, status, motivo_status,
+               motivo_descarte, motivo_classificacao, thread_id))
 
 
 def classificar_manual(thread_id: str, categoria: str) -> None:
@@ -256,6 +271,34 @@ def classificar_manual(thread_id: str, categoria: str) -> None:
                 status_workflow = 'Aguardando Finaud'
             WHERE thread_id = ?
         """, (categoria, thread_id))
+
+
+def recalcular_status_todos() -> int:
+    """
+    Recalcula status_workflow, motivo_status e destinatario_principal
+    para todas as threads do destino 'principal'.
+    Usado para backfill após migrações de schema.
+    Retorna o número de threads atualizadas.
+    """
+    with _conectar() as conn:
+        rows = conn.execute(
+            "SELECT thread_id, mensagens_json FROM threads WHERE destino = 'principal'"
+        ).fetchall()
+    atualizadas = 0
+    for row in rows:
+        msgs = json.loads(row['mensagens_json']) if row['mensagens_json'] else []
+        status, motivo  = _determinar_status(msgs)
+        destinatario    = msgs[0].get('destinatarios', '') if msgs else ''
+        with _conectar() as conn:
+            conn.execute("""
+                UPDATE threads
+                SET status_workflow        = ?,
+                    motivo_status          = ?,
+                    destinatario_principal = ?
+                WHERE thread_id = ?
+            """, (status, motivo, destinatario, row['thread_id']))
+        atualizadas += 1
+    return atualizadas
 
 
 def atualizar_status(thread_id: str, status_workflow: str) -> None:
@@ -286,8 +329,8 @@ def buscar_por_destino(destino: str) -> list[dict]:
     with _conectar() as conn:
         rows = conn.execute("""
             SELECT thread_id, assunto, qtd_mensagens, data_primeira_msg,
-                   data_ultima_msg, remetente_principal,
-                   destino, categoria, status_workflow,
+                   data_ultima_msg, remetente_principal, destinatario_principal,
+                   destino, categoria, status_workflow, motivo_status,
                    motivo_descarte, motivo_classificacao
             FROM   threads
             WHERE  destino = ?

@@ -377,24 +377,24 @@ body { margin: 0; background: var(--bg); display: flex; min-height: 100vh; }
       <div class="tab-panel ativo" id="tab-panel-af">
         <div class="tabela-wrap">
           <table class="tabela">
-            <thead><tr><th>Assunto</th><th>Data</th><th class="num">Msgs</th></tr></thead>
-            <tbody id="tbody-cat-af"><tr><td colspan="3" class="vazio">Carregando…</td></tr></tbody>
+            <thead><tr><th>Assunto</th><th>De</th><th>Para</th><th>Data</th><th class="num">Msgs</th></tr></thead>
+            <tbody id="tbody-cat-af"><tr><td colspan="5" class="vazio">Carregando…</td></tr></tbody>
           </table>
         </div>
       </div>
       <div class="tab-panel" id="tab-panel-ac">
         <div class="tabela-wrap">
           <table class="tabela">
-            <thead><tr><th>Assunto</th><th>Data</th><th class="num">Msgs</th></tr></thead>
-            <tbody id="tbody-cat-ac"><tr><td colspan="3" class="vazio">Carregando…</td></tr></tbody>
+            <thead><tr><th>Assunto</th><th>De</th><th>Para</th><th>Data</th><th class="num">Msgs</th></tr></thead>
+            <tbody id="tbody-cat-ac"><tr><td colspan="5" class="vazio">Carregando…</td></tr></tbody>
           </table>
         </div>
       </div>
       <div class="tab-panel" id="tab-panel-co">
         <div class="tabela-wrap">
           <table class="tabela">
-            <thead><tr><th>Assunto</th><th>Data</th><th class="num">Msgs</th></tr></thead>
-            <tbody id="tbody-cat-co"><tr><td colspan="3" class="vazio">Carregando…</td></tr></tbody>
+            <thead><tr><th>Assunto</th><th>De</th><th>Para</th><th>Data</th><th class="num">Msgs</th></tr></thead>
+            <tbody id="tbody-cat-co"><tr><td colspan="5" class="vazio">Carregando…</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -568,7 +568,7 @@ async function abrirCategoria(catId, catNome) {
   // Reset: spinner em todas as abas, volta para primeira aba
   ['af','ac','co'].forEach(s => {
     document.getElementById('tbody-cat-' + s).innerHTML =
-      '<tr><td colspan="3" class="vazio">Carregando…</td></tr>';
+      '<tr><td colspan="5" class="vazio">Carregando…</td></tr>';
     document.getElementById('tab-ct-' + s).textContent = '—';
   });
   document.querySelectorAll('#modal-cat-tabs .tab-btn').forEach((b,i) =>
@@ -588,17 +588,24 @@ async function abrirCategoria(catId, catNome) {
       const lista = grupos[s];
       document.getElementById('tab-ct-' + s).textContent = lista.length;
       document.getElementById('tbody-cat-' + s).innerHTML = lista.length
-        ? lista.map(t => `<tr onclick="abrirThread('${escHtml(t.thread_id)}')">
-            <td>${escHtml(t.assunto)}</td>
-            <td>${escHtml(t.data)}</td>
-            <td class="num">${t.qtd_mensagens}</td>
-          </tr>`).join('')
-        : '<tr><td colspan="3" class="vazio">Nenhuma thread neste status.</td></tr>';
+        ? lista.map(t => {
+            const motivo = t.motivo_status
+              ? `<br><span style="font-size:0.75rem;color:#94a3b8;">${escHtml(t.motivo_status)}</span>`
+              : '';
+            return `<tr onclick="abrirThread('${escHtml(t.thread_id)}')">
+              <td>${escHtml(t.assunto)}${motivo}</td>
+              <td style="white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis;">${escHtml(t.de)}</td>
+              <td style="white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis;">${escHtml(t.para)}</td>
+              <td style="white-space:nowrap;">${escHtml(t.data)}</td>
+              <td class="num">${t.qtd_mensagens}</td>
+            </tr>`;
+          }).join('')
+        : '<tr><td colspan="5" class="vazio">Nenhuma thread neste status.</td></tr>';
     });
   } catch (e) {
     ['af','ac','co'].forEach(s => {
       document.getElementById('tbody-cat-' + s).innerHTML =
-        '<tr><td colspan="3" class="vazio">Erro ao carregar.</td></tr>';
+        '<tr><td colspan="5" class="vazio">Erro ao carregar.</td></tr>';
     });
   }
 }

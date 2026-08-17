@@ -73,7 +73,7 @@ def test_extrair_corpo_vazio():
 # ── _determinar_status — lista vazia ─────────────────────────────────────────
 
 def test_status_sem_mensagens():
-    assert bt._determinar_status([]) == 'Aguardando Finaud'
+    assert bt._determinar_status([])[0] == 'Aguardando Finaud'
 
 
 # ── _determinar_status — regra especial "transmitido no BACEN" ───────────────
@@ -81,20 +81,20 @@ def test_status_sem_mensagens():
 def test_status_transmitido_bacen_pelo_cliente():
     """Cliente avisa transmissão ao BACEN → Concluída (regra especial §8.3)."""
     msgs = [_msg(CLIENTE, corpo='Transmitido no BACEN com sucesso.')]
-    assert bt._determinar_status(msgs) == 'Concluída'
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
 
 
 def test_status_transmitida_bacen_variacao():
     """Variação 'transmitida no BACEN' também encerra."""
     msgs = [_msg(FINAUD, corpo='Arquivo transmitida no BACEN hoje.')]
-    assert bt._determinar_status(msgs) == 'Concluída'
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
 
 
 def test_status_transmitido_bacen_no_historico_nao_conta():
     """'transmitido no BACEN' só no histórico citado (linha >) → NÃO encerra."""
     corpo = 'Preciso do relatório atualizado.\n> Transmitido no BACEN em agosto.'
     msgs = [_msg(CLIENTE, corpo=corpo)]
-    assert bt._determinar_status(msgs) == 'Aguardando Finaud'
+    assert bt._determinar_status(msgs)[0] == 'Aguardando Finaud'
 
 
 # ── _determinar_status — remetente Finaud ─────────────────────────────────────
@@ -102,43 +102,43 @@ def test_status_transmitido_bacen_no_historico_nao_conta():
 def test_status_finaud_res_no_assunto():
     """'RES:' no assunto com remetente Finaud → Concluída."""
     msgs = [_msg(FINAUD, assunto='RES: DDR_2011 Banco X')]
-    assert bt._determinar_status(msgs) == 'Concluída'
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
 
 
 def test_status_finaud_com_anexo():
     """Finaud envia mensagem com anexo → Concluída."""
     msgs = [_msg(FINAUD, nomes_anexos=['DDR_2011_20260817.zip'])]
-    assert bt._determinar_status(msgs) == 'Concluída'
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
 
 
 def test_status_finaud_frase_segue_em_anexo():
     """Finaud usa 'segue em anexo' no texto → Concluída."""
     msgs = [_msg(FINAUD, corpo='Conforme combinado, segue em anexo o relatório.')]
-    assert bt._determinar_status(msgs) == 'Concluída'
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
 
 
 def test_status_finaud_conforme_solicitado():
     """Finaud usa 'conforme solicitado' → Concluída."""
     msgs = [_msg(FINAUD, corpo='Conforme solicitado, segue o DDR atualizado.')]
-    assert bt._determinar_status(msgs) == 'Concluída'
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
 
 
 def test_status_finaud_procedemos_com():
     """Finaud usa 'procedemos com' → Concluída."""
     msgs = [_msg(FINAUD, corpo='Procedemos com o envio ao BACEN.')]
-    assert bt._determinar_status(msgs) == 'Concluída'
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
 
 
 def test_status_finaud_sem_sinal_encerramento():
     """Finaud respondeu mas sem sinal de encerramento → Aguardando Cliente."""
     msgs = [_msg(FINAUD, corpo='Verificamos aqui, precisamos de mais informações.')]
-    assert bt._determinar_status(msgs) == 'Aguardando Cliente'
+    assert bt._determinar_status(msgs)[0] == 'Aguardando Cliente'
 
 
 def test_status_finaud_res_minusculo():
     """'RES:' case-insensitive."""
     msgs = [_msg(FINAUD, assunto='res: DDR_2011 Banco X')]
-    assert bt._determinar_status(msgs) == 'Concluída'
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
 
 
 # ── _determinar_status — remetente cliente ────────────────────────────────────
@@ -146,37 +146,37 @@ def test_status_finaud_res_minusculo():
 def test_status_cliente_so_obrigado():
     """Cliente só disse 'obrigado' → Concluída."""
     msgs = [_msg(CLIENTE, corpo='Obrigado!')]
-    assert bt._determinar_status(msgs) == 'Concluída'
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
 
 
 def test_status_cliente_ok_recebido():
     """Cliente disse 'ok, recebido' → Concluída."""
     msgs = [_msg(CLIENTE, corpo='Ok, recebido.')]
-    assert bt._determinar_status(msgs) == 'Concluída'
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
 
 
 def test_status_cliente_de_acordo():
     """Cliente disse 'de acordo' → Concluída."""
     msgs = [_msg(CLIENTE, corpo='De acordo, obrigado.')]
-    assert bt._determinar_status(msgs) == 'Concluída'
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
 
 
 def test_status_cliente_conteudo_real():
     """Cliente mandou conteúdo real (sem pergunta) → Aguardando Finaud."""
     msgs = [_msg(CLIENTE, corpo='Segue os dados para análise.')]
-    assert bt._determinar_status(msgs) == 'Aguardando Finaud'
+    assert bt._determinar_status(msgs)[0] == 'Aguardando Finaud'
 
 
 def test_status_veto_obrigado_com_pergunta():
     """Agradecimento + pergunta no mesmo e-mail → Aguardando Finaud (veto §8.3)."""
     msgs = [_msg(CLIENTE, corpo='Obrigado! Mas quando chegará o arquivo de setembro?')]
-    assert bt._determinar_status(msgs) == 'Aguardando Finaud'
+    assert bt._determinar_status(msgs)[0] == 'Aguardando Finaud'
 
 
 def test_status_cliente_so_pergunta():
     """Cliente fez apenas uma pergunta → Aguardando Finaud."""
     msgs = [_msg(CLIENTE, corpo='Boa tarde, quando será enviado o arquivo?')]
-    assert bt._determinar_status(msgs) == 'Aguardando Finaud'
+    assert bt._determinar_status(msgs)[0] == 'Aguardando Finaud'
 
 
 # ── _determinar_status — reabertura de caso (§8.4) ───────────────────────────
@@ -188,7 +188,7 @@ def test_status_reabertura_apos_concluida():
         _msg(CLIENTE, corpo='Obrigado!'),
         _msg(CLIENTE, corpo='Preciso do arquivo atualizado com os dados de agosto.'),
     ]
-    assert bt._determinar_status(msgs) == 'Aguardando Finaud'
+    assert bt._determinar_status(msgs)[0] == 'Aguardando Finaud'
 
 
 def test_status_reabertura_so_ultimo_e_mail_importa():
@@ -198,4 +198,4 @@ def test_status_reabertura_so_ultimo_e_mail_importa():
         _msg(FINAUD, corpo='Segue em anexo.', nomes_anexos=['arquivo.zip']),
     ]
     # Último é da Finaud com anexo → Concluída
-    assert bt._determinar_status(msgs) == 'Concluída'
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
