@@ -8,11 +8,11 @@
 
 ---
 
-## 📓 Diário da sessão (2026-08-17) — C55, C57, §4 filtro, ZIIN e fechamento da fase de threads
+## 📓 Diário da sessão (2026-08-17) — C55, C57, §4 filtro, ZIIN, telas e pipeline
 
 ### Resumo do que foi feito hoje
 
-**Contexto:** sessão de continuação. Início: /fechar da sessão anterior (764/767). Esta sessão finalizou TODAS as pendências de threads antes de avançar para as telas.
+**Contexto:** sessão de continuação. Início: /fechar da sessão anterior (764/767). Esta sessão finalizou TODAS as pendências de threads, construiu as telas de gestão e rodou o pipeline pela primeira vez com dados reais.
 
 **C55 — "Divulgação Instrução Normativa" no assunto → INTERNO:**
 Placar: 758→759/767.
@@ -31,6 +31,17 @@ Placar: 758→759/767.
 Thread `19f71c34de2418fe` ("Re: Arquivos Regulatórios - ZIIN") confirmada como DLO_2061 por Michel. Experimento com corpus de 1.200 chars: não resolveu ZIIN (DLO está além de 1.200 chars) e causou 2 regressões. Revertido. ZIIN aceito como 4º residual.
 
 **Decisão final de Michel:** aceitar 4 residuais e passar para telas (§13).
+
+**Telas de gestão entregues (Fase 1):**
+- `scripts/servidor_telas.py` — Flask porta 5001, autenticação, 6 endpoints API REST
+- `templates/gestao_login.html` + `templates/gestao_email.html` — padrão visual Finaud
+- Testado no browser: login, tabela de categorias, modais de thread, auto-refresh 5 min
+- Commit: `f98b191`
+
+**Pipeline criado e rodado pela primeira vez:**
+- `scripts/executar_pipeline.py` — orquestrador coletor → classificador
+- Resultado: 1.272 threads coletadas | 1.045 → Principal | 227 → Descartes | 0 → Revisão
+- Tempo: 6 minutos. Dados visíveis em http://localhost:5001
 
 ---
 
@@ -52,15 +63,13 @@ Thread `19f71c34de2418fe` ("Re: Arquivos Regulatórios - ZIIN") confirmada como 
 
 ### Próximo passo
 
-**🟢 INICIAR FASE 1 — Escrever o código de produção**
+**🟢 FASE 1 EM ANDAMENTO — Validar os dados nas telas**
 
-Escopo redefinido em 17/08/2026: sem IA por enquanto. O sistema usa só o classificador determinístico.
-Spec e PENDENCIAS atualizados para refletir:
-- 3 telas definidas em §14: Principal, Revisão, Descartes
-- IA/OCR movidos para fase futura
-- Próximo passo real: `coletor_gmail.py` + pipeline + telas
+Pipeline rodou pela primeira vez com dados reais (17/08/2026).
+1.045 threads classificadas visíveis em http://localhost:5001.
 
-Ver `documentações/PENDENCIAS.md` → seção "ETAPA ATUAL — Construir a Fase 1".
+Próxima ação: validar se as categorias, status e conteúdo das threads estão corretos nas telas.
+Em especial: verificar se as contagens por categoria fazem sentido, abrir threads conhecidas e conferir De/Para/Data.
 
 Último /fechar: pendente desta sessão
 

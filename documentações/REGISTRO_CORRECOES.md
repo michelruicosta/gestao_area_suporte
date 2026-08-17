@@ -10,6 +10,38 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-08-17 — Telas de gestão + pipeline + primeira carga real do Gmail
+
+### 17/08 — Telas de gestão de e-mail entregues (Fase 1)
+
+**🔎 Em miúdos:** criadas as três telas do sistema — login, painel principal com resumo por categoria e o menu com seções de Não Classificados e Bloqueados. O sistema agora tem uma interface web para o gestor acompanhar os e-mails.
+
+**O que foi criado:**
+- `scripts/servidor_telas.py` — servidor Flask na porta 5001 com autenticação por sessão, 6 endpoints de API REST e lógica de "De/Para" do §7
+- `templates/gestao_login.html` — tela de login no padrão visual Finaud (fundo azul marca, card branco)
+- `templates/gestao_email.html` — tela principal com sidebar, 3 seções (Classificados / Não Classificados / Bloqueados), tabela de categorias, modais de thread e classificação manual, auto-refresh de 5 minutos
+
+**Validação:** ✅ VALIDADO — servidor abre no browser, login funciona, tabela de categorias exibe com contagens por status.
+
+---
+
+### 17/08 — Script de pipeline criado e primeira carga real do Gmail executada
+
+**🔎 Em miúdos:** criado um script que conecta o coletor e o classificador em sequência. Rodado pela primeira vez contra a caixa real — o sistema coletou e classificou todo o histórico disponível.
+
+**O que foi criado:** `scripts/executar_pipeline.py` — orquestrador que roda coletor → classificador em sequência, com log de etapas e resumo final.
+
+**Resultado da primeira carga (17/08/2026 17:45):**
+- 1.272 threads coletadas da caixa `coleta.oraculo@finaud.com.br`
+- 1.045 classificadas → Tela Principal
+- 227 descartadas pelo filtro §4 (automáticos, relatórios de serviço, newsletters)
+- 0 em revisão — classificador cobriu 100% das threads que passaram pelo filtro
+- Tempo total: 6 minutos
+
+**Validação:** ✅ VALIDADO — pipeline completou com exit code 0; dados aparecem nas telas em http://localhost:5001.
+
+---
+
 ## 2026-08-17 — Lógica de status automático: implementação do §8.3 Concluída
 
 ### 17/08 — Status agora detecta Concluída automaticamente
