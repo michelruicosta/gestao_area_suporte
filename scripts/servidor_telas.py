@@ -108,6 +108,15 @@ def _formatar_data(iso: str | None) -> str:
         return iso[:10] if iso else ''
 
 
+def _chave_data(t: dict) -> str:
+    """'DD/MM/AAAA HH:MM' → 'AAAAMMDD HHMM' para ordenação correta por data."""
+    d = t.get('data_ultima_msg') or ''
+    try:
+        return datetime.strptime(d[:16], '%d/%m/%Y %H:%M').strftime('%Y%m%d%H%M')
+    except Exception:
+        return d
+
+
 # ── Autenticação ──────────────────────────────────────────────────────────────
 
 def _requer_login(f):
@@ -201,8 +210,10 @@ def api_resumo():
 @app.route('/api/categoria/<cat_id>')
 @_requer_login
 def api_categoria(cat_id: str):
-    threads = [t for t in bt.buscar_por_destino('principal')
-               if t.get('categoria') == cat_id]
+    threads = sorted(
+        [t for t in bt.buscar_por_destino('principal') if t.get('categoria') == cat_id],
+        key=_chave_data, reverse=True,
+    )
     resultado = [
         {
             'thread_id':            t['thread_id'],
@@ -253,7 +264,10 @@ def api_thread(thread_id: str):
 @app.route('/api/nao-classificados')
 @_requer_login
 def api_nao_classificados():
-    threads = bt.buscar_por_destino('revisao') + bt.buscar_sem_classificar()
+    threads = sorted(
+        bt.buscar_por_destino('revisao') + bt.buscar_sem_classificar(),
+        key=_chave_data, reverse=True,
+    )
     resultado = [
         {
             'thread_id':     t['thread_id'],
@@ -272,6 +286,7 @@ def api_nao_classificados():
 @app.route('/api/bloqueados')
 @_requer_login
 def api_bloqueados():
+    threads = sorted(bt.buscar_por_destino('descartes'), key=_chave_data, reverse=True)
     resultado = [
         {
             'thread_id':       t['thread_id'],
@@ -281,7 +296,7 @@ def api_bloqueados():
             'remetente':       _extrair_nome(t.get('remetente_principal') or ''),
             'motivo_descarte': t.get('motivo_descarte') or '',
         }
-        for t in bt.buscar_por_destino('descartes')
+        for t in threads
     ]
     return jsonify({'threads': resultado, 'total': len(resultado)})
 
