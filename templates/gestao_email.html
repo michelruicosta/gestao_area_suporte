@@ -99,9 +99,9 @@ body { margin: 0; background: var(--bg); display: flex; min-height: 100vh; }
 
 /* ─── Tabela ────────────────────────────────────────────────────────── */
 .tabela-wrap { background: #fff; border: 1px solid var(--border); border-radius: 10px; overflow-x: auto; }
-.tabela { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.tabela { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.875rem; }
 .tabela th, .tabela td { padding: 0.65rem 0.85rem; border-bottom: 1px solid #eef0f2; text-align: left; vertical-align: middle; }
-.tabela th { background: #f8f9fa; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; color: #64748b; font-weight: 600; }
+.tabela th { background: #f8f9fa; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; color: #64748b; font-weight: 600; position: sticky; top: 0; z-index: 1; border-top: 1px solid #eef0f2; }
 .tabela tr:last-child td { border-bottom: 0; }
 .tabela tbody tr { cursor: pointer; }
 .tabela tbody tr:hover td { background: #f8faff; }
