@@ -10,6 +10,28 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-08-18 — Correção de status: assinatura confundia detecção de cortesia
+
+### 18/08 — §8.3 _so_cortesia: assinatura de e-mail contada como conteúdo real
+
+**🔎 Em miúdos:** quando um cliente respondia "Obrigado pelo retorno" + assinatura longa (nome, cargo, telefone, links), o sistema não reconhecia como cortesia e deixava a thread como "Aguardando Cliente". A assinatura virava conteúdo "extra" que parecia mensagem de verdade.
+
+**Problema:** `_so_cortesia()` recebia o texto sem separar a assinatura. Depois de remover as frases de cortesia, sobrava nome + cargo + telefone + URLs (até 491 chars), bem acima do limite de 15. O sistema concluía que havia conteúdo real — mas era só o rodapé padrão do e-mail. Adicionalmente, se a assinatura continha uma URL com `?`, o check de pergunta disparava erroneamente.
+
+**Causa raiz:** nenhuma lógica removia o bloco de assinatura antes da avaliação. O separador natural ("Atenciosamente", "Att", "Cordialmente" etc.) não era detectado.
+
+**Correção (commit 0757360):**
+- Nova constante `_SIGN_OFF_RE` em `scripts/banco_threads.py`: regex que detecta o sign-off no início de uma linha e marca o início do bloco de assinatura
+- U+200B (zero-width space, invisível, aparece em assinaturas HTML) removido explicitamente antes de qualquer regex via `texto.replace('​', '')`
+- `_so_cortesia()` trunca o texto no início do sign-off → tudo após (nome/cargo/telefone/URLs) é descartado antes de qualquer avaliação
+- O check de `'?'` também passou a rodar após o truncamento — URLs com `?` na assinatura não disparam mais falso negativo
+
+**Impacto:** threads com resposta de cortesia + assinatura longa agora marcam "Concluída" corretamente. Caso real: TRINUS — resposta do Luiz Eduardo ao CADOC de Jun/2026.
+
+**Validação:** `pytest tests/ -q` → ✅ 274/274 — 2 novos testes (cenário TRINUS com assinatura + conteúdo real com assinatura → não é cortesia). Zero regressões.
+
+---
+
 ## 2026-08-18 — Correção de status: e-mails internos informativos
 
 ### 18/08 — §8.7 Internos informativos: "Aguardando Finaud" corrigido para "Concluída"

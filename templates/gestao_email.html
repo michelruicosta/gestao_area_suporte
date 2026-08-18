@@ -263,10 +263,16 @@ body { margin: 0; background: var(--bg); display: flex; min-height: 100vh; }
 .status-dot.ok      { background: #168a43; }
 .status-dot.erro    { background: #c0392b; }
 @keyframes pulsar { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
-.chip-ok   { background: #dff3e6; color: #168a43; }
-.chip-erro { background: #fee2e2; color: #c0392b; }
-.chip-inc  { background: #e7f5ff; color: #1864ab; }
-.chip-hist { background: #fff0c2; color: #8a5b00; }
+.chip-ok      { background: #dff3e6; color: #168a43; }
+.chip-erro    { background: #fee2e2; color: #c0392b; }
+.chip-inc     { background: #e7f5ff; color: #1864ab; }
+.chip-hist    { background: #fff0c2; color: #8a5b00; }
+.classif-pills { display: flex; flex-wrap: wrap; gap: 4px; }
+.cpill        { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px;
+                border-radius: 99px; font-size: 0.78rem; font-weight: 600; white-space: nowrap; }
+.cpill-princ  { background: #dff3e6; color: #168a43; }
+.cpill-desc   { background: #fff3cd; color: #7a4e00; }
+.cpill-rev    { background: #fee2e2; color: #c0392b; }
 </style>
 </head>
 <body>
@@ -413,15 +419,14 @@ body { margin: 0; background: var(--bg); display: flex; min-height: 100vh; }
               <tr>
                 <th>Data / Hora</th>
                 <th>Tipo</th>
-                <th class="num">Threads</th>
-                <th class="num">Erros</th>
+                <th>Coletadas</th>
+                <th>Classificadas</th>
                 <th class="num">Duração</th>
                 <th>Status</th>
-                <th>Mensagem</th>
               </tr>
             </thead>
             <tbody id="tbody-log">
-              <tr><td colspan="7" class="vazio">Carregando…</td></tr>
+              <tr><td colspan="6" class="vazio">Carregando…</td></tr>
             </tbody>
           </table>
         </div>
@@ -940,17 +945,17 @@ async function dispararColeta() {
 
 async function carregarLogColetas() {
   document.getElementById('tbody-log').innerHTML =
-    '<tr><td colspan="7" class="vazio">Carregando…</td></tr>';
+    '<tr><td colspan="6" class="vazio">Carregando…</td></tr>';
   try {
     const d = await _get('/api/admin/log-coletas');
     if (!d.logs.length) {
       document.getElementById('tbody-log').innerHTML =
-        '<tr><td colspan="7" class="vazio">Nenhuma execução registrada ainda.</td></tr>';
+        '<tr><td colspan="6" class="vazio">Nenhuma execução registrada ainda.</td></tr>';
       return;
     }
     document.getElementById('tbody-log').innerHTML = d.logs.map(l => {
       const chipTipo = l.tipo === 'historica'
-        ? `<span class="chip chip-hist">Histórica completa</span>`
+        ? `<span class="chip chip-hist">Histórica</span>`
         : `<span class="chip chip-inc">Incremental</span>`;
       const chipStatus = l.status === 'concluida'
         ? `<span class="chip chip-ok">✓ Concluída</span>`
@@ -958,24 +963,32 @@ async function carregarLogColetas() {
       const dur = l.duracao_seg != null
         ? (l.duracao_seg >= 60
             ? `${Math.floor(l.duracao_seg/60)}m ${Math.round(l.duracao_seg%60)}s`
-            : `${l.duracao_seg}s`)
+            : `${Math.round(l.duracao_seg)}s`)
         : '—';
-      const msg = l.mensagem
-        ? `<span style="font-size:0.78rem;color:#c0392b;" title="${escHtml(l.mensagem)}">${escHtml(l.mensagem.substring(0,60))}${l.mensagem.length>60?'…':''}</span>`
-        : '<span class="n-zero">—</span>';
+      const errosTxt = l.erros
+        ? `<div style="font-size:0.76rem;color:#c0392b;">${l.erros} erro(s)</div>` : '';
+      const coletadas = `<div style="font-weight:600;">${l.threads_proc} novas</div>${errosTxt}`;
+      const temClassif = l.classif_principal || l.classif_descartes || l.classif_revisao;
+      let classifHtml = '<span class="n-zero">—</span>';
+      if (temClassif) {
+        const pills = [];
+        if (l.classif_principal) pills.push(`<span class="cpill cpill-princ">✓ ${l.classif_principal} principal</span>`);
+        if (l.classif_descartes) pills.push(`<span class="cpill cpill-desc">⊘ ${l.classif_descartes} descarte</span>`);
+        if (l.classif_revisao)   pills.push(`<span class="cpill cpill-rev">! ${l.classif_revisao} revisão</span>`);
+        classifHtml = `<div class="classif-pills">${pills.join('')}</div>`;
+      }
       return `<tr>
-        <td style="white-space:nowrap;">${escHtml(l.data_hora)}</td>
+        <td style="white-space:nowrap;font-size:0.87rem;">${escHtml(l.data_hora)}</td>
         <td>${chipTipo}</td>
-        <td class="num">${l.threads_proc}</td>
-        <td class="num">${l.erros || '<span class="n-zero">—</span>'}</td>
+        <td>${coletadas}</td>
+        <td>${classifHtml}</td>
         <td class="num" style="white-space:nowrap;">${dur}</td>
         <td>${chipStatus}</td>
-        <td>${msg}</td>
       </tr>`;
     }).join('');
   } catch (e) {
     document.getElementById('tbody-log').innerHTML =
-      '<tr><td colspan="7" class="vazio">Erro ao carregar log.</td></tr>';
+      '<tr><td colspan="6" class="vazio">Erro ao carregar log.</td></tr>';
   }
 }
 

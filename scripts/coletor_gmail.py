@@ -284,7 +284,7 @@ def _sincronizar_incremental(service, start_history_id: str) -> tuple[str | None
 
 # ── Ponto de entrada ──────────────────────────────────────────────────────────
 
-def coletar() -> None:
+def coletar() -> int | None:
     print('=' * 60)
     print('COLETOR GMAIL — caixa de coleta do Oráculo 360')
     print('=' * 60)
@@ -323,12 +323,13 @@ def coletar() -> None:
             print(f'Marcador de sincronização atualizado: {novo_hist_id}')
 
         duracao = time.time() - _inicio
-        registrar_coleta(tipo, threads_proc, total_erros, duracao, 'concluida')
+        log_id = registrar_coleta(tipo, threads_proc, total_erros, duracao, 'concluida')
 
         print()
         print('=' * 60)
         print('Coleta concluída.')
         print('=' * 60)
+        return log_id
 
     except Exception as exc:
         duracao = time.time() - _inicio

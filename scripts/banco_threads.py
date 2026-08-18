@@ -111,14 +111,17 @@ def criar_banco() -> None:
             );
 
             CREATE TABLE IF NOT EXISTS log_coletas (
-                id           INTEGER PRIMARY KEY AUTOINCREMENT,
-                data_hora    TEXT NOT NULL,
-                tipo         TEXT NOT NULL,
-                threads_proc INTEGER NOT NULL DEFAULT 0,
-                erros        INTEGER NOT NULL DEFAULT 0,
-                duracao_seg  REAL,
-                status       TEXT NOT NULL,
-                mensagem     TEXT
+                id                INTEGER PRIMARY KEY AUTOINCREMENT,
+                data_hora         TEXT NOT NULL,
+                tipo              TEXT NOT NULL,
+                threads_proc      INTEGER NOT NULL DEFAULT 0,
+                erros             INTEGER NOT NULL DEFAULT 0,
+                duracao_seg       REAL,
+                status            TEXT NOT NULL,
+                mensagem          TEXT,
+                classif_principal INTEGER NOT NULL DEFAULT 0,
+                classif_descartes INTEGER NOT NULL DEFAULT 0,
+                classif_revisao   INTEGER NOT NULL DEFAULT 0
             );
         """)
         # Migração segura: adiciona colunas novas sem recriar o banco
@@ -129,6 +132,9 @@ def criar_banco() -> None:
             'remetente_ultima_msg TEXT',
             'destinatario_ultima_msg TEXT',
             'reply_to_ultima_msg TEXT',
+            'classif_principal INTEGER NOT NULL DEFAULT 0',
+            'classif_descartes INTEGER NOT NULL DEFAULT 0',
+            'classif_revisao   INTEGER NOT NULL DEFAULT 0',
         ]:
             try:
                 conn.execute(f'ALTER TABLE threads ADD COLUMN {col_def}')
@@ -629,14 +635,27 @@ def ler_ultimo_snapshot() -> dict[str, dict]:
 # ── Log de execuções do coletor ───────────────────────────────────────────────
 
 def registrar_coleta(tipo: str, threads_proc: int, erros: int,
-                     duracao_seg: float, status: str, mensagem: str = '') -> None:
-    """Grava o resultado de uma rodada do coletor (chamado ao final de cada execução)."""
+                     duracao_seg: float, status: str, mensagem: str = '') -> int:
+    """Grava o resultado de uma rodada do coletor. Retorna o id do registro criado."""
     with _conectar() as conn:
-        conn.execute(
+        cur = conn.execute(
             """INSERT INTO log_coletas
                (data_hora, tipo, threads_proc, erros, duracao_seg, status, mensagem)
                VALUES (?, ?, ?, ?, ?, ?, ?)""",
             (_agora(), tipo, threads_proc, erros, round(duracao_seg, 1), status, mensagem)
+        )
+        return cur.lastrowid
+
+
+def atualizar_classif_coleta(log_id: int, principal: int,
+                             descartes: int, revisao: int) -> None:
+    """Adiciona o resultado da classificação a um registro de coleta já gravado."""
+    with _conectar() as conn:
+        conn.execute(
+            """UPDATE log_coletas
+               SET classif_principal=?, classif_descartes=?, classif_revisao=?
+               WHERE id=?""",
+            (principal, descartes, revisao, log_id)
         )
 
 
@@ -644,7 +663,8 @@ def ler_log_coletas(limite: int = 30) -> list[dict]:
     """Retorna as últimas N rodadas do coletor, mais recente primeiro."""
     with _conectar() as conn:
         rows = conn.execute(
-            """SELECT id, data_hora, tipo, threads_proc, erros, duracao_seg, status, mensagem
+            """SELECT id, data_hora, tipo, threads_proc, erros, duracao_seg, status,
+                      mensagem, classif_principal, classif_descartes, classif_revisao
                FROM log_coletas ORDER BY id DESC LIMIT ?""",
             (limite,)
         ).fetchall()

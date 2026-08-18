@@ -386,7 +386,16 @@ def api_admin_coletar():
         try:
             sys.path.insert(0, _SCRIPTS_DIR)
             from coletor_gmail import coletar
-            coletar()
+            from classificador_ia import classificar_banco
+            log_id = coletar()
+            contagens = classificar_banco()
+            if log_id:
+                bt.atualizar_classif_coleta(
+                    log_id,
+                    contagens.get('principal', 0),
+                    contagens.get('descartes', 0),
+                    contagens.get('revisao', 0),
+                )
         finally:
             _coleta_em_andamento = False
 
