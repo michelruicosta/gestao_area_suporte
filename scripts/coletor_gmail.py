@@ -13,7 +13,8 @@ from email.utils import parsedate_to_datetime
 from email.header import decode_header as _decode_header
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from banco_threads import criar_banco, salvar_thread, get_controle_sync, set_controle_sync
+from banco_threads import (criar_banco, salvar_thread, get_controle_sync,
+                           set_controle_sync, salvar_snapshot, registrar_coleta)
 
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -161,10 +162,10 @@ def _processar_thread(service, thread_id: str) -> dict | None:
 
 # ── Importação histórica completa (primeira vez) ──────────────────────────────
 
-def _importar_historico(service) -> str | None:
+def _importar_historico(service) -> tuple[str | None, int, int]:
     """
     Percorre TODAS as threads da caixa de coleta e salva no banco.
-    Retorna o historyId mais recente (para sincronizações futuras).
+    Retorna (ultimo_hist_id, total_threads, total_erros).
     """
     print('Modo: importação histórica completa...')
 
@@ -214,18 +215,18 @@ def _importar_historico(service) -> str | None:
         time.sleep(0.1)
 
     print(f'\nImportação concluída: {total} threads | {erros} erros')
-    return str(ultimo_hist_id) if ultimo_hist_id else None
+    return (str(ultimo_hist_id) if ultimo_hist_id else None), total, erros
 
 
 # ── Sincronização incremental (rodadas seguintes) ─────────────────────────────
 
-def _sincronizar_incremental(service, start_history_id: str) -> str | None:
+def _sincronizar_incremental(service, start_history_id: str) -> tuple[str | None, int, int]:
     """
     Usa a API de histórico do Gmail para buscar apenas threads que mudaram
     desde a última sincronização. Muito mais rápido que reimportar tudo.
 
-    Retorna o novo historyId, ou None se o historyId expirou (nesse caso o
-    chamador refaz a importação histórica).
+    Retorna (novo_hist_id, threads_salvas, erros).
+    novo_hist_id=None significa que o historyId expirou → chamador refaz importação histórica.
     """
     print(f'Modo: sincronização incremental (desde historyId {start_history_id})...')
 
@@ -247,9 +248,9 @@ def _sincronizar_incremental(service, start_history_id: str) -> str | None:
         except HttpError as e:
             if 'invalidHistoryId' in str(e) or e.resp.status == 404:
                 print('[AVISO] historyId expirou. Será feita importação histórica completa.')
-                return None
+                return None, 0, 0
             print(f'[ERRO] Falha na sincronização incremental: {e}')
-            return start_history_id  # mantém o historyId anterior
+            return start_history_id, 0, 0  # mantém o historyId anterior
 
         for entrada in resultado.get('history', []):
             for msg_info in entrada.get('messagesAdded', []):
@@ -264,16 +265,21 @@ def _sincronizar_incremental(service, start_history_id: str) -> str | None:
 
     if not thread_ids_novas:
         print('Nenhuma thread nova desde a última sincronização.')
-        return novo_hist_id
+        return novo_hist_id, 0, 0
 
+    salvadas = 0
+    erros_thread = 0
     print(f'{len(thread_ids_novas)} thread(s) nova(s)/atualizada(s). Salvando...')
     for thread_id in thread_ids_novas:
         thread_data = _processar_thread(service, thread_id)
         if thread_data:
             salvar_thread(thread_data)
+            salvadas += 1
             print(f'  Atualizada: {thread_data["assunto"][:65]}')
+        else:
+            erros_thread += 1
 
-    return novo_hist_id
+    return novo_hist_id, salvadas, erros_thread
 
 
 # ── Ponto de entrada ──────────────────────────────────────────────────────────
@@ -283,32 +289,52 @@ def coletar() -> None:
     print('COLETOR GMAIL — caixa de coleta do Oráculo 360')
     print('=' * 60)
 
-    criar_banco()
+    _inicio = time.time()
+    tipo = 'incremental'
+    threads_proc = 0
+    total_erros = 0
 
-    # Snapshot do estado antes desta rodada — base para o delta exibido na tela
-    bt.salvar_snapshot()
-    print('Snapshot de contadores salvo.')
+    try:
+        criar_banco()
 
-    service = _conectar_gmail()
+        # Snapshot do estado antes desta rodada — base para o delta exibido na tela
+        salvar_snapshot()
+        print('Snapshot de contadores salvo.')
 
-    start_hist_id = get_controle_sync('last_history_id')
+        service = _conectar_gmail()
 
-    if start_hist_id:
-        novo_hist_id = _sincronizar_incremental(service, start_hist_id)
-        if novo_hist_id is None:
-            # historyId expirou: reimporta tudo
-            novo_hist_id = _importar_historico(service)
-    else:
-        novo_hist_id = _importar_historico(service)
+        start_hist_id = get_controle_sync('last_history_id')
 
-    if novo_hist_id:
-        set_controle_sync('last_history_id', str(novo_hist_id))
-        print(f'Marcador de sincronização atualizado: {novo_hist_id}')
+        if start_hist_id:
+            novo_hist_id, tp, err = _sincronizar_incremental(service, start_hist_id)
+            if novo_hist_id is None:
+                # historyId expirou: reimporta tudo
+                tipo = 'historica'
+                novo_hist_id, threads_proc, total_erros = _importar_historico(service)
+            else:
+                threads_proc = tp
+                total_erros = err
+        else:
+            tipo = 'historica'
+            novo_hist_id, threads_proc, total_erros = _importar_historico(service)
 
-    print()
-    print('=' * 60)
-    print('Coleta concluída.')
-    print('=' * 60)
+        if novo_hist_id:
+            set_controle_sync('last_history_id', str(novo_hist_id))
+            print(f'Marcador de sincronização atualizado: {novo_hist_id}')
+
+        duracao = time.time() - _inicio
+        registrar_coleta(tipo, threads_proc, total_erros, duracao, 'concluida')
+
+        print()
+        print('=' * 60)
+        print('Coleta concluída.')
+        print('=' * 60)
+
+    except Exception as exc:
+        duracao = time.time() - _inicio
+        registrar_coleta(tipo, threads_proc, total_erros, duracao, 'erro', str(exc))
+        print(f'\n[ERRO FATAL] {exc}')
+        raise
 
 
 if __name__ == '__main__':

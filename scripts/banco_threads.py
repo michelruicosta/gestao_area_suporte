@@ -95,6 +95,17 @@ def criar_banco() -> None:
                 co        INTEGER NOT NULL DEFAULT 0,
                 total     INTEGER NOT NULL DEFAULT 0
             );
+
+            CREATE TABLE IF NOT EXISTS log_coletas (
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                data_hora    TEXT NOT NULL,
+                tipo         TEXT NOT NULL,
+                threads_proc INTEGER NOT NULL DEFAULT 0,
+                erros        INTEGER NOT NULL DEFAULT 0,
+                duracao_seg  REAL,
+                status       TEXT NOT NULL,
+                mensagem     TEXT
+            );
         """)
         # Migração segura: adiciona colunas novas sem recriar o banco
         for col_def in [
@@ -586,6 +597,31 @@ def ler_ultimo_snapshot() -> dict[str, dict]:
             'SELECT categoria, af, ac, co, total FROM snapshots'
         ).fetchall()
     return {r['categoria']: dict(r) for r in rows}
+
+
+# ── Log de execuções do coletor ───────────────────────────────────────────────
+
+def registrar_coleta(tipo: str, threads_proc: int, erros: int,
+                     duracao_seg: float, status: str, mensagem: str = '') -> None:
+    """Grava o resultado de uma rodada do coletor (chamado ao final de cada execução)."""
+    with _conectar() as conn:
+        conn.execute(
+            """INSERT INTO log_coletas
+               (data_hora, tipo, threads_proc, erros, duracao_seg, status, mensagem)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (_agora(), tipo, threads_proc, erros, round(duracao_seg, 1), status, mensagem)
+        )
+
+
+def ler_log_coletas(limite: int = 30) -> list[dict]:
+    """Retorna as últimas N rodadas do coletor, mais recente primeiro."""
+    with _conectar() as conn:
+        rows = conn.execute(
+            """SELECT id, data_hora, tipo, threads_proc, erros, duracao_seg, status, mensagem
+               FROM log_coletas ORDER BY id DESC LIMIT ?""",
+            (limite,)
+        ).fetchall()
+    return [dict(r) for r in rows]
 
 
 # ── Controle de sincronização com o Gmail ─────────────────────────────────────

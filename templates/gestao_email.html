@@ -236,6 +236,37 @@ body { margin: 0; background: var(--bg); display: flex; min-height: 100vh; }
 }
 .busca-input:focus { border-color: var(--marca); box-shadow: 0 0 0 2px rgba(51,51,168,0.12); }
 .busca-sem-resultado { display: none; text-align: center; color: var(--muted); padding: 1.5rem 1rem; font-size: 0.88rem; }
+
+/* ─── Admin ─────────────────────────────────────────────────── */
+.admin-card {
+  background: #fff; border: 1px solid var(--border); border-radius: 10px;
+  padding: 1.25rem 1.5rem; margin-bottom: 1.25rem;
+}
+.admin-card h2 { margin: 0 0 1rem; font-size: 0.95rem; font-weight: 700; color: var(--text); }
+.btn-coletar {
+  padding: 0.6rem 1.4rem; background: var(--marca); color: #fff;
+  border: none; border-radius: 8px; font: inherit; font-size: 0.93rem;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 0.55rem;
+  transition: background 0.12s;
+}
+.btn-coletar:hover:not(:disabled) { background: #2828a0; }
+.btn-coletar:disabled { opacity: 0.55; cursor: not-allowed; }
+.status-linha {
+  display: flex; align-items: center; gap: 0.55rem;
+  font-size: 0.86rem; color: var(--muted); margin-top: 0.85rem;
+}
+.status-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #94a3b8; flex-shrink: 0; transition: background 0.3s;
+}
+.status-dot.rodando { background: #f59e0b; animation: pulsar 1.1s ease-in-out infinite; }
+.status-dot.ok      { background: #168a43; }
+.status-dot.erro    { background: #c0392b; }
+@keyframes pulsar { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
+.chip-ok   { background: #dff3e6; color: #168a43; }
+.chip-erro { background: #fee2e2; color: #c0392b; }
+.chip-inc  { background: #e7f5ff; color: #1864ab; }
+.chip-hist { background: #fff0c2; color: #8a5b00; }
 </style>
 </head>
 <body>
@@ -265,6 +296,13 @@ body { margin: 0; background: var(--bg); display: flex; min-height: 100vh; }
       <span class="nav-ico">🚫</span>
       Bloqueados por filtro
       <span class="nav-badge" id="badge-bloqueados">—</span>
+    </button>
+
+    <div class="nav-label" style="margin-top:0.5rem;">Sistema</div>
+
+    <button class="nav-item" data-pagina="admin" onclick="navegar(this)">
+      <span class="nav-ico">⚙️</span>
+      Admin
     </button>
   </nav>
 
@@ -344,6 +382,49 @@ body { margin: 0; background: var(--bg); display: flex; min-height: 100vh; }
             <tr><td colspan="5" class="vazio">Carregando…</td></tr>
           </tbody>
         </table>
+      </div>
+    </section>
+
+    <!-- ── Página 4: Admin ───────────────────────────────────────── -->
+    <section class="page" id="pag-admin">
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1 class="page-titulo">Admin</h1>
+          <p class="page-sub">Controles do coletor de e-mails do Oráculo 360</p>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <h2>Coletor de e-mails</h2>
+        <button class="btn-coletar" id="btn-coletar" onclick="dispararColeta()">
+          ▶ Rodar coletor agora
+        </button>
+        <div class="status-linha">
+          <span class="status-dot" id="status-dot"></span>
+          <span id="status-coleta-txt">Aguardando verificação…</span>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <h2>Histórico de execuções</h2>
+        <div class="tabela-wrap">
+          <table class="tabela" id="tbl-log">
+            <thead>
+              <tr>
+                <th>Data / Hora</th>
+                <th>Tipo</th>
+                <th class="num">Threads</th>
+                <th class="num">Erros</th>
+                <th class="num">Duração</th>
+                <th>Status</th>
+                <th>Mensagem</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-log">
+              <tr><td colspan="7" class="vazio">Carregando…</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
 
@@ -503,11 +584,13 @@ function navegar(btn) {
   const titulos = {
     'classificados':    'Classificação e Status',
     'nao-classificados':'Não classificados',
-    'bloqueados':       'Bloqueados por filtro'
+    'bloqueados':       'Bloqueados por filtro',
+    'admin':            'Admin',
   };
   document.getElementById('topbar-titulo').textContent = titulos[pag] || '';
   if (pag === 'nao-classificados') carregarNaoClassificados();
   if (pag === 'bloqueados') carregarBloqueados();
+  if (pag === 'admin') { _atualizarStatusColeta(); carregarLogColetas(); }
 }
 
 // ── Auto-refresh ──────────────────────────────────────────────────────
@@ -801,6 +884,98 @@ async function confirmarClassificacao() {
     await carregarResumo();
   } catch (e) {
     alert('Erro ao classificar. Tente novamente.');
+  }
+}
+
+// ── Admin: coletor ────────────────────────────────────────────────────
+let _pollTimer = null;
+
+async function _atualizarStatusColeta() {
+  try {
+    const d = await _get('/api/admin/status-coleta');
+    const dot = document.getElementById('status-dot');
+    const txt = document.getElementById('status-coleta-txt');
+    const btn = document.getElementById('btn-coletar');
+    if (d.em_andamento) {
+      dot.className = 'status-dot rodando';
+      txt.textContent = 'Coletando e-mails… aguarde.';
+      btn.disabled = true;
+      btn.textContent = '⏳ Coletando…';
+      if (!_pollTimer) {
+        _pollTimer = setInterval(async () => {
+          const s = await _get('/api/admin/status-coleta').catch(() => ({em_andamento:true}));
+          if (!s.em_andamento) {
+            clearInterval(_pollTimer); _pollTimer = null;
+            _atualizarStatusColeta();
+            carregarLogColetas();
+          }
+        }, 3000);
+      }
+    } else {
+      dot.className = 'status-dot ok';
+      txt.textContent = 'Coletor parado. Pronto para nova rodada.';
+      btn.disabled = false;
+      btn.textContent = '▶ Rodar coletor agora';
+    }
+  } catch (_) {}
+}
+
+async function dispararColeta() {
+  const btn = document.getElementById('btn-coletar');
+  btn.disabled = true;
+  try {
+    const r = await fetch('/api/admin/coletar', { method: 'POST' });
+    if (r.status === 409) {
+      alert('Uma coleta já está em andamento. Aguarde o término.');
+      btn.disabled = false;
+      return;
+    }
+    if (!r.ok) throw new Error();
+    _atualizarStatusColeta();
+  } catch (e) {
+    alert('Erro ao iniciar o coletor. Verifique o servidor.');
+    btn.disabled = false;
+  }
+}
+
+async function carregarLogColetas() {
+  document.getElementById('tbody-log').innerHTML =
+    '<tr><td colspan="7" class="vazio">Carregando…</td></tr>';
+  try {
+    const d = await _get('/api/admin/log-coletas');
+    if (!d.logs.length) {
+      document.getElementById('tbody-log').innerHTML =
+        '<tr><td colspan="7" class="vazio">Nenhuma execução registrada ainda.</td></tr>';
+      return;
+    }
+    document.getElementById('tbody-log').innerHTML = d.logs.map(l => {
+      const chipTipo = l.tipo === 'historica'
+        ? `<span class="chip chip-hist">Histórica completa</span>`
+        : `<span class="chip chip-inc">Incremental</span>`;
+      const chipStatus = l.status === 'concluida'
+        ? `<span class="chip chip-ok">✓ Concluída</span>`
+        : `<span class="chip chip-erro">✕ Erro</span>`;
+      const dur = l.duracao_seg != null
+        ? (l.duracao_seg >= 60
+            ? `${Math.floor(l.duracao_seg/60)}m ${Math.round(l.duracao_seg%60)}s`
+            : `${l.duracao_seg}s`)
+        : '—';
+      const msg = l.mensagem
+        ? `<span style="font-size:0.78rem;color:#c0392b;" title="${escHtml(l.mensagem)}">${escHtml(l.mensagem.substring(0,60))}${l.mensagem.length>60?'…':''}</span>`
+        : '<span class="n-zero">—</span>';
+      return `<tr>
+        <td style="white-space:nowrap;">${escHtml(l.data_hora)}</td>
+        <td>${chipTipo}</td>
+        <td class="num">${l.threads_proc}</td>
+        <td class="num">${l.erros || '<span class="n-zero">—</span>'}</td>
+        <td class="num" style="white-space:nowrap;">${dur}</td>
+        <td>${chipStatus}</td>
+        <td>${msg}</td>
+      </tr>`;
+    }).join('');
+  } catch (e) {
+    document.getElementById('tbody-log').innerHTML =
+      '<tr><td colspan="7" class="vazio">Erro ao carregar log.</td></tr>';
   }
 }
 

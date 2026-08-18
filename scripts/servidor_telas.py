@@ -11,6 +11,7 @@ import json
 import os
 import re
 import sys
+import threading
 from datetime import datetime
 from functools import wraps
 
@@ -28,6 +29,8 @@ app = Flask(
     static_folder=os.path.join(_ROOT_DIR, 'static'),
 )
 app.secret_key = os.environ.get('SECRET_KEY', 'oraculo360-gestao-secret')
+
+_coleta_em_andamento = False
 
 # Credencial de acesso (variáveis de ambiente sobrescrevem o padrão)
 _ADMIN_EMAIL = os.environ.get('GESTAO_EMAIL', 'michel@finaud.com.br')
@@ -367,6 +370,42 @@ def api_classificar(thread_id: str):
         return jsonify({'erro': f'categoria desconhecida: {categoria}'}), 400
     bt.classificar_manual(thread_id, categoria)
     return jsonify({'ok': True, 'thread_id': thread_id, 'categoria': categoria})
+
+
+# ── API: Admin — coletor e log ────────────────────────────────────────────────
+
+@app.route('/api/admin/coletar', methods=['POST'])
+@_requer_login
+def api_admin_coletar():
+    global _coleta_em_andamento
+    if _coleta_em_andamento:
+        return jsonify({'erro': 'Coleta já em andamento. Aguarde o término.'}), 409
+
+    def _rodar():
+        global _coleta_em_andamento
+        try:
+            sys.path.insert(0, _SCRIPTS_DIR)
+            from coletor_gmail import coletar
+            coletar()
+        finally:
+            _coleta_em_andamento = False
+
+    _coleta_em_andamento = True
+    threading.Thread(target=_rodar, daemon=True).start()
+    return jsonify({'ok': True, 'mensagem': 'Coleta iniciada em segundo plano.'})
+
+
+@app.route('/api/admin/status-coleta')
+@_requer_login
+def api_admin_status_coleta():
+    return jsonify({'em_andamento': _coleta_em_andamento})
+
+
+@app.route('/api/admin/log-coletas')
+@_requer_login
+def api_admin_log_coletas():
+    logs = bt.ler_log_coletas(limite=30)
+    return jsonify({'logs': logs})
 
 
 # ── Inicialização ─────────────────────────────────────────────────────────────

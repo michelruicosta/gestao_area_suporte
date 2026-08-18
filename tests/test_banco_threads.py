@@ -683,3 +683,36 @@ def test_snapshot_sobrescreve_anterior(monkeypatch, tmp_path):
 
     snap = bt.ler_ultimo_snapshot()
     assert snap['DRM_2060']['af'] == 1  # apenas 1, não 2
+
+
+# ── Testes: registrar_coleta / ler_log_coletas ────────────────────────────────
+
+def test_registrar_coleta_e_ler(monkeypatch, tmp_path):
+    """registrar_coleta() grava; ler_log_coletas() retorna mais recente primeiro."""
+    banco_tmp = str(tmp_path / 'test.db')
+    monkeypatch.setattr(bt, 'BANCO', banco_tmp)
+    bt.criar_banco()
+
+    bt.registrar_coleta('incremental', 5, 0, 12.3, 'concluida', '')
+    bt.registrar_coleta('historica', 100, 2, 120.5, 'concluida', '')
+
+    logs = bt.ler_log_coletas()
+    assert len(logs) == 2
+    assert logs[0]['tipo'] == 'historica'     # mais recente primeiro (id DESC)
+    assert logs[0]['threads_proc'] == 100
+    assert logs[1]['tipo'] == 'incremental'
+    assert logs[1]['threads_proc'] == 5
+
+
+def test_registrar_coleta_erro(monkeypatch, tmp_path):
+    """coleta com erro salva mensagem e status 'erro'."""
+    banco_tmp = str(tmp_path / 'test.db')
+    monkeypatch.setattr(bt, 'BANCO', banco_tmp)
+    bt.criar_banco()
+
+    bt.registrar_coleta('incremental', 0, 0, 1.0, 'erro', 'Falha de autenticação')
+
+    logs = bt.ler_log_coletas()
+    assert len(logs) == 1
+    assert logs[0]['status'] == 'erro'
+    assert 'Falha de autenticação' in logs[0]['mensagem']
