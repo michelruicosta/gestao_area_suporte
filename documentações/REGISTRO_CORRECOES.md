@@ -10,6 +10,41 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-08-18 — Correção de status para e-mails encaminhados (Forwards)
+
+### 18/08 — §8.6 Regras de forward: status "E-mail interno" corrigido para casos de entrega ao cliente
+
+**🔎 Em miúdos:** quando a Finaud entregava um arquivo ao cliente e depois encaminhava o e-mail enviado para a caixa suporte como registro interno, o sistema via "Finaud → Finaud" e marcava "Aguardando Finaud". Na prática o trabalho já estava feito.
+
+**Problema:**
+- `_determinar_status()` olhava o último e-mail. Se era Finaud→suporte (para_finaud=True), retornava "E-mail interno — aguarda ação da Finaud" sem checar o conteúdo.
+- Padrão de entrega: Sarah envia DDR ao cliente → encaminha a confirmação para suporte@finaud como registro → sistema via Finaud→Finaud e errava o status.
+- Impacto: 6 threads com status errado — 3 marcadas "Aguardando Finaud" quando eram "Concluída", e 3 quando eram "Aguardando Cliente".
+
+**Causa raiz:** o branch `para_finaud=True` em `_determinar_status()` retornava imediatamente sem checar se havia um forward de entrega ao cliente dentro do corpo.
+
+**Correção** (`scripts/banco_threads.py`):
+- Adicionados constantes de módulo: `_FORWARD_SEP_RE` (detecta separador Formato A) e `_IMAGENS_INLINE` (extensões que não contam como arquivo entregável).
+- Adicionados helpers locais em `_determinar_status()`: `_tem_arquivo_entregavel()` e `_eh_forward_para_cliente()`.
+- `_eh_forward_para_cliente()` detecta Formato A (traços) e Formato B (setas `>`) e lê o campo `Para:` interno para verificar se aponta para cliente externo.
+- Branch `para_finaud=True` agora verifica primeiro se é forward de entrega (§8.6):
+  - **Sub-caso 1a** (arquivo real + forward para cliente) → "Concluída"
+  - **Sub-caso 1b-concluída** (RES: ou frase conclusiva + forward para cliente) → "Concluída"
+  - **Sub-caso 1b-padrão** (sem sinal claro + forward para cliente) → "Aguardando Cliente"
+  - **E-mail interno genuíno** (sem forward ou forward para Finaud) → "Aguardando Finaud" (inalterado)
+- Spec atualizada: §8.1 (nota de exceção) + §8.6 (novo — mapa completo de forwards).
+
+**Regras mapeadas com Michel (18/08/2026):**
+- 2 formatos de forward (A: traços, B: setas `>`)
+- 4 cenários (Finaud→cliente+registro, cliente→Finaud, Finaud→Finaud, cliente→Finaud com troca interna)
+- Falso positivo filtrado: "mensagem encaminhada" sem traços em volta não ativa a regra
+
+**Validação:**
+- `pytest tests/ -q` → ✅ 243/243 — inclui 13 testes novos (cenários 1a, 1b-concluída, 1b-padrão, cenário 3, formato B, falso positivo, regressões) e 230 existentes sem regressão.
+- Recalculação no banco (1.045 threads): 6 threads mudaram de status — 3 "Aguardando Finaud" → "Concluída", 3 "Aguardando Finaud" → "Aguardando Cliente". Aprovado por Michel.
+
+---
+
 ## 2026-08-17 — Telas de gestão + pipeline + primeira carga real do Gmail
 
 ### 17/08 — Telas de gestão de e-mail entregues (Fase 1)

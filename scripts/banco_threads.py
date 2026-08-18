@@ -14,6 +14,17 @@ from datetime import datetime
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BANCO    = os.path.join(BASE_DIR, 'data', 'oraculo360.db')
 
+# §8.6 — detecta separador de Forwarded message (Formato A)
+_FORWARD_SEP_RE = re.compile(
+    r'-{5,}\s*(?:forwarded message|mensagem encaminhada)\s*-{5,}',
+    re.IGNORECASE,
+)
+# Extensões de imagens inline — não contam como arquivo entregável (§8.6)
+_IMAGENS_INLINE = frozenset({
+    '.png', '.gif', '.jpg', '.jpeg', '.bmp', '.ico',
+    '.webp', '.tif', '.tiff', '.svg',
+})
+
 
 # ── Conexão ────────────────────────────────────────────────────────────────────
 
@@ -169,13 +180,76 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     texto_novo  = _extrair_texto_novo(corpo_raw)
     texto_lower = texto_novo.lower()
 
+    # ── Helpers §8.6 — detecção de forward ───────────────────────────────────
+
+    def _tem_arquivo_entregavel(anexos: list) -> bool:
+        """True se tem pelo menos um arquivo que não é imagem inline (§8.6)."""
+        for a in (anexos or []):
+            ext = ('.' + a.rsplit('.', 1)[-1].lower()) if '.' in a else ''
+            if ext not in _IMAGENS_INLINE:
+                return True
+        return False
+
+    def _eh_forward_para_cliente(texto: str) -> bool:
+        """§8.6: True se o corpo contém forward cujo Para: aponta para cliente externo."""
+        # Formato A: separador com traços
+        m = _FORWARD_SEP_RE.search(texto)
+        if m:
+            trecho = texto[m.end():]
+            mp = re.search(
+                r'(?:^|\n)[>\s]*(?:para|to)\s*:\s*(.+)',
+                trecho[:600], re.IGNORECASE,
+            )
+            if mp:
+                emails = re.findall(r'<([^>]+)>', mp.group(1))
+                if not emails:
+                    emails = re.findall(
+                        r'[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}',
+                        mp.group(1),
+                    )
+                if emails and any(not _eh_finaud_addr(e) for e in emails):
+                    return True
+        # Formato B: headers citados com > (> De: @finaud ... > Para: cliente)
+        de_m = re.search(
+            r'(?:^|\n)\s*>\s*(?:de|from)\s*:.*?@(?:finaud|finaudtec)',
+            texto, re.IGNORECASE,
+        )
+        if de_m:
+            trecho_b = texto[de_m.start():]
+            mp_b = re.search(
+                r'(?:^|\n)\s*>\s*(?:para|to)\s*:\s*(.+)',
+                trecho_b[:500], re.IGNORECASE,
+            )
+            if mp_b:
+                emails = re.findall(r'<([^>]+)>', mp_b.group(1))
+                if not emails:
+                    emails = re.findall(
+                        r'[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}',
+                        mp_b.group(1),
+                    )
+                if emails and any(not _eh_finaud_addr(e) for e in emails):
+                    return True
+        return False
+
     # Regra especial §8.3: "transmitido no BACEN" encerra independente de quem mandou
     if 'transmitido no bacen' in texto_lower or 'transmitida no bacen' in texto_lower:
         return 'Concluída', 'Confirmação de entrega no BACEN'
 
     if eh_finaud:
-        # Finaud → Finaud (e-mail interno): ação ainda é da Finaud
+        # Finaud → Finaud: verificar se é forward de entrega ao cliente (§8.6 Cenário 1)
         if para_finaud:
+            if _eh_forward_para_cliente(corpo_raw):
+                # Sub-caso 1a: tem arquivo real → Concluída
+                if _tem_arquivo_entregavel(ultimo.get('nomes_anexos') or []):
+                    return 'Concluída', 'Finaud entregou arquivo ao cliente e registrou internamente'
+                # Sub-caso 1b: verificar sinal de conclusão
+                if assunto.strip().upper().startswith('RES:'):
+                    return 'Concluída', 'Finaud encaminhou confirmação ao cliente e registrou internamente'
+                if any(f in texto_lower for f in _FRASES_CONCLUSIVAS_FINAUD):
+                    return 'Concluída', 'Finaud encaminhou confirmação ao cliente e registrou internamente'
+                # 1b-padrão: sem sinal claro → Aguardando Cliente (erro mais seguro)
+                return 'Aguardando Cliente', 'Finaud escreveu ao cliente — aguarda retorno'
+            # E-mail interno genuíno (Cenário 3)
             return 'Aguardando Finaud', 'E-mail interno — aguarda ação da Finaud'
         # Finaud → Cliente
         if tem_anexo:

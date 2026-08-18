@@ -1064,7 +1064,7 @@ O caso está com a Finaud — ela precisa agir.
 | Situação | Exemplo |
 |---|---|
 | Último e-mail é do cliente para a Finaud | Cliente enviou dados, perguntou algo, mandou documento |
-| Último e-mail é interno (Finaud → Finaud) | Andrea encaminhou para Monica cuidar — ainda não foi para o cliente |
+| Último e-mail é interno (Finaud → Finaud) | Andrea encaminhou para Monica cuidar — ainda não foi para o cliente. **Exceção:** se o e-mail interno é um forward de entrega já feita ao cliente → ver **§8.6** |
 
 ---
 
@@ -1165,6 +1165,54 @@ Quando a Finaud envia o arquivo ZIP do CADOC por um e-mail separado — não com
 Se o ZIP chegar mas não houver thread aberto correspondente → sistema registra alerta para revisão manual.
 
 > **Decisão confirmada por Michel (05/08/2026).**
+
+---
+
+### 8.6 Regras para e-mails encaminhados (Forwards)
+
+Mapa completo aprovado por Michel (18/08/2026).
+
+Quando alguém encaminha um e-mail, o Gmail insere o conteúdo original dentro da mensagem. O sistema reconhece dois formatos:
+
+| Formato | Como aparece no corpo |
+|---|---|
+| **A — traços** | `---------- Forwarded message ----------` seguido dos cabeçalhos De / Para / Assunto |
+| **B — setas** | Cada linha do e-mail original prefixada com `>` (ex.: `> De: Andrea <andrea@finaud.com.br>`) |
+
+**Filtro de falso positivo:** a frase "mensagem encaminhada" pode aparecer dentro de um parágrafo normal sem ser um forward real (ex.: "a mensagem encaminhada anteriormente..."). O sistema só reconhece como forward quando os traços estão presentes no Formato A, ou quando as linhas `> De:` / `> Para:` aparecem em sequência no Formato B.
+
+---
+
+**Os 4 cenários de forward e o status correto:**
+
+| # | Quem encaminha | Para onde | Status | Motivo exibido |
+|---|---|---|---|---|
+| **1** | Finaud | Registra no suporte após entregar ao cliente | Ver sub-casos abaixo | — |
+| **2** | Cliente | suporte@finaud (encaminha algo externo) | Aguardando Finaud | "Cliente escreveu — aguarda resposta da Finaud" |
+| **3** | Finaud | Outra pessoa da Finaud (ação interna) | Aguardando Finaud | "E-mail interno — aguarda ação da Finaud" |
+| **4** | Cliente | suporte@finaud (encaminha troca interna da empresa dele) | Aguardando Finaud | "Cliente escreveu — aguarda resposta da Finaud" |
+
+Os cenários 2, 3 e 4 já funcionam corretamente pela lógica do último e-mail (§8.1). O §8.6 trata exclusivamente o Cenário 1.
+
+---
+
+**Cenário 1 — como o sistema identifica:**
+
+O sinal é o campo `Para:` (ou `To:`) dentro do bloco forwarded. Se aponta para um endereço externo (não @finaud.com.br / @finaudtec.com.br) → é Cenário 1.
+
+**Sub-casos e status:**
+
+| Sub-caso | Condição | Status | Motivo exibido |
+|---|---|---|---|
+| **1a** | Forward para cliente + tem arquivo real (.zip, .xls, .pdf…) | Concluída | "Finaud entregou arquivo ao cliente e registrou internamente" |
+| **1b — concluída** | Forward para cliente + sinal claro: assunto começa com "RES:" ou texto contém frase conclusiva | Concluída | "Finaud encaminhou confirmação ao cliente e registrou internamente" |
+| **1b — padrão** | Forward para cliente + nenhum sinal claro de conclusão | Aguardando Cliente | "Finaud escreveu ao cliente — aguarda retorno" |
+
+**Por que 1b-padrão é "Aguardando Cliente" e não "Concluída":**
+O texto de um forward pode combinar sinais opostos ("encaminhamos o arquivo e aguardamos retorno"). Se o sistema errar para "Aguardando Cliente" quando já está concluído, o caso aparece no painel e alguém verifica. Se errar para "Concluída" quando ainda está pendente, o caso some do radar sem ninguém perceber. O erro que aparece é mais seguro que o erro que desaparece. *(Confirmado por Michel, 18/08/2026)*
+
+**Arquivos que NÃO contam como "arquivo real" (sub-caso 1a):**
+Imagens inline do e-mail HTML (`.png`, `.gif`, `.jpg`, `.jpeg`, `.bmp`, `.ico`, `.webp`, `.tif`, `.tiff`, `.svg`) não representam entrega — são decoração do layout. Só arquivos de outros tipos (.zip, .xls, .pdf, .xml etc.) acionam o sub-caso 1a.
 
 ---
 

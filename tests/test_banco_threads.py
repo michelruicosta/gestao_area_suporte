@@ -1,7 +1,8 @@
 """
 test_banco_threads.py
 Testes para a lógica de determinação de status de workflow em scripts/banco_threads.py.
-Cobre §8.1 (Aguardando Finaud), §8.2 (Aguardando Cliente) e §8.3 (Concluída) da spec.
+Cobre §8.1 (Aguardando Finaud), §8.2 (Aguardando Cliente), §8.3 (Concluída) e
+§8.6 (Forwards) da spec.
 """
 from __future__ import annotations
 
@@ -26,17 +27,55 @@ def _msg(
     corpo: str = '',
     assunto: str = '',
     nomes_anexos: list | None = None,
+    destinatarios: str = '',
+    reply_to: str = '',
 ) -> dict:
     return {
         'remetente': remetente,
         'corpo_texto': corpo,
         'assunto': assunto,
         'nomes_anexos': nomes_anexos or [],
+        'destinatarios': destinatarios,
+        'reply_to': reply_to,
     }
 
 
 FINAUD  = 'Monica <monica@finaud.com.br>'
+SUPORTE = 'Sarah Sá <suporte@finaud.com.br>'
 CLIENTE = 'João <joao@bancox.com.br>'
+
+# Corpo Formato A: separador com traços, Para: aponta para cliente externo
+_FORWARD_A_PARA_CLIENTE = (
+    'Registrando internamente.\n\n'
+    '---------- Forwarded message ----------\n'
+    'De: Sarah Sá <suporte@finaud.com.br>\n'
+    'Para: Jacilaine Lima <jnlima@planner.com.br>\n'
+    'Assunto: DDR 2011 - 13/08/2026\n\n'
+    'Prezada, segue o arquivo DDR conforme solicitado.'
+)
+
+# Corpo Formato A: Para: aponta para outra Finaud (interno genuíno)
+_FORWARD_A_PARA_FINAUD = (
+    'Monica, por favor verifique.\n\n'
+    '---------- Forwarded message ----------\n'
+    'De: Andrea <andrea@finaud.com.br>\n'
+    'Para: Monica <monica@finaud.com.br>\n'
+    'Assunto: Verificar urgente\n\n'
+    'Precisa de atenção.'
+)
+
+# Corpo Formato B: headers com >, De: @finaud, Para: cliente externo
+_FORWARD_B_PARA_CLIENTE = (
+    'Registro interno.\n\n'
+    '> De: Andrea Inacio <andrea.inacio@finaud.com.br>\n'
+    '> To: William Barbosa <william.oliveira@miraeinvest.com.br>\n'
+    '> Assunto: DRL julho/2026\n'
+)
+
+# Falso positivo: "mensagem encaminhada" em texto corrido, sem traços
+_FALSO_POSITIVO = (
+    'Conforme a mensagem encaminhada anteriormente, confirmamos o recebimento.\n'
+)
 
 
 # ── _extrair_texto_novo ───────────────────────────────────────────────────────
@@ -199,3 +238,147 @@ def test_status_reabertura_so_ultimo_e_mail_importa():
     ]
     # Último é da Finaud com anexo → Concluída
     assert bt._determinar_status(msgs)[0] == 'Concluída'
+
+
+# ── _determinar_status — forwards §8.6 ───────────────────────────────────────
+
+# Cenário 1a: Finaud→suporte, forward Formato A para cliente, com arquivo real → Concluída
+def test_forward_1a_formato_a_com_arquivo():
+    """§8.6 Cenário 1a: forward para cliente + arquivo .zip → Concluída."""
+    msgs = [_msg(
+        SUPORTE,
+        corpo=_FORWARD_A_PARA_CLIENTE,
+        destinatarios='suporte@finaud.com.br',
+        nomes_anexos=['DDR_20260813.zip'],
+    )]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída'
+    assert 'entregou arquivo' in motivo
+
+
+# Cenário 1a: arquivo real + imagens (imagens não contam, .zip conta) → Concluída
+def test_forward_1a_arquivo_real_com_imagens():
+    """§8.6 Cenário 1a: arquivo .zip + imagens inline → Concluída (imagens ignoradas)."""
+    msgs = [_msg(
+        SUPORTE,
+        corpo=_FORWARD_A_PARA_CLIENTE,
+        destinatarios='suporte@finaud.com.br',
+        nomes_anexos=['image001.png', 'DDR_20260813.zip'],
+    )]
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
+
+
+# Cenário 1b-concluída: RES: no assunto → Concluída
+def test_forward_1b_res_no_assunto():
+    """§8.6 Cenário 1b: forward para cliente + RES: no assunto → Concluída."""
+    msgs = [_msg(
+        SUPORTE,
+        corpo=_FORWARD_A_PARA_CLIENTE,
+        assunto='RES: DDR 2011 - 13/08/2026',
+        destinatarios='suporte@finaud.com.br',
+    )]
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
+
+
+# Cenário 1b-concluída: frase conclusiva no texto novo (antes do bloco forward) → Concluída
+def test_forward_1b_frase_conclusiva():
+    """§8.6 Cenário 1b: frase conclusiva no texto novo + forward para cliente → Concluída.
+    Nota: texto novo vem ANTES do separador --- (depois é cortado por _extrair_texto_novo)."""
+    corpo = 'Conforme solicitado, segue o encaminhamento.\n\n' + _FORWARD_A_PARA_CLIENTE
+    msgs = [_msg(
+        SUPORTE,
+        corpo=corpo,
+        destinatarios='suporte@finaud.com.br',
+    )]
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
+
+
+# Cenário 1b-padrão: forward para cliente, sem sinal claro → Aguardando Cliente
+def test_forward_1b_padrao_aguarda_cliente():
+    """§8.6 Cenário 1b-padrão: forward para cliente sem sinal → Aguardando Cliente."""
+    msgs = [_msg(
+        SUPORTE,
+        corpo=_FORWARD_A_PARA_CLIENTE,
+        destinatarios='suporte@finaud.com.br',
+    )]
+    assert bt._determinar_status(msgs)[0] == 'Aguardando Cliente'
+
+
+# Cenário 3: Finaud→Finaud sem forward → E-mail interno → Aguardando Finaud
+def test_forward_cenario3_interno_sem_forward():
+    """§8.6 Cenário 3: Finaud→Finaud sem forward → Aguardando Finaud."""
+    msgs = [_msg(
+        SUPORTE,
+        corpo='Monica, por favor verifique este caso.',
+        destinatarios='monica@finaud.com.br',
+    )]
+    assert bt._determinar_status(msgs)[0] == 'Aguardando Finaud'
+
+
+# Cenário 3: Finaud→Finaud COM forward mas Para: também Finaud → Aguardando Finaud
+def test_forward_cenario3_forward_para_finaud():
+    """§8.6 Cenário 3: forward cujo Para: é @finaud → E-mail interno → Aguardando Finaud."""
+    msgs = [_msg(
+        SUPORTE,
+        corpo=_FORWARD_A_PARA_FINAUD,
+        destinatarios='suporte@finaud.com.br',
+    )]
+    assert bt._determinar_status(msgs)[0] == 'Aguardando Finaud'
+
+
+# Formato B (setas >) — forward de Finaud para cliente externo → detectado corretamente
+def test_forward_formato_b_setas_para_cliente():
+    """§8.6 Formato B: > De: @finaud > Para: cliente → tratado como forward para cliente."""
+    msgs = [_msg(
+        SUPORTE,
+        corpo=_FORWARD_B_PARA_CLIENTE,
+        destinatarios='suporte@finaud.com.br',
+    )]
+    # Sem arquivo e sem frase conclusiva → Aguardando Cliente (1b-padrão)
+    assert bt._determinar_status(msgs)[0] == 'Aguardando Cliente'
+
+
+# Falso positivo: "mensagem encaminhada" em texto corrido sem traços → não ativa §8.6
+def test_forward_falso_positivo_texto_corrido():
+    """§8.6 Falso positivo: 'mensagem encaminhada' em parágrafo normal → Aguardando Finaud."""
+    msgs = [_msg(
+        SUPORTE,
+        corpo=_FALSO_POSITIVO,
+        destinatarios='suporte@finaud.com.br',
+    )]
+    assert bt._determinar_status(msgs)[0] == 'Aguardando Finaud'
+
+
+# ── Regressões — comportamentos existentes não mudam ────────────────────────
+
+def test_regressao_cliente_para_finaud_sem_forward():
+    """Regressão §8.1: cliente envia sem forward → Aguardando Finaud."""
+    msgs = [_msg(CLIENTE, corpo='Segue os dados para análise.')]
+    assert bt._determinar_status(msgs)[0] == 'Aguardando Finaud'
+
+
+def test_regressao_finaud_com_anexo_para_cliente():
+    """Regressão §8.3: Finaud envia com anexo direto ao cliente → Concluída."""
+    msgs = [_msg(FINAUD, nomes_anexos=['arquivo.zip'])]
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
+
+
+def test_regressao_finaud_interno_genuino():
+    """Regressão §8.1: Finaud→Finaud sem forward → E-mail interno → Aguardando Finaud."""
+    msgs = [_msg(
+        FINAUD,
+        corpo='Andrea, pode cuidar deste caso?',
+        destinatarios='andrea@finaud.com.br',
+    )]
+    assert bt._determinar_status(msgs)[0] == 'Aguardando Finaud'
+
+
+def test_regressao_so_imagens_nao_e_arquivo_entregavel():
+    """Regressão §8.6: forward com só imagens inline não é sub-caso 1a → Aguardando Cliente."""
+    msgs = [_msg(
+        SUPORTE,
+        corpo=_FORWARD_A_PARA_CLIENTE,
+        destinatarios='suporte@finaud.com.br',
+        nomes_anexos=['image001.png', 'image002.gif'],
+    )]
+    assert bt._determinar_status(msgs)[0] == 'Aguardando Cliente'
