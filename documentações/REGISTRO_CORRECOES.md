@@ -133,6 +133,26 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-08-18 — Correção de status: reações do Teams marcadas como "Aguardando Finaud"
+
+### 18/08 — §8.10 Reações do Teams: "Aguardando Finaud" corrigido para "Concluída"
+
+**🔎 Em miúdos:** quando um cliente curtia ou reagia com emoji a uma mensagem da Finaud no Teams (aparece como um e-mail "❤️ Jacilaine reagiu à sua mensagem"), o sistema marcava "Aguardando Finaud" — como se ninguém tivesse feito nada. Na prática o cliente estava confirmando que recebeu a entrega da Finaud.
+
+**Problema:** `_determinar_status()` não reconhecia o padrão de notificação de reação do Teams. Entrava no branch genérico "remetente externo sem sinal claro" e retornava "Aguardando Finaud".
+
+**Correção** (`scripts/banco_threads.py`):
+- Nova constante de módulo: `_REACAO_TEAMS_RE` (regex `reacted to your message|reagiu à sua mensagem`)
+- Verificação adicionada **antes de qualquer outro branch** em `_determinar_status()`: se a última mensagem contém o padrão de reação → "Concluída / Cliente confirmou recebimento — reação do Teams"
+- A verificação vem antes do check de `via_suporte`, de `para_finaud` e de todos os outros — para capturar reações enviadas diretamente **ou** via suporte@finaud.com.br
+
+**Impacto:** 9 threads corrigidas (todas de "Aguardando Finaud" → "Concluída"):
+DRM - 2060 JULHO, RE: DRL JULHO / 26, DDR 2011 - 11/08/2026, DDR 2011 - 10/08/2026, RE: DDR DIA 05/08, RE: CADOC 4111 DIA 04/08, RE: DDR DIA 31/07, RE: DDR DIA 30/07, 4111 CORREÇÃO CV - JUNHO.
+
+**Validação:** `pytest tests/ -q` → ✅ 267/267 — inclui 4 testes novos (reação com ❤️, reação com 👍, reação via suporte@, regressão sem reação). Zero regressões. Banco recalculado: 1.045 threads.
+
+---
+
 ## 2026-08-17 — Telas de gestão + pipeline + primeira carga real do Gmail
 
 ### 17/08 — Telas de gestão de e-mail entregues (Fase 1)

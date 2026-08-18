@@ -586,3 +586,38 @@ def test_regressao_finaud_arquivo_sem_pergunta_concluida():
     """Regressão §8.9: Finaud envia arquivo sem pergunta → Concluída (sem mudança)."""
     msgs = [_msg(FINAUD, corpo='Segue em anexo conforme solicitado.', nomes_anexos=['arquivo.zip'])]
     assert bt._determinar_status(msgs)[0] == 'Concluída'
+
+
+# ── §8.10 — Reação do Teams → Concluída ──────────────────────────────────────
+
+def test_reacao_teams_heart_concluida():
+    """§8.10: cliente reage com ❤️ a mensagem da Finaud → Concluída."""
+    corpo = '[heart]         Jacilaine das Neves Lima reacted to your message:\r\nFrom: Sarah Sá <suporte@finaud.com.br>\r\nSegue o DRM do dia.'
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída'
+    assert 'reação' in motivo.lower() or 'Teams' in motivo
+
+
+def test_reacao_teams_like_concluida():
+    """§8.10: cliente reage com 👍 a mensagem da Finaud → Concluída."""
+    corpo = '[like]  Paulo Henrique Barbosa Silveira reacted to your message:\r\nFrom: Sarah Sá <suporte@finaud.com.br>'
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
+
+
+def test_reacao_teams_via_suporte_concluida():
+    """§8.10: reação via suporte@ (remetente = cliente via suporte) → Concluída."""
+    corpo = '[heart]         Jacilaine das Neves Lima reacted to your message:'
+    msgs = [_msg(
+        "'Jacilaine das Neves Lima' via Suporte <suporte@finaud.com.br>",
+        corpo=corpo,
+        reply_to='jacilaine@planner.com.br',
+    )]
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
+
+
+def test_regressao_cliente_escreveu_sem_reacao_aguarda_finaud():
+    """Regressão §8.10: cliente escreve texto normal sem reação → Aguardando Finaud."""
+    msgs = [_msg(CLIENTE, corpo='Bom dia, preciso do arquivo atualizado.')]
+    assert bt._determinar_status(msgs)[0] == 'Aguardando Finaud'

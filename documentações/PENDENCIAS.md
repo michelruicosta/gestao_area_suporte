@@ -171,25 +171,6 @@ Ideia de Michel: além do `motivo_status` (texto livre), salvar um campo estrutu
 
 ---
 
-### 🟡 STATUS — Reações do Teams marcadas como "Aguardando Finaud" (identificado 18/08/2026)
-
-8 threads têm como última mensagem uma notificação de reação do Teams (ex.: "❤️ Jacilaine reagiu à sua mensagem"). O sistema marca como "Aguardando Finaud" porque não reconhece o padrão.
-
-**O problema:** a regra de status olha só o último e-mail, sem ver o contexto anterior. Uma reação pode ser confirmação de entrega (→ Concluída) ou só um acuse de recebimento — depende do que veio antes.
-
-**O que precisa ser decidido com Michel:**
-- Quando o cliente reage com emoji a uma mensagem da Finaud, a thread está encerrada?
-- A decisão depende do que a Finaud enviou antes — como consultamos isso?
-
-**O que fazer:**
-1. Mostrar 2–3 exemplos reais a Michel para mapear o padrão
-2. Definir a regra (provavelmente: reação do Teams = confirmação → Concluída)
-3. Atualizar a spec §8 e implementar com testes
-
-**Impacto:** 8 threads no banco atual.
-
----
-
 ### 🟡 SPEC — Definir comportamento em produção: threads novas vs. já classificadas (identificado 07/08/2026)
 
 **Contexto:** em produção, novas threads chegam diariamente e threads existentes recebem novos e-mails. O sistema precisa saber o que fazer em cada caso.
@@ -337,19 +318,31 @@ Durante a validação com 768 threads, identificamos que e-mails automáticos qu
 
 ---
 
-### 🟡 DADOS — Respostas de colaboradores via suporte@ não aparecem no dado (identificado 05/08/2026)
+### 🔴 URGENTE — DADOS: Respostas da Finaud via suporte@ não estão sendo capturadas no banco (identificado 05/08/2026 · confirmado com evidência em 18/08/2026)
 
-Durante a simulação, confirmamos que **Flávio Camargo** (e possivelmente **Pedro Silva**, **Fábio Silva**, **Lucas Vellani**) responderam a threads que estão no dado, mas nenhuma resposta deles foi capturada. Os 113 threads onde Flávio é destinatário têm o seguinte padrão: 87 com apenas 1 mensagem (a do cliente), e 26 com respostas via `suporte@` que têm Reply-To de **clientes externos** (não do Flávio).
+**🔎 Em miúdos:** quando a Sarah (ou qualquer colaborador da Finaud) responde a um cliente enviando um arquivo, essa resposta não aparece no banco. O sistema fica sem ver que a Finaud já respondeu — e marca a thread como "Aguardando Finaud" quando na prática o trabalho já estava feito.
 
-**Causa provável:** quando o colaborador responde via o grupo `suporte@finaud.com.br`, a regra de roteamento não captura essa mensagem (o envelope sender é o grupo, não o colaborador), e o Gmail pode não estar entregando cópias dessas respostas na caixa `coleta.oraculo@`.
+**Evidência concreta (18/08/2026):** thread "DDR 2011 - 11/08/2026":
+- Jacilaine envia extratos + pede DDR → capturado ✅
+- Sarah responde enviando o DDR (13/08 às 14:41, From: suporte@finaud.com.br) → **NÃO capturado** ❌
+- Jacilaine reage com ❤️ ao e-mail da Sarah → capturado ✅ (mas fora de contexto)
 
-**O que precisa ser investigado:**
-1. Como esses colaboradores respondem na prática — via grupo, via e-mail direto, ou outro canal (WhatsApp, Teams)?
-2. Se por e-mail: verificar diretamente na caixa `coleta.oraculo@finaud.com.br` no Gmail se existem threads com `From = flavio.camargo@finaud.com.br` que não foram capturadas na extração
+A resposta da Sarah é visível no Gmail (aparece citada na notificação de reação), mas não está no banco como mensagem separada.
 
-**Impacto no sistema:** sem essas respostas, o status de threads atribuídas ao Flávio ficará sempre "Aguardando Finaud" — o sistema nunca verá que ele respondeu.
+**Impacto direto no status de workflow:** threads que deveriam ser "Concluída" (Finaud entregou, cliente confirmou) aparecem como "Aguardando Finaud" — o sistema nunca viu a entrega. Escala desconhecida — pode afetar dezenas de threads.
 
-**Arquivo de destino:** a depender da causa — pode ser ajuste no roteamento do Google Workspace ou no coletor Gmail.
+**Causa provável:** quando um colaborador responde via o grupo `suporte@finaud.com.br`, a mensagem enviada não chega na caixa `coleta.oraculo@finaud.com.br` — o Google Workspace não faz cópia de e-mails enviados pelo grupo para a caixa de coleta.
+
+**O que investigar:**
+1. Verificar diretamente no Gmail da conta `coleta.oraculo@finaud.com.br`: existem threads com `From: suporte@finaud.com.br → Para: cliente` que não estão no banco?
+2. Verificar as configurações do grupo `suporte@finaud.com.br` no Google Workspace — está configurado para arquivar mensagens enviadas?
+3. Se o grupo não arquiva: avaliar se é possível configurar para que cópias dos envios cheguem à `coleta.oraculo@`
+
+**O que fazer depois de entender a causa:**
+- Se for configuração do Google Workspace: ajustar o grupo para arquivar envios → recarregar histórico
+- Se for limitação do coletor: ajustar `coletor_gmail.py` para buscar também `From: suporte@finaud.com.br` no histórico de sentados
+
+**Prioridade:** resolver antes da Fase 1 entrar em produção — sem essas mensagens, o status de workflow é sistematicamente errado para threads respondidas via suporte@.
 
 ---
 

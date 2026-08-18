@@ -40,6 +40,9 @@ _EXTRATO_RE = re.compile(r'\bextratos?\b', re.IGNORECASE)
 # §8.9 — saudações com "?" que não indicam pedido de ação do cliente
 _SAUDACOES_PERGUNTA = re.compile(r'\btudo\s+(?:bem|bom|certo)\s*\?', re.IGNORECASE)
 
+# §8.10 — notificação de reação do Teams ("reacted to your message")
+_REACAO_TEAMS_RE = re.compile(r'reacted to your message|reagiu à sua mensagem', re.IGNORECASE)
+
 
 # ── Conexão ────────────────────────────────────────────────────────────────────
 
@@ -208,6 +211,10 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
 
     texto_novo  = _extrair_texto_novo(corpo_raw)
     texto_lower = texto_novo.lower()
+
+    # §8.10: reação do Teams → cliente confirmou recebimento de mensagem da Finaud
+    if _REACAO_TEAMS_RE.search(texto_novo):
+        return 'Concluída', 'Cliente confirmou recebimento — reação do Teams'
 
     # ── Helpers §8.6 — detecção de forward ───────────────────────────────────
 
