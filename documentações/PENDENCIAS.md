@@ -222,32 +222,6 @@ Quando a Finaud envia um arquivo **e** faz uma pergunta que exige ação do clie
 
 ---
 
-### 🟡 STATUS — E-mails internos informativos marcados como "Aguardando Finaud" (identificado 18/08/2026)
-
-5 threads internas (Finaud→Finaud) são informativas mas recebem status "Aguardando Finaud". Deveria ser "Concluída — informativo, sem pendência".
-
-**Casos identificados:**
-- "Comunicado de Saída" — mensagem de despedida de colega
-- "Divulgação Instrução Normativa BCB nº 761" — Byron informando nova norma regulatória
-- "Divulgação Comunicado nº 45.514" — Byron informando comunicado GAFI/FATF
-- "Boas-Vindas ao time FINAUD – Miguel Santos" — welcome a novo colaborador
-- "Boas-Vindas ao time FINAUD – Sarah de Sá" — welcome a nova colaboradora
-
-**Regra definida por Michel (18/08/2026):** e-mails informativos internos → Concluída.
-
-**Desafio:** todos são Finaud→Finaud, mas alguns exigem ação (DLO para transmitir, CADOC para processar) e outros são só informativos. Precisa de regra para distinguir.
-
-**Sinais de "informativo":** assunto contém "Divulgação", "Comunicado", "Boas-Vindas"; sem CADOC no assunto; sem pedido de ação no texto.
-
-**O que fazer:**
-1. Definir com Michel os padrões de assunto/conteúdo que indicam e-mail informativo
-2. Atualizar spec §8 com o sub-caso de interno informativo
-3. Implementar e testar
-
-**Impacto:** 5 threads com status errado.
-
----
-
 ### 🟡 STATUS — Reações do Teams marcadas como "Aguardando Finaud" (identificado 18/08/2026)
 
 8 threads têm como última mensagem uma notificação de reação do Teams (ex.: "❤️ Jacilaine reagiu à sua mensagem"). O sistema marca como "Aguardando Finaud" porque não reconhece o padrão.

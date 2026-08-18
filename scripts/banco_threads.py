@@ -14,6 +14,14 @@ from datetime import datetime
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BANCO    = os.path.join(BASE_DIR, 'data', 'oraculo360.db')
 
+# §8.7 — assuntos de e-mails internos informativos (Finaud→Finaud sem ação pendente)
+_ASSUNTOS_INFORMATIVOS = (
+    'divulgação',
+    'boas-vindas',
+    'comunicado de saída',
+    'comunicado de saida',
+)
+
 # §8.6 — detecta separador de Forwarded message (Formato A)
 _FORWARD_SEP_RE = re.compile(
     r'-{5,}\s*(?:forwarded message|mensagem encaminhada)\s*-{5,}',
@@ -254,6 +262,10 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
                 # 1b-padrão: sem sinal claro → Aguardando Cliente (erro mais seguro)
                 return 'Aguardando Cliente', 'Finaud escreveu ao cliente — aguarda retorno'
             # E-mail interno genuíno (Cenário 3)
+            # §8.7: assunto informativo → sem ação pendente (strip RES:/ENC: antes)
+            assunto_lower = re.sub(r'^(res|enc|fwd|fw)\s*:\s*', '', assunto.strip(), flags=re.IGNORECASE).lower()
+            if any(assunto_lower.startswith(p) for p in _ASSUNTOS_INFORMATIVOS):
+                return 'Concluída', 'Informativo interno — sem pendência'
             return 'Aguardando Finaud', 'E-mail interno — aguarda ação da Finaud'
         # Finaud → Cliente
         if tem_anexo:

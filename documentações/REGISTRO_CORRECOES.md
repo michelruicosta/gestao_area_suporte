@@ -10,6 +10,25 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-08-18 — Correção de status: e-mails internos informativos
+
+### 18/08 — §8.7 Internos informativos: "Aguardando Finaud" corrigido para "Concluída"
+
+**🔎 Em miúdos:** quando a Finaud enviava internamente uma divulgação de norma, um boas-vindas ou um comunicado de saída, o sistema marcava "Aguardando Finaud" — como se alguém da equipe ainda precisasse agir. Na prática são informativos: ninguém precisa responder.
+
+**Problema:** o branch Finaud→Finaud (sem forward) retornava "E-mail interno — aguarda ação da Finaud" sem checar o assunto. Não havia distinção entre e-mail operacional (exige ação) e e-mail informativo (apenas comunicação).
+
+**Correção:**
+- Nova constante `_ASSUNTOS_INFORMATIVOS` em `scripts/banco_threads.py` com os padrões: `'divulgação'`, `'boas-vindas'`, `'comunicado de saída'`, `'comunicado de saida'`
+- Branch Finaud→Finaud agora verifica o assunto (após strip de RES:/ENC:/FWD:) antes de retornar "E-mail interno"
+- Se assunto começa com padrão informativo → "Concluída / Informativo interno — sem pendência"
+
+**Impacto:** 5 threads corrigidas (2 Divulgações BCB, 2 Boas-Vindas, 1 Comunicado de Saída).
+
+**Validação:** `pytest tests/ -q` → ✅ 250/250 — inclui 4 testes novos (divulgação, boas-vindas, comunicado com RES:, regressão operacional). Zero regressões.
+
+---
+
 ## 2026-08-18 — Correção de status: notificação de entrega sem pedido de resposta
 
 ### 18/08 — Finaud notifica cliente de transmissão → "Aguardando Cliente" corrigido para "Concluída"

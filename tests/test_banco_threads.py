@@ -391,6 +391,54 @@ def test_regressao_finaud_interno_genuino():
     assert bt._determinar_status(msgs)[0] == 'Aguardando Finaud'
 
 
+# ── §8.7 — internos informativos ─────────────────────────────────────────────
+
+def test_interno_divulgacao_instrucao_normativa():
+    """§8.7: 'Divulgação...' Finaud→Finaud → Concluída — informativo."""
+    msgs = [_msg(
+        FINAUD,
+        assunto='Divulgação Instrução Normativa BCB nº 761',
+        corpo='Prezados, segue a IN para conhecimento.',
+        destinatarios='rafael@finaud.com.br',
+    )]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída'
+    assert 'nformativo' in motivo
+
+
+def test_interno_boas_vindas():
+    """§8.7: 'Boas-Vindas...' Finaud→Finaud → Concluída — informativo."""
+    msgs = [_msg(
+        FINAUD,
+        assunto='Boas-Vindas ao time FINAUD - Miguel Santos',
+        corpo='Olá Miguel, seja bem-vindo!',
+        destinatarios='miguel@finaud.com.br',
+    )]
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
+
+
+def test_interno_comunicado_saida_res():
+    """§8.7: 'RES: Comunicado de Saida' — strip do RES: antes de checar → Concluída."""
+    msgs = [_msg(
+        FINAUD,
+        assunto='RES: Comunicado de Saida',
+        corpo='Boa sorte na nova jornada!',
+        destinatarios='pedro@finaud.com.br',
+    )]
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
+
+
+def test_interno_operacional_nao_vira_informativo():
+    """Regressão §8.7: Finaud→Finaud operacional (sem assunto informativo) → Aguardando Finaud."""
+    msgs = [_msg(
+        FINAUD,
+        assunto='Re: DLO - 30.06.2026',
+        corpo='Prezados, segue em continuidade a apuração.',
+        destinatarios='alecsandro@finaudtec.com.br',
+    )]
+    assert bt._determinar_status(msgs)[0] == 'Aguardando Finaud'
+
+
 def test_regressao_so_imagens_nao_e_arquivo_entregavel():
     """Regressão §8.6: forward com só imagens inline não é sub-caso 1a → Aguardando Cliente."""
     msgs = [_msg(
