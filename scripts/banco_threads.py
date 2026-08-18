@@ -43,6 +43,20 @@ _SAUDACOES_PERGUNTA = re.compile(r'\btudo\s+(?:bem|bom|certo)\s*\?', re.IGNORECA
 # §8.10 — notificação de reação do Teams ("reacted to your message")
 _REACAO_TEAMS_RE = re.compile(r'reacted to your message|reagiu à sua mensagem', re.IGNORECASE)
 
+# §8.3 — bloco de assinatura: sign-off antes do nome/cargo/telefone/URLs
+# Detecta palavras de encerramento ("Atenciosamente", "Att", etc.) que marcam o início
+# do rodapé do e-mail. Tudo depois do sign-off é assinatura e deve ser ignorado ao
+# verificar se o texto é "só cortesia" (_so_cortesia).
+# Nota: U+200B (zero-width space) é removido do texto ANTES de aplicar esta regex,
+# então o padrão usa apenas espaço e tab (não é necessário incluir ​ aqui).
+_SIGN_OFF_RE = re.compile(
+    r'(?:^|\r?\n)[ \t]*'
+    r'(?:atenciosamente|att\.?|cordialmente|abra[cç]os?|regards?|sinceramente|'
+    r'com\s+respeito|best\s+regards?|kind\s+regards?|grat[ao])'
+    r'[ \t]*[,.]?[ \t]*(?:\r?\n|$)',
+    re.IGNORECASE,
+)
+
 
 # ── Conexão ────────────────────────────────────────────────────────────────────
 
@@ -181,9 +195,22 @@ def _tem_pergunta_acao(texto: str) -> bool:
 
 
 def _so_cortesia(texto: str) -> bool:
-    """True se o texto novo contém apenas frases de cortesia, sem conteúdo substantivo."""
+    """True se o texto novo contém apenas frases de cortesia, sem conteúdo substantivo.
+
+    Remove o bloco de assinatura (nome/cargo/telefone/URLs após o sign-off) antes de avaliar,
+    para não confundir rodapé de e-mail com conteúdo real da mensagem.
+    """
     if not texto.strip():
         return True
+    # U+200B (zero-width space) aparece em assinaturas HTML — remove antes dos checks
+    texto = texto.replace('​', '')
+    # Trunca a partir do sign-off ("Atenciosamente", "Att", etc.): tudo após é assinatura
+    m = _SIGN_OFF_RE.search(texto)
+    if m:
+        texto = texto[:m.start()]
+    # Remove URLs residuais (podem conter '?' que não indica pergunta real)
+    texto = re.sub(r'https?://\S+', '', texto)
+    texto = re.sub(r'\[https?://[^\]]*\]', '', texto)
     if '?' in texto:
         return False
     restante = _CORTESIA.sub('', texto.lower())

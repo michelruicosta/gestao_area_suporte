@@ -508,6 +508,48 @@ def test_regressao_cliente_confirma_sem_enc_sem_extrato():
     assert bt._determinar_status(msgs)[0] == 'Concluída'
 
 
+def test_cliente_obrigado_com_assinatura_via_suporte_concludes():
+    """§8.3: cliente responde 'obrigado' via suporte@ com assinatura longa → Concluída.
+    Reproduz o bug TRINUS: assinatura (nome+cargo+telefone+URLs) confundia _so_cortesia.
+    """
+    corpo = (
+        'Boa tarde,\r\n\r\n'
+        'Obrigado pelo retorno.\r\n\r\n\r\n'
+        '​Atenciosamente,​​\r\n\r\n'
+        '[https://assinatura.trinusco.com.br/logo.png]<https://trinus.co/>\r\n\r\n'
+        'Luiz Eduardo Coelho Filho\r\n\r\n'
+        'Risco\r\n\r\n'
+        '+55 62 3773-1500\r\n\r\n'
+        '[https://assinatura.trinusco.com.br/ico-ig.png]<https://www.instagram.com/somostrinus/>'
+    )
+    msgs = [_msg(
+        'Luiz via Suporte <suporte@finaud.com.br>',
+        corpo=corpo,
+        assunto='RE: TRINUS - ENVIAR COS 4010 E 4016 DE JUN.2026',
+        reply_to='Luiz <luiz@trinusco.com.br>',
+    )]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída', f'Esperado Concluída, got: {status} | {motivo}'
+
+
+def test_conteudo_real_mais_assinatura_nao_e_cortesia():
+    """§8.3: e-mail com conteúdo real + assinatura não é tratado como cortesia → Aguardando Finaud."""
+    corpo = (
+        'Preciso que vocês verifiquem o arquivo enviado.\r\n\r\n'
+        'Atenciosamente,\r\n'
+        'João Silva\r\n'
+        '+55 11 9999-0000\r\n'
+        'https://empresa.com.br'
+    )
+    msgs = [_msg(
+        CLIENTE,
+        corpo=corpo,
+        assunto='Re: Verificação de arquivo',
+    )]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+
+
 # ── §8.9 — Finaud envia arquivo + pergunta real → Aguardando Cliente ──────────
 
 def test_finaud_arquivo_com_pergunta_real_aguarda_cliente():
