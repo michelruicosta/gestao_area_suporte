@@ -284,6 +284,11 @@ def coletar() -> None:
     print('=' * 60)
 
     criar_banco()
+
+    # Snapshot do estado antes desta rodada — base para o delta exibido na tela
+    bt.salvar_snapshot()
+    print('Snapshot de contadores salvo.')
+
     service = _conectar_gmail()
 
     start_hist_id = get_controle_sync('last_history_id')

@@ -621,3 +621,65 @@ def test_regressao_cliente_escreveu_sem_reacao_aguarda_finaud():
     """Regressão §8.10: cliente escreve texto normal sem reação → Aguardando Finaud."""
     msgs = [_msg(CLIENTE, corpo='Bom dia, preciso do arquivo atualizado.')]
     assert bt._determinar_status(msgs)[0] == 'Aguardando Finaud'
+
+
+# ── Snapshots de contadores ───────────────────────────────────────────────────
+
+def test_snapshot_banco_vazio(monkeypatch, tmp_path):
+    """Banco vazio → snapshot vazio → ler_ultimo_snapshot devolve {}."""
+    banco_tmp = str(tmp_path / 'test.db')
+    monkeypatch.setattr(bt, 'BANCO', banco_tmp)
+    bt.criar_banco()
+    bt.salvar_snapshot()
+    assert bt.ler_ultimo_snapshot() == {}
+
+
+def test_snapshot_grava_e_le(monkeypatch, tmp_path):
+    """Após salvar threads, salvar_snapshot grava contagens corretas."""
+    import json
+    banco_tmp = str(tmp_path / 'test.db')
+    monkeypatch.setattr(bt, 'BANCO', banco_tmp)
+    bt.criar_banco()
+
+    # Insere 2 threads manualmente: 1 AF, 1 CO na categoria DDR_2011
+    def _inserir(thread_id, status):
+        import sqlite3
+        conn = sqlite3.connect(banco_tmp)
+        conn.execute(
+            "INSERT INTO threads (thread_id, assunto, destino, categoria, status_workflow) "
+            "VALUES (?, 'Teste', 'principal', 'DDR_2011', ?)",
+            (thread_id, status)
+        )
+        conn.commit(); conn.close()
+
+    _inserir('t1', 'Aguardando Finaud')
+    _inserir('t2', 'Concluída')
+
+    bt.salvar_snapshot()
+    snap = bt.ler_ultimo_snapshot()
+
+    assert 'DDR_2011' in snap
+    assert snap['DDR_2011']['af'] == 1
+    assert snap['DDR_2011']['ac'] == 0
+    assert snap['DDR_2011']['co'] == 1
+
+
+def test_snapshot_sobrescreve_anterior(monkeypatch, tmp_path):
+    """Segunda chamada a salvar_snapshot substitui a primeira — sem acumulação."""
+    import sqlite3
+    banco_tmp = str(tmp_path / 'test.db')
+    monkeypatch.setattr(bt, 'BANCO', banco_tmp)
+    bt.criar_banco()
+
+    conn = sqlite3.connect(banco_tmp)
+    conn.execute(
+        "INSERT INTO threads (thread_id, assunto, destino, categoria, status_workflow) "
+        "VALUES ('t1', 'X', 'principal', 'DRM_2060', 'Aguardando Finaud')"
+    )
+    conn.commit(); conn.close()
+
+    bt.salvar_snapshot()
+    bt.salvar_snapshot()  # segunda chamada — não deve duplicar
+
+    snap = bt.ler_ultimo_snapshot()
+    assert snap['DRM_2060']['af'] == 1  # apenas 1, não 2

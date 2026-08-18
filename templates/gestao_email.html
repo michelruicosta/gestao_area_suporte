@@ -120,6 +120,10 @@ body { margin: 0; background: var(--bg); display: flex; min-height: 100vh; }
 /* Contadores coloridos na tabela */
 .n-af { color: #8a5b00; font-weight: 700; }
 .n-ac { color: #1864ab; font-weight: 700; }
+
+/* Triângulos de delta (variação desde a última rodada) */
+.delta-ruim { color: #c0392b; font-size: 0.72rem; font-weight: 700; margin-left: 0.3rem; }
+.delta-bom  { color: #168a43; font-size: 0.72rem; font-weight: 700; margin-left: 0.3rem; }
 .n-co { color: #168a43; font-weight: 700; }
 .n-zero { color: #c0c9d5; }
 
@@ -552,9 +556,22 @@ async function carregarResumo() {
     } else {
       tbody.innerHTML = d.categorias.map(c => {
         const pct = tot > 0 ? ((c.total / tot) * 100).toFixed(1) : '0.0';
-        const af  = c.af ? `<span class="n-af">${c.af}</span>` : '<span class="n-zero">—</span>';
-        const ac  = c.ac ? `<span class="n-ac">${c.ac}</span>` : '<span class="n-zero">—</span>';
-        const co  = c.co ? `<span class="n-co">${c.co}</span>` : '<span class="n-zero">—</span>';
+
+        // Monta célula com triângulo de delta
+        // AF/AC: ▲ = ruim (vermelho), ▼ = bom (verde)
+        // CO:    ▲ = bom  (verde),    ▼ = ruim (vermelho)
+        function celDelta(val, cls, delta, invertido) {
+          const num = val ? `<span class="${cls}">${val}</span>` : '<span class="n-zero">—</span>';
+          if (!delta) return num;
+          const tri = delta > 0 ? '▲' : '▼';
+          const cor = (delta > 0) === invertido ? 'delta-bom' : 'delta-ruim';
+          return `${num}<span class="${cor}"> ${tri} ${Math.abs(delta)}</span>`;
+        }
+
+        const af = celDelta(c.af, 'n-af', c.delta_af, false);
+        const ac = celDelta(c.ac, 'n-ac', c.delta_ac, false);
+        const co = celDelta(c.co, 'n-co', c.delta_co, true);
+
         return `<tr onclick="abrirCategoria('${c.id}','${escHtml(c.nome)}')">
           <td>${escHtml(c.nome)}</td>
           <td class="num pct">${pct}%</td>

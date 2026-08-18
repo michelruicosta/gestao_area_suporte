@@ -85,6 +85,16 @@ def criar_banco() -> None:
 
             CREATE INDEX IF NOT EXISTS idx_data_ultima
                 ON threads (data_ultima_msg);
+
+            CREATE TABLE IF NOT EXISTS snapshots (
+                id        INTEGER PRIMARY KEY AUTOINCREMENT,
+                data_hora TEXT NOT NULL,
+                categoria TEXT NOT NULL,
+                af        INTEGER NOT NULL DEFAULT 0,
+                ac        INTEGER NOT NULL DEFAULT 0,
+                co        INTEGER NOT NULL DEFAULT 0,
+                total     INTEGER NOT NULL DEFAULT 0
+            );
         """)
         # Migração segura: adiciona colunas novas sem recriar o banco
         for col_def in [
@@ -540,6 +550,42 @@ def contar_por_destino() -> dict:
             contagens[chave] = row['total']
     contagens['total'] = sum(v for k, v in contagens.items() if k != 'total')
     return contagens
+
+
+# ── Snapshots de contadores por categoria ────────────────────────────────────
+
+def salvar_snapshot() -> None:
+    """Grava o estado atual dos contadores por categoria — chamado pelo coletor antes de cada rodada."""
+    threads = buscar_por_destino('principal')
+    contagens: dict[str, dict] = {}
+    for t in threads:
+        cat    = t.get('categoria') or 'DESCONHECIDA'
+        status = t.get('status_workflow') or 'Aguardando Finaud'
+        if cat not in contagens:
+            contagens[cat] = {'af': 0, 'ac': 0, 'co': 0}
+        if status == 'Aguardando Finaud':
+            contagens[cat]['af'] += 1
+        elif status == 'Aguardando Cliente':
+            contagens[cat]['ac'] += 1
+        elif status == 'Concluída':
+            contagens[cat]['co'] += 1
+    agora = _agora()
+    with _conectar() as conn:
+        conn.execute('DELETE FROM snapshots')
+        conn.executemany(
+            'INSERT INTO snapshots (data_hora, categoria, af, ac, co, total) VALUES (?,?,?,?,?,?)',
+            [(agora, cat, c['af'], c['ac'], c['co'], c['af'] + c['ac'] + c['co'])
+             for cat, c in contagens.items()],
+        )
+
+
+def ler_ultimo_snapshot() -> dict[str, dict]:
+    """Retorna o último snapshot salvo como {categoria_id: {af, ac, co, total}}. Vazio se não houver snapshot."""
+    with _conectar() as conn:
+        rows = conn.execute(
+            'SELECT categoria, af, ac, co, total FROM snapshots'
+        ).fetchall()
+    return {r['categoria']: dict(r) for r in rows}
 
 
 # ── Controle de sincronização com o Gmail ─────────────────────────────────────
