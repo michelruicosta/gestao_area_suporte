@@ -318,31 +318,13 @@ Durante a validação com 768 threads, identificamos que e-mails automáticos qu
 
 ---
 
-### 🔴 URGENTE — DADOS: Respostas da Finaud via suporte@ não estão sendo capturadas no banco (identificado 05/08/2026 · confirmado com evidência em 18/08/2026)
+### ✅ DADOS: Respostas da Finaud via suporte@ não chegavam ao banco — RESOLVIDO EM 18/08/2026
 
-**🔎 Em miúdos:** quando a Sarah (ou qualquer colaborador da Finaud) responde a um cliente enviando um arquivo, essa resposta não aparece no banco. O sistema fica sem ver que a Finaud já respondeu — e marca a thread como "Aguardando Finaud" quando na prática o trabalho já estava feito.
+Causa raiz identificada: e-mails *enviados* via o grupo `suporte@finaud.com.br` não voltavam para `coleta.oraculo@finaud.com.br` — comportamento padrão do Google Groups. Correção: adicionado `suporte@finaud.com.br` à regra de roteamento "Cópia de segurança para IA - Interações Externas" no Google Workspace Admin. A partir de 18/08/2026, todos os envios via suporte@ chegam à caixa de coleta e entram no banco.
 
-**Evidência concreta (18/08/2026):** thread "DDR 2011 - 11/08/2026":
-- Jacilaine envia extratos + pede DDR → capturado ✅
-- Sarah responde enviando o DDR (13/08 às 14:41, From: suporte@finaud.com.br) → **NÃO capturado** ❌
-- Jacilaine reage com ❤️ ao e-mail da Sarah → capturado ✅ (mas fora de contexto)
+**Limitação residual:** e-mails enviados *antes* de 18/08/2026 não são recuperados por esta regra — o histórico dessas respostas permanece incompleto. Aceito como limitação; não bloqueia a Fase 1.
 
-A resposta da Sarah é visível no Gmail (aparece citada na notificação de reação), mas não está no banco como mensagem separada.
-
-**Impacto direto no status de workflow:** threads que deveriam ser "Concluída" (Finaud entregou, cliente confirmou) aparecem como "Aguardando Finaud" — o sistema nunca viu a entrega. Escala desconhecida — pode afetar dezenas de threads.
-
-**Causa provável:** quando um colaborador responde via o grupo `suporte@finaud.com.br`, a mensagem enviada não chega na caixa `coleta.oraculo@finaud.com.br` — o Google Workspace não faz cópia de e-mails enviados pelo grupo para a caixa de coleta.
-
-**O que investigar:**
-1. Verificar diretamente no Gmail da conta `coleta.oraculo@finaud.com.br`: existem threads com `From: suporte@finaud.com.br → Para: cliente` que não estão no banco?
-2. Verificar as configurações do grupo `suporte@finaud.com.br` no Google Workspace — está configurado para arquivar mensagens enviadas?
-3. Se o grupo não arquiva: avaliar se é possível configurar para que cópias dos envios cheguem à `coleta.oraculo@`
-
-**O que fazer depois de entender a causa:**
-- Se for configuração do Google Workspace: ajustar o grupo para arquivar envios → recarregar histórico
-- Se for limitação do coletor: ajustar `coletor_gmail.py` para buscar também `From: suporte@finaud.com.br` no histórico de sentados
-
-**Prioridade:** resolver antes da Fase 1 entrar em produção — sem essas mensagens, o status de workflow é sistematicamente errado para threads respondidas via suporte@.
+Ver detalhes em `documentações/REGISTRO_CORRECOES.md` — entrada de 18/08/2026 e `documentações/TAREFAS_AGENDADAS.md`.
 
 ---
 

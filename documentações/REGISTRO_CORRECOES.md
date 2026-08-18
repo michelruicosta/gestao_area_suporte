@@ -133,6 +133,24 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-08-18 — Correção de coleta: respostas da Finaud via suporte@ não chegavam ao banco
+
+### 18/08 — Regra de roteamento adicionada ao Google Workspace: copia envios do suporte@ para coleta.oraculo
+
+**🔎 Em miúdos:** quando a Sarah (ou qualquer colaboradora) respondia ao cliente usando o endereço `suporte@finaud.com.br`, esse e-mail ia para o cliente mas o banco nunca ficava sabendo. O sistema marcava a thread como "Aguardando Finaud" mesmo depois de a Finaud já ter respondido.
+
+**Problema:** a caixa `coleta.oraculo@finaud.com.br` é membro do grupo `suporte@finaud.com.br` — por isso recebe os e-mails *dos clientes* que chegam ao grupo. Mas e-mails *enviados* pelo grupo (respostas da Finaud ao cliente) não são redistribuídos para os membros. Resultado: o banco só via a metade da conversa.
+
+**Causa raiz:** comportamento padrão do Google Groups — envios de um membro via o endereço do grupo não voltam para os outros membros.
+
+**Correção:** na regra de roteamento "Cópia de segurança para IA - Interações Externas" no Google Workspace Admin (admin.google.com → Apps → Google Workspace → Gmail → Roteamento), adicionado `suporte@finaud.com.br` ao filtro de remetentes (campo "Afetar apenas remetentes de envelopes específicos"). Feito por Michel em 18/08/2026.
+
+**Impacto:** a partir de agora, qualquer e-mail enviado pelo endereço `suporte@finaud.com.br` chega automaticamente à caixa `coleta.oraculo@finaud.com.br` e entra no banco na próxima rodada do coletor. E-mails enviados *antes* de 18/08/2026 não são recuperados por esta regra (limitação do roteamento — só captura daqui para frente).
+
+**Validação:** ⚠️ VALIDAÇÃO PENDENTE — confirmar na próxima vez que uma colaboradora responder via suporte@: a mensagem deve aparecer no banco após a próxima rodada do coletor.
+
+---
+
 ## 2026-08-18 — Correção de status: reações do Teams marcadas como "Aguardando Finaud"
 
 ### 18/08 — §8.10 Reações do Teams: "Aguardando Finaud" corrigido para "Concluída"
