@@ -84,6 +84,27 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-08-18 — Correção de status: cliente encaminhando extratos para processamento
+
+### 18/08 — §8.8 Cliente ENC:/EXTRATO com texto vazio: "Concluída" corrigido para "Aguardando Finaud"
+
+**🔎 Em miúdos:** quando o cliente enviava um extrato bancário para a Finaud processar — seja com "ENC:" no assunto ou com "EXTRATO COMPROMISSADA" no nome — o sistema marcava "Concluída", como se o trabalho já tivesse acabado. Na prática a Finaud ainda precisava usar aquele extrato para gerar o DDR.
+
+**Problema:** o branch "remetente externo" verificava se o texto novo era só cortesia (`_so_cortesia`). Se sim, retornava "Concluída / Cliente confirmou". Mas clientes que entregam extratos também enviam texto curto ("Segue banvox", ou texto vazio) — o sinal de entrega vinha pelo assunto (ENC: ou EXTRATO), não pelo texto.
+
+**Correção** (`scripts/banco_threads.py`):
+- Adicionadas duas constantes de módulo: `_ENC_PREFIX` (regex `^(enc|fwd?)\s*:`) e `_EXTRATO_RE` (regex `\bextratos?\b`)
+- O `_ENC_PREFIX` que estava definido dentro da função foi movido para o módulo (evita recompilar a cada chamada)
+- Condição extendida: se texto é cortesia E (assunto começa com ENC:/FWD: **ou** assunto contém "EXTRATO/EXTRATOS") → "Aguardando Finaud / Cliente encaminhou — aguarda processamento da Finaud"
+
+**Impacto:** 13 threads corrigidas:
+- 12 × "ENC: EXTRATOS COMPROMISSADAS/CUSTODIA (BANVOX/TRUSTEE) - data" → Aguardando Finaud
+- 1 × "TRUSTEE DTVM - EXTRATO COMPROMISSADA 2026.07.29" (sem ENC: no assunto) → Aguardando Finaud
+
+**Validação:** `pytest tests/ -q` → ✅ 255/255 — inclui 5 testes novos (ENC: vazio, FWD: curto, EXTRATO sem ENC:, EXTRATO com texto real, regressão sem ENC:/EXTRATO). Zero regressões.
+
+---
+
 ## 2026-08-17 — Telas de gestão + pipeline + primeira carga real do Gmail
 
 ### 17/08 — Telas de gestão de e-mail entregues (Fase 1)

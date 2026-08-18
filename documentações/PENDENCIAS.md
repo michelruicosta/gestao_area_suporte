@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Oráculo 360 Finaud
 
-**Atualizado:** 2026-08-17
+**Atualizado:** 2026-08-18
 **Organização:** por etapa que bloqueia — reorganizado em 03/08/2026 para seguir as fases sem brechas.
 **Regra:** este arquivo lista **só o que ainda falta** (aberto / aguardando decisão / backlog).
 Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada no
@@ -200,25 +200,6 @@ Quando a Finaud envia um arquivo **e** faz uma pergunta que exige ação do clie
 1. Mapear regras de detecção com Michel (o que distingue saudação de ação)
 2. Atualizar a spec §8 com os tipos
 3. Implementar detecção no `_determinar_status()` com testes
-
----
-
-### 🟡 STATUS — Cliente encaminha extratos com texto vazio → marcado como Concluída incorretamente (identificado 18/08/2026)
-
-12 threads "ENC: EXTRATOS COMPROMISSADAS/CUSTODIA" (BANVOX e TRUSTEE) têm texto novo vazio — o conteúdo está na parte encaminhada (abaixo do separador). O sistema vê texto vazio, trata como cortesia e marca como "Concluída".
-
-**Na prática:** o cliente está enviando extratos para a Finaud gerar e encaminhar o DDR do dia. Deveria ser "Aguardando Finaud".
-
-**Causa raiz:** `_so_cortesia()` retorna True para texto vazio — mas texto vazio num forward do cliente é uma entrega, não uma confirmação. Mesma raiz do bug §8.6, direção inversa (Cenário 2: cliente encaminha para a Finaud).
-
-**Regra a implementar:** se o texto novo está vazio E o corpo contém um forward → não é cortesia → Aguardando Finaud.
-
-**Impacto:** 12 threads com status errado (Concluída quando deveria ser Aguardando Finaud).
-
-**O que fazer:**
-1. Mapear com Michel quais outros tipos de e-mail chegam com texto vazio + forward
-2. Atualizar spec §8.6 Cenário 2 com este sub-caso
-3. Implementar e testar
 
 ---
 

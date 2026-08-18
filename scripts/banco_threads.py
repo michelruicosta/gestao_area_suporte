@@ -33,6 +33,10 @@ _IMAGENS_INLINE = frozenset({
     '.webp', '.tif', '.tiff', '.svg',
 })
 
+# §8.8 — cliente encaminhou: prefixo ENC:/FWD: ou assunto com EXTRATO sem prefixo
+_ENC_PREFIX = re.compile(r'^(enc|fwd?)\s*:', re.IGNORECASE)
+_EXTRATO_RE = re.compile(r'\bextratos?\b', re.IGNORECASE)
+
 
 # ── Conexão ────────────────────────────────────────────────────────────────────
 
@@ -277,6 +281,9 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         return 'Aguardando Cliente', 'Finaud escreveu — aguarda retorno do cliente'
 
     # Remetente externo (cliente)
+    # §8.8: cliente encaminhou algo (ENC:/FWD: ou assunto com EXTRATO) com texto vazio → Finaud precisa processar
+    if _so_cortesia(texto_novo) and (_ENC_PREFIX.match(assunto.strip()) or _EXTRATO_RE.search(assunto)):
+        return 'Aguardando Finaud', 'Cliente encaminhou — aguarda processamento da Finaud'
     if _so_cortesia(texto_novo):
         return 'Concluída', 'Cliente confirmou — sem pendência'
     return 'Aguardando Finaud', 'Cliente escreveu — aguarda resposta da Finaud'

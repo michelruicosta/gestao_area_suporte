@@ -448,3 +448,61 @@ def test_regressao_so_imagens_nao_e_arquivo_entregavel():
         nomes_anexos=['image001.png', 'image002.gif'],
     )]
     assert bt._determinar_status(msgs)[0] == 'Aguardando Cliente'
+
+
+# ── §8.8 — cliente encaminhou extrato (ENC: ou EXTRATO no assunto) ────────────
+
+def test_enc_prefix_texto_vazio_aguarda_finaud():
+    """§8.8: cliente envia ENC: com texto vazio → Finaud precisa processar."""
+    msgs = [_msg(
+        CLIENTE,
+        assunto='ENC: EXTRATOS COMPROMISSADAS/CUSTODIA (BANVOX) 12/08/2026',
+        corpo='',
+    )]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+    assert 'ncaminhou' in motivo
+
+
+def test_fwd_prefix_texto_curto_aguarda_finaud():
+    """§8.8: cliente envia FWD: com texto só cortesia → Finaud precisa processar."""
+    msgs = [_msg(
+        CLIENTE,
+        assunto='Fwd: extrato do dia',
+        corpo='Atenciosamente',
+    )]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+    assert 'ncaminhou' in motivo
+
+
+def test_extrato_no_assunto_texto_curto_aguarda_finaud():
+    """§8.8: cliente envia EXTRATO no assunto (sem ENC:) com texto curto → Aguardando Finaud."""
+    msgs = [_msg(
+        CLIENTE,
+        assunto='TRUSTEE DTVM - EXTRATO COMPROMISSADA 2026.07.29',
+        corpo='Segue banvox',
+    )]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+    assert 'ncaminhou' in motivo
+
+
+def test_extrato_no_assunto_texto_real_aguarda_finaud():
+    """§8.8: cliente com EXTRATO no assunto + texto real → Aguardando Finaud (pergunta real)."""
+    msgs = [_msg(
+        CLIENTE,
+        assunto='TRUSTEE DTVM - EXTRATO COMPROMISSADA 2026.07.29',
+        corpo='Bom dia, há um valor divergente na linha 3. Podem verificar?',
+    )]
+    assert bt._determinar_status(msgs)[0] == 'Aguardando Finaud'
+
+
+def test_regressao_cliente_confirma_sem_enc_sem_extrato():
+    """Regressão §8.8: cliente confirma com texto só cortesia, assunto normal → Concluída."""
+    msgs = [_msg(
+        CLIENTE,
+        assunto='Re: DLO - 30.06.2026',
+        corpo='Obrigado, recebemos.',
+    )]
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
