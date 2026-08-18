@@ -218,6 +218,20 @@ body { margin: 0; background: var(--bg); display: flex; min-height: 100vh; }
 
 /* ─── Vazio ─────────────────────────────────────────────────────────── */
 .vazio { text-align: center; color: var(--muted); padding: 3rem 1rem; font-size: 0.92rem; }
+
+/* ─── Busca no modal de categoria ───────────────────────────────────── */
+.busca-wrap {
+  padding: 0.55rem 1.25rem; border-bottom: 1px solid var(--border);
+  background: #fafbfc; flex-shrink: 0;
+}
+.busca-input {
+  width: 100%; padding: 0.45rem 0.75rem;
+  border: 1px solid #c5cad3; border-radius: 6px;
+  font: inherit; font-size: 0.88rem; background: #fff;
+  color: var(--text); outline: none; transition: border-color 0.12s;
+}
+.busca-input:focus { border-color: var(--marca); box-shadow: 0 0 0 2px rgba(51,51,168,0.12); }
+.busca-sem-resultado { display: none; text-align: center; color: var(--muted); padding: 1.5rem 1rem; font-size: 0.88rem; }
 </style>
 </head>
 <body>
@@ -378,6 +392,10 @@ body { margin: 0; background: var(--bg); display: flex; min-height: 100vh; }
       <button class="tab-btn" data-tab="co" onclick="trocarAba(this)">
         Concluída <span class="tab-count" id="tab-ct-co">—</span>
       </button>
+    </div>
+    <div class="busca-wrap">
+      <input class="busca-input" id="busca-thread" type="search"
+             placeholder="🔍  Filtrar por assunto…" oninput="filtrarThreads()">
     </div>
     <div class="modal-body" style="padding:0.75rem 1.25rem; overflow-x: auto;">
       <div class="tab-panel ativo" id="tab-panel-af">
@@ -581,6 +599,7 @@ async function abrirCategoria(catId, catNome) {
     b.classList.toggle('ativo', i === 0));
   document.querySelectorAll('#modal-cat .tab-panel').forEach((p,i) =>
     p.classList.toggle('ativo', i === 0));
+  document.getElementById('busca-thread').value = '';
   abrirModal('modal-cat');
   try {
     const d = await _get('/api/categoria/' + encodeURIComponent(catId));
@@ -621,6 +640,32 @@ function trocarAba(btn) {
   btn.classList.add('ativo');
   document.querySelectorAll('#modal-cat .tab-panel').forEach(p => p.classList.remove('ativo'));
   document.getElementById('tab-panel-' + btn.dataset.tab).classList.add('ativo');
+  filtrarThreads(); // reaplica filtro ao trocar aba
+}
+
+// ── Filtro de assunto no modal de categoria ────────────────────────────
+function filtrarThreads() {
+  const q = document.getElementById('busca-thread').value.toLowerCase().trim();
+  ['af', 'ac', 'co'].forEach(s => {
+    let visiveis = 0;
+    document.getElementById('tbody-cat-' + s).querySelectorAll('tr').forEach(tr => {
+      if (tr.querySelector('td[colspan]')) return; // linha de vazio/carregando — não filtrar
+      const texto = (tr.cells[0]?.textContent || '').toLowerCase();
+      const mostrar = !q || texto.includes(q);
+      tr.style.display = mostrar ? '' : 'none';
+      if (mostrar) visiveis++;
+    });
+    // Mostrar aviso "nenhum resultado" se filtro ativo e sem resultados
+    const panel = document.getElementById('tab-panel-' + s);
+    let aviso = panel.querySelector('.busca-sem-resultado');
+    if (!aviso) {
+      aviso = document.createElement('p');
+      aviso.className = 'busca-sem-resultado';
+      aviso.textContent = 'Nenhuma thread encontrada para este filtro.';
+      panel.appendChild(aviso);
+    }
+    aviso.style.display = (q && visiveis === 0) ? 'block' : 'none';
+  });
 }
 
 // ── Thread completa ────────────────────────────────────────────────────
