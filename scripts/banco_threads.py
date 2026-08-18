@@ -108,6 +108,10 @@ _FRASES_CONCLUSIVAS_FINAUD = (
     'segue em anexo',
     'conforme solicitado',
     'procedemos com',
+    'informo que foi encaminhado',
+    'informamos que foi encaminhado',
+    'foi encaminhado ao bc',
+    'foi encaminhado ao bacen',
 )
 
 

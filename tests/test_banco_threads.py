@@ -168,6 +168,24 @@ def test_status_finaud_procedemos_com():
     assert bt._determinar_status(msgs)[0] == 'Concluída'
 
 
+def test_status_finaud_notificacao_foi_encaminhado_bc():
+    """Finaud notifica que encaminhou ao BC → Concluída, sem pedido de resposta."""
+    msgs = [_msg(FINAUD, corpo='Prezados, bom dia.\n\nInformo que foi encaminhado o arquivo de remessa DRL ao BC, ref. julho/2026.\n\nAtenciosamente.')]
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
+
+
+def test_status_finaud_notificacao_informamos_encaminhado():
+    """Finaud usa 'informamos que foi encaminhado' → Concluída."""
+    msgs = [_msg(FINAUD, corpo='Informamos que foi encaminhado o DDR referente a 10/08.')]
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
+
+
+def test_status_finaud_notificacao_foi_encaminhado_bacen():
+    """Finaud usa 'foi encaminhado ao bacen' → Concluída."""
+    msgs = [_msg(FINAUD, corpo='O arquivo foi encaminhado ao BACEN conforme protocolo.')]
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
+
+
 def test_status_finaud_sem_sinal_encerramento():
     """Finaud respondeu mas sem sinal de encerramento → Aguardando Cliente."""
     msgs = [_msg(FINAUD, corpo='Verificamos aqui, precisamos de mais informações.')]

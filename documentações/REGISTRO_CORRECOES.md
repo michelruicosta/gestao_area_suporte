@@ -10,6 +10,26 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-08-18 — Correção de status: notificação de entrega sem pedido de resposta
+
+### 18/08 — Finaud notifica cliente de transmissão → "Aguardando Cliente" corrigido para "Concluída"
+
+**🔎 Em miúdos:** quando a Finaud avisava o cliente que tinha enviado um arquivo ao BACEN ("Informo que foi encaminhado o DRL ao BC"), o sistema marcava "Aguardando Cliente" — como se ainda esperasse uma resposta. Na prática o trabalho estava feito e não havia necessidade de resposta.
+
+**Problema:** frases de notificação de entrega ("Informo que foi encaminhado", "foi encaminhado ao BC") não estavam na lista `_FRASES_CONCLUSIVAS_FINAUD`. O sistema caia no padrão padrão: "Finaud→Cliente sem sinal de encerramento → Aguardando Cliente".
+
+**Correção:** adicionadas 4 frases à tupla `_FRASES_CONCLUSIVAS_FINAUD` em `scripts/banco_threads.py`:
+- `'informo que foi encaminhado'`
+- `'informamos que foi encaminhado'`
+- `'foi encaminhado ao bc'`
+- `'foi encaminhado ao bacen'`
+
+**Impacto:** 2 threads corrigidas (REMITLY DRL e DRL 2160 — Monica notificando transmissão ao BC).
+
+**Validação:** `pytest tests/ -q` → ✅ 246/246 — inclui 3 testes novos para as frases de notificação. Zero regressões.
+
+---
+
 ## 2026-08-18 — Correção de status para e-mails encaminhados (Forwards)
 
 ### 18/08 — §8.6 Regras de forward: status "E-mail interno" corrigido para casos de entrega ao cliente

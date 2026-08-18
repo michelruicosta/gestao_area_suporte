@@ -157,6 +157,116 @@ Determinístico classifica 134/134 threads que o R6 retornou como INCERTO. Todos
 
 ---
 
+### 🟡 BANCO — Adicionar campo `tipo_status` para rastreabilidade (identificado 18/08/2026)
+
+Ideia de Michel: além do `motivo_status` (texto livre), salvar um campo estruturado `tipo_status` com categorias fixas — ex.: "ação_cliente", "cortesia", "entrega", "forward", "interno". Permite filtrar, auditar e construir relatórios.
+
+**O que fazer:**
+1. Definir com Michel o conjunto de tipos (mapeamento completo)
+2. Adicionar coluna `tipo_status TEXT` no banco via migração segura
+3. Preencher ao recalcular status em `_determinar_status()`
+4. Atualizar a tela para exibir ou filtrar por tipo
+
+**Por que ainda não foi feito:** requer decisão de design antes de implementar (envolve schema do banco e mudança em todas as branches de status).
+
+---
+
+### 🟡 STATUS — Finaud enviou arquivo + fez pergunta → marcado como Concluída incorretamente (identificado 18/08/2026)
+
+Quando a Finaud envia um arquivo **e** faz uma pergunta que exige ação do cliente, o sistema marca como "Concluída" porque detecta o anexo antes de verificar o conteúdo.
+
+**Impacto:** ~9 threads com status errado (Concluída quando deveria ser Aguardando Cliente).
+
+**Exemplos reais:**
+- "Você tem acesso ao Risk S4 e S5?" — Finaud perguntando sobre acesso
+- "O aumento de capital foi feito em qual data?" — Finaud pedindo informação
+- "Poderiam enviar o 2060 antes de protocolarem?" — Finaud pedindo arquivo
+- "Podem verificar por gentileza?" — Finaud pedindo verificação
+
+**Regra definida por Michel (18/08/2026):**
+- Finaud envia arquivo + pergunta que exige **ação do cliente** → Aguardando Cliente
+- Finaud envia arquivo + frase de cortesia com "?" ("qualquer dúvida retorne") → Concluída
+- "Tudo bem?" sozinho (saudação) → Concluída
+- "Segue o relatório, tudo bem?" (pedindo confirmação) → Aguardando Cliente
+
+**Tipagem para o campo `tipo_status` (ver pendência de banco):**
+- `saudação` — "Tudo bem?" isolado
+- `confirmação` — pergunta pedindo aceite de algo entregue
+- `ação` — pergunta exigindo que o cliente faça algo
+
+**Falsos positivos a ignorar:** "?" em XML de e-mails de rastreamento (`<?xml version=...`).
+
+**O que fazer:**
+1. Mapear regras de detecção com Michel (o que distingue saudação de ação)
+2. Atualizar a spec §8 com os tipos
+3. Implementar detecção no `_determinar_status()` com testes
+
+---
+
+### 🟡 STATUS — Cliente encaminha extratos com texto vazio → marcado como Concluída incorretamente (identificado 18/08/2026)
+
+12 threads "ENC: EXTRATOS COMPROMISSADAS/CUSTODIA" (BANVOX e TRUSTEE) têm texto novo vazio — o conteúdo está na parte encaminhada (abaixo do separador). O sistema vê texto vazio, trata como cortesia e marca como "Concluída".
+
+**Na prática:** o cliente está enviando extratos para a Finaud gerar e encaminhar o DDR do dia. Deveria ser "Aguardando Finaud".
+
+**Causa raiz:** `_so_cortesia()` retorna True para texto vazio — mas texto vazio num forward do cliente é uma entrega, não uma confirmação. Mesma raiz do bug §8.6, direção inversa (Cenário 2: cliente encaminha para a Finaud).
+
+**Regra a implementar:** se o texto novo está vazio E o corpo contém um forward → não é cortesia → Aguardando Finaud.
+
+**Impacto:** 12 threads com status errado (Concluída quando deveria ser Aguardando Finaud).
+
+**O que fazer:**
+1. Mapear com Michel quais outros tipos de e-mail chegam com texto vazio + forward
+2. Atualizar spec §8.6 Cenário 2 com este sub-caso
+3. Implementar e testar
+
+---
+
+### 🟡 STATUS — E-mails internos informativos marcados como "Aguardando Finaud" (identificado 18/08/2026)
+
+5 threads internas (Finaud→Finaud) são informativas mas recebem status "Aguardando Finaud". Deveria ser "Concluída — informativo, sem pendência".
+
+**Casos identificados:**
+- "Comunicado de Saída" — mensagem de despedida de colega
+- "Divulgação Instrução Normativa BCB nº 761" — Byron informando nova norma regulatória
+- "Divulgação Comunicado nº 45.514" — Byron informando comunicado GAFI/FATF
+- "Boas-Vindas ao time FINAUD – Miguel Santos" — welcome a novo colaborador
+- "Boas-Vindas ao time FINAUD – Sarah de Sá" — welcome a nova colaboradora
+
+**Regra definida por Michel (18/08/2026):** e-mails informativos internos → Concluída.
+
+**Desafio:** todos são Finaud→Finaud, mas alguns exigem ação (DLO para transmitir, CADOC para processar) e outros são só informativos. Precisa de regra para distinguir.
+
+**Sinais de "informativo":** assunto contém "Divulgação", "Comunicado", "Boas-Vindas"; sem CADOC no assunto; sem pedido de ação no texto.
+
+**O que fazer:**
+1. Definir com Michel os padrões de assunto/conteúdo que indicam e-mail informativo
+2. Atualizar spec §8 com o sub-caso de interno informativo
+3. Implementar e testar
+
+**Impacto:** 5 threads com status errado.
+
+---
+
+### 🟡 STATUS — Reações do Teams marcadas como "Aguardando Finaud" (identificado 18/08/2026)
+
+8 threads têm como última mensagem uma notificação de reação do Teams (ex.: "❤️ Jacilaine reagiu à sua mensagem"). O sistema marca como "Aguardando Finaud" porque não reconhece o padrão.
+
+**O problema:** a regra de status olha só o último e-mail, sem ver o contexto anterior. Uma reação pode ser confirmação de entrega (→ Concluída) ou só um acuse de recebimento — depende do que veio antes.
+
+**O que precisa ser decidido com Michel:**
+- Quando o cliente reage com emoji a uma mensagem da Finaud, a thread está encerrada?
+- A decisão depende do que a Finaud enviou antes — como consultamos isso?
+
+**O que fazer:**
+1. Mostrar 2–3 exemplos reais a Michel para mapear o padrão
+2. Definir a regra (provavelmente: reação do Teams = confirmação → Concluída)
+3. Atualizar a spec §8 e implementar com testes
+
+**Impacto:** 8 threads no banco atual.
+
+---
+
 ### 🟡 SPEC — Definir comportamento em produção: threads novas vs. já classificadas (identificado 07/08/2026)
 
 **Contexto:** em produção, novas threads chegam diariamente e threads existentes recebem novos e-mails. O sistema precisa saber o que fazer em cada caso.
@@ -240,6 +350,18 @@ Durante a validação do Campo 6, os e-mails da TRUSTEE DTVM apareceram com cara
 1. Identificar quantos e-mails no JSON01 têm esse problema (buscar por U+FFFD no campo `corpo_texto`)
 2. Verificar se o problema é só TRUSTEE ou há outros remetentes afetados
 3. Implementar detecção e reconversão de encoding no coletor Gmail
+
+**Arquivo de destino:** módulo de limpeza do corpo — Passo 3 da Fase 1.
+
+---
+
+### 🟡 LIMPEZA — Rótulo do Outlook aparece como primeira linha do texto (identificado 18/08/2026)
+
+Alguns e-mails gerados pelo Outlook têm um rótulo de classificação automático ("Classificação: Interno e Parceiros de Negócios") na primeira linha do corpo, antes do conteúdo real. O extrator `_extrair_texto_novo()` captura esse rótulo como se fosse a primeira linha da mensagem.
+
+**Impacto atual:** 35 threads com esse padrão. Status não é afetado (o conteúdo real vem logo depois), mas o rótulo polui o texto que seria enviado para a IA classificar.
+
+**O que fazer:** ao construir o módulo de limpeza de corpo na Fase 1, adicionar filtro para remover linhas que começam com `Classificação:` seguido de categorias do Outlook.
 
 **Arquivo de destino:** módulo de limpeza do corpo — Passo 3 da Fase 1.
 
