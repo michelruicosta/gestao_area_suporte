@@ -506,3 +506,83 @@ def test_regressao_cliente_confirma_sem_enc_sem_extrato():
         corpo='Obrigado, recebemos.',
     )]
     assert bt._determinar_status(msgs)[0] == 'Concluída'
+
+
+# ── §8.9 — Finaud envia arquivo + pergunta real → Aguardando Cliente ──────────
+
+def test_finaud_arquivo_com_pergunta_real_aguarda_cliente():
+    """§8.9: Finaud envia arquivo + faz pergunta real → Aguardando Cliente."""
+    msgs = [_msg(
+        FINAUD,
+        corpo='Prezado Jorge, boa tarde.\r\nVocê tem acesso ao Risk S4 e S5?',
+        nomes_anexos=['image001.png', 'relatorio.pdf'],
+    )]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Cliente'
+    assert 'aguarda resposta' in motivo
+
+
+def test_finaud_arquivo_com_multiplas_perguntas_aguarda_cliente():
+    """§8.9: Finaud envia arquivo + múltiplas perguntas reais → Aguardando Cliente."""
+    msgs = [_msg(
+        FINAUD,
+        corpo='O aumento de capital foi feito em qual data?\nFoi feito com $ dos sócios?\nO BC já autorizou?',
+        nomes_anexos=['dados.zip'],
+    )]
+    assert bt._determinar_status(msgs)[0] == 'Aguardando Cliente'
+
+
+def test_finaud_arquivo_com_instrucao_sem_pergunta_aguarda_cliente():
+    """§8.9: Finaud envia arquivo + instrução com pergunta → Aguardando Cliente."""
+    msgs = [_msg(
+        FINAUD,
+        corpo='Alguma posição...? O relatório de DRL está pendente no BC.',
+        nomes_anexos=['image001.png', 'DRL.zip'],
+    )]
+    assert bt._determinar_status(msgs)[0] == 'Aguardando Cliente'
+
+
+def test_finaud_arquivo_tudo_bem_sozinho_concluida():
+    """§8.9: Finaud entrega arquivo + só 'Tudo bem?' (saudação) → Concluída."""
+    msgs = [_msg(
+        FINAUD,
+        corpo='Segue em anexo o DDR do dia.\r\nTudo bem?',
+        nomes_anexos=['21040668_2011_20260814_I_1.zip'],
+    )]
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
+
+
+def test_finaud_arquivo_ola_tudo_bem_concluida():
+    """§8.9: 'Olá, tudo bem?' é saudação — não é pergunta de ação → Concluída."""
+    msgs = [_msg(
+        FINAUD,
+        corpo='Olá, Erivelto, tudo bem?\r\nSegue em anexo as projeções conforme solicitado.',
+        nomes_anexos=['projecoes.pdf'],
+    )]
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
+
+
+def test_finaud_arquivo_url_com_interrogacao_concluida():
+    """§8.9: URL com '?' na assinatura não conta como pergunta real → Concluída."""
+    msgs = [_msg(
+        FINAUD,
+        corpo='Segue em anexo.\r\n\r\n<https://api.whatsapp.com/send?phone=551137222277>',
+        nomes_anexos=['arquivo.zip'],
+    )]
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
+
+
+def test_finaud_arquivo_xml_header_concluida():
+    """§8.9: Cabeçalho <?xml...?> não conta como pergunta real → Concluída."""
+    msgs = [_msg(
+        FINAUD,
+        corpo='<?xml version="1.0" encoding="UTF-8"?>\r\nSegue em anexo o arquivo.',
+        nomes_anexos=['remessa.zip'],
+    )]
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
+
+
+def test_regressao_finaud_arquivo_sem_pergunta_concluida():
+    """Regressão §8.9: Finaud envia arquivo sem pergunta → Concluída (sem mudança)."""
+    msgs = [_msg(FINAUD, corpo='Segue em anexo conforme solicitado.', nomes_anexos=['arquivo.zip'])]
+    assert bt._determinar_status(msgs)[0] == 'Concluída'

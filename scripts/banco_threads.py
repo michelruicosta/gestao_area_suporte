@@ -37,6 +37,9 @@ _IMAGENS_INLINE = frozenset({
 _ENC_PREFIX = re.compile(r'^(enc|fwd?)\s*:', re.IGNORECASE)
 _EXTRATO_RE = re.compile(r'\bextratos?\b', re.IGNORECASE)
 
+# §8.9 — saudações com "?" que não indicam pedido de ação do cliente
+_SAUDACOES_PERGUNTA = re.compile(r'\btudo\s+(?:bem|bom|certo)\s*\?', re.IGNORECASE)
+
 
 # ── Conexão ────────────────────────────────────────────────────────────────────
 
@@ -141,6 +144,16 @@ def _extrair_texto_novo(corpo: str) -> str:
             break
         resultado.append(linha)
     return '\n'.join(resultado).strip()
+
+
+def _tem_pergunta_acao(texto: str) -> bool:
+    """§8.9: True se o texto tem pergunta real que exige ação do cliente.
+    Remove URLs, cabeçalhos XML e saudações com '?' antes de checar."""
+    t = re.sub(r'<https?://[^>]+>', '', texto)        # links <https://...>
+    t = re.sub(r'https?://\S+', '', t)                # URLs soltas
+    t = re.sub(r'^\s*<\?xml\b.*$', '', t, flags=re.MULTILINE)  # cabeçalho XML
+    t = _SAUDACOES_PERGUNTA.sub('', t)                # "Tudo bem?", "Tudo bom?"
+    return '?' in t
 
 
 def _so_cortesia(texto: str) -> bool:
@@ -273,6 +286,9 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
             return 'Aguardando Finaud', 'E-mail interno — aguarda ação da Finaud'
         # Finaud → Cliente
         if tem_anexo:
+            # §8.9: arquivo + pergunta real → cliente precisa responder
+            if _tem_pergunta_acao(texto_novo):
+                return 'Aguardando Cliente', 'Finaud enviou arquivo e aguarda resposta do cliente'
             return 'Concluída', 'Finaud enviou arquivo ao cliente'
         if assunto.strip().upper().startswith('RES:'):
             return 'Concluída', 'Finaud respondeu ao cliente'

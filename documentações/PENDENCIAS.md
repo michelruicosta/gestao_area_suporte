@@ -171,38 +171,6 @@ Ideia de Michel: além do `motivo_status` (texto livre), salvar um campo estrutu
 
 ---
 
-### 🟡 STATUS — Finaud enviou arquivo + fez pergunta → marcado como Concluída incorretamente (identificado 18/08/2026)
-
-Quando a Finaud envia um arquivo **e** faz uma pergunta que exige ação do cliente, o sistema marca como "Concluída" porque detecta o anexo antes de verificar o conteúdo.
-
-**Impacto:** ~9 threads com status errado (Concluída quando deveria ser Aguardando Cliente).
-
-**Exemplos reais:**
-- "Você tem acesso ao Risk S4 e S5?" — Finaud perguntando sobre acesso
-- "O aumento de capital foi feito em qual data?" — Finaud pedindo informação
-- "Poderiam enviar o 2060 antes de protocolarem?" — Finaud pedindo arquivo
-- "Podem verificar por gentileza?" — Finaud pedindo verificação
-
-**Regra definida por Michel (18/08/2026):**
-- Finaud envia arquivo + pergunta que exige **ação do cliente** → Aguardando Cliente
-- Finaud envia arquivo + frase de cortesia com "?" ("qualquer dúvida retorne") → Concluída
-- "Tudo bem?" sozinho (saudação) → Concluída
-- "Segue o relatório, tudo bem?" (pedindo confirmação) → Aguardando Cliente
-
-**Tipagem para o campo `tipo_status` (ver pendência de banco):**
-- `saudação` — "Tudo bem?" isolado
-- `confirmação` — pergunta pedindo aceite de algo entregue
-- `ação` — pergunta exigindo que o cliente faça algo
-
-**Falsos positivos a ignorar:** "?" em XML de e-mails de rastreamento (`<?xml version=...`).
-
-**O que fazer:**
-1. Mapear regras de detecção com Michel (o que distingue saudação de ação)
-2. Atualizar a spec §8 com os tipos
-3. Implementar detecção no `_determinar_status()` com testes
-
----
-
 ### 🟡 STATUS — Reações do Teams marcadas como "Aguardando Finaud" (identificado 18/08/2026)
 
 8 threads têm como última mensagem uma notificação de reação do Teams (ex.: "❤️ Jacilaine reagiu à sua mensagem"). O sistema marca como "Aguardando Finaud" porque não reconhece o padrão.

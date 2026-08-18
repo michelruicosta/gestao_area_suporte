@@ -84,6 +84,34 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-08-18 — Correção de status: Finaud envia arquivo e faz pergunta real ao cliente
+
+### 18/08 — §8.9 Finaud com arquivo + pergunta real: "Concluída" corrigido para "Aguardando Cliente"
+
+**🔎 Em miúdos:** quando a Finaud entregava um arquivo ao cliente e, na mesma mensagem, fazia uma pergunta real (pedindo verificação, informação ou ação), o sistema marcava "Concluída" — como se o trabalho estivesse encerrado. Na prática o cliente ainda precisava responder.
+
+**Problema:** o branch "Finaud → Cliente" verificava `tem_anexo` primeiro e retornava "Concluída / Finaud enviou arquivo" imediatamente, sem checar se o texto continha uma pergunta que exigia ação do cliente.
+
+**Correção** (`scripts/banco_threads.py`):
+- Nova constante de módulo: `_SAUDACOES_PERGUNTA` (regex `\btudo\s+(?:bem|bom|certo)\s*\?`)
+- Nova função de módulo: `_tem_pergunta_acao(texto)` — remove URLs, cabeçalhos XML e saudações com "?" antes de checar se sobrou algum "?"
+- Branch `tem_anexo` agora verifica `_tem_pergunta_acao(texto_novo)` antes de retornar Concluída:
+  - Arquivo + pergunta real → "Aguardando Cliente / Finaud enviou arquivo e aguarda resposta do cliente"
+  - Arquivo + só saudação ("Tudo bem?") ou sem pergunta → "Concluída" (inalterado)
+
+**Proteções contra falsos positivos:**
+- "Tudo bem?" e variantes → removidos antes do teste de "?"
+- URLs com "?" em links de assinatura (WhatsApp, LinkedIn, Facebook) → removidos
+- Cabeçalhos XML (`<?xml...`) de notificações do Outlook → removidos
+
+**Impacto:** 11 threads corrigidas (Concluída → Aguardando Cliente):
+- 6 casos originais identificados na varredura inicial
+- 5 casos adicionais com apenas imagens inline como anexo (logo/assinatura) — detectados pelo placar, todos confirmados por Michel
+
+**Validação:** `pytest tests/ -q` → ✅ 263/263 — inclui 8 testes novos (pergunta real, múltiplas perguntas, instrução com "?", "Tudo bem?" sozinho, "Olá tudo bem?", URL com "?", XML header, regressão sem pergunta). Zero regressões.
+
+---
+
 ## 2026-08-18 — Correção de status: cliente encaminhando extratos para processamento
 
 ### 18/08 — §8.8 Cliente ENC:/EXTRATO com texto vazio: "Concluída" corrigido para "Aguardando Finaud"
