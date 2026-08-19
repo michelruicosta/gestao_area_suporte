@@ -132,12 +132,18 @@ def criar_banco() -> None:
             'remetente_ultima_msg TEXT',
             'destinatario_ultima_msg TEXT',
             'reply_to_ultima_msg TEXT',
+        ]:
+            try:
+                conn.execute(f'ALTER TABLE threads ADD COLUMN {col_def}')
+            except Exception:
+                pass  # coluna já existe
+        for col_def in [
             'classif_principal INTEGER NOT NULL DEFAULT 0',
             'classif_descartes INTEGER NOT NULL DEFAULT 0',
             'classif_revisao   INTEGER NOT NULL DEFAULT 0',
         ]:
             try:
-                conn.execute(f'ALTER TABLE threads ADD COLUMN {col_def}')
+                conn.execute(f'ALTER TABLE log_coletas ADD COLUMN {col_def}')
             except Exception:
                 pass  # coluna já existe
     print(f'Banco criado/verificado: {BANCO}')

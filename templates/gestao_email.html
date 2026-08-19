@@ -987,8 +987,9 @@ async function carregarLogColetas() {
       </tr>`;
     }).join('');
   } catch (e) {
+    const detalhe = e && e.message ? ` — ${escHtml(e.message)}` : '';
     document.getElementById('tbody-log').innerHTML =
-      '<tr><td colspan="6" class="vazio">Erro ao carregar log.</td></tr>';
+      `<tr><td colspan="6" class="vazio" style="color:#c0392b;">Erro ao carregar log${detalhe}</td></tr>`;
   }
 }
 
