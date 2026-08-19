@@ -70,13 +70,17 @@ _RETORNO_SINAIS_FORTES = [
     'COMUNICAÇÃO DE INCONSISTÊNCIA',
     'INDICIO DE PROBLEMA DE QUALIDADE',
     'INDÍCIO DE PROBLEMA DE QUALIDADE',
+    'INDICIOS DE PROBLEMA DE QUALIDADE',
+    'INDÍCIOS DE PROBLEMA DE QUALIDADE',
     'COMUNICACAO DE VARIACAO RELEVANTE',   # C51: título exato do comunicado BACEN
     'COMUNICAÇÃO DE VARIAÇÃO RELEVANTE',   # idem com acento
     'REITERACAO',                   # 1ª/2ª reiteração de comunicado BACEN
     'REITERAÇÃO',                   # idem com acento
+    'REITERACOES',                  # plural sem acento
+    'REITERAÇÕES',                  # plural com acento
 ]
-_RETORNO_SINAIS_VCRD = ['VCRD', 'CRITICA VCRD', 'CRÍTICA VCRD']
-_RETORNO_SINAIS_INDICIO = ['INDICIO', 'INDÍCIO']
+_RETORNO_SINAIS_VCRD = ['VCRD', 'CRITICA VCRD', 'CRÍTICA VCRD', 'CRITICAS VCRD', 'CRÍTICAS VCRD']
+_RETORNO_SINAIS_INDICIO = ['INDICIO', 'INDÍCIO', 'INDICIOS', 'INDÍCIOS']
 
 # Padrões DDR_2011 (regex aplicado sobre texto em maiúsculo)
 _DDR_PADROES = [
@@ -87,7 +91,7 @@ _DDR_PADROES = [
     r'\bPCAM\b',
     r'(?<!/)\bTVM\b',          # não dispara em "/TVM" (ex: TPF/TVM em contexto DLO)
     r'OP\.\s*SELIC',
-    r'POSI[CÇ][AÃ][OÃ] DE C[AÂ]MBIO',
+    r'POSI[CÇ](?:[AÃ][OÃ]|[OÕ]ES) DE C[AÂ]MBIO',   # singular e plural: POSIÇÃO/POSIÇÕES
     r'\bPU[S]?\b',
     # C43: VMTM removido — sigla de cálculo que aparece em suporte; nenhuma thread DDR depende dele
     r'CADASTRO DE A[ÇC][OÕ]ES E OP[ÇC][OÕ]ES',
@@ -110,8 +114,8 @@ _MARC_CITACAO = re.compile(
 _INTERNO_PADROES_ASSUNTO = [
     r'BOAS.VINDAS',
     r'BOA.VINDA',
-    r'BEM.VINDO',
-    r'COMUNICADO DE SA[IÍ]DA',
+    r'BEM.VINDOS?',                        # singular e plural: BEM-VINDO / BEM-VINDOS
+    r'COMUNICADOS? DE SA[IÍ]DA',           # singular e plural: COMUNICADO / COMUNICADOS
     r'C[OÓ]DIGO DE VERIFICA',
     r'CONVIDOU VOC[EÊ]',
     r'INGRESSAR.*TEAMS',
@@ -300,10 +304,10 @@ def _classificar_deterministico(
     if 'QUALIDADE BACEN' in au:
         return _ok(['RETORNO_BACEN'], "'QUALIDADE BACEN' no assunto", 'RETORNO - Regra 01')
     # 'AJUSTE BACEN' no assunto → cliente pedindo ajuste por crítica do BACEN
-    if 'AJUSTE BACEN' in au:
-        return _ok(['RETORNO_BACEN'], "'AJUSTE BACEN' no assunto", 'RETORNO - Regra 01')
-    # 'CRITICAS AO' no assunto → BC apontando críticas ao CADOC enviado
-    if 'CRITICAS AO' in au or 'CRÍTICAS AO' in au:
+    if 'AJUSTE BACEN' in au or 'AJUSTES BACEN' in au:
+        return _ok(['RETORNO_BACEN'], "'AJUSTE(S) BACEN' no assunto", 'RETORNO - Regra 01')
+    # 'CRITICA(S) AO' no assunto → BC apontando crítica(s) ao CADOC enviado
+    if 'CRITICAS AO' in au or 'CRÍTICAS AO' in au or 'CRITICA AO' in au or 'CRÍTICA AO' in au:
         return _ok(['RETORNO_BACEN'], "'CRITICAS AO' no assunto", 'RETORNO - Regra 01')
 
     # Camada 1b — CADOC pelo assunto
@@ -314,7 +318,9 @@ def _classificar_deterministico(
     if re.search(r'\bS5\b', au):
         cats.add('S5')
     # FORCAPITAL só no assunto — no corpo aparece como endereço de e-mail ou contexto de suporte
-    _FC_SINAIS = ('FORCAPITAL', 'FOR CAPITAL', 'FOR-CAPITAL', 'PROJECAO DE CAPITAL', 'PROJEÇÃO DE CAPITAL')
+    _FC_SINAIS = ('FORCAPITAL', 'FOR CAPITAL', 'FOR-CAPITAL',
+                  'PROJECAO DE CAPITAL',  'PROJEÇÃO DE CAPITAL',
+                  'PROJECOES DE CAPITAL', 'PROJEÇÕES DE CAPITAL')
     if any(s in au for s in _FC_SINAIS):
         cats.add('FORCAPITAL')
     # Códigos COS DLO solo no assunto (ex.: '4010 Trinus', 'COSIF'S 4010') — no corpo podem ser contexto (C30)

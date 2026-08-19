@@ -1894,7 +1894,7 @@ Validado em 303 threads reais (29/07/2026). Cobertura: 100%. R5 se aplica (4 cas
 | Sinal | O que aparece | Confiança |
 |---|---|---|
 | Assunto ou corpo | "FORCAPITAL", "ForCapital", "For Capital", "For-Capital" (qualquer variação) | Alta |
-| Assunto ou corpo | "projeção de capital" | Alta |
+| Assunto ou corpo | "projeção de capital" ou "projeções de capital" (singular ou plural) | Alta |
 | Assunto ou corpo | "projeção" isolado | Média — confirmar que não é projeção de outro relatório |
 | Destinatário | suporteforcapital@finaud.com.br | Alta |
 | Exemplos reais | "poderia nos enviar a projeção de capital para 36 meses?"; "Acesso ForCapital + credenciais"; "Encaminhamos projeção de capital DEZ/25 a DEZ/28" | — |
