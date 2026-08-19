@@ -303,6 +303,11 @@ def test_buscar_imagens_filtra_por_indice(tmp_path, monkeypatch):
     ('REMITLY : Movimento 2026.08.04',                              'DDR_2011'),
     # Correção 05 — 12/08/2026: PI EXPOSURE é relatório diário de posição (DDR)
     ('PI Exposure MiraeAsset Securities in Brazil_HK - 20260804_AUDIT', 'DDR_2011'),
+    # Correção 56 — 19/08/2026: sigla colada com código de 4 dígitos (sem separador) — ex.: DRL2160_072026
+    ('RE: DRL2160_072026.',        'DRL_2160'),
+    ('DRM2060_062026',             'DRM_2060'),
+    ('DLO2061_062026',             'DLO_2061'),
+    ('DLI2062_062026',             'DLI_2062'),
 ])
 def test_camada1_assunto_detecta_cadoc(assunto, esperado):
     """Camada 1: assunto com sinal inequívoco → categoria correta."""
@@ -1480,3 +1485,39 @@ def test_correcao55_enc_instrucao_normativa_sem_cadoc_e_suporte():
     r = _classificar('ENC: INSTRUÇÃO NORMATIVA BCB Nº 749', '', [])
     assert r['categorias'] == ['SUPORTE'], \
         f"C55: esperado SUPORTE para encaminhamento sem CADOC no corpo, obtido {r['categorias']}"
+
+
+# ---------------------------------------------------------------------------
+# C56 — sigla colada com código de 4 dígitos no assunto → categoria correta
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize('assunto,esperado', [
+    # Caso real: "RE: DRL2160_072026." — DRL colado com o código 2160 (sem espaço/separador)
+    # Antes: ir para SUPORTE (r'\bDRL\b' falha pois "2" é char de palavra após "DRL")
+    # Depois: detectar DRL_2160 via padrão r'(?<!\w)DRL\d{4}'
+    ('RE: DRL2160_072026.',        'DRL_2160'),
+    ('DRL2160_062026',             'DRL_2160'),
+    ('DRM2060_072026',             'DRM_2060'),
+    ('DLO2061_062026',             'DLO_2061'),
+    ('DLI2062_062026',             'DLI_2062'),
+])
+def test_correcao56_sigla_colada_com_codigo(assunto, esperado):
+    """C56 — 'SIGLA+4dígitos' colados no assunto → detecta a categoria mesmo sem separador."""
+    r = _classificar(assunto)
+    assert esperado in r['categorias'], (
+        f"Assunto '{assunto}': esperado '{esperado}', obtido {r['categorias']}"
+    )
+
+
+@pytest.mark.parametrize('assunto,esperado', [
+    ('DRL JULHO 2026',  'DRL_2160'),
+    ('DRM JUNHO',       'DRM_2060'),
+    ('DLO JUNHO 2026',  'DLO_2061'),
+    ('DLI MAIO 2026',   'DLI_2062'),
+])
+def test_correcao56_sigla_com_espaco_regress_nao_afetada(assunto, esperado):
+    """C56 — regressão: sigla com espaço continua detectando normalmente após a correção."""
+    r = _classificar(assunto)
+    assert esperado in r['categorias'], (
+        f"C56: regressão — '{assunto}': esperado '{esperado}', obtido {r['categorias']}"
+    )

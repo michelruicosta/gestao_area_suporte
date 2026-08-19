@@ -10,6 +10,79 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-08-19 — Classificador: sigla colada com código de 4 dígitos não detectada (C56)
+
+### 19/08 — Classificador: "DRL2160_072026" caindo em SUPORTE em vez de DRL_2160
+
+**🔎 Em miúdos:** quando o assunto do e-mail trazia o código do relatório colado à sigla sem espaço — como "RE: DRL2160_072026." — o sistema não reconhecia que era um e-mail de DRL e mandava para Suporte.
+
+**Problema:** o padrão `\bDRL\b` exige uma fronteira de palavra depois de "DRL". Em "DRL2160", o dígito "2" é um caractere de palavra — então não há fronteira, e o padrão falha. O mesmo problema atingia DRM, DLO e DLI quando escritos no formato SIGLA+código (ex.: DRM2060, DLO2061, DLI2062).
+
+**Causa raiz:** todos os 4 CADOCs usavam `\bSIGLA\b` em `_detectar_cadoc()`. O formato "SIGLA colada com código de 4 dígitos" não tem fronteira de palavra após a sigla.
+
+**Correção (commit a ser gerado):**
+- Adicionados 4 checks na Camada 1b (assunto) em `scripts/classificador_ia.py`, após o bloco C40:
+  - `(?<!\w)(?:DRL|DLR)\d{4}` → DRL_2160 (inclui typo DLR)
+  - `(?<!\w)DRM\d{4}` → DRM_2060
+  - `(?<!\w)DLO\d{4}` → DLO_2061
+  - `(?<!\w)DLI\d{4}` → DLI_2062
+- Restrito ao assunto (mesmo raciocínio do C40 para DDR: no corpo, referência ao relatório, não entrega)
+- 9 novos testes em `tests/test_classificador_ia.py` (C56): 5 casos de sigla colada + 4 regressões de sigla com espaço
+
+**Validação:** `pytest tests/ -q` → ✅ 287/287. Zero regressões.
+
+---
+
+## 2026-08-19 — Classificador: 9 padrões detectavam apenas singular (não plural)
+
+### 19/08 — Correções de plural em padrões do classificador (commit 688fe7f)
+
+**🔎 Em miúdos:** vários sinais de detecção no classificador aceitavam apenas a forma singular das palavras. Quando o cliente ou o sistema usava o plural (ex.: "Projeções de Capital", "Reiterações"), o e-mail ia para o destino errado.
+
+**Problema:** varredura completa do classificador revelou 9 padrões que cobriam apenas o singular:
+1. FORCAPITAL: "Projeção de Capital" — plural "Projeções" não detectado
+2. RETORNO sinais fortes: "Reiteração" — plural "Reiterações" não detectado
+3. RETORNO sinais fortes: "Indício de Problema de Qualidade" — plural "Indícios" não detectado
+4. RETORNO sinais VCRD: "Críticas VCRD" — versão com cedilha/acentuação alternativa
+5. RETORNO sinais VCRD: "Crítica VCRD" — singular sem cedilha
+6. DDR padrões: "Posição de Câmbio" — plural "Posições de Câmbio" não detectado
+7. Padrões INTERNO: "Bem-vindo" — plural "Bem-vindos" não detectado
+8. Padrões INTERNO: "Comunicado de Saída" — plural "Comunicados de Saída" não detectado
+9. Padrões diretos (Camada 1b): "Ajuste BACEN" — plural "Ajustes BACEN" + singular de "Crítica ao" sem cedilha
+
+**Correção** (`scripts/classificador_ia.py`):
+- `_FC_SINAIS`: adicionados 'PROJECOES DE CAPITAL' e 'PROJEÇÕES DE CAPITAL'
+- `_RETORNO_SINAIS_FORTES`: adicionados 'INDÍCIOS DE PROBLEMA DE QUALIDADE', 'REITERACOES', 'REITERAÇÕES'
+- `_RETORNO_SINAIS_VCRD`: adicionados 'CRITICAS VCRD', 'CRÍTICAS VCRD'
+- `_RETORNO_SINAIS_INDICIO`: adicionados 'INDICIOS', 'INDÍCIOS'
+- `_DDR_PADROES`: regex `POSI[CÇ][AÃ][OÃ]` expandido para `POSI[CÇ](?:[AÃ][OÃ]|[OÕ]ES)` (cobre plural)
+- `_INTERNO_PADROES_ASSUNTO`: `BEM.VINDO` → `BEM.VINDOS?`; `COMUNICADO DE SA[IÍ]DA` → `COMUNICADOS? DE SA[IÍ]DA`
+- Camada 1b direta: `'AJUSTE BACEN'` → `'AJUSTE BACEN' or 'AJUSTES BACEN'`; adicionados `'CRÍTICA AO'` e `'CRITICA AO'`
+
+**Impacto:** 2 e-mails do FORCAPITAL com "Projeções de Capital" no assunto reclassificados diretamente no banco (destino: FORCAPITAL).
+
+**Validação:** incluído na suíte de testes da sessão — 287 passando.
+
+---
+
+## 2026-08-19 — Admin: migração criava colunas na tabela errada
+
+### 19/08 — Bug de migração: colunas `classif_*` adicionadas à tabela `threads` em vez de `log_coletas`
+
+**🔎 Em miúdos:** quando o sistema tentava salvar os resultados de classificação no log de coletas, dava um erro genérico "Erro ao carregar log" — sem dizer o motivo. Na prática, as colunas necessárias nunca tinham sido criadas na tabela certa.
+
+**Problema:** o loop de migração que adicionava as colunas `classif_principal`, `classif_descartes` e `classif_revisao` rodava o `ALTER TABLE` na tabela `threads`, não na `log_coletas`. Resultado: a tabela certa ficava sem as colunas; qualquer leitura do log retornava erro de "no such column".
+
+**Causa raiz:** as novas colunas foram adicionadas ao loop de migração existente (que cobre `threads`), sem criar um loop separado para `log_coletas`.
+
+**Correção** (`scripts/banco_threads.py`, commit 265d7d4):
+- Criado loop de migração separado para `log_coletas`, com `try/except` por coluna
+- Erro genérico "Erro ao carregar log" no frontend corrigido para exibir o `e.message` real (template `gestao_email.html`)
+
+**Validação:** erro sumiu após reiniciar o servidor; log aparece corretamente no painel Admin.
+
+---
+
 ## 2026-08-18 — Correção de status: assinatura confundia detecção de cortesia
 
 ### 18/08 — §8.3 _so_cortesia: assinatura de e-mail contada como conteúdo real

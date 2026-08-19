@@ -330,6 +330,17 @@ def _classificar_deterministico(
     # No corpo pode ser referência ao relatório do cliente ("nosso relatório de DDR2011") — restrito ao assunto
     if re.search(r'(?<!\w)DDR\d{4}(?!\w)', au):
         cats.add('DDR_2011')
+    # C56: sigla colada com código 4 dígitos — ex.: "DRL2160_072026" (underscore após o código)
+    # r'\bDRL\b' falha porque dígito imediatamente após "DRL" elimina a fronteira de palavra (\b)
+    # Restrito ao assunto — mesmo raciocínio do C40 para DDR
+    if re.search(r'(?<!\w)(?:DRL|DLR)\d{4}', au):
+        cats.add('DRL_2160')
+    if re.search(r'(?<!\w)DRM\d{4}', au):
+        cats.add('DRM_2060')
+    if re.search(r'(?<!\w)DLO\d{4}', au):
+        cats.add('DLO_2061')
+    if re.search(r'(?<!\w)DLI\d{4}', au):
+        cats.add('DLI_2062')
     # C47: 'Saldos do dia DD/MM' no assunto = envio de saldos diários → SCD
     # No corpo, 'saldos do dia' pode aparecer como contexto/pedido — restrito ao assunto
     if re.search(r'SALDOS DO DIA\b', au):
