@@ -100,6 +100,7 @@ _DDR_PADROES = [
     r'\bRD\b',              # Remessa Diária — arquivos RD_MOEDA, RD_LFT, RD_NTN etc.
     r'SALDOS 4111 E POSI[CÇ][AÃ][OÃ] LFT',  # planilha ZIIN com DDR + SALDOS no mesmo arquivo
     r'CADASTRO.*RISKDRIVER|RISKDRIVER.*CADASTRO',  # cadastro de fundos no Risk Driver = entrega DDR (C27)
+    r'CADASTR\w*.*FUNDO',                          # C58: cadastramento de novo fundo = entra no fluxo DDR (Risk Driver)
     r'POSICAO\s+\d{2}[./]\d{2}[./]\d{4}',          # 'POSICAO DD.MM.AAAA' no assunto = arquivo de posição DDR (C28)
     r'\bEXTRATO[S]?\b',                             # extratos de conta/câmbio/aplicações = insumo DDR (C29)
 ]

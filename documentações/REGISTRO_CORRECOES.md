@@ -10,6 +10,20 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-08-19 — Classificador: CADASTRAMENTO NOVO FUNDO não detectado como DDR (C58)
+
+### 19/08 — Classificador: "CADASTRAMENTO NOVO FUNDO" caindo em SUPORTE em vez de DDR_2011
+
+**🔎 Em miúdos:** e-mail pedindo cadastro de novo fundo no sistema ia para a fila de suporte em vez de DDR.
+
+**Problema:** o assunto "URGENTE: CADASTRAMENTO NOVO FUNDO - AZUMI" não tinha RISKDRIVER nem outros sinais, então o classificador não detectava que se trata de fluxo DDR. A regra C27 (CADASTRO+RISKDRIVER) não cobria o caso onde RISKDRIVER não aparece no assunto.
+
+**Correção:** adicionado padrão `r'CADASTR\w*.*FUNDO'` à lista `_DDR_PADROES_ASSUNTO` em `scripts/classificador_ia.py` como C58. Thread "URGENTE: CADASTRAMENTO NOVO FUNDO - AZUMI" reclassificada manualmente de SUPORTE → DDR_2011 no banco.
+
+**Validação:** 292/292 testes passando ✅ — 5 novos casos C58 adicionados + 1 regressão C27.
+
+---
+
 ## 2026-08-19 — Classificador: sigla colada com código de 4 dígitos não detectada (C56)
 
 ### 19/08 — Classificador: "DRL2160_072026" caindo em SUPORTE em vez de DRL_2160

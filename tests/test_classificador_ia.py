@@ -1521,3 +1521,31 @@ def test_correcao56_sigla_com_espaco_regress_nao_afetada(assunto, esperado):
     assert esperado in r['categorias'], (
         f"C56: regressão — '{assunto}': esperado '{esperado}', obtido {r['categorias']}"
     )
+
+
+# ---------------------------------------------------------------------------
+# C58 — CADASTRAMENTO/CADASTRO + FUNDO no assunto → DDR_2011
+# ---------------------------------------------------------------------------
+@pytest.mark.parametrize('assunto,esperado', [
+    ('CADASTRAMENTO NOVO FUNDO - AZUMI',          'DDR_2011'),
+    ('URGENTE: CADASTRAMENTO NOVO FUNDO - AZUMI', 'DDR_2011'),
+    ('CADASTRO DE NOVOS FUNDOS',                  'DDR_2011'),
+    ('CADASTRO DO FUNDO PARA REGULATORIO',        'DDR_2011'),
+])
+def test_correcao58_cadastramento_fundo_ddr(assunto, esperado):
+    """C58 — CADASTR* + FUNDO no assunto → DDR_2011 (cadastro entra no fluxo Risk Driver)."""
+    r = _classificar(assunto)
+    assert esperado in r['categorias'], (
+        f"C58: '{assunto}': esperado '{esperado}', obtido {r['categorias']}"
+    )
+
+
+@pytest.mark.parametrize('assunto,esperado', [
+    ('CADASTRO DOS FUNDOS NO SISTEMA - RISKDRIVER', 'DDR_2011'),  # C27 continua funcionando
+])
+def test_correcao58_regress_c27_nao_afetada(assunto, esperado):
+    """C58 — regressão: C27 (CADASTRO+RISKDRIVER) continua detectando normalmente."""
+    r = _classificar(assunto)
+    assert esperado in r['categorias'], (
+        f"C58: regressão C27 — '{assunto}': esperado '{esperado}', obtido {r['categorias']}"
+    )

@@ -494,6 +494,23 @@ Ideias levantadas por Michel para evoluir o painel:
 
 ---
 
+### 🟡 CLASSIFICADOR — Avaliar remoção do limite de 3 mensagens por thread (identificado 19/08/2026)
+
+Hoje o classificador lê apenas as 3 primeiras mensagens de cada thread. Uma simulação mostrou que, sem esse limite, 120 threads seriam reclassificadas — a maioria adicionando uma segunda categoria CADOC (ex.: DLO + DLI, DDR + SCD).
+
+**Por que não mexer agora:** o sistema está funcionando bem (764/768). O impacto é grande e a decisão requer definir primeiro como distinguir entrega genuína de referência de passagem no corpo da mensagem.
+
+**O que decidir antes de implementar:**
+1. Estratégia de classificação: assunto manda (se sujeito já tem CADOC, corpo só confirma) vs. todos os sinais valem
+2. Revisar as 5 threads onde a categoria *muda* (não adiciona) para confirmar se a nova classificação seria correta
+3. Decidir se threads multi-categoria (DLO+DLI genuínos) devem ou não aparecer nas duas filas
+
+**Arquivo a alterar:** `scripts/classificador_ia.py` — linha `for msg in mensagens[:3]`
+
+---
+
+---
+
 ### 🟡 §8 — Threads "irmãs": quando a confirmação chega em thread separada (identificado 03/08/2026)
 
 Situação onde o cliente, em vez de responder na thread original, abre um e-mail novo para confirmar (ex.: "DDR transmitido no BACEN" chega em thread B, mas a thread A ainda aparece como Aguardando Cliente).
