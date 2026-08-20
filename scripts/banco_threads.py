@@ -244,6 +244,8 @@ _FRASES_PEDIDO_EXPLICITO = (
     'poderia encaminhar por gentileza',
     'pode encaminhar por gentileza',
     'por gentileza, encaminhe',
+    'solicito ',        # forma singular: "solicito também os balanços", "solicito que envie"
+    'vou precisar',    # "vou precisar dos COSIFs", "vou precisar que você"
 )
 
 _SAUDACAO_RE = re.compile(

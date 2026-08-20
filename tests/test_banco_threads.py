@@ -236,6 +236,57 @@ def test_status_muito_obrigado_conclui():
     assert status == 'Concluída', f'Esperado Concluída, got: {status} | {motivo}'
 
 
+def test_finaud_solicito_aguarda_cliente():
+    """§8.X: Finaud usa 'solicito' pedindo algo ao cliente → Aguardando Cliente.
+    Reproduz caso 'ENC: BANCO CENTRAL - INCONSISTENCIA DRM' (20/08/2026).
+    """
+    corpo = (
+        'Olá Luiza, bom dia.\r\n\r\nTudo bem?\r\n\r\n'
+        'Para eu conseguir verificar a crítica apontada, vou precisar dos '
+        "COSIFs de Junho (4010 e 4016).\r\nAproveitando, solicito também os "
+        'balanços e a planilha LEC.\r\n\r\nAtenciosamente,\r\nMonica Macedo'
+    )
+    msgs = [
+        _msg(CLIENTE, corpo='Prezados, segue a comunicação de inconsistência do DRM.'),
+        _msg(FINAUD, corpo=corpo),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Cliente', f'Esperado Aguardando Cliente, got: {status} | {motivo}'
+
+
+def test_finaud_vou_precisar_aguarda_cliente():
+    """§8.X: Finaud usa 'vou precisar' pedindo documentos → Aguardando Cliente."""
+    corpo = (
+        'Boa tarde, João.\r\n\r\n'
+        'Vou precisar dos extratos de junho para verificar a divergência.\r\n\r\n'
+        'Atenciosamente,\r\nAndrea Inacio'
+    )
+    msgs = [
+        _msg(CLIENTE, corpo='Prezados, encontrei uma divergência no DRM.'),
+        _msg(FINAUD, corpo=corpo),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Cliente', f'Esperado Aguardando Cliente, got: {status} | {motivo}'
+
+
+def test_finaud_recebemos_disponivel_conclui():
+    """§8.X: Finaud informa que geração está disponível → Concluída (não é pedido).
+    Reproduz caso 'Erro ao gerar o arquivo 4111' (20/08/2026).
+    """
+    corpo = (
+        'Boa tarde.\r\n\r\nTudo bem?\r\n\r\n'
+        'Recebemos a informação de que o cálculo e a geração do relatório '
+        'já está disponível.\r\nQualquer dúvida retorne.\r\nÀ disposição.\r\n\r\n'
+        'Atenciosamente,\r\nMonica Macedo'
+    )
+    msgs = [
+        _msg(CLIENTE, corpo='Bom dia, tive um erro ao gerar o arquivo 4111.'),
+        _msg(FINAUD, corpo=corpo),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída', f'Esperado Concluída, got: {status} | {motivo}'
+
+
 def test_status_transmitido_bacen_no_historico_nao_conta():
     """'transmitido no BACEN' só no histórico citado (linha >) → NÃO encerra."""
     corpo = 'Preciso do relatório atualizado.\n> Transmitido no BACEN em agosto.'
