@@ -130,10 +130,10 @@ def test_status_transmitida_bacen_variacao():
 
 
 def test_status_transmitido_sem_mencao_bacen():
-    """§8.3: cliente abre mensagem com 'Transmitido os DLO e DLI' sem dizer 'no BACEN' → Concluída.
-    Reproduz caso 'DLO | DLI - Referente a MAI.2026' (20/08/2026).
+    """§8.3: 'Boa tarde!\n\nTransmitido os DLO e DLI' sem dizer 'no BACEN' → Concluída.
+    Reproduz caso real 'DLO | DLI - Referente a MAI.2026' (20/08/2026): saudação precede 'Transmitido'.
     """
-    corpo = 'Transmitido os DLO e DLI referente a MAIO de 2026:\n\n[image: screenshot.png]'
+    corpo = 'Boa tarde!\n\nTransmitido os DLO e DLI referente a MAIO de 2026:\n\n[image: screenshot.png]'
     msgs = [
         _msg(FINAUD, corpo='Prezados, seguem remessas DLO e DLI de maio/2026 para transmissão ao BC.'),
         _msg(CLIENTE, corpo=corpo),

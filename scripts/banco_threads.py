@@ -416,7 +416,8 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         return any(t_content.startswith(f) or t_content == f for f in _cortesia)
 
     # Regra especial §8.3: confirmação de transmissão ao BACEN — independente de quem enviou
-    _inicio_transmitido = bool(re.match(r'\s*transmitid[oa]s?\b', texto_lower))
+    # re.search com âncora de linha: "Transmitido" pode vir após saudação ("Boa tarde!\n\nTransmitido...")
+    _inicio_transmitido = bool(re.search(r'(?:^|\r?\n)\s*transmitid[oa]s?\b', texto_lower))
     if ('transmitido no bacen' in texto_lower
             or 'transmitida no bacen' in texto_lower
             or (_inicio_transmitido and '?' not in texto_lower)):
