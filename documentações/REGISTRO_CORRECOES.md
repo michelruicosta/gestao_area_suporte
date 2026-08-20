@@ -10,6 +10,113 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-08-20 — Banco: "solicito/vou precisar" da Finaud não detectado como pedido
+
+### 20/08 — _eh_cortesia_finaud: Finaud pede algo com "solicito" ou "vou precisar" → marcava Concluída
+
+**🔎 Em miúdos:** quando a Finaud dizia "solicito também os balanços" ou "vou precisar dos COSIFs", o banco marcava a conversa como "Concluída" — como se tudo estivesse resolvido. Na prática a Finaud estava pedindo algo ao cliente e aguardava resposta.
+
+**Problema:** `_FRASES_PEDIDO_EXPLICITO` só tinha formas com "solicitamos" (plural). As formas singulares "solicito" e "vou precisar" não eram reconhecidas como pedido. Resultado: `_eh_cortesia_finaud()` retornava True (texto curto, nenhum sinal de pedido detectado) → status Concluída incorreto.
+
+**Correção (scripts/banco_threads.py, commit a7d1e9c):**
+- Adicionados `'solicito '` e `'vou precisar'` à tupla `_FRASES_PEDIDO_EXPLICITO`
+- Esses itens são verificados contra o texto completo (antes do truncamento de assinatura) para cobrir casos como "Tudo bem? [...] solicito também os balanços"
+
+**Caso real identificado na auditoria de 20/08/2026:** ENC BANCO CENTRAL INCONSISTENCIA DRM — Finaud dizia "Tudo bem? [...] vou precisar dos COSIFs" e era marcada como Concluída.
+
+**Validação:** `pytest tests/ -q` → ✅ 307/307 — 3 novos testes (solicito singular, vou precisar, regressão de Concluída existente). Zero regressões.
+
+---
+
+## 2026-08-20 — Banco: saudação pura ("Boa Tarde + Att") marcava Concluída incorretamente
+
+### 20/08 — _determinar_status: saudação pura sem palavra de confirmação → "Aguardando Finaud"
+
+**🔎 Em miúdos:** quando um cliente mandava só "Boa Tarde" seguido de assinatura, o banco marcava a conversa como "Concluída" — igual a quando o cliente dizia "Muito obrigado". Os dois ficavam iguais depois de remover as frases de cortesia (ambos viravam zero caracteres restantes), e o sistema não sabia distinguir um do outro.
+
+**Problema:** `_so_cortesia()` retornava True tanto para "Muito obrigado" quanto para "Boa Tarde + Att" — ambos resultam em texto vazio após remover cortesia. Sem distinção, qualquer e-mail curto do cliente virava Concluída.
+
+**Correção (scripts/banco_threads.py, commit 6f2e3d6):**
+- Nova constante `_CONFIRMACAO_EXPLICITA` com palavras que confirmam conclusão ("obrigado", "deu certo", "ok", "recebido", "perfeito", "valeu", "confirmado", etc.)
+- Em `_determinar_status`, o path de Concluída agora exige: `_so_cortesia(texto_novo)` **e** `_CONFIRMACAO_EXPLICITA.search(texto_lower)`
+- Saudação pura sem palavra de confirmação → "Aguardando Finaud / Cliente enviou saudação — possível entrega de arquivo"
+
+**Impacto identificado na auditoria de 20/08/2026:** 9 threads de Paulo Henrique (Planner) com CADOC 4111 e DDR — e-mails de entrega com "Boa Tarde\r\n\r\nSegue\r\n\r\nAtt" que marcavam Concluída incorretamente.
+
+**Validação:** `pytest tests/ -q` → ✅ 304/304 — 4 novos testes (Boa Tarde+Att, Bom dia+Att, texto vazio, Muito obrigado). Zero regressões.
+
+---
+
+## 2026-08-20 — Banco: "Segue" no início de linha não é confirmação conclusiva
+
+### 20/08 — _determinar_status: "Segue [algo]" → cliente entregando conteúdo → "Aguardando Finaud"
+
+**🔎 Em miúdos:** quando o cliente dizia "Segue em anexo" ou simplesmente "Segue" no começo do texto, o banco às vezes marcava como "Concluída". Isso porque o texto era tão curto que passava pelo filtro de cortesia — mas "Segue" indica entrega de arquivo, não encerramento.
+
+**Problema:** "Segue\r\n\r\nAtt" e "Segue relação." resultam em texto muito curto após remover cortesia → `_so_cortesia()` retornava True → status Concluída (via `_CONFIRMACAO_EXPLICITA`, fix anterior) ou Aguardando Finaud por caminho errado. O caminho correto é reconhecer "Segue" como entrega ativa.
+
+**Correção (scripts/banco_threads.py, commit cfdde9d):**
+- Adicionado check `re.search(r'(?:^|\r?\n)\s*segue\b', texto_lower)` em `_determinar_status`, **após** o bloco EXTRATO/ENC (para não interferir com "Segue banvox" + assunto de extrato)
+- Se encontrado "Segue" no início de linha → "Aguardando Finaud / Cliente enviou conteúdo — aguarda processamento da Finaud"
+
+**Impacto identificado na auditoria de 20/08/2026:** 10 threads incorretamente Concluída, incluindo Paulo Henrique (Planner) com DDR de datas múltiplas.
+
+**Validação:** `pytest tests/ -q` → ✅ 300/300 — 4 novos testes (Segue sozinho, Segue relação, Segue em anexo, regressão de obrigado/deu certo). Zero regressões.
+
+---
+
+## 2026-08-20 — Banco: "Transmitido" no meio do e-mail não detectado
+
+### 20/08 — _determinar_status: "Transmitido" após saudação não fechava como Concluída
+
+**🔎 Em miúdos:** quando o cliente escrevia "Boa tarde!\r\n\r\nTransmitido os DLO e DLI..." o banco não reconhecia que o cliente estava confirmando a transmissão, e deixava a thread como "Aguardando Finaud". Só funcionava se "Transmitido" fosse a primeira palavra do e-mail.
+
+**Problema:** `re.match(r'\s*transmitid[oa]s?\b', texto_lower)` só casa no início da string. Após "Boa tarde!\r\n\r\n", o regex falhava.
+
+**Correção (scripts/banco_threads.py, commit edca51c):**
+- Trocado `re.match` por `re.search(r'(?:^|\r?\n)\s*transmitid[oa]s?\b', texto_lower)` — ancora de linha cobre "Transmitido" no início de qualquer linha
+
+**Caso real identificado:** DLO | DLI - Referente a MAI.2026 (auditoria 20/08/2026).
+
+**Validação:** `pytest tests/ -q` → ✅ 296/296 — teste existente atualizado para incluir "Boa tarde!" antes de "Transmitido". Zero regressões.
+
+---
+
+## 2026-08-20 — Banco: "Transmitido" sem "ao BACEN" não fechava como Concluída
+
+### 20/08 — _determinar_status: confirmação de transmissão do cliente sem menção explícita ao BACEN
+
+**🔎 Em miúdos:** quando o cliente confirmava "Transmitido os DLO e DLI referente a MAIO de 2026" sem dizer "ao BACEN", o banco não reconhecia como confirmação e deixava como "Aguardando Finaud".
+
+**Problema:** a detecção de transmissão exigia a frase "ao BACEN" ou "ao BC" logo após "Transmitido". Clientes que escreviam apenas "Transmitidos os arquivos" ou "Transmitido o DLO de maio" não eram detectados.
+
+**Correção (scripts/banco_threads.py, commit 1b6c3b9):**
+- `_inicio_transmitido` detecta "Transmitido[a/s]" no início de linha (qualquer variação)
+- Proteção: se o texto contém `?`, mantém "Aguardando Finaud" (cliente tem dúvida)
+- Proteção: o check de `?` roda após o sign-off truncation para não ser enganado por URLs com `?` na assinatura
+
+**Validação:** `pytest tests/ -q` → ✅ 296/296 — 2 novos testes. Zero regressões.
+
+---
+
+## 2026-08-20 — Banco: "agradecimento conclusivo" não detectado como Concluída
+
+### 20/08 — _so_cortesia: "nos ajudou muito" e saudações com ? não removidos antes de avaliar
+
+**🔎 Em miúdos:** quando o cliente dizia "Muito obrigado, nos ajudou muito!" o banco não reconhecia como confirmação de conclusão e deixava como "Aguardando Finaud". Também, "Tudo bem?" era contado como ponto de interrogação e fazia o código achar que havia uma pergunta.
+
+**Problema:**
+- `_CORTESIA` não cobria "nos ajudou", "me ajudou", "bom final de semana", "boa semana"
+- `_so_cortesia()` verificava `'?' in texto` antes de remover saudações — "Tudo bem?" estava no texto e disparava o "tem pergunta" falsamente
+
+**Correção (scripts/banco_threads.py, commit 263a9b4):**
+- `_CORTESIA` ampliada com: "nos ajudou", "me ajudou", "ajudou", "bom final de semana", "boa semana"
+- `_so_cortesia()` agora remove saudações com `?` (usando `_SAUDACOES_PERGUNTA`) antes de checar `'?' in texto`
+
+**Validação:** `pytest tests/ -q` → ✅ 294/294 — 2 novos testes (Oslo DLO e TRADERS RSA 2030). Zero regressões.
+
+---
+
 ## 2026-08-20 — Banco: status "Concluída" incorreto por imagens de assinatura e por Finaud pedindo ação
 
 ### 20/08 — _determinar_status: Bug A (imagens contadas como arquivo) + Bug B (Finaud pediu ação mas status era Concluída)

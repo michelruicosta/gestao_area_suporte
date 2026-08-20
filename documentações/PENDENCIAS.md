@@ -494,6 +494,23 @@ Ideias levantadas por Michel para evoluir o painel:
 
 ---
 
+### 🟡 CLASSIFICADOR — DLI+DLO no mesmo assunto: hoje grava só o primeiro (identificado 20/08/2026)
+
+Quando o assunto menciona DLI e DLO juntos (ex.: `DLI (2062) / DLO (2061)`), o classificador grava apenas a categoria que aparece primeiro no assunto. Critério confirmado por Michel em 20/08/2026 como correto para agora.
+
+**Por que reavaliar futuramente:** threads com DLI+DLO genuínos (cliente pedindo ou entregando os dois) deveriam aparecer nas filas de ambas as categorias no painel — hoje aparecem só na primeira.
+
+**O que decidir antes de implementar:**
+1. Confirmar quais threads com DLI+DLO são entregas genuínas dos dois (vs. referência de passagem)
+2. Decidir se o painel deve exibir a thread nas duas filas (DLI e DLO) ou numa fila unificada
+3. Avaliar impacto na contagem e no painel delta
+
+**Arquivo a alterar:** `scripts/classificador_ia.py` — lógica de acúmulo de categorias quando assunto tem mais de um CADOC.
+
+**Quando fazer:** após a Fase 1 estar rodando em produção.
+
+---
+
 ### 🟡 CLASSIFICADOR — Avaliar remoção do limite de 3 mensagens por thread (identificado 19/08/2026)
 
 Hoje o classificador lê apenas as 3 primeiras mensagens de cada thread. Uma simulação mostrou que, sem esse limite, 120 threads seriam reclassificadas — a maioria adicionando uma segunda categoria CADOC (ex.: DLO + DLI, DDR + SCD).
