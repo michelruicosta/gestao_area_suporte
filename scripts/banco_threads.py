@@ -480,6 +480,9 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     # §8.8: cliente encaminhou algo (ENC:/FWD: ou assunto com EXTRATO) com texto vazio → Finaud precisa processar
     if _so_cortesia(texto_novo) and (_ENC_PREFIX.match(assunto.strip()) or _EXTRATO_RE.search(assunto)):
         return 'Aguardando Finaud', 'Cliente encaminhou — aguarda processamento da Finaud'
+    # §8.8b: "Segue [algo]" no início de linha = cliente entregando conteúdo — nunca é confirmação conclusiva
+    if re.search(r'(?:^|\r?\n)\s*segue\b', texto_lower):
+        return 'Aguardando Finaud', 'Cliente enviou conteúdo — aguarda processamento da Finaud'
     if _so_cortesia(texto_novo):
         return 'Concluída', 'Cliente confirmou — sem pendência'
     return 'Aguardando Finaud', 'Cliente escreveu — aguarda resposta da Finaud'

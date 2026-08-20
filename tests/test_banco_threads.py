@@ -149,6 +149,54 @@ def test_status_transmitido_sem_bacen_com_pergunta_nao_encerra():
     assert status == 'Aguardando Finaud'
 
 
+def test_status_segue_sozinho_aguarda_finaud():
+    """§8.3: cliente manda só 'Segue' (entregando arquivo) → Aguardando Finaud.
+    Reproduz caso DDR DIA 28/07 — Paulo Henrique envia só 'Segue' + assinatura (20/08/2026).
+    """
+    corpo = 'Segue\r\n\r\n\r\nAtt\r\n\r\nPaulo Henrique\r\nPlanner SCD – Financeiro/SPB'
+    msgs = [
+        _msg(FINAUD, corpo='Prezado Paulo, segue remessa DDR para transmissão ao BC.'),
+        _msg(CLIENTE, corpo=corpo),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status} | {motivo}'
+
+
+def test_status_segue_relacao_aguarda_finaud():
+    """§8.3: 'Boa tarde! Segue relação.' → Aguardando Finaud.
+    Reproduz caso 'Informações para DDRs de 29/07 a 05/08/2026' (20/08/2026).
+    """
+    corpo = 'Boa tarde!\r\n\r\nSegue relação.\r\n\r\nAtenciosamente,\r\nLeonardo Almeida\r\nTesouraria'
+    msgs = [
+        _msg(FINAUD, corpo='Prezado Leonardo, favor encaminhar a relação dos DDRs.'),
+        _msg(CLIENTE, corpo=corpo),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status} | {motivo}'
+
+
+def test_status_segue_em_anexo_aguarda_finaud():
+    """§8.3: 'Segue em anexo.' → Aguardando Finaud."""
+    corpo = 'Segue em anexo.\r\n\r\nAtenciosamente,\r\nGabriel Santos'
+    msgs = [
+        _msg(FINAUD, corpo='Prezado Gabriel, favor encaminhar o COS4010.'),
+        _msg(CLIENTE, corpo=corpo),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status} | {motivo}'
+
+
+def test_status_obrigado_deu_certo_conclui():
+    """§8.3: 'Deu certo, obrigada!' → Concluída (não deve ser afetado pela regra do segue)."""
+    corpo = 'Prezados, boa tarde,\r\n\r\ndeu certo, obrigada!\r\n\r\nAtenciosamente,\r\nTalita Santana'
+    msgs = [
+        _msg(FINAUD, corpo='Prezada Talita, efetuamos o cadastro do novo fundo.'),
+        _msg(CLIENTE, corpo=corpo),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída', f'Esperado Concluída, got: {status} | {motivo}'
+
+
 def test_status_transmitido_bacen_no_historico_nao_conta():
     """'transmitido no BACEN' só no histórico citado (linha >) → NÃO encerra."""
     corpo = 'Preciso do relatório atualizado.\n> Transmitido no BACEN em agosto.'
