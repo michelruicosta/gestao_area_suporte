@@ -297,6 +297,8 @@ def _so_cortesia(texto: str) -> bool:
     # Remove URLs residuais (podem conter '?' que não indica pergunta real)
     texto = re.sub(r'https?://\S+', '', texto)
     texto = re.sub(r'\[https?://[^\]]*\]', '', texto)
+    # Remove menções @Nome<mailto:email> do Outlook/Teams — não é conteúdo real
+    texto = re.sub(r'@[^<\n]+<mailto:[^>]+>', '', texto, flags=re.IGNORECASE)
     # Remove "tudo bem?", "tudo bom?" — saudações sociais que não são perguntas reais
     texto = _SAUDACOES_PERGUNTA.sub('', texto)
     if '?' in texto:

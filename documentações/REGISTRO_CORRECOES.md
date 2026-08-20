@@ -10,6 +10,26 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-08-20 — Banco: @mention do Outlook impedia detecção de "Muito obrigado"
+
+### 20/08 — _so_cortesia: menção @Nome<mailto:...> não era removida antes de avaliar cortesia
+
+**🔎 Em miúdos:** quando o cliente agradecia usando a menção do Outlook ("Muito obrigado @Monica Macedo") o sistema ficava com a thread como "Aguardando Finaud" — porque o `<mailto:monica.macedo@finaud.com.br>` ficava no texto depois de remover os agradecimentos, e o tamanho excedia o limite de "só cortesia".
+
+**Problema:** `_so_cortesia()` remove URLs `https://` mas não remove padrões `@Nome<mailto:email>` do Outlook. Com o `<mailto:...>` no texto, o "restante" após remover frases de cortesia ficava com mais de 15 chars → `_so_cortesia()` retornava False → a condição `_so_cortesia() and _CONFIRMACAO_EXPLICITA` nunca era ativada → caía no `return AF`.
+
+**Correção (scripts/banco_threads.py, Fix D, 20/08/2026):**
+- Em `_so_cortesia()`, após as linhas de remoção de URLs: `texto = re.sub(r'@[^<\n]+<mailto:[^>]+>', '', texto, flags=re.IGNORECASE)`
+- Remove completamente padrões como `@Monica Macedo<mailto:monica.macedo@finaud.com.br>` antes da avaliação
+
+**Caso real:** thread "4010 Trinus" — cliente respondeu "Muito obrigado @Monica Macedo<mailto:...>" e ficava como Aguardando Finaud.
+
+**Impacto:** 2 threads corrigidas (AF → Concluída).
+
+**Validação:** `pytest tests/ -q` → ✅ 313/313 — 1 novo teste. Zero regressões. Recálculo: 1157 threads.
+
+---
+
 ## 2026-08-20 — Banco: frase de entrega quebrada por quebra de linha não encerrava thread
 
 ### 20/08 — texto_flat: frases de entrega com \r\n no meio não eram detectadas

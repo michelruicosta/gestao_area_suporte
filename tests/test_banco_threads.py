@@ -970,6 +970,23 @@ def test_status_arquivos_transmitidos_com_pergunta_nao_encerra():
 
 # ── Fix C — frase de entrega quebrada por \r\n não impedia Concluída (20/08/2026) ──
 
+def test_status_mencao_outlook_nao_bloqueia_obrigado():
+    """Fix D: '@Monica Macedo<mailto:...>' no texto não deve impedir detecção de 'Muito obrigado'.
+    Caso real: '4010 Trinus' — cliente agradeceu com @mention do Outlook → ficava AF (20/08/2026).
+    """
+    corpo = (
+        'Boa tarde,\r\n\r\n'
+        'Muito obrigado @Monica Macedo<mailto:monica.macedo@finaud.com.br>.\r\n\r\n'
+        '​Atenciosamente,​​\r\n\r\nLuiz Eduardo Coelho Filho\r\nRisco'
+    )
+    msgs = [
+        _msg(FINAUD, corpo='Conforme solicitado, segue os arquivos de substituição.'),
+        _msg(CLIENTE, corpo=corpo),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída', f'Esperado Concluída, got: {status} | {motivo}'
+
+
 def test_status_segue_em_anexo_quebrado_por_linha_conclui():
     """Fix C: 'segue em\\r\\nanexo' (linha quebrada) → Concluída.
     Caso real: TRINUS DTVM - Subst. DDR e DRM (ABR e MAR/2026).
