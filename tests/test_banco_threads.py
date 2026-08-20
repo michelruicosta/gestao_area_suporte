@@ -230,6 +230,33 @@ def test_status_veto_obrigado_com_pergunta():
     assert bt._determinar_status(msgs)[0] == 'Aguardando Finaud'
 
 
+def test_status_cliente_obrigado_nos_ajudou():
+    """§8.3: cliente agradece com 'nos ajudou muito' → Concluída.
+    Reproduz caso 'Erro em classificação FPR no DLO' (Oslo, 20/08/2026).
+    """
+    corpo = 'Boa tarde, Obrigado Andrea, nos ajudou muito. Bom final de semana.'
+    msgs = [
+        _msg(FINAUD, corpo='Prezados, segue análise do erro de classificação FPR.'),
+        _msg(CLIENTE, corpo=corpo),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída', f'Esperado Concluída, got: {status} | {motivo}'
+
+
+def test_status_cliente_muito_obrigado_ajudou():
+    """§8.3: cliente agradece com 'muito obrigado me ajudou muito' → Concluída.
+    Reproduz caso 'TRADERS - RSA 2030 - 06/2026 - PENDENTE' (20/08/2026).
+    """
+    corpo = 'Bom dia, Andrea, tudo bem ?\n\nmuito obrigado me ajudou muito.'
+    msgs = [
+        _msg(CLIENTE, corpo='Bom dia, Andrea, por favor poderia me ajudar?'),
+        _msg(FINAUD, corpo='Prezado Marcos, bom dia. Caso a instituição não possua...'),
+        _msg(CLIENTE, corpo=corpo),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída', f'Esperado Concluída, got: {status} | {motivo}'
+
+
 def test_status_cliente_so_pergunta():
     """Cliente fez apenas uma pergunta → Aguardando Finaud."""
     msgs = [_msg(CLIENTE, corpo='Boa tarde, quando será enviado o arquivo?')]

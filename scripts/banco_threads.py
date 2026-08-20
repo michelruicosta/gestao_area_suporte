@@ -165,7 +165,9 @@ _SEP_HISTORICO = re.compile(
 _CORTESIA = re.compile(
     r'\b(obrigad[ao]s?|muito\s+obrigad[ao]s?|ok|de\s+acordo|concordo|recebido|'
     r'perfeito|valeu|confirmado|certo|entendido|tudo\s+bem|sem\s+problemas|'
-    r'bom\s+dia|boa\s+tarde|boa\s+noite|at[ée]\s+mais|abraços?|att)\b',
+    r'bom\s+dia|boa\s+tarde|boa\s+noite|bom\s+final\s+de\s+semana|boa\s+semana|'
+    r'nos?\s+ajudou|me\s+ajudou|ajudou\s+(?:muito|bastante)|'
+    r'at[ée]\s+mais|abraços?|att)\b',
     re.IGNORECASE,
 )
 
@@ -282,6 +284,8 @@ def _so_cortesia(texto: str) -> bool:
     # Remove URLs residuais (podem conter '?' que não indica pergunta real)
     texto = re.sub(r'https?://\S+', '', texto)
     texto = re.sub(r'\[https?://[^\]]*\]', '', texto)
+    # Remove "tudo bem?", "tudo bom?" — saudações sociais que não são perguntas reais
+    texto = _SAUDACOES_PERGUNTA.sub('', texto)
     if '?' in texto:
         return False
     restante = _CORTESIA.sub('', texto.lower())
