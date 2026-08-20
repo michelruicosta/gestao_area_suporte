@@ -10,6 +10,25 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-08-20 — Banco: frase de entrega quebrada por quebra de linha não encerrava thread
+
+### 20/08 — texto_flat: frases de entrega com \r\n no meio não eram detectadas
+
+**🔎 Em miúdos:** quando a Finaud escrevia "segue em\r\nanexo" (linha quebrada no meio da frase pelo cliente de e-mail), o sistema não reconhecia como entrega — deixava a thread como "Aguardando Cliente". Na prática a Finaud já tinha entregado o arquivo.
+
+**Problema:** as verificações de frases de entrega (`'segue em anexo' in texto_lower`) buscam texto contínuo. Se o e-mail quebrou a linha entre "em" e "anexo", o texto tem "\r\n" no meio — e a busca não encontra. Casos reais: 2 threads TRINUS DTVM (ABR e MAR/2026) com "segue em\r\nanexo".
+
+**Correção (scripts/banco_threads.py, Fix C, 20/08/2026):**
+- Após `texto_lower = texto_novo.lower()`, adicionado `texto_flat = re.sub(r'\s+', ' ', texto_lower)` — versão com toda whitespace interna colapsada num espaço
+- Substituído `texto_lower` por `texto_flat` nas 3 verificações de frases de entrega (`_FRASES_ENTREGA`, `_FRASES_CONCLUSIVAS_FINAUD` nos dois branches)
+- Verificações que dependem de estrutura de linha (`_inicio_transmitido`, regex) continuam usando `texto_lower` intacto
+
+**Impacto real:** 13 threads corrigidas (12 AC → Concluída, 1 AF → Concluída). Mais amplo que os 2 casos TRINUS — outros e-mails também tinham frases quebradas.
+
+**Validação:** `pytest tests/ -q` → ✅ 312/312 — 1 novo teste. Zero regressões. Recálculo: 1157 threads.
+
+---
+
 ## 2026-08-20 — Classificador: DLI_2062 aparecia como principal quando DLO_2061 também estava presente
 
 ### 20/08 — _ordenar_cats: DLO_2061 passa a ter prioridade sobre DLI_2062 quando ambos coexistem

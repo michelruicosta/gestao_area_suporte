@@ -966,3 +966,20 @@ def test_status_arquivos_transmitidos_com_pergunta_nao_encerra():
     msgs = [_msg(CLIENTE, corpo=corpo)]
     status, _ = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud'
+
+
+# ── Fix C — frase de entrega quebrada por \r\n não impedia Concluída (20/08/2026) ──
+
+def test_status_segue_em_anexo_quebrado_por_linha_conclui():
+    """Fix C: 'segue em\\r\\nanexo' (linha quebrada) → Concluída.
+    Caso real: TRINUS DTVM - Subst. DDR e DRM (ABR e MAR/2026).
+    """
+    corpo = (
+        'Prezado Luís, boa tarde.\r\n\r\n'
+        'Devidos as alterações do ultimo COS4010/4060 encaminhado para nós, segue em\r\n'
+        'anexo os arquivos substituídos DDR e DRM referente a Abr2026, para serem\r\n'
+        'encaminhados ao BACEN.\r\n\r\nAgradeço e permaneço a disposição.'
+    )
+    msgs = [_msg(FINAUD, corpo=corpo, nomes_anexos=['02276653_2011_20260430_S_4.zip'])]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída', f'Esperado Concluída, got: {status} | {motivo}'

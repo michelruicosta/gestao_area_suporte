@@ -346,6 +346,9 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
 
     texto_novo  = _extrair_texto_novo(corpo_raw)
     texto_lower = texto_novo.lower()
+    # Versão sem quebras de linha internas — para frases de entrega que podem ser
+    # quebradas pelo cliente de e-mail (ex.: "segue em\r\nanexo" → "segue em anexo")
+    texto_flat  = re.sub(r'\s+', ' ', texto_lower)
 
     # §8.10: reação do Teams → cliente confirmou recebimento de mensagem da Finaud
     if _REACAO_TEAMS_RE.search(texto_novo):
@@ -448,7 +451,7 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
                 # Sub-caso 1b: verificar sinal de conclusão
                 if assunto.strip().upper().startswith('RES:'):
                     return 'Concluída', 'Finaud encaminhou confirmação ao cliente e registrou internamente'
-                if any(f in texto_lower for f in _FRASES_CONCLUSIVAS_FINAUD):
+                if any(f in texto_flat for f in _FRASES_CONCLUSIVAS_FINAUD):
                     return 'Concluída', 'Finaud encaminhou confirmação ao cliente e registrou internamente'
                 # 1b-padrão: sem sinal claro → Aguardando Cliente (erro mais seguro)
                 return 'Aguardando Cliente', 'Finaud escreveu ao cliente — aguarda retorno'
@@ -463,7 +466,7 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         if tem_arquivo_real:
             if _tem_pergunta_acao(texto_novo):
                 return 'Aguardando Cliente', 'Finaud enviou arquivo e aguarda resposta do cliente'
-            if any(f in texto_lower for f in _FRASES_ENTREGA):
+            if any(f in texto_flat for f in _FRASES_ENTREGA):
                 return 'Concluída', 'Finaud entregou arquivo ao cliente'
             if any(f in texto_lower for f in _FRASES_AGUARDANDO_FINAUD_ATIVA):
                 return 'Aguardando Finaud', 'Finaud prometeu retornar'
@@ -473,7 +476,7 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         # Sem arquivo real
         if assunto.strip().upper().startswith('RES:'):
             return 'Concluída', 'Finaud respondeu ao cliente'
-        if any(f in texto_lower for f in _FRASES_CONCLUSIVAS_FINAUD):
+        if any(f in texto_flat for f in _FRASES_CONCLUSIVAS_FINAUD):
             return 'Concluída', 'Finaud encerrou a conversa'
         if any(f in texto_lower for f in _FRASES_AGUARDANDO_FINAUD_ATIVA):
             return 'Aguardando Finaud', 'Finaud prometeu retornar'
