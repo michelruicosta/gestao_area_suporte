@@ -171,6 +171,17 @@ _CORTESIA = re.compile(
     re.IGNORECASE,
 )
 
+# Palavras que indicam confirmação explícita do cliente (distintas de mera saudação).
+# "Boa tarde + Att" = saudação pura → NÃO confirma nada → não deve marcar Concluída.
+# "Obrigado / Deu certo / Ok" = confirmação explícita → pode marcar Concluída.
+_CONFIRMACAO_EXPLICITA = re.compile(
+    r'\b(obrigad[ao]s?|muito\s+obrigad[ao]s?|ok\b|de\s+acordo|concordo|recebido|'
+    r'perfeito|valeu|confirmado|entendido|sem\s+problemas|'
+    r'nos?\s+ajudou|me\s+ajudou|ajudou|deu\s+certo|voltou|funcionou|resolveu|'
+    r'certo\b|tudo\s+(bem|certo|ok|bom))\b',
+    re.IGNORECASE,
+)
+
 _FRASES_CONCLUSIVAS_FINAUD = (
     'segue em anexo', 'segue anexo', 'seguem anexo', 'seguem em anexo',
     'segue o arquivo', 'segue os arquivos',
@@ -483,8 +494,12 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     # §8.8b: "Segue [algo]" no início de linha = cliente entregando conteúdo — nunca é confirmação conclusiva
     if re.search(r'(?:^|\r?\n)\s*segue\b', texto_lower):
         return 'Aguardando Finaud', 'Cliente enviou conteúdo — aguarda processamento da Finaud'
-    if _so_cortesia(texto_novo):
+    # §8.8c: saudação pura (sem palavra de confirmação) = provavelmente entrega de arquivo
+    # "Boa Tarde + Att" ≠ confirmação; "Muito obrigado" = confirmação explícita
+    if _so_cortesia(texto_novo) and _CONFIRMACAO_EXPLICITA.search(texto_lower):
         return 'Concluída', 'Cliente confirmou — sem pendência'
+    if _so_cortesia(texto_novo):
+        return 'Aguardando Finaud', 'Cliente enviou saudação — possível entrega de arquivo'
     return 'Aguardando Finaud', 'Cliente escreveu — aguarda resposta da Finaud'
 
 

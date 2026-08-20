@@ -197,6 +197,45 @@ def test_status_obrigado_deu_certo_conclui():
     assert status == 'Concluída', f'Esperado Concluída, got: {status} | {motivo}'
 
 
+def test_status_boa_tarde_att_aguarda_finaud():
+    """§8.8c: 'Boa Tarde + Att' sem palavra de confirmação → Aguardando Finaud.
+    Reproduz padrão Paulo Henrique (Planner): CADOC 4111 enviado com saudação + assinatura (20/08/2026).
+    """
+    corpo = 'Boa Tarde\r\n\r\n\r\nAtt\r\n\r\nPaulo Henrique\r\nPlanner SCD – Financeiro/SPB'
+    msgs = [
+        _msg(FINAUD, corpo='Prezado Paulo, favor encaminhar o CADOC 4111 do dia 16/07.'),
+        _msg(CLIENTE, corpo=corpo),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status} | {motivo}'
+
+
+def test_status_bom_dia_att_aguarda_finaud():
+    """§8.8c: 'Bom dia + Att' sem confirmação → Aguardando Finaud."""
+    corpo = 'Bom dia\r\n\r\n\r\nAtt\r\n\r\nPaulo Henrique\r\nPlanner SCD – Financeiro/SPB'
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status} | {motivo}'
+
+
+def test_status_texto_vazio_cliente_aguarda_finaud():
+    """§8.8c: texto completamente vazio de cliente → Aguardando Finaud (só anexo enviado)."""
+    msgs = [_msg(CLIENTE, corpo='')]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status} | {motivo}'
+
+
+def test_status_muito_obrigado_conclui():
+    """§8.8c: 'Muito obrigado!' → Concluída (palavra de confirmação explícita presente)."""
+    corpo = 'Monica, bom dia.\r\n\r\nMuito obrigado!\r\n\r\nAtenciosamente,\r\nPedro'
+    msgs = [
+        _msg(FINAUD, corpo='Prezado Pedro, segue o relatório DLO conforme solicitado.'),
+        _msg(CLIENTE, corpo=corpo),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída', f'Esperado Concluída, got: {status} | {motivo}'
+
+
 def test_status_transmitido_bacen_no_historico_nao_conta():
     """'transmitido no BACEN' só no histórico citado (linha >) → NÃO encerra."""
     corpo = 'Preciso do relatório atualizado.\n> Transmitido no BACEN em agosto.'
