@@ -10,6 +10,31 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-08-20 — Banco: status "Concluída" incorreto por imagens de assinatura e por Finaud pedindo ação
+
+### 20/08 — _determinar_status: Bug A (imagens contadas como arquivo) + Bug B (Finaud pediu ação mas status era Concluída)
+
+**🔎 Em miúdos:** o banco marcava uma conversa como "Concluída" mesmo quando o único arquivo no e-mail era a foto da assinatura da Finaud, ou quando a Finaud tinha pedido algo ao cliente mas ainda não havia recebido resposta.
+
+**Problema (Bug A):** o código verificava `bool(nomes_anexos)` — qualquer coisa na lista de arquivos, incluindo imagens de assinatura (.png, .gif), fazia o banco considerar que um arquivo real foi entregue. Resultado: threads com só imagem de assinatura recebiam status "Concluída" incorretamente.
+
+**Problema (Bug B):** na ausência de arquivo real, a lógica não detectava quando a Finaud prometeu retornar (ex.: "estamos verificando", "pedi para o Flávio") e não identificava cortesia de encerramento de forma precisa. Resultado: algumas threads ficavam em "Aguardando Cliente" quando deveriam ser "Aguardando Finaud" ou "Concluída".
+
+**Correção (scripts/banco_threads.py):**
+- `_FRASES_CONCLUSIVAS_FINAUD`: expandida de 7 para 27 frases
+- `_FRASES_AGUARDANDO_FINAUD_ATIVA`: nova tupla — detecta "Finaud prometeu retornar" (retornaremos, estamos verificando, pedi para, etc.)
+- `_FRASES_ENTREGA`: nova tupla — superset de _FRASES_CONCLUSIVAS_FINAUD + frases específicas de entrega por tipo de relatório
+- `_FRASES_PEDIDO_EXPLICITO`: nova tupla — bloqueia detecção de cortesia quando Finaud está pedindo algo ao cliente
+- `_SAUDACAO_RE`: novo regex — remove linhas de saudação ("Prezado X,") antes de avaliar cortesia
+- `_eh_cortesia_finaud()`: nova função aninhada — detecta cortesia da Finaud com lógica refinada
+- Branch Finaud→Cliente reescrito: usa `_tem_arquivo_entregavel()` (filtra imagens) + novo pipeline de detecção (arquivo → entrega/aguardando/sem linguagem → frases conclusivas → aguardando Finaud → cortesia → coordenação interna)
+
+**Impacto no banco:** 1.102 threads recalculadas. Mudanças: 44x Concluída→Aguardando Cliente (Bug A), 10x Concluída→Aguardando Finaud (Bug B), 29x Aguardando Finaud→Concluída (frases conclusivas expandidas), 6x outras.
+
+**Validação:** `pytest tests/ -q` → 292 passed, 0 failed ✅
+
+---
+
 ## 2026-08-19 — Classificador: CADASTRAMENTO NOVO FUNDO não detectado como DDR (C58)
 
 ### 19/08 — Classificador: "CADASTRAMENTO NOVO FUNDO" caindo em SUPORTE em vez de DDR_2011

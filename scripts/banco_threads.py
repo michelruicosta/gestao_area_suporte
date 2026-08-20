@@ -170,13 +170,72 @@ _CORTESIA = re.compile(
 )
 
 _FRASES_CONCLUSIVAS_FINAUD = (
-    'segue em anexo',
+    'segue em anexo', 'segue anexo', 'seguem anexo', 'seguem em anexo',
+    'segue o arquivo', 'segue os arquivos',
+    'segue a remessa', 'seguem as remessas', 'seguem remessas',
+    'segue protocolo', 'segue o protocolo', 'segue para controle',
+    'encaminhamos', 'encaminho',
     'conforme solicitado',
     'procedemos com',
-    'informo que foi encaminhado',
-    'informamos que foi encaminhado',
-    'foi encaminhado ao bc',
-    'foi encaminhado ao bacen',
+    'informo que foi encaminhado', 'informamos que foi encaminhado',
+    'foi encaminhado ao bc', 'foi encaminhado ao bacen',
+    'enviamos', 'acabamos de enviar', 'foi enviado', 'ok, enviado',
+    'já está disponível', 'ja esta disponivel',
+    'transmitimos a versão', 'transmitimos o arquivo', 'transmitimos a remessa',
+    'estamos acompanhando o processamento',
+    'estamos acompanhando os processamentos',
+    'aceite do bc', 'aceite do bacen', 'aceito pelo sistema',
+    'foram cadastrad', 'foi cadastrad',
+    'foram inativad', 'foi inativad', 'foram ativad', 'foi ativad',
+    'providenciamos o reset', 'providenciamos a inativação',
+    'providenciamos o cadastro', 'providenciamos a ativação',
+    'recebido e enviado', 'ok, recebido e enviado',
+    'obrigada pelo retorno', 'obrigado pelo retorno',
+    'certo, providenciamos', 'certo, verificamos',
+)
+
+# Finaud prometeu retornar — bola ainda está com a Finaud
+_FRASES_AGUARDANDO_FINAUD_ATIVA = (
+    'retornaremos em breve', 'retornaremos', 'retornarei',
+    'estamos verificando', 'estamos analisando', 'estamos investigando',
+    'verificaremos', 'analisaremos', 'vamos verificar', 'vamos analisar',
+    'nossa equipe técnica', 'equipe técnica irá', 'em análise',
+    'em verificação', 'aguarde o retorno',
+    'assim que tiver',
+    'pedi para',
+    'pedimos para',
+)
+
+# Frases de entrega usadas no branch com arquivo real (superset de _FRASES_CONCLUSIVAS_FINAUD)
+_FRASES_ENTREGA = _FRASES_CONCLUSIVAS_FINAUD + (
+    'conforme anexo', 'em continuidade, segue',
+    'para acompanhamento, conforme',
+    'segue o 4111', 'segue a cópia', 'segue o ddr', 'segue o drm',
+    'segue o dlo', 'segue o dli', 'segue o drl',
+    'segue o scd', 'segue o drsac',
+    'segue a apuração', 'obrigada. seguem', 'obrigado. seguem',
+    'obrigada, seguem', 'obrigado, seguem',
+    'segue o cadoc', 'providenciamos as remessas', 'providenciamos a remessa',
+    'seguem os', 'seguem também',
+    'providenciamos o ajuste',
+    'providenciamos a correção',
+    'já concluímos', 'concluímos',
+    'enviando em anexo',
+)
+
+# Bloqueiam detecção de cortesia — Finaud está pedindo algo ao cliente
+_FRASES_PEDIDO_EXPLICITO = (
+    'solicitamos encaminhar',
+    'solicitamos que encaminhe',
+    'solicitamos que envie',
+    'poderia encaminhar por gentileza',
+    'pode encaminhar por gentileza',
+    'por gentileza, encaminhe',
+)
+
+_SAUDACAO_RE = re.compile(
+    r'^(prezad[ao]|bom\s+dia|boa\s+tarde|boa\s+noite|ol[aá]|caro|cara)\b',
+    re.IGNORECASE,
 )
 
 
@@ -248,7 +307,6 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     destinatario  = (ultimo.get('destinatarios') or '')
     assunto       = (ultimo.get('assunto')       or '')
     corpo_raw     = (ultimo.get('corpo_texto')   or '')
-    tem_anexo     = bool(ultimo.get('nomes_anexos'))
 
     def _eh_finaud_addr(addr: str) -> bool:
         a = addr.lower()
@@ -327,6 +385,32 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
                     return True
         return False
 
+    def _eh_cortesia_finaud(texto: str) -> bool:
+        """True se o texto da Finaud é só cortesia — sem pedido de ação ao cliente."""
+        if not texto.strip():
+            return True
+        texto = texto.replace('​', '')
+        texto_norm_completo = re.sub(r'[\r\n]+', ' ', texto).lower()
+        if any(f in texto_norm_completo for f in _FRASES_PEDIDO_EXPLICITO):
+            return False
+        m = _SIGN_OFF_RE.search(texto)
+        texto_antes = texto[:m.start()].strip() if m else texto.strip()
+        if not texto_antes:
+            return True
+        t = re.sub(r'<https?://[^>]+>', '', texto_antes).strip()
+        t = re.sub(r'https?://\S+', '', t).strip()
+        linhas = [l.strip() for l in t.splitlines() if l.strip()]
+        linhas = [l for l in linhas if not _SAUDACAO_RE.match(l)]
+        if not linhas:
+            return True
+        t_content = ' '.join(linhas).lower()
+        _cortesia = (
+            'obrigada', 'obrigado', 'ok', 'certo', 'entendido',
+            'recebido', 'anotado', 'ótimo', 'perfeito', 'tudo bem', 'com prazer',
+            'isso', 'exatamente', 'correto',
+        )
+        return any(t_content.startswith(f) or t_content == f for f in _cortesia)
+
     # Regra especial §8.3: "transmitido no BACEN" encerra independente de quem mandou
     if 'transmitido no bacen' in texto_lower or 'transmitida no bacen' in texto_lower:
         return 'Concluída', 'Confirmação de entrega no BACEN'
@@ -352,15 +436,36 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
                 return 'Concluída', 'Informativo interno — sem pendência'
             return 'Aguardando Finaud', 'E-mail interno — aguarda ação da Finaud'
         # Finaud → Cliente
-        if tem_anexo:
-            # §8.9: arquivo + pergunta real → cliente precisa responder
+        tem_arquivo_real = _tem_arquivo_entregavel(ultimo.get('nomes_anexos') or [])
+        if tem_arquivo_real:
             if _tem_pergunta_acao(texto_novo):
                 return 'Aguardando Cliente', 'Finaud enviou arquivo e aguarda resposta do cliente'
-            return 'Concluída', 'Finaud enviou arquivo ao cliente'
+            if any(f in texto_lower for f in _FRASES_ENTREGA):
+                return 'Concluída', 'Finaud entregou arquivo ao cliente'
+            if any(f in texto_lower for f in _FRASES_AGUARDANDO_FINAUD_ATIVA):
+                return 'Aguardando Finaud', 'Finaud prometeu retornar'
+            if not texto_novo.strip():
+                return 'Concluída', 'Finaud entregou arquivo ao cliente'
+            return 'Aguardando Cliente', 'Finaud enviou arquivo sem linguagem de entrega'
+        # Sem arquivo real
         if assunto.strip().upper().startswith('RES:'):
             return 'Concluída', 'Finaud respondeu ao cliente'
         if any(f in texto_lower for f in _FRASES_CONCLUSIVAS_FINAUD):
             return 'Concluída', 'Finaud encerrou a conversa'
+        if any(f in texto_lower for f in _FRASES_AGUARDANDO_FINAUD_ATIVA):
+            return 'Aguardando Finaud', 'Finaud prometeu retornar'
+        if _eh_cortesia_finaud(texto_novo):
+            if len(msgs) == 1:
+                return 'Aguardando Finaud', 'Finaud acusou recibo — aguarda processamento'
+            if len(msgs) >= 2:
+                ant = msgs[-2]
+                rem_ant = (ant.get('remetente') or '').lower()
+                anexos_ant = ant.get('nomes_anexos') or []
+                if not _eh_finaud_addr(rem_ant) and _tem_arquivo_entregavel(anexos_ant):
+                    return 'Aguardando Finaud', 'Finaud recebeu arquivos do cliente — aguarda processamento'
+            return 'Concluída', 'Finaud encerrou com cortesia'
+        if len(msgs) >= 2 and para_finaud and all(_eh_finaud_addr((m.get('remetente') or '').lower()) for m in msgs):
+            return 'Aguardando Finaud', 'Coordenação interna Finaud'
         return 'Aguardando Cliente', 'Finaud escreveu — aguarda retorno do cliente'
 
     # Remetente externo (cliente)
