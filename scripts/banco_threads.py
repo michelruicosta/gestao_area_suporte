@@ -415,8 +415,11 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         )
         return any(t_content.startswith(f) or t_content == f for f in _cortesia)
 
-    # Regra especial §8.3: "transmitido no BACEN" encerra independente de quem mandou
-    if 'transmitido no bacen' in texto_lower or 'transmitida no bacen' in texto_lower:
+    # Regra especial §8.3: confirmação de transmissão ao BACEN — independente de quem enviou
+    _inicio_transmitido = bool(re.match(r'\s*transmitid[oa]s?\b', texto_lower))
+    if ('transmitido no bacen' in texto_lower
+            or 'transmitida no bacen' in texto_lower
+            or (_inicio_transmitido and '?' not in texto_lower)):
         return 'Concluída', 'Confirmação de entrega no BACEN'
 
     if eh_finaud:

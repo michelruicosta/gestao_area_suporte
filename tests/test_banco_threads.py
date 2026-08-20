@@ -129,6 +129,26 @@ def test_status_transmitida_bacen_variacao():
     assert bt._determinar_status(msgs)[0] == 'Concluída'
 
 
+def test_status_transmitido_sem_mencao_bacen():
+    """§8.3: cliente abre mensagem com 'Transmitido os DLO e DLI' sem dizer 'no BACEN' → Concluída.
+    Reproduz caso 'DLO | DLI - Referente a MAI.2026' (20/08/2026).
+    """
+    corpo = 'Transmitido os DLO e DLI referente a MAIO de 2026:\n\n[image: screenshot.png]'
+    msgs = [
+        _msg(FINAUD, corpo='Prezados, seguem remessas DLO e DLI de maio/2026 para transmissão ao BC.'),
+        _msg(CLIENTE, corpo=corpo),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída', f'Esperado Concluída, got: {status} | {motivo}'
+
+
+def test_status_transmitido_sem_bacen_com_pergunta_nao_encerra():
+    """§8.3: 'Transmitido' + pergunta → não deve encerrar (cliente tem dúvida)."""
+    msgs = [_msg(CLIENTE, corpo='Transmitido, mas apareceu uma crítica. O que devo fazer?')]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+
+
 def test_status_transmitido_bacen_no_historico_nao_conta():
     """'transmitido no BACEN' só no histórico citado (linha >) → NÃO encerra."""
     corpo = 'Preciso do relatório atualizado.\n> Transmitido no BACEN em agosto.'
