@@ -943,3 +943,26 @@ def test_registrar_coleta_erro(monkeypatch, tmp_path):
     assert len(logs) == 1
     assert logs[0]['status'] == 'erro'
     assert 'Falha de autenticação' in logs[0]['mensagem']
+
+
+# ── Fix B — "Arquivos transmitidos." → Concluída (20/08/2026) ─────────────────
+
+def test_status_arquivos_transmitidos_conclui():
+    """§8.3: 'Arquivos transmitidos.' no corpo (não no início de linha) → Concluída.
+    Caso real: RES: Documentos retificados junho (20/08/2026).
+    """
+    corpo = 'Bom dia,\r\n\r\nArquivos transmitidos.\r\n\r\nObrigada.\r\n\r\nAtt,\r\n\r\nLuiza Milet.'
+    msgs = [
+        _msg(FINAUD, corpo='Prezada Luiza, segue o arquivo para transmissão.'),
+        _msg(CLIENTE, corpo=corpo),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída', f'Esperado Concluída, got: {status} | {motivo}'
+
+
+def test_status_arquivos_transmitidos_com_pergunta_nao_encerra():
+    """§8.3: 'Arquivos transmitidos?' com interrogação → não encerra (veto §8.3)."""
+    corpo = 'Bom dia,\r\n\r\nArquivos transmitidos?\r\n\r\nAtt,'
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'

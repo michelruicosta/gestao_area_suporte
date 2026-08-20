@@ -1549,3 +1549,27 @@ def test_correcao58_regress_c27_nao_afetada(assunto, esperado):
     assert esperado in r['categorias'], (
         f"C58: regressão C27 — '{assunto}': esperado '{esperado}', obtido {r['categorias']}"
     )
+
+
+# ── Correção 59 — DLO_2061 tem prioridade sobre DLI_2062 quando ambos presentes ──
+
+def test_correcao59_dlo_historicos_dlo_e_principal():
+    """C59 — 'DLO - históricos' no assunto + corpo com DLI e DLO → DLO_2061 é categorias[0].
+    Caso real: thread classificada como DLI_2062 principal antes desta correção (20/08/2026).
+    """
+    r = _classificar(
+        assunto='DLO - históricos',
+        corpo='Poderiam compartilhar os cadocs de DLI e DLO das datas base de Dez/2025',
+    )
+    assert r['categorias'][0] == 'DLO_2061', \
+        f"C59: DLO_2061 deve ser categorias[0]; obtido {r['categorias']}"
+    assert 'DLI_2062' in r['categorias'], \
+        f"C59: DLI_2062 deve estar como categoria secundária; obtido {r['categorias']}"
+
+
+def test_correcao59_dlo_e_dli_dlo_e_principal():
+    """C59 — assunto 'DLO E DLI' → DLO_2061 é categorias[0], DLI_2062 secundário."""
+    r = _classificar('DLO E DLI - JUNHO 2026')
+    assert r['categorias'][0] == 'DLO_2061', \
+        f"C59: DLO_2061 deve ser [0] quando ambos presentes; obtido {r['categorias']}"
+    assert 'DLI_2062' in r['categorias']

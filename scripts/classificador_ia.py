@@ -254,6 +254,16 @@ def _ok(cats: list[str], motivo: str, regra_usada: str | None) -> dict:
     }
 
 
+def _ordenar_cats(cats) -> list:
+    """DLO_2061 tem prioridade sobre DLI_2062 quando ambos coexistem; demais: ordem alfabética."""
+    result = sorted(cats)
+    if 'DLO_2061' in result and 'DLI_2062' in result:
+        i_dli = result.index('DLI_2062')
+        i_dlo = result.index('DLO_2061')
+        result[i_dli], result[i_dlo] = result[i_dlo], result[i_dli]
+    return result
+
+
 # ── Pré-processamento de corpo ────────────────────────────────────────────────
 
 def _corpo_sem_citacoes(corpo: str) -> str:
@@ -480,7 +490,7 @@ def _classificar_deterministico(
         # numa entrega real; quando o cliente menciona S5, a categoria é só S5.
         if 'DLO_2061' in cats and 'S5' in cats and re.search(r'\bS5\b', au):
             cats.discard('DLO_2061')
-        cats = sorted(cats)
+        cats = _ordenar_cats(cats)
         return _ok(cats, f'sinal de CADOC no assunto ({", ".join(cats)})', None)
 
     # Camada 2a — RETORNO_BACEN pelo corpo (cliente encaminhando e-mail do BACEN).
@@ -517,7 +527,7 @@ def _classificar_deterministico(
             )
             if _au_sem_dlo and _cu_sem_dlo_forte and 'COS4016' in cu:
                 cats.discard('DLO_2061')
-        cats = sorted(cats)
+        cats = _ordenar_cats(cats)
         return _ok(cats, f'sinal de CADOC no corpo ({", ".join(cats)})', None)
 
     # Camada 3 — CADOC pelos nomes dos anexos
@@ -525,7 +535,7 @@ def _classificar_deterministico(
     # 'COS 4010' (com espaço) nos nomes de arquivo = entrega DLO — no corpo pode ser contexto de pergunta (C31)
     if re.search(r'COS\s*(?:4010|4016|4060|4066)', xu_norm):
         cats_set.add('DLO_2061')
-    cats = sorted(cats_set)
+    cats = _ordenar_cats(cats_set)
     if cats:
         return _ok(cats, f'sinal de CADOC nos anexos ({", ".join(cats)})', None)
 

@@ -10,6 +10,44 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-08-20 — Classificador: DLI_2062 aparecia como principal quando DLO_2061 também estava presente
+
+### 20/08 — _ordenar_cats: DLO_2061 passa a ter prioridade sobre DLI_2062 quando ambos coexistem
+
+**🔎 Em miúdos:** quando um e-mail pedia tanto DLO quanto DLI, o sistema registrava DLI como entrega principal — e DLO ficava em segundo lugar. Isso estava errado: a regra é que DLO sempre tem prioridade sobre DLI quando os dois aparecem juntos.
+
+**Problema:** `sorted(cats)` ordena em ordem alfabética. Como "I" vem antes de "O", `DLI_2062` aparecia antes de `DLO_2061` na lista. O campo `categorias[0]` (que define a entrega principal) pegava o primeiro da lista — ou seja, sempre DLI.
+
+**Correção (scripts/classificador_ia.py, Fix A, 20/08/2026):**
+- Nova função `_ordenar_cats(cats)`: ordena alfabeticamente e depois troca DLI_2062 e DLO_2061 de posição quando ambos estão presentes
+- Substituídos 3 `sorted(cats)` por `_ordenar_cats(cats)` nas camadas 1b, 2b e 3 de `_classificar_deterministico()`
+- A chamada `sorted(cats)` de `_detectar_cadoc()` linha 232 **não foi alterada** (retorna para um `set()` que descarta a ordem)
+
+**Caso real:** thread "DLO - históricos" era classificada como DLI_2062 principal. Com a correção, DLO_2061 passa a ser o `[0]`.
+
+**Validação:** `pytest tests/ -q` → ✅ 311/311 — 2 novos testes (DLO principal em assunto e em corpo). Zero regressões.
+
+---
+
+## 2026-08-20 — Banco: "Arquivos transmitidos." no meio da frase não encerrava a thread
+
+### 20/08 — _arquivos_transmitidos: nova detecção para "arquivos transmitidos" fora do início de linha
+
+**🔎 Em miúdos:** quando o cliente escrevia "Arquivos transmitidos." o banco deixava a thread como "Aguardando Finaud" — porque só detectava "Transmitido" no começo de uma linha, não depois de "Arquivos". A thread ficava aberta quando já estava concluída.
+
+**Problema:** `_inicio_transmitido` usa regex `(?:^|\r?\n)\s*transmitid[oa]s?\b` — exige que a palavra "transmitido" esteja no início de linha. "Arquivos transmitidos." tem "transmitidos" precedido de "Arquivos ", fora do início de linha.
+
+**Correção (scripts/banco_threads.py, Fix B, 20/08/2026):**
+- Nova variável `_arquivos_transmitidos = bool(re.search(r'\barquivo[s]?\s+transmitid[oa]s?\b', texto_lower))`
+- Adicionada ao bloco `if ... transmitido no bacen ...`: `or (_arquivos_transmitidos and '?' not in texto_lower)`
+- Veto de interrogação mantido: "Arquivos transmitidos?" não encerra
+
+**Caso real:** thread "RES: Documentos retificados junho" — cliente respondeu "Bom dia,\r\n\r\nArquivos transmitidos.\r\n\r\nObrigada." e ficava como Aguardando Finaud.
+
+**Validação:** `pytest tests/ -q` → ✅ 311/311 — 2 novos testes (com e sem interrogação). Zero regressões.
+
+---
+
 ## 2026-08-20 — Banco: "solicito/vou precisar" da Finaud não detectado como pedido
 
 ### 20/08 — _eh_cortesia_finaud: Finaud pede algo com "solicito" ou "vou precisar" → marcava Concluída
