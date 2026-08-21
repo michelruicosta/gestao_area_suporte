@@ -10,6 +10,26 @@ com entrada datada (HH:MM). Formato obrigatório: "Em miúdos" + Problema + Corr
 
 ---
 
+## 2026-08-20 — Banco: [cid:...] e assinatura sem sign-off impediam detecção de agradecimento
+
+### 20/08 — _so_cortesia: imagens inline e bloco de assinatura sem sign-off explícito poluíam residual
+
+**🔎 Em miúdos:** quando o cliente dizia "Obrigado, Andrea" mas a assinatura vinha sem "Atenciosamente" — só com logo `[cid:...]`, nome e cargo — o sistema deixava a thread como "Aguardando Finaud". O lixo da assinatura era tomado como conteúdo real.
+
+**Problema:** `_so_cortesia()` trunca no sign-off (`_SIGN_OFF_RE`), mas quando não há sign-off explícito, toda a assinatura (imagem CID + nome + cargo + telefone) fica no texto. Após remover as frases de cortesia, o residual tinha 169 chars → muito acima do limite de 15 → `_so_cortesia()` = False.
+
+**Correção (scripts/banco_threads.py, Fix E, 20/08/2026) — dois acréscimos em `_so_cortesia()`:**
+1. Truncar em bloco de 4+ linhas em branco consecutivas (assinatura sem sign-off): `re.sub(r'(\r?\n){4,}[\s\S]*', '', texto)`
+2. Remover referências `[cid:...]` de imagens inline do Outlook: `re.sub(r'\[cid:[^\]]+\]', '', texto)`
+
+**Caso real:** "Re: Arquivo COS. Resultado Quantitativo 06/2026" — cliente respondeu "Obrigado, Andrea" + 12 linhas em branco + `[cid:logo]` + "Enio Feyh / Compliance / +55..."
+
+**Impacto:** 4 threads corrigidas (AF → Concluída).
+
+**Validação:** `pytest tests/ -q` → ✅ 314/314 — 1 novo teste. Zero regressões. Recálculo: 1157 threads.
+
+---
+
 ## 2026-08-20 — Banco: @mention do Outlook impedia detecção de "Muito obrigado"
 
 ### 20/08 — _so_cortesia: menção @Nome<mailto:...> não era removida antes de avaliar cortesia

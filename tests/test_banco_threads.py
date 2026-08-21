@@ -970,6 +970,24 @@ def test_status_arquivos_transmitidos_com_pergunta_nao_encerra():
 
 # ── Fix C — frase de entrega quebrada por \r\n não impedia Concluída (20/08/2026) ──
 
+def test_status_cid_e_bloco_assinatura_sem_signoff_nao_bloqueia_obrigado():
+    """Fix E: [cid:...] + bloco de assinatura sem sign-off explícito não deve impedir Concluída.
+    Caso real: 'Re: Arquivo COS' — cliente respondeu 'Obrigado, Andrea' + 12 linhas em branco
+    + [cid:logo] + 'Enio Feyh / Compliance / +55...' sem 'Atenciosamente' → ficava AF (20/08/2026).
+    """
+    corpo = (
+        'Obrigado,  Andrea\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n'
+        '[cid:a5345f28-54af-4093-b6f4-cae3c514ba1c]\r\n\r\n\r\n\r\n'
+        'Enio Feyh\r\nCompliance\r\n+55 51 3303.3460\r\nexecutivecambio.com.br'
+    )
+    msgs = [
+        _msg(FINAUD, corpo='Prezados, segue o resultado quantitativo.', nomes_anexos=['RQ_06_2026.xlsx']),
+        _msg(CLIENTE, corpo=corpo),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída', f'Esperado Concluída, got: {status} | {motivo}'
+
+
 def test_status_mencao_outlook_nao_bloqueia_obrigado():
     """Fix D: '@Monica Macedo<mailto:...>' no texto não deve impedir detecção de 'Muito obrigado'.
     Caso real: '4010 Trinus' — cliente agradeceu com @mention do Outlook → ficava AF (20/08/2026).

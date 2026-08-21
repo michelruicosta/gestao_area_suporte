@@ -294,9 +294,13 @@ def _so_cortesia(texto: str) -> bool:
     m = _SIGN_OFF_RE.search(texto)
     if m:
         texto = texto[:m.start()]
+    # Fallback: bloco de 4+ linhas em branco seguidas = assinatura sem sign-off explícito
+    texto = re.sub(r'(\r?\n){4,}[\s\S]*', '', texto)
     # Remove URLs residuais (podem conter '?' que não indica pergunta real)
     texto = re.sub(r'https?://\S+', '', texto)
     texto = re.sub(r'\[https?://[^\]]*\]', '', texto)
+    # Remove referências [cid:...] de imagens inline do Outlook
+    texto = re.sub(r'\[cid:[^\]]+\]', '', texto)
     # Remove menções @Nome<mailto:email> do Outlook/Teams — não é conteúdo real
     texto = re.sub(r'@[^<\n]+<mailto:[^>]+>', '', texto, flags=re.IGNORECASE)
     # Remove "tudo bem?", "tudo bom?" — saudações sociais que não são perguntas reais
