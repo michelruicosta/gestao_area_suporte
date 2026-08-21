@@ -282,10 +282,17 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .card-hd {
   padding: 13px 18px; border-bottom: 1px solid var(--border);
   display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  cursor: pointer; user-select: none;
 }
+.card-hd:hover { background: var(--bg); border-radius: 10px 10px 0 0; }
 .card-title { font-size: 15px; font-weight: 600; color: var(--text); }
 .card-sub   { font-size: 12px; color: var(--muted); margin-top: 2px; }
 .refresh-info { font-size: 0.8rem; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+.chev-tbl { font-size: 0.7rem; color: var(--muted); transition: transform 0.2s; margin-left: 6px; }
+.tabela-wrap.collapsed .chev-tbl { transform: rotate(-90deg); }
+.tabela-wrap.collapsed .card-hd { border-bottom: none; border-radius: 10px; }
+.tabela-wrap.collapsed table { display: none; }
+.tabela-wrap.collapsed tfoot { display: none; }
 
 /* ─── Cabeçalho de página (demais páginas) ──────────────────────────── */
 .page-header { display: flex; align-items: baseline; justify-content: space-between; gap: 1.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
@@ -558,9 +565,9 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
     <!-- ── Página 1: Classificação e Status ───────────────────────── -->
     <section class="page ativa" id="pag-classificados">
       <div class="tabela-wrap">
-        <div class="card-hd">
+        <div class="card-hd" onclick="toggleTblResumo()" title="Clique para minimizar / expandir">
           <div>
-            <div class="card-title">Classificação e Status</div>
+            <div class="card-title">Classificação e Status <span class="chev-tbl">▼</span></div>
             <div class="card-sub">Agrupadas por categoria · atualizadas a cada 5 minutos</div>
           </div>
           <span class="refresh-info" id="refresh-info"></span>
@@ -1456,6 +1463,10 @@ function renderEvo() {
     <td class="evo-cco">${tot.co}</td><td>${evoBdg(tD.co,'co')}</td>
     <td style="font-weight:600">${tot.tot}</td><td>${evoBdg(totD2,'tot')}</td></tr>`;
   document.getElementById('evo-p-note').textContent = getEvoNote();
+}
+
+function toggleTblResumo() {
+  document.querySelector('#pag-classificados .tabela-wrap').classList.toggle('collapsed');
 }
 
 function toggleEvo() {
