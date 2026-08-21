@@ -772,7 +772,6 @@ def salvar_snapshot() -> None:
             contagens[cat]['co'] += 1
     agora = _agora()
     with _conectar() as conn:
-        conn.execute('DELETE FROM snapshots')
         conn.executemany(
             'INSERT INTO snapshots (data_hora, categoria, af, ac, co, total) VALUES (?,?,?,?,?,?)',
             [(agora, cat, c['af'], c['ac'], c['co'], c['af'] + c['ac'] + c['co'])
@@ -784,7 +783,8 @@ def ler_ultimo_snapshot() -> dict[str, dict]:
     """Retorna o último snapshot salvo como {categoria_id: {af, ac, co, total}}. Vazio se não houver snapshot."""
     with _conectar() as conn:
         rows = conn.execute(
-            'SELECT categoria, af, ac, co, total FROM snapshots'
+            'SELECT categoria, af, ac, co, total FROM snapshots '
+            'WHERE data_hora = (SELECT MAX(data_hora) FROM snapshots)'
         ).fetchall()
     return {r['categoria']: dict(r) for r in rows}
 

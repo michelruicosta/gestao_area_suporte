@@ -15,9 +15,41 @@
   --border: #e2e5ea;
   --text: #1e293b;
   --muted: #64748b;
+  /* tokens para novos componentes (evo panel, menu usuário) */
+  --surface: #fff;
+  --accent: #3333a8;
+  --accent-bg: #eef0ff;
+  --sel-text: #fff;
+  --pos: #168a43; --pos-bg: #dff3e6;
+  --neg: #c55a00; --neg-bg: #fff3cd;
+  --af-c: #8a5b00; --ac-c: #1864ab; --co-c: #168a43;
+  --cal-sel: #3333a8; --cal-range: #e0e0ff; --cal-hover: #eef0ff;
+  --avatar: #3333a8;
   font-family: "Segoe UI", system-ui, sans-serif;
   line-height: 1.5;
   box-sizing: border-box;
+}
+[data-theme="claro"] {
+  --bg: #f7f8fa; --surface: #fff; --border: #dde2ec;
+  --text: #1c2b4a; --muted: #6b7a9a;
+  --accent: #2463eb; --accent-bg: #eef3fe;
+  --pos: #16a34a; --pos-bg: #f0fdf4;
+  --neg: #d97706; --neg-bg: #fffbeb;
+  --af-c: #d97706; --ac-c: #2463eb; --co-c: #16a34a;
+  --cal-sel: #2463eb; --cal-range: #dce8ff; --cal-hover: #eef3fe;
+  --avatar: #2463eb;
+}
+[data-theme="escuro"] {
+  --bg: #111827; --surface: #1f2937; --border: #374151;
+  --sidebar-bg: #0f172a; --sidebar-active-bg: #1e293b; --sidebar-hover-bg: #1a2535;
+  --card-bg: #1f2937;
+  --text: #f3f4f6; --muted: #9ca3af;
+  --accent: #60a5fa; --accent-bg: #1e3a5f; --sel-text: #0a1628;
+  --pos: #4ade80; --pos-bg: #052e16;
+  --neg: #fbd150; --neg-bg: #3b2000;
+  --af-c: #fbd150; --ac-c: #60a5fa; --co-c: #4ade80;
+  --cal-sel: #60a5fa; --cal-range: #1e3a5f; --cal-hover: #1e3a5f;
+  --avatar: #60a5fa;
 }
 *, *::before, *::after { box-sizing: inherit; }
 body { margin: 0; background: var(--bg); display: flex; min-height: 100vh; }
@@ -86,6 +118,159 @@ body { margin: 0; background: var(--bg); display: flex; min-height: 100vh; }
 }
 .btn-sair { font-size: 0.82rem; color: var(--muted); text-decoration: none; }
 .btn-sair:hover { color: #b4233a; }
+
+/* ─── Menu usuário ──────────────────────────────────────────────────── */
+.user-wrap { position: relative; }
+.user-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 10px 4px 4px; border-radius: 24px;
+  border: 1px solid var(--border); background: none; cursor: pointer;
+  font-family: inherit; color: var(--text); transition: background .15s;
+}
+.user-btn:hover { background: var(--accent-bg); border-color: var(--accent); }
+.user-menu {
+  position: absolute; top: calc(100% + 6px); right: 0;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12); min-width: 240px; z-index: 200;
+  display: none; overflow: hidden;
+}
+.user-menu.open { display: block; }
+.menu-info { padding: 14px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px; }
+.menu-email-text { font-size: 13px; font-weight: 600; color: var(--text); }
+.menu-role { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.menu-section { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.menu-section-title { font-size: 10px; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+.theme-opts { display: flex; gap: 6px; }
+.t-btn {
+  flex: 1; padding: 6px 4px; border-radius: 6px; border: 1px solid var(--border);
+  background: none; color: var(--muted); font-size: 12px; font-weight: 500;
+  cursor: pointer; font-family: inherit; transition: all .15s; text-align: center;
+}
+.t-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+.t-btn.active { background: var(--accent); border-color: var(--accent); color: var(--sel-text); }
+.menu-item-btn {
+  display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+  color: var(--muted); font-size: 13px; cursor: pointer; transition: background .1s;
+  border: none; background: none; width: 100%; font-family: inherit; text-align: left;
+  text-decoration: none;
+}
+.menu-item-btn:hover { background: var(--accent-bg); color: var(--text); }
+.menu-item-btn.sair { color: var(--neg); }
+
+/* ─── Sortable headers ──────────────────────────────────────────────── */
+.th-sort { cursor: pointer; user-select: none; transition: color .12s; }
+.th-sort:hover { color: var(--text) !important; }
+.th-sort.sort-active { color: var(--marca) !important; }
+.si { font-size: 9px; margin-left: 2px; opacity: .7; }
+#tbl-resumo tbody td:first-child { text-transform: uppercase; }
+
+/* ─── Painel Evolução Histórica ─────────────────────────────────────── */
+.evo { background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.07); overflow: hidden; margin-bottom: 1.25rem; }
+.evo-trig { display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 18px; cursor: pointer; border: none; background: none; width: 100%;
+  color: var(--text); font-family: inherit; gap: 8px; transition: background .15s; }
+.evo-trig:hover { background: var(--accent-bg); }
+.evo-left { display: flex; align-items: center; gap: 10px; }
+.evo-ico { width: 28px; height: 28px; background: var(--accent-bg); border-radius: 6px;
+  display: flex; align-items: center; justify-content: center; color: var(--accent);
+  font-size: 14px; flex-shrink: 0; }
+.evo-lbl { font-size: 14px; font-weight: 600; color: var(--text); }
+.evo-hint { font-size: 12px; color: var(--muted); margin-left: 3px; }
+.chev { color: var(--muted); font-size: 11px; transition: transform .2s; }
+.evo.open .chev { transform: rotate(180deg); }
+.evo-body { display: none; border-top: 1px solid var(--border); }
+.evo.open .evo-body { display: block; }
+/* period tabs */
+.p-bar { display: flex; align-items: center; gap: 4px; padding: 11px 18px;
+  border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.p-lbl { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase;
+  letter-spacing: .04em; margin-right: 6px; }
+.p-btn { padding: 4px 11px; border-radius: 16px; border: 1px solid var(--border);
+  background: none; color: var(--muted); font-size: 12px; font-weight: 500;
+  cursor: pointer; font-family: inherit; transition: all .15s; }
+.p-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+.p-btn.active { background: var(--accent); border-color: var(--accent); color: var(--sel-text); }
+/* filtro categorias */
+.cat-bar { display: flex; align-items: center; gap: 4px; padding: 8px 18px;
+  border-bottom: 1px solid var(--border); flex-wrap: wrap; background: var(--bg); }
+.cat-all { padding: 3px 10px; border-radius: 12px; border: 1px solid var(--border);
+  background: none; color: var(--muted); font-size: 11px; font-weight: 600;
+  cursor: pointer; font-family: inherit; transition: all .15s; text-transform: uppercase; letter-spacing: .04em; }
+.cat-all:hover, .cat-all.active { background: var(--text); border-color: var(--text); color: var(--surface); }
+.cat-pill { padding: 3px 9px; border-radius: 12px; border: 1px solid var(--border);
+  background: none; color: var(--muted); font-size: 11px; font-weight: 500;
+  cursor: pointer; font-family: inherit; transition: all .15s; text-transform: uppercase; }
+.cat-pill:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+.cat-pill.active { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
+/* calendário */
+.evo-cal { padding: 16px 18px; border-bottom: 1px solid var(--border); background: var(--bg); }
+.cal-months { display: flex; gap: 28px; flex-wrap: wrap; }
+.cal-m { flex: 1; min-width: 200px; max-width: 240px; }
+.cal-mhd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.cal-nav { background: none; border: 1px solid var(--border); border-radius: 5px;
+  width: 26px; height: 26px; cursor: pointer; color: var(--text); font-size: 13px;
+  display: flex; align-items: center; justify-content: center; font-family: inherit; }
+.cal-nav:hover { background: var(--accent-bg); border-color: var(--accent); }
+.cal-mname { font-size: 13px; font-weight: 600; text-align: center; flex: 1; color: var(--text); }
+.cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 1px; }
+.cdow { text-align: center; font-size: 10px; font-weight: 600; color: var(--muted);
+  padding: 4px 0; text-transform: uppercase; }
+.cday { text-align: center; padding: 5px 1px; font-size: 12px; cursor: pointer;
+  border-radius: 4px; border: 1px solid transparent; user-select: none;
+  transition: background .08s; color: var(--text); }
+.cday:hover:not(.cempty):not(.cstart):not(.cend) { background: var(--cal-hover); }
+.cempty { cursor: default; }
+.cin-range { background: var(--cal-range); }
+.cstart, .cend { background: var(--cal-sel) !important; color: var(--sel-text) !important; font-weight: 700; }
+.ctoday { border-color: var(--accent); font-weight: 600; }
+.cdisabled { color: var(--muted); opacity: .3; cursor: not-allowed; }
+.cdisabled:hover { background: none !important; }
+.cal-nav:disabled { opacity: .25; cursor: not-allowed; pointer-events: none; }
+.cal-range-note { font-size: 11px; color: var(--muted); margin-top: 10px;
+  padding-top: 10px; border-top: 1px solid var(--border); }
+.cal-acts { display: flex; align-items: center; justify-content: space-between;
+  margin-top: 12px; gap: 8px; flex-wrap: wrap; }
+.cal-hint { font-size: 12px; color: var(--muted); }
+.cal-btns { display: flex; gap: 8px; }
+.btn-cal-clear { padding: 5px 12px; border-radius: 5px; border: 1px solid var(--border);
+  background: none; color: var(--muted); font-size: 12px; cursor: pointer; font-family: inherit; }
+.btn-cal-clear:hover { border-color: var(--accent); color: var(--accent); }
+.btn-cal-apply { padding: 5px 12px; border-radius: 5px; border: none;
+  background: var(--accent); color: var(--sel-text); font-size: 12px;
+  font-weight: 600; cursor: pointer; font-family: inherit; }
+.btn-cal-apply:disabled { opacity: .4; cursor: not-allowed; }
+/* tabela evo */
+.evo-tw { overflow-x: auto; }
+.evo-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.evo-table th { padding: 7px 13px; font-size: 11px; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid var(--border);
+  white-space: nowrap; text-align: right; background: var(--surface); }
+.evo-table th.sortable { cursor: pointer; user-select: none; transition: color .15s; }
+.evo-table th.sortable:hover { color: var(--text); }
+.evo-table th.sort-active { color: var(--accent) !important; }
+.evo-table th:first-child { text-align: left; }
+.evo-table td { padding: 8px 13px; border-bottom: 1px solid var(--border);
+  text-align: right; font-size: 13px; color: var(--text); }
+.evo-table td:first-child { text-align: left; font-weight: 500; text-transform: uppercase; }
+.evo-table tr:last-child td { border-bottom: none; }
+.evo-table tbody tr:hover td { background: var(--accent-bg); }
+.evo-table tfoot td { padding: 8px 13px; text-align: right; font-size: 13px; font-weight: 700;
+  border-top: 1px solid var(--border); color: var(--text); background: var(--surface); }
+.evo-table tfoot td:first-child { text-align: left; }
+.evo-caf { color: var(--af-c); font-weight: 600; }
+.evo-cac { color: var(--ac-c); font-weight: 600; }
+.evo-cco { color: var(--co-c); font-weight: 600; }
+.evo-badge { display: inline-flex; align-items: center; gap: 2px; padding: 1px 5px;
+  border-radius: 8px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.evo-bpos { background: var(--pos-bg); color: var(--pos); }
+.evo-bneg { background: var(--neg-bg); color: var(--neg); }
+.evo-bneu { background: var(--border); color: var(--muted); }
+.evo-p-note { font-size: 12px; color: var(--muted); padding: 7px 18px 0; }
+.evo-ft { padding: 10px 18px; border-top: 1px solid var(--border); font-size: 11px;
+  color: var(--muted); display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 
 .content { flex: 1; padding: 1.5rem 1.75rem 2rem; overflow-y: auto; }
 .page { display: none; }
@@ -323,10 +508,32 @@ body { margin: 0; background: var(--bg); display: flex; min-height: 100vh; }
     <span class="topbar-titulo" id="topbar-titulo">Classificação e Status</span>
     <div class="topbar-direita">
       <span class="refresh-spinner" id="spinner"></span>
-      <a href="/sair" class="btn-sair">Sair</a>
-      <div class="user-chip">
-        <div class="user-avatar" id="user-av">?</div>
-        <span id="user-email">{{ email }}</span>
+      <div class="user-wrap">
+        <button class="user-btn" onclick="toggleMenu()" id="user-btn" aria-expanded="false" aria-haspopup="true">
+          <div class="user-avatar" id="user-av">?</div>
+          <span id="user-email">{{ email }}</span>
+          <span style="font-size:9px;color:var(--muted);margin-left:2px">▼</span>
+        </button>
+        <div class="user-menu" id="user-menu" role="menu">
+          <div class="menu-info">
+            <div class="user-avatar" id="user-av2" style="width:36px;height:36px;font-size:13px">?</div>
+            <div>
+              <div class="menu-email-text">{{ email }}</div>
+              <div class="menu-role">Administrador</div>
+            </div>
+          </div>
+          <div class="menu-section">
+            <div class="menu-section-title">Aparência</div>
+            <div class="theme-opts">
+              <button class="t-btn active" data-t="sistema" onclick="setTheme(this)">🖥 Sistema</button>
+              <button class="t-btn" data-t="claro" onclick="setTheme(this)">☀ Claro</button>
+              <button class="t-btn" data-t="escuro" onclick="setTheme(this)">☾ Escuro</button>
+            </div>
+          </div>
+          <a href="/sair" class="menu-item-btn sair">
+            <span style="font-size:14px;width:18px;text-align:center">↩</span> Sair
+          </a>
+        </div>
       </div>
     </div>
   </header>
@@ -348,12 +555,12 @@ body { margin: 0; background: var(--bg); display: flex; min-height: 100vh; }
         <table class="tabela" id="tbl-resumo">
           <thead>
             <tr>
-              <th>Categoria</th>
-              <th class="num">%</th>
-              <th class="num">Ag. Finaud</th>
-              <th class="num">Ag. Cliente</th>
-              <th class="num">Concluídas</th>
-              <th class="num">Total</th>
+              <th class="th-sort" data-s="n" onclick="mainSort('n')">CATEGORIA<span class="si" id="msi-n"></span></th>
+              <th class="num th-sort" data-s="pct" onclick="mainSort('pct')">%<span class="si" id="msi-pct"></span></th>
+              <th class="num th-sort" data-s="af" onclick="mainSort('af')">AG.FINAUD<span class="si" id="msi-af"></span></th>
+              <th class="num th-sort" data-s="ac" onclick="mainSort('ac')">AG.CLIENTE<span class="si" id="msi-ac"></span></th>
+              <th class="num th-sort" data-s="co" onclick="mainSort('co')">CONCLUÍDAS<span class="si" id="msi-co"></span></th>
+              <th class="num th-sort" data-s="tot" onclick="mainSort('tot')">TOTAL<span class="si" id="msi-tot"></span></th>
             </tr>
           </thead>
           <tbody id="tbody-resumo">
@@ -363,6 +570,63 @@ body { margin: 0; background: var(--bg); display: flex; min-height: 100vh; }
         </table>
       </div>
     </section>
+
+    <!-- ── Painel Evolução Histórica ──────────────────────────────── -->
+    <div class="evo" id="evo">
+      <button class="evo-trig" onclick="toggleEvo()" aria-expanded="false">
+        <div class="evo-left">
+          <div class="evo-ico">📈</div>
+          <div><span class="evo-lbl">Evolução histórica</span><span class="evo-hint">— variação por período</span></div>
+        </div>
+        <span class="chev">▼</span>
+      </button>
+      <div class="evo-body">
+        <div class="p-bar">
+          <span class="p-lbl">Período</span>
+          <button class="p-btn" onclick="selPeriod('hoje',this)">Hoje</button>
+          <button class="p-btn active" onclick="selPeriod('semana',this)">Semana</button>
+          <button class="p-btn" onclick="selPeriod('quinzena',this)">Quinzena</button>
+          <button class="p-btn" onclick="selPeriod('mes',this)">Mês</button>
+          <button class="p-btn" onclick="selPeriod('semestre',this)">Semestre</button>
+          <button class="p-btn" onclick="selPeriod('custom',this)">Personalizado</button>
+        </div>
+        <div class="cat-bar" id="cat-bar"></div>
+        <div class="evo-cal" id="evo-cal" hidden>
+          <div class="cal-months" id="cal-months"></div>
+          <div class="cal-range-note" id="cal-range-note"></div>
+          <div class="cal-acts">
+            <span class="cal-hint" id="cal-hint">Selecione a data de início</span>
+            <div class="cal-btns">
+              <button class="btn-cal-clear" onclick="clearRange()">Limpar</button>
+              <button class="btn-cal-apply" id="btn-apply" onclick="applyRange()" disabled>Aplicar período</button>
+            </div>
+          </div>
+        </div>
+        <div class="evo-p-note" id="evo-p-note"></div>
+        <div class="evo-tw"><table class="evo-table">
+          <thead><tr>
+            <th class="sortable" data-s="n" onclick="evoSort('n')">CATEGORIA<span class="si" id="esi-n"></span></th>
+            <th class="sortable" style="color:var(--af-c)" data-s="af" onclick="evoSort('af')">AG.FINAUD<span class="si" id="esi-af"></span></th>
+            <th class="sortable" style="color:var(--af-c);font-weight:400" data-s="daf" onclick="evoSort('daf')">variação<span class="si" id="esi-daf"></span></th>
+            <th class="sortable" style="color:var(--ac-c)" data-s="ac" onclick="evoSort('ac')">AG.CLIENTE<span class="si" id="esi-ac"></span></th>
+            <th class="sortable" style="color:var(--ac-c);font-weight:400" data-s="dac" onclick="evoSort('dac')">variação<span class="si" id="esi-dac"></span></th>
+            <th class="sortable" style="color:var(--co-c)" data-s="co" onclick="evoSort('co')">CONCLUÍDAS<span class="si" id="esi-co"></span></th>
+            <th class="sortable" style="color:var(--co-c);font-weight:400" data-s="dco" onclick="evoSort('dco')">variação<span class="si" id="esi-dco"></span></th>
+            <th class="sortable" data-s="tot" onclick="evoSort('tot')">TOTAL<span class="si" id="esi-tot"></span></th>
+            <th style="font-weight:400;color:var(--muted)">variação</th>
+          </tr></thead>
+          <tbody id="evo-tbody"><tr><td colspan="9" style="text-align:center;color:var(--muted);padding:20px">Abra o painel para carregar o histórico.</td></tr></tbody>
+          <tfoot id="evo-tfoot"></tfoot>
+        </table></div>
+        <div class="evo-ft">
+          Leitura:
+          <span><span class="evo-badge evo-bneg">▲</span> AF/AC cresceu — mais trabalho</span>
+          <span><span class="evo-badge evo-bpos">▼</span> AF/AC caiu — mais resolvido</span>
+          <span><span class="evo-badge evo-bpos">▲</span> Concluídas cresceu</span>
+          <span><span class="evo-badge evo-bneu">—</span> sem variação</span>
+        </div>
+      </div>
+    </div>
 
     <!-- ── Página 2: Não classificados ────────────────────────────── -->
     <section class="page" id="pag-nao-classificados">
@@ -637,39 +901,8 @@ async function carregarResumo() {
     if ((d.bloqueados || 0) > 0)  document.getElementById('badge-bloqueados').classList.add('alerta');
 
     // Tabela
-    const tot = d.totais.total || 1;
-    const tbody = document.getElementById('tbody-resumo');
-    if (!d.categorias.length) {
-      tbody.innerHTML = '<tr><td colspan="6" class="vazio">Nenhuma thread classificada ainda.</td></tr>';
-    } else {
-      tbody.innerHTML = d.categorias.map(c => {
-        const pct = tot > 0 ? ((c.total / tot) * 100).toFixed(1) : '0.0';
-
-        // Monta célula com triângulo de delta
-        // AF/AC: ▲ = ruim (vermelho), ▼ = bom (verde)
-        // CO:    ▲ = bom  (verde),    ▼ = ruim (vermelho)
-        function celDelta(val, cls, delta, invertido) {
-          const num = val ? `<span class="${cls}">${val}</span>` : '<span class="n-zero">—</span>';
-          if (!delta) return num;
-          const tri = delta > 0 ? '▲' : '▼';
-          const cor = (delta > 0) === invertido ? 'delta-bom' : 'delta-ruim';
-          return `${num}<span class="${cor}"> ${tri} ${Math.abs(delta)}</span>`;
-        }
-
-        const af = celDelta(c.af, 'n-af', c.delta_af, false);
-        const ac = celDelta(c.ac, 'n-ac', c.delta_ac, false);
-        const co = celDelta(c.co, 'n-co', c.delta_co, true);
-
-        return `<tr onclick="abrirCategoria('${c.id}','${escHtml(c.nome)}')">
-          <td>${escHtml(c.nome)}</td>
-          <td class="num pct">${pct}%</td>
-          <td class="num">${af}</td>
-          <td class="num">${ac}</td>
-          <td class="num">${co}</td>
-          <td class="num"><strong>${c.total}</strong></td>
-        </tr>`;
-      }).join('');
-    }
+    _dadosResumo = {categorias: d.categorias, totais: d.totais};
+    renderResumo();
 
     // Rodapé
     const t = d.totais;
@@ -1007,6 +1240,376 @@ function escHtml(s) {
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
+
+// ── Tema ─────────────────────────────────────────────────────────────
+function setTheme(btn) {
+  const t = typeof btn === 'string' ? btn : btn.dataset.t;
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('o360_theme', t);
+  document.querySelectorAll('.t-btn').forEach(b => b.classList.toggle('active', b.dataset.t === t));
+}
+(function() {
+  const s = localStorage.getItem('o360_theme');
+  if (s) setTheme(s);
+  const av2 = document.getElementById('user-av2');
+  if (av2) av2.textContent = document.getElementById('user-email').textContent.trim().slice(0,2).toUpperCase();
+})();
+
+// ── Menu do usuário ───────────────────────────────────────────────────
+function toggleMenu() {
+  const m = document.getElementById('user-menu');
+  const open = m.classList.toggle('open');
+  document.getElementById('user-btn').setAttribute('aria-expanded', open);
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.user-wrap')) {
+    const m = document.getElementById('user-menu');
+    if (m) m.classList.remove('open');
+  }
+});
+
+// ── Ordenação da tabela principal ─────────────────────────────────────
+let _dadosResumo = null, mainSortKey = null, mainSortDir = -1;
+
+function _celDelta(val, cls, delta, invertido) {
+  const num = val ? `<span class="${cls}">${val}</span>` : '<span class="n-zero">—</span>';
+  if (!delta) return num;
+  const tri = delta > 0 ? '▲' : '▼';
+  const cor = (delta > 0) === invertido ? 'delta-bom' : 'delta-ruim';
+  return `${num}<span class="${cor}"> ${tri} ${Math.abs(delta)}</span>`;
+}
+
+function renderResumo() {
+  if (!_dadosResumo) return;
+  const {categorias, totais} = _dadosResumo;
+  const tot = totais.total || 1;
+  let cats = [...categorias];
+  if (mainSortKey) {
+    cats.sort((a, b) => {
+      if (mainSortKey === 'n') return mainSortDir * a.nome.localeCompare(b.nome, 'pt-BR', {sensitivity:'base'});
+      let va, vb;
+      if (mainSortKey === 'af') {va=a.af;vb=b.af;}
+      else if (mainSortKey === 'ac') {va=a.ac;vb=b.ac;}
+      else if (mainSortKey === 'co') {va=a.co;vb=b.co;}
+      else {va=a.total;vb=b.total;}
+      return mainSortDir * (va - vb);
+    });
+  }
+  const tbody = document.getElementById('tbody-resumo');
+  if (!cats.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="vazio">Nenhuma thread classificada ainda.</td></tr>';
+  } else {
+    tbody.innerHTML = cats.map(c => {
+      const pct = tot > 0 ? ((c.total / tot) * 100).toFixed(1) : '0.0';
+      const af = _celDelta(c.af, 'n-af', c.delta_af, false);
+      const ac = _celDelta(c.ac, 'n-ac', c.delta_ac, false);
+      const co = _celDelta(c.co, 'n-co', c.delta_co, true);
+      return `<tr onclick="abrirCategoria('${c.id}','${escHtml(c.nome)}')">
+        <td>${escHtml(c.nome)}</td>
+        <td class="num pct">${pct}%</td>
+        <td class="num">${af}</td>
+        <td class="num">${ac}</td>
+        <td class="num">${co}</td>
+        <td class="num"><strong>${c.total}</strong></td>
+      </tr>`;
+    }).join('');
+  }
+  document.querySelectorAll('#tbl-resumo th[data-s]').forEach(th => {
+    th.classList.toggle('sort-active', th.dataset.s === mainSortKey);
+    const si = th.querySelector('.si');
+    if (si) si.textContent = th.dataset.s === mainSortKey ? (mainSortDir === 1 ? ' ▲' : ' ▼') : '';
+  });
+}
+
+function mainSort(key) {
+  if (mainSortKey === key) mainSortDir *= -1; else {mainSortKey = key; mainSortDir = -1;}
+  renderResumo();
+}
+
+// ── Evolução Histórica ────────────────────────────────────────────────
+let evoHistorico = [], evoCats = [], evoSelectedCats = new Set();
+let evoSortKey = null, evoSortDir = -1;
+let activePeriod = 'semana', customDelta = null, customLabel = '';
+let EVO_DATA_MIN = null, EVO_DATA_MAX = null;
+let calY, calM, rStart = null, rEnd = null;
+
+async function carregarHistorico() {
+  try {
+    const [dh, dl] = await Promise.all([_get('/api/historico'), _get('/api/historico/limites')]);
+    evoHistorico = dh.historico || [];
+    if (dl.min) EVO_DATA_MIN = new Date(dl.min.replace(' ', 'T'));
+    if (dl.max) EVO_DATA_MAX = new Date(dl.max.replace(' ', 'T'));
+    if (EVO_DATA_MAX) { calY = EVO_DATA_MAX.getFullYear(); calM = EVO_DATA_MAX.getMonth(); }
+    if (evoHistorico.length) {
+      const latest = evoHistorico[evoHistorico.length - 1];
+      evoCats = _CATS
+        .filter(([id]) => id in latest.categorias)
+        .map(([id, n]) => { const c = latest.categorias[id]; return {id, n, af:c.af, ac:c.ac, co:c.co, tot:c.total}; });
+      evoSelectedCats = new Set(evoCats.map(c => c.id));
+      buildCatBar();
+      renderEvo();
+    } else {
+      document.getElementById('evo-tbody').innerHTML =
+        '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:20px">Sem histórico disponível — rode o coletor para gerar snapshots.</td></tr>';
+    }
+  } catch(e) {
+    document.getElementById('evo-tbody').innerHTML =
+      '<tr><td colspan="9" style="text-align:center;color:var(--neg);padding:20px">Erro ao carregar histórico.</td></tr>';
+  }
+}
+
+function getEvoDelta() {
+  if (!evoHistorico.length) return evoCats.map(() => [0,0,0]);
+  if (activePeriod === 'custom') return customDelta || evoCats.map(() => [0,0,0]);
+  const latest = evoHistorico[evoHistorico.length - 1];
+  const latestDate = new Date(latest.data_hora.replace(' ','T'));
+  const dMap = {hoje:1, semana:7, quinzena:15, mes:30, semestre:180};
+  const target = new Date(latestDate.getTime() - (dMap[activePeriod]||7) * 864e5);
+  let prev = evoHistorico[0];
+  for (const snap of evoHistorico) {
+    if (new Date(snap.data_hora.replace(' ','T')) <= target) prev = snap; else break;
+  }
+  return evoCats.map(({id}) => {
+    const c = latest.categorias[id]||{af:0,ac:0,co:0};
+    const p = prev.categorias[id]||{af:0,ac:0,co:0};
+    return [c.af-p.af, c.ac-p.ac, c.co-p.co];
+  });
+}
+
+function getEvoNote() {
+  if (!evoHistorico.length) return '';
+  const fmtD = d => `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+  if (activePeriod === 'custom') return customLabel || 'Selecione o período acima';
+  const latest = evoHistorico[evoHistorico.length - 1];
+  const latestDate = new Date(latest.data_hora.replace(' ','T'));
+  const dMap = {hoje:1, semana:7, quinzena:15, mes:30, semestre:180};
+  const from = new Date(latestDate.getTime() - (dMap[activePeriod]||7) * 864e5);
+  return `Comparando com ${fmtD(from)} — último snapshot: ${fmtD(latestDate)}`;
+}
+
+function evoSort(key) {
+  if (evoSortKey === key) evoSortDir *= -1; else {evoSortKey = key; evoSortDir = -1;}
+  renderEvo();
+}
+
+function evoSortVis(vis, d) {
+  if (!evoSortKey) return vis;
+  return [...vis].sort((a,b) => {
+    if (evoSortKey==='n') return evoSortDir*a.n.localeCompare(b.n,'pt-BR',{sensitivity:'base'});
+    let va,vb;
+    if (evoSortKey==='af'){va=a.af;vb=b.af;}
+    else if(evoSortKey==='ac'){va=a.ac;vb=b.ac;}
+    else if(evoSortKey==='co'){va=a.co;vb=b.co;}
+    else if(evoSortKey==='tot'){va=a.tot;vb=b.tot;}
+    else if(evoSortKey==='daf'){va=d[a.i][0];vb=d[b.i][0];}
+    else if(evoSortKey==='dac'){va=d[a.i][1];vb=d[b.i][1];}
+    else if(evoSortKey==='dco'){va=d[a.i][2];vb=d[b.i][2];}
+    else{va=a.tot;vb=b.tot;}
+    return evoSortDir*(va-vb);
+  });
+}
+
+function evoBdg(delta, tipo) {
+  if (!delta) return '<span class="evo-badge evo-bneu">—</span>';
+  const bom = (tipo==='co'||tipo==='tot') ? delta>0 : delta<0;
+  return `<span class="evo-badge ${bom?'evo-bpos':'evo-bneg'}">${delta>0?'▲':'▼'}${Math.abs(delta)}</span>`;
+}
+
+function renderEvo() {
+  const d = getEvoDelta();
+  let vis = evoCats.map((r,i) => ({...r,i})).filter(r => evoSelectedCats.has(r.id));
+  vis = evoSortVis(vis, d);
+  document.querySelectorAll('.evo-table th[data-s]').forEach(th => {
+    th.classList.toggle('sort-active', th.dataset.s === evoSortKey);
+    const si = th.querySelector('.si');
+    if (si) si.textContent = th.dataset.s === evoSortKey ? (evoSortDir===1?' ▲':' ▼') : '';
+  });
+  const tot = vis.reduce((a,r) => ({af:a.af+r.af,ac:a.ac+r.ac,co:a.co+r.co,tot:a.tot+r.tot}), {af:0,ac:0,co:0,tot:0});
+  const tD  = vis.reduce((a,r) => ({af:a.af+d[r.i][0],ac:a.ac+d[r.i][1],co:a.co+d[r.i][2]}), {af:0,ac:0,co:0});
+  document.getElementById('evo-tbody').innerHTML = vis.map(r => {
+    const tD2 = d[r.i][0]+d[r.i][1]+d[r.i][2];
+    return `<tr><td>${r.n}</td>
+      <td class="evo-caf">${r.af}</td><td>${evoBdg(d[r.i][0],'af')}</td>
+      <td class="evo-cac">${r.ac}</td><td>${evoBdg(d[r.i][1],'ac')}</td>
+      <td class="evo-cco">${r.co}</td><td>${evoBdg(d[r.i][2],'co')}</td>
+      <td style="font-weight:600">${r.tot}</td><td>${evoBdg(tD2,'tot')}</td></tr>`;
+  }).join('') || (evoSelectedCats.size===0
+    ? '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:20px">Nenhuma categoria selecionada</td></tr>'
+    : '');
+  const totD2 = tD.af+tD.ac+tD.co;
+  document.getElementById('evo-tfoot').innerHTML = `<tr><td>Total</td>
+    <td class="evo-caf">${tot.af}</td><td>${evoBdg(tD.af,'af')}</td>
+    <td class="evo-cac">${tot.ac}</td><td>${evoBdg(tD.ac,'ac')}</td>
+    <td class="evo-cco">${tot.co}</td><td>${evoBdg(tD.co,'co')}</td>
+    <td style="font-weight:600">${tot.tot}</td><td>${evoBdg(totD2,'tot')}</td></tr>`;
+  document.getElementById('evo-p-note').textContent = getEvoNote();
+}
+
+function toggleEvo() {
+  const p = document.getElementById('evo');
+  const open = p.classList.toggle('open');
+  p.querySelector('.evo-trig').setAttribute('aria-expanded', open);
+  if (open && !evoHistorico.length) carregarHistorico();
+  else if (open) renderEvo();
+}
+
+function selPeriod(p, btn) {
+  activePeriod = p;
+  document.querySelectorAll('.p-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('evo-cal').hidden = (p !== 'custom');
+  if (p === 'custom') renderCal();
+  renderEvo();
+}
+
+function buildCatBar() {
+  const bar = document.getElementById('cat-bar');
+  bar.innerHTML = `<span class="p-lbl">Categorias</span>
+    <button class="cat-all active" id="btn-all" onclick="toggleAllCats()">Todas</button>` +
+    evoCats.map(c => `<button class="cat-pill active" data-id="${c.id}" onclick="toggleCat('${c.id}')">${c.n}</button>`).join('');
+}
+
+function toggleCat(id) {
+  if (evoSelectedCats.has(id)) evoSelectedCats.delete(id); else evoSelectedCats.add(id);
+  updateCatUI(); renderEvo();
+}
+
+function toggleAllCats() {
+  if (evoSelectedCats.size === evoCats.length) evoSelectedCats = new Set();
+  else evoSelectedCats = new Set(evoCats.map(c => c.id));
+  updateCatUI(); renderEvo();
+}
+
+function updateCatUI() {
+  document.querySelectorAll('.cat-pill').forEach(b => b.classList.toggle('active', evoSelectedCats.has(b.dataset.id)));
+  const all = document.getElementById('btn-all');
+  if (all) all.classList.toggle('active', evoSelectedCats.size === evoCats.length);
+}
+
+// Calendário
+function calHint(t) { document.getElementById('cal-hint').textContent = t; }
+function calFmt(d) { return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`; }
+
+function clearRange() {
+  rStart=null; rEnd=null; customDelta=null; customLabel='';
+  document.getElementById('btn-apply').disabled = true;
+  calHint('Selecione a data de início');
+  document.querySelectorAll('.cday').forEach(el => el.classList.remove('cstart','cend','cin-range'));
+  renderEvo();
+}
+
+function applyRange() {
+  if (!rStart||!rEnd||!evoHistorico.length) return;
+  const startTs=rStart.getTime(), endTs=rEnd.getTime();
+  let snapStart=evoHistorico[0], snapEnd=evoHistorico[evoHistorico.length-1];
+  for (const snap of evoHistorico) {
+    const ts=new Date(snap.data_hora.replace(' ','T')).getTime();
+    if (ts<=startTs) snapStart=snap;
+    if (ts<=endTs) snapEnd=snap;
+  }
+  const days=Math.round((rEnd-rStart)/864e5);
+  customLabel=`Período personalizado: ${calFmt(rStart)} a ${calFmt(rEnd)} (${days} dia${days!==1?'s':''})`;
+  customDelta=evoCats.map(({id}) => {
+    const e=snapEnd.categorias[id]||{af:0,ac:0,co:0};
+    const s=snapStart.categorias[id]||{af:0,ac:0,co:0};
+    return [e.af-s.af, e.ac-s.ac, e.co-s.co];
+  });
+  document.getElementById('evo-cal').hidden=true;
+  renderEvo();
+}
+
+function updateCalClasses() {
+  const s=rStart?.getTime(), e=rEnd?.getTime();
+  document.querySelectorAll('.cday[data-ts]').forEach(el => {
+    const ts=+el.dataset.ts;
+    el.classList.toggle('cstart',!!(s&&ts===s));
+    el.classList.toggle('cend',  !!(e&&ts===e));
+    el.classList.toggle('cin-range',!!(s&&e&&ts>Math.min(s,e)&&ts<Math.max(s,e)));
+  });
+}
+
+function dayHover(el) {
+  if (!rStart||rEnd) return;
+  const hts=+el.dataset.ts, s=rStart.getTime();
+  document.querySelectorAll('.cday[data-ts]').forEach(d => {
+    const ts=+d.dataset.ts;
+    d.classList.toggle('cin-range', ts>Math.min(s,hts)&&ts<Math.max(s,hts));
+  });
+}
+
+function calNav(dir) {
+  let nm=calM+dir, ny=calY;
+  if (nm>11){nm=0;ny++;}if(nm<0){nm=11;ny--;}
+  if (!EVO_DATA_MIN||!EVO_DATA_MAX) return;
+  if (ny<EVO_DATA_MIN.getFullYear()||(ny===EVO_DATA_MIN.getFullYear()&&nm<EVO_DATA_MIN.getMonth())) return;
+  let rm=nm+1,ry=ny; if(rm>11){rm=0;ry++;}
+  if (ry>EVO_DATA_MAX.getFullYear()||(ry===EVO_DATA_MAX.getFullYear()&&rm>EVO_DATA_MAX.getMonth())) return;
+  calM=nm; calY=ny; renderCal();
+}
+
+function renderCal() {
+  if (!EVO_DATA_MIN||!EVO_DATA_MAX) return;
+  document.getElementById('cal-months').innerHTML=[0,1].map(o=>renderMonth(calY,calM+o,o===0)).join('');
+  const fmtD=d=>`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+  document.getElementById('cal-range-note').textContent=
+    `📅 Dados disponíveis: ${fmtD(EVO_DATA_MIN)} a ${fmtD(EVO_DATA_MAX)} — datas fora deste intervalo estão desabilitadas`;
+}
+
+function renderMonth(y,m,isFirst) {
+  let yr=y,mo=m;
+  while(mo>11){mo-=12;yr++;}while(mo<0){mo+=12;yr--;}
+  const mnames=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const firstDay=new Date(yr,mo,1).getDay(), dim=new Date(yr,mo+1,0).getDate();
+  const prevM=calM===0?11:calM-1, prevY=calM===0?calY-1:calY;
+  const canBack=EVO_DATA_MIN&&!(prevY<EVO_DATA_MIN.getFullYear()||(prevY===EVO_DATA_MIN.getFullYear()&&prevM<EVO_DATA_MIN.getMonth()));
+  let rm2=calM+2,ry2=calY; if(rm2>11){rm2=rm2-12;ry2++;}
+  const canFwd=EVO_DATA_MAX&&!(ry2>EVO_DATA_MAX.getFullYear()||(ry2===EVO_DATA_MAX.getFullYear()&&rm2>EVO_DATA_MAX.getMonth()));
+  let h=`<div class="cal-m"><div class="cal-mhd">
+    ${isFirst?`<button class="cal-nav" onclick="calNav(-1)" ${!canBack?'disabled':''}>‹</button>`:'<span style="width:26px"></span>'}
+    <span class="cal-mname">${mnames[mo]} ${yr}</span>
+    ${!isFirst?`<button class="cal-nav" onclick="calNav(1)" ${!canFwd?'disabled':''}>›</button>`:'<span style="width:26px"></span>'}
+  </div><div class="cal-grid">
+  <div class="cdow">D</div><div class="cdow">S</div><div class="cdow">T</div><div class="cdow">Q</div>
+  <div class="cdow">Q</div><div class="cdow">S</div><div class="cdow">S</div>`;
+  for(let i=0;i<firstDay;i++) h+=`<div class="cday cempty"></div>`;
+  const minTs=EVO_DATA_MIN.getTime(), maxTs=EVO_DATA_MAX.getTime();
+  const todayTs=new Date(EVO_DATA_MAX.getFullYear(),EVO_DATA_MAX.getMonth(),EVO_DATA_MAX.getDate()).getTime();
+  for(let day=1;day<=dim;day++){
+    const ts=new Date(yr,mo,day).getTime();
+    const disabled=ts<minTs||ts>maxTs;
+    const isToday=ts===todayTs;
+    const isS=!disabled&&rStart&&ts===rStart.getTime();
+    const isE=!disabled&&rEnd&&ts===rEnd.getTime();
+    const s=rStart?.getTime(),e=rEnd?.getTime();
+    const inR=!disabled&&s&&e&&ts>Math.min(s,e)&&ts<Math.max(s,e);
+    const cls=['cday',disabled?'cdisabled':'',isS?'cstart':'',isE?'cend':'',
+               inR?'cin-range':'',isToday&&!isS&&!isE&&!disabled?'ctoday':''].filter(Boolean).join(' ');
+    const evts=disabled?'':`data-ts="${ts}" onclick="dayClick(${yr},${mo},${day})" onmouseenter="dayHover(this)"`;
+    h+=`<div class="${cls}" ${evts}>${day}</div>`;
+  }
+  return h+'</div></div>';
+}
+
+function dayClick(y,m,day) {
+  const dt=new Date(y,m,day);
+  if (EVO_DATA_MIN&&dt<EVO_DATA_MIN) return;
+  if (EVO_DATA_MAX&&dt>EVO_DATA_MAX) return;
+  if (!rStart||rEnd) {rStart=dt;rEnd=null;calHint('Selecione a data de fim');}
+  else if (dt>=rStart) {
+    rEnd=dt;
+    document.getElementById('btn-apply').disabled=false;
+    const days=Math.round((rEnd-rStart)/864e5);
+    calHint(`${calFmt(rStart)} → ${calFmt(rEnd)} (${days} dia${days!==1?'s':''}) — clique em Aplicar`);
+  } else {rStart=dt;rEnd=null;calHint('Selecione a data de fim');}
+  updateCalClasses();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const cal=document.getElementById('evo-cal');
+  if (cal) cal.addEventListener('mouseleave', () => {
+    if (rStart&&!rEnd) document.querySelectorAll('.cday').forEach(d=>d.classList.remove('cin-range'));
+  });
+});
 
 // ── Inicialização ─────────────────────────────────────────────────────
 carregarResumo();

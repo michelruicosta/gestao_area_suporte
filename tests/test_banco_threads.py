@@ -891,9 +891,9 @@ def test_snapshot_grava_e_le(monkeypatch, tmp_path):
     assert snap['DDR_2011']['co'] == 1
 
 
-def test_snapshot_sobrescreve_anterior(monkeypatch, tmp_path):
-    """Segunda chamada a salvar_snapshot substitui a primeira — sem acumulação."""
-    import sqlite3
+def test_snapshot_acumula_historico(monkeypatch, tmp_path):
+    """Duas chamadas a salvar_snapshot acumulam — ler_ultimo_snapshot devolve só o mais recente."""
+    import sqlite3, time
     banco_tmp = str(tmp_path / 'test.db')
     monkeypatch.setattr(bt, 'BANCO', banco_tmp)
     bt.criar_banco()
@@ -905,11 +905,21 @@ def test_snapshot_sobrescreve_anterior(monkeypatch, tmp_path):
     )
     conn.commit(); conn.close()
 
-    bt.salvar_snapshot()
-    bt.salvar_snapshot()  # segunda chamada — não deve duplicar
+    # Força timestamps distintos via monkeypatch
+    ts_seq = iter(['2026-08-20 10:00:00', '2026-08-20 10:05:00'])
+    monkeypatch.setattr(bt, '_agora', lambda: next(ts_seq))
 
+    bt.salvar_snapshot()
+    bt.salvar_snapshot()
+
+    # ler_ultimo_snapshot devolve só o snapshot mais recente (af=1, não duplicado)
     snap = bt.ler_ultimo_snapshot()
-    assert snap['DRM_2060']['af'] == 1  # apenas 1, não 2
+    assert snap['DRM_2060']['af'] == 1
+
+    # O banco deve conter 2 momentos distintos acumulados
+    with bt._conectar() as c:
+        n_momentos = c.execute('SELECT COUNT(DISTINCT data_hora) FROM snapshots').fetchone()[0]
+    assert n_momentos == 2, f'Esperado 2 momentos acumulados, mas havia {n_momentos}'
 
 
 # ── Testes: registrar_coleta / ler_log_coletas ────────────────────────────────

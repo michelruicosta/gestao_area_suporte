@@ -417,6 +417,35 @@ def api_admin_log_coletas():
     return jsonify({'logs': logs})
 
 
+@app.route('/api/historico')
+@_requer_login
+def api_historico():
+    from collections import OrderedDict
+    with bt._conectar() as conn:
+        rows = conn.execute(
+            'SELECT data_hora, categoria, af, ac, co, total FROM snapshots ORDER BY data_hora'
+        ).fetchall()
+    snaps: OrderedDict = OrderedDict()
+    for r in rows:
+        dt = r['data_hora']
+        if dt not in snaps:
+            snaps[dt] = {}
+        snaps[dt][r['categoria']] = {
+            'af': r['af'], 'ac': r['ac'], 'co': r['co'], 'total': r['total']
+        }
+    return jsonify({
+        'historico': [{'data_hora': dt, 'categorias': cats} for dt, cats in snaps.items()]
+    })
+
+
+@app.route('/api/historico/limites')
+@_requer_login
+def api_historico_limites():
+    with bt._conectar() as conn:
+        row = conn.execute('SELECT MIN(data_hora), MAX(data_hora) FROM snapshots').fetchone()
+    return jsonify({'min': row[0], 'max': row[1]})
+
+
 # ── Inicialização ─────────────────────────────────────────────────────────────
 
 if __name__ == '__main__':
