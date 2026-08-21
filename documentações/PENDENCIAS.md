@@ -157,27 +157,9 @@ Determinístico classifica 134/134 threads que o R6 retornou como INCERTO. Todos
 
 ---
 
-### 🟡 TELAS — Painel "o que mudou desde a última rodada" (identificado 18/08/2026)
+### ✅ TELAS — Painel delta (variação entre rodadas) — resolvido em 21/08/2026
 
-Michel quer visualizar facilmente o que entrou, saiu e ficou igual em cada categoria após uma rodada do coletor — sem trocar de tela e sem poluir a tela principal.
-
-**Conceito aprovado (protótipo em 18/08/2026):**
-- Painel recolhível acima da tabela de categorias
-- Mostra só as categorias que tiveram mudança (não todas as 12)
-- Por categoria: delta de Ag. Finaud (↑/↓), Ag. Cliente (↑/↓), Concluída (↑/↓) + quantidade de threads novas
-- Cores: ↑ em AF/AC = laranja (mais trabalho), ↓ em AF/AC = verde (resolvido), ↑ em CO = verde
-- Cabeçalho recolhido: "23 threads processadas · 12 novas · 8 resolvidas"
-- Controles de visualização: "Todas / Só novas / Atualizadas"
-
-**O que fazer:**
-1. Salvar antes/depois no banco a cada rodada (snapshot do contador por categoria antes de rodar)
-2. Calcular o delta ao final da rodada
-3. Renderizar o painel na tela `gestao_email.html`
-
-**Dependência:** banco precisa ter coluna de snapshot ou tabela de histórico de contadores.
-**Quando fazer:** após coletor estar em produção (Fase 1).
-
-**Protótipo:** publicado como artifact em 18/08/2026 — ver link na sessão deste dia.
+Implementado como colunas VAR separadas na tabela principal (AF/VAR/AC/VAR/CO/VAR/TOTAL/VAR — 10 colunas). Abordagem aprovada por Michel: mais compacto e integrado do que o painel recolhível do protótipo. Delta calculado via `ler_penultimo_snapshot()` (fim da rodada N-1 vs. fim da rodada N). Commit `facf13c`.
 
 ---
 

@@ -8,60 +8,69 @@
 
 ---
 
-## 📓 Diário da sessão (2026-08-20) — Continuação: testes dos Fix A/B + Fix C/D/E/F + auditoria seeds 0–10
+## 📓 Diário da sessão (2026-08-21) — Telas: painel delta + Fix H (agradecimento sem pergunta)
 
-### O que foi feito hoje (2ª parte da sessão)
+### O que foi feito hoje
 
-Continuação da auditoria sistemática de status iniciada no início do dia. Objetivo: percorrer seeds 0–10, um padrão por vez, até esgotar os erros detectáveis.
+**Duas frentes concluídas:**
 
 ---
 
-**4 correções adicionais aplicadas em `scripts/banco_threads.py`:**
+#### Frente 1 — Telas: painel delta na tabela principal
 
-| Fix | Commit | Correção |
-|---|---|---|
-| C | `3bad5da` | `texto_flat` — frases de entrega quebradas por `\r\n` (ex.: "segue em\nanexo") não eram detectadas |
-| D | `53c66ed` | `@Nome<mailto:email>` do Outlook/Teams bloqueava detecção de "Muito obrigado" |
-| E | `64cce04` | `[cid:...]` + assinatura sem sign-off e sem 4+ linhas em branco bloqueava agradecimento |
-| F | `10b3c55` | "De acordo" + assinatura corporativa separada por 1 linha em branco ficava como AF |
+Implementadas melhorias visuais e funcionais na tela `templates/gestao_email.html`:
 
-**Testes escritos para Fix A e Fix B (já existentes):**
-- Fix A (DLO prioridade sobre DLI): 2 testes novos em `tests/test_classificador_ia.py`
-- Fix B (arquivos transmitidos): 2 testes novos em `tests/test_banco_threads.py`
+| Melhoria | Detalhe |
+|---|---|
+| Chevron ▼ movido para canto direito do card-hd | Igual ao padrão do painel "Evolução histórica" |
+| Contador regressivo virou chip destacado | Borda + cor da marca + peso de fonte, id `refresh-info` |
+| Colunas VAR separadas (10 colunas total) | AF / VAR / AC / VAR / CO / VAR / TOTAL / VAR — cada métrica tem sua própria coluna de variação |
+| Footer da tabela | Linha de legenda (▲▼ — símbolos) + intervalo dinâmico ("a cada 5 min") |
+| `ler_penultimo_snapshot()` no banco | Calcula delta entre fim da rodada N-1 e fim da rodada N (antes era início vs. início — delta era zero) |
+| `delta_tot` no servidor | Campo novo para variação do TOTAL |
+| `_chipVar()` no JS | Função nova para chips de variação nas colunas VAR |
+| `_REFRESH_INTERVAL = 300` | Constante central — usada no contador E no footer |
 
-**Auditoria de amostragem (seeds 0–10):**
-- Seeds 0–2: padrões base — limpos (validados em sessão anterior)
-- Seed 3: fix adicional de transmissão + segue no início de linha → já cobertos
-- Seed 4: 30/30 corretos — nenhum novo padrão
-- Seed 5: detectou Fix C (frase de entrega quebrada por `\r\n`)
-- Seed 6: detectou Fix D (`@mention` do Outlook)
-- Seed 7: detectou Fix E (`[cid:]` + assinatura sem sign-off)
-- Seed 8: 30/30 corretos
-- Seed 9: detectou Fix F ("De acordo" + assinatura corporativa, 1 linha em branco)
-- Seed 10: 30/30 corretos — auditoria encerrada
+Commits: vários (`facf13c` mais recente da frente de telas). Push realizado.
+
+---
+
+#### Frente 2 — Fix H: cliente agradece sem pergunta ficava AF indevidamente
+
+**Problema identificado:** Michel mostrou thread onde Wilson Lima escreveu "Muito obrigado, vou fazer de acordo com a orientação." — o sistema deixava como Aguardando Finaud mesmo o assunto estando encerrado.
+
+**Diagnóstico:** mapeamento de 846 threads AF → 821 com cliente como último remetente → 9 "obrigado simples" + 53 "outros" incorretos. Causa: Fix G só entendia verbos plurais ("realizaremos") — singular ("vou fazer") e agradecimentos simples não eram cobertos.
+
+**Correção — Fix H** em `scripts/banco_threads.py`:
+- Condição: `_CONFIRMACAO_EXPLICITA` + sem "?" + sem entrega de doc (`seguem?`, `anexo`, `encaminho`) + sem pedido implícito (`precisamos`, `necessitamos`) → Concluída
+- 5 novos testes (`tests/test_banco_threads.py`) — 100 total, zero regressões
+- `scripts/recalcular_status_af.py` — script retroativo (pode rodar novamente se necessário)
+- 42 threads corrigidas retroativamente no banco
+
+Commit: `d99110a` — push realizado.
 
 ---
 
 ### Estado atual
 
-**Suite de testes:** 318/318 passando.
-**Banco:** placar pós-Fix F: **AF=839 · C=260 · AC=58** (total: 1.157 threads classificadas).
-**GitHub:** sincronizado — push realizado ao final da sessão (`10b3c55` mais recente).
-**PENDENCIAS.md:** sem alteração (nenhuma pendência aberta foi tocada hoje).
-**REGISTRO_CORRECOES.md:** 4 entradas adicionadas (Fix C, D, E, F) — todas com Problema / Correção / Validação.
+**Suite de testes:** 100/100 passando (`test_banco_threads.py`).
+**Banco:** pós-Fix H: **AF reduzido em 42** threads (movidas para Concluída). Snapshot delta funcional.
+**GitHub:** sincronizado — push realizado ao final da sessão (`d99110a` mais recente).
+**PENDENCIAS.md:** painel delta marcado como ✅ resolvido (implementado como colunas VAR na tabela, não painel separado — abordagem aprovada por Michel).
+**REGISTRO_CORRECOES.md:** entrada do Fix H adicionada durante a sessão.
 
 ---
 
 ### Próximo passo
 
-**🟢 FASE 1 — Implementação do coletor e das telas**
+**🟢 FASE 1 — Implementação do coletor em produção**
 
-Auditoria de status concluída (seeds 0–10 limpos). A lógica de status está estável e coberta por testes. Próximas tarefas por prioridade:
+Telas e lógica de status estáveis. Próximas tarefas por prioridade:
 
-1. **Rodar o coletor novamente** — capturar e-mails novos com a lógica de status corrigida (Fix C–F). Script já existe: `scripts/coletor_gmail.py`
-2. **Implementar painel delta** — Michel quer ver o que mudou a cada rodada; conceito aprovado (ver PENDENCIAS.md § Telas)
-3. **Definir comportamento em produção** — threads novas vs. já classificadas (ver PENDENCIAS.md §8 — ciclo de vida)
+1. **Rodar o coletor novamente** — capturar e-mails novos com a lógica de status corrigida (Fix A–H). Script já existe: `scripts/coletor_gmail.py`
+2. **Definir comportamento em produção** — threads novas vs. já classificadas (ver PENDENCIAS.md §8 — ciclo de vida)
+3. **Corrigir "Abraço" singular** no detector de assinatura (ver PENDENCIAS.md — item 🟡)
 
-Último /fechar: 2026-08-20 21:XX — memórias revisadas ✅
+Último /fechar: 2026-08-21 — memórias revisadas ✅
 
 ---
