@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-08-21 — Fix H: cliente agradece sem pergunta ficava AF indevidamente
+
+### 21/08 — Fix H: threads onde cliente fechou o assunto permaneciam em "Aguardando Finaud"
+
+**🔎 Em miúdos:** quando o cliente respondia "Muito obrigado, vou fazer de acordo com a orientação." (sem perguntas, sem enviar documento), o sistema deixava o e-mail como "Aguardando Finaud" — como se ainda esperasse resposta da equipe. Na prática, o assunto estava encerrado.
+
+**Problema:** o classificador de status só entendia como "Concluída" quando o cliente usava verbos no plural ("realizaremos", "enviaremos" — Fix G). Verbos no singular ("vou fazer", "farei") e agradecimentos simples ("obrigada pelo retorno") não eram reconhecidos.
+
+**Causa raiz:** a regra do Fix G exigia `_ACAO_PROPRIA` (verbos plurais específicos). Não havia regra para o padrão mais amplo: agradecimento + sem pergunta + sem envio de documento.
+
+**Correção:** adicionado Fix H em `scripts/banco_threads.py` (após Fix G, antes do fallthrough final):
+- Condições para Concluída: `_CONFIRMACAO_EXPLICITA` (obrigado, ok, de acordo, etc.) + sem "?" + sem palavra de entrega de documento (segue, anexo, encaminho) + sem pedido implícito (precisamos, necessitamos)
+- Criado `scripts/recalcular_status_af.py` para atualizar retroativamente as threads já no banco.
+- 42 threads identificadas para correção (aprovação de Michel pendente antes de gravar).
+
+**Validação:** ✅ VALIDADO — 100 testes passando (95 anteriores + 5 novos: Wilson Lima, obrigada pelo retorno, conseguindo gerar arquivo, com pergunta→AF, segue mid-sentence→AF). Zero regressões.
+
+---
+
 ## 2026-08-21 — Telas: modo escuro + painel de evolução em todas as páginas + layout igual ao protótipo
 
 ### 21/08 — Fix: painel "Evolução histórica" aparecia em todas as páginas

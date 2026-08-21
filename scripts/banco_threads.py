@@ -531,6 +531,27 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
             and _CONFIRMACAO_EXPLICITA.search(texto_lower)
             and _ACAO_PROPRIA.search(texto_lower)):
         return 'Concluída', 'Cliente confirmou e comprometeu-se a agir — sem pendência para a Finaud'
+    # Fix H: cliente agradece sem pergunta e sem entrega de documento → Concluída
+    # Regra aprovada por Michel em 21/08/2026: "se não houver perguntas, observações e
+    # documento é concluída". Mais amplo que Fix G — não exige verbo de ação específico.
+    # Ex.: "Muito obrigado, vou fazer de acordo." / "Obrigada pelo retorno."
+    # §8.8b já bloqueou "Segue" no início de linha. Verificamos "segue/anexo" em qualquer
+    # posição para cobrir "Obrigado, segue o arquivo." (entrega de doc, permanece AF).
+    # Guarda adicional: palavras de pedido implícito sem "?" ("precisamos da planilha")
+    # indicam que o cliente ainda espera algo da Finaud — permanece AF.
+    _ENTREGA_DOC_CLI = re.compile(
+        r'\bseguem?\b|\banexo\b|\bencaminho\b|\bencaminhamos\b|\bestou\s+enviando\b',
+        re.IGNORECASE,
+    )
+    _PEDIDO_IMPLICITO = re.compile(
+        r'\bprecis[ao]mos?\b|\bnecessit[ao]mos?\b|\bgostar[íi]amos?\b|\bprecisaria\b',
+        re.IGNORECASE,
+    )
+    if ('?' not in texto_novo
+            and _CONFIRMACAO_EXPLICITA.search(texto_lower)
+            and not _ENTREGA_DOC_CLI.search(texto_lower)
+            and not _PEDIDO_IMPLICITO.search(texto_lower)):
+        return 'Concluída', 'Cliente agradeceu sem pergunta ou documento — assunto encerrado'
     return 'Aguardando Finaud', 'Cliente escreveu — aguarda resposta da Finaud'
 
 

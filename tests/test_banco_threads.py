@@ -1118,3 +1118,49 @@ def test_status_fixg_fp_segue_antes_nao_conclui():
     msgs = [_msg(_CLIENTE_VIA, corpo=corpo, reply_to=_CLIENTE_REPLY)]
     status, _ = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud'
+
+
+# ── Fix H: cliente agradece sem pergunta e sem documento → Concluída ──────────
+
+def test_status_fixh_wilson_lima_vou_fazer():
+    """Fix H — caso-gatilho: 'Muito obrigado, vou fazer de acordo.' → Concluída."""
+    corpo = (
+        'Boa noite Andrea\n\n'
+        'Muito obrigado, vou fazer de acordo com a orientação.\n\n\n'
+        'Abraço e fique com Deus.'
+    )
+    msgs = [_msg(_CLIENTE_VIA, corpo=corpo, reply_to=_CLIENTE_REPLY)]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Concluída'
+
+
+def test_status_fixh_obrigada_pelo_retorno():
+    """Fix H — agradecimento simples sem ação → Concluída."""
+    corpo = 'Obrigada pelo retorno.'
+    msgs = [_msg(_CLIENTE_VIA, corpo=corpo, reply_to=_CLIENTE_REPLY)]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Concluída'
+
+
+def test_status_fixh_conseguindo_gerar_arquivo():
+    """Fix H — cliente informa que resolveu + obrigado, sem perguntas → Concluída."""
+    corpo = 'Obrigado, já estou conseguindo gerar o arquivo.'
+    msgs = [_msg(_CLIENTE_VIA, corpo=corpo, reply_to=_CLIENTE_REPLY)]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Concluída'
+
+
+def test_status_fixh_fp_com_pergunta():
+    """Fix H — falso positivo: obrigado + pergunta → AF (? veta)."""
+    corpo = 'Obrigado! Mas tenho uma dúvida: quando chega o arquivo?'
+    msgs = [_msg(_CLIENTE_VIA, corpo=corpo, reply_to=_CLIENTE_REPLY)]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+
+
+def test_status_fixh_fp_segue_mid_sentence():
+    """Fix H — falso positivo: obrigado + segue (entrega de doc) fora do início de linha → AF."""
+    corpo = 'Obrigado, segue a planilha conforme solicitado.'
+    msgs = [_msg(_CLIENTE_VIA, corpo=corpo, reply_to=_CLIENTE_REPLY)]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
