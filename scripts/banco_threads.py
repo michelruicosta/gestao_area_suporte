@@ -520,6 +520,17 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
             and _so_cortesia(_primeiro_para)
             and _CONFIRMACAO_EXPLICITA.search(_primeiro_para.lower())):
         return 'Concluída', 'Cliente confirmou — sem pendência'
+    # Fix G: cliente agradece e compromete-se a agir por conta própria sem pedir nada à Finaud
+    # Ex.: "Muito obrigado, realizaremos o procedimento e enviaremos a alteração do report ao BCB."
+    _ACAO_PROPRIA = re.compile(
+        r'\b(realizaremos|efetuaremos|enviaremos|encaminharemos|faremos|providenciaremos|'
+        r'transmitiremos|corrigiremos|ajustaremos|reenviaremos)\b',
+        re.IGNORECASE,
+    )
+    if ('?' not in texto_novo
+            and _CONFIRMACAO_EXPLICITA.search(texto_lower)
+            and _ACAO_PROPRIA.search(texto_lower)):
+        return 'Concluída', 'Cliente confirmou e comprometeu-se a agir — sem pendência para a Finaud'
     return 'Aguardando Finaud', 'Cliente escreveu — aguarda resposta da Finaud'
 
 

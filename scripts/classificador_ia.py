@@ -320,6 +320,10 @@ def _classificar_deterministico(
     # 'CRITICA(S) AO' no assunto → BC apontando crítica(s) ao CADOC enviado
     if 'CRITICAS AO' in au or 'CRÍTICAS AO' in au or 'CRITICA AO' in au or 'CRÍTICA AO' in au:
         return _ok(['RETORNO_BACEN'], "'CRITICAS AO' no assunto", 'RETORNO - Regra 01')
+    # 'CRITICA' + nome de CADOC no assunto → cliente recebeu crítica do BACEN sobre aquele relatório
+    # Ex.: "EQI | Crítica DRM | 202607" — o cliente está reportando que o BACEN criticou o DRM
+    if re.search(r'\bCR[IÍ]TICA[S]?\b', au) and re.search(r'\b(DRM|DDR|DRL|DLO|DLI|DRSAC|2060|2011|2160|2061|2062)\b', au):
+        return _ok(['RETORNO_BACEN'], "'CRÍTICA' + CADOC no assunto → crítica do BACEN sobre o relatório", 'RETORNO - Regra 01')
 
     # Camada 1b — CADOC pelo assunto
     _pendencia_bacen = False  # C48: flag para suprimir Camada 2b quando assunto indica pendência

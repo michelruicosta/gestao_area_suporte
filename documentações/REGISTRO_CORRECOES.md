@@ -55,6 +55,53 @@
 
 ---
 
+### 21/08 — Fix: texto de célula e categoria invisíveis no modo escuro (cor e negrito)
+
+**🔎 Em miúdos:** em modo escuro, o texto dentro das células da tabela aparecia preto (cor padrão do browser) em vez de branco. Os nomes de categoria na 1ª coluna apareciam com tons de cinza e pesos diferentes entre si.
+
+**Problema:** (1) `body` não declarava `color: var(--text)` — células herdavam a cor preta padrão do browser; (2) `.tabela th, .tabela td` não tinham `color` explícito — em modo escuro o token `--text` não chegava às células; (3) `#tbl-resumo tbody td:first-child` não tinha `color` nem `font-weight` explícitos — algumas categorias apareciam em cinza e outras em branco dependendo de herança CSS.
+
+**Correção (`templates/gestao_email.html`):**
+- `body`: adicionou `color: var(--text); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale`
+- `.tabela th, .tabela td`: adicionou `color: var(--text)`
+- `#tbl-resumo tbody td:first-child`: adicionou `color: var(--text); font-weight: 600`
+
+**Validação:** ✅ VALIDADO — `getComputedStyle()` confirmou `color: rgb(243,244,246)` (branco) e `font-weight: 600` em modo escuro em todas as categorias.
+
+---
+
+### 21/08 — Fix A: classificador marcando "CRÍTICA DRM" como DRM_2060 em vez de RETORNO_BACEN
+
+**🔎 Em miúdos:** quando um cliente encaminhava uma crítica do BACEN sobre o DRM com "Crítica DRM" no assunto, o sistema classificava como entrega normal de DRM (DRM_2060) em vez de crítica do BACEN (RETORNO_BACEN).
+
+**Problema:** a Camada 1a do classificador verificava sinais como "COMUNICACAO DE INCONSISTENCIA", "AVISO DE ATRASO", "CRITICA AO" — mas não o padrão "CRÍTICA + CADOC" (ex.: "Crítica DRM", "Crítica DRL"). A palavra "DRM" no assunto era capturada pela Camada 1b como entrega → DRM_2060.
+
+**Correção (`scripts/classificador_ia.py`, Fix A, 21/08/2026):**
+- Adicionada verificação na Camada 1a, antes da detecção de CADOC: se assunto contém `\bCRÍTICA[S]?\b` + qualquer nome de CADOC (DRM, DDR, DRL, DLO, DLI, DRSAC, 2060, 2011, 2160, 2061, 2062) → RETORNO_BACEN.
+- Thread "EQI | Crítica DRM | 202607" corrigida manualmente no banco.
+
+**Casos similares no banco:** nenhum outro (só o EQI neste momento).
+
+**Validação:** ✅ VALIDADO — teste manual (5 casos): EQI e variação "Crítica DRM 2060" → RETORNO_BACEN; DRM - Julho/2026, DRM 07.2026, Arquivo 2060 - Julho 2026 → DRM_2060 (sem regressão). `pytest tests/ -q` → 318/318.
+
+---
+
+### 21/08 — Fix B (Fix G no código): cliente confirma e promete agir por conta própria ficava como AF
+
+**🔎 Em miúdos:** quando o cliente respondia "Muito obrigado, realizaremos o procedimento e enviaremos ao BCB" (confirmando e prometendo agir por conta própria), o sistema classificava como "Aguardando Finaud" — porque o texto longo ("realizaremos...") impedia que fosse detectado como cortesia simples.
+
+**Problema:** `_determinar_status()` detectava Concluída só quando "obrigado" + residual < 15 chars (cortesia pura). O caso "obrigado + compromisso de ação própria + sem pergunta" não tinha padrão específico → caía no fallthrough → AF.
+
+**Correção (`scripts/banco_threads.py`, Fix G, 21/08/2026):**
+- Adicionado check antes do fallback final: se cliente escreve `_CONFIRMACAO_EXPLICITA` (obrigado, de acordo…) + verbo de ação própria (realizaremos, efetuaremos, enviaremos, encaminharemos, faremos, providenciaremos, transmitiremos, corrigiremos, ajustaremos, reenviaremos) + sem `?` → Concluída.
+- Thread "Re: DRM - Geração do Report - maio/26" corrigida: AF → Concluída.
+
+**Casos similares no banco:** nenhum outro (só 1 caso neste momento).
+
+**Validação:** ✅ VALIDADO — 3 casos devem ser Concluída (incluindo caso real) + 3 casos devem permanecer AF (segue arquivo, tem pergunta, sem confirmação). `pytest tests/ -q` → 318/318.
+
+---
+
 ## 2026-08-20 — Banco: "De acordo" + assinatura corporativa sem sign-off ficava como AF
 
 ### 20/08 — Fix F: confirmação no 1º parágrafo ignorada por assinatura sem sign-off (<4 linhas em branco)

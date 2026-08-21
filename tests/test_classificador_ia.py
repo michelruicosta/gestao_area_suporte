@@ -143,6 +143,20 @@ def test_classificar_retorno_bacen_no_corpo():
     assert r['categorias'] == ['RETORNO_BACEN']
 
 
+def test_classificar_retorno_bacen_critica_drm_no_assunto():
+    """'Crítica DRM' no assunto → RETORNO_BACEN (Fix A 21/08/2026 — cliente recebeu crítica do BACEN sobre DRM)."""
+    r = _classificar('EQI | Crítica DRM | 202607',
+                     corpo='Recebemos a crítica abaixo referente ao documento 2060 de julho. Conseguem verificar?')
+    assert r['categorias'] == ['RETORNO_BACEN']
+
+
+def test_classificar_drm_normal_nao_vira_retorno_bacen():
+    """'DRM Julho' no assunto sem 'Crítica' → continua DRM_2060 (regressão Fix A)."""
+    r = _classificar('DRM - Julho/2026', corpo='Segue a remessa DRM de julho.')
+    assert r['categorias'] == ['DRM_2060']
+    assert 'RETORNO_BACEN' not in r['categorias']
+
+
 def test_classificar_suporte_sem_sinais():
     """Assunto e corpo sem qualquer sinal de CADOC → SUPORTE."""
     r = _classificar('dúvida sobre o sistema', corpo='Olá, tudo bem? Preciso de ajuda.')

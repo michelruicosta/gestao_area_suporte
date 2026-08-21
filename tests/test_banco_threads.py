@@ -1082,3 +1082,39 @@ def test_status_fixf_fp_segue_antes_da_confirmacao_nao_conclui():
     msgs = [_msg(CLIENTE, corpo=corpo)]
     status, _ = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud'
+
+
+# ── Fix G — cliente confirma e promete agir por conta própria (21/08/2026) ──
+
+_CLIENTE_VIA = "'Murillo Oliveira | Saygo' via Suporte <suporte@finaud.com.br>"
+_CLIENTE_REPLY = 'murillo.oliveira@saygogroup.com.br'
+
+
+def test_status_cliente_obrigado_e_acao_propria_conclui():
+    """Fix G: cliente agradece E promete agir por conta própria (sem pedir nada) → Concluída.
+    Caso real: 'Muito obrigado, realizaremos o procedimento e enviaremos a alteração do report ao BCB.'
+    ficava AF porque o texto longo impedia _so_cortesia() de retornar True.
+    """
+    corpo = 'Muito obrigado, realizaremos o procedimento e enviaremos a alteração do report ao BCB.\r\n\r\nAbs!'
+    msgs = [
+        _msg(FINAUD, corpo='Prezado, corrija assim: X.', destinatarios=_CLIENTE_REPLY),
+        _msg(_CLIENTE_VIA, corpo=corpo, reply_to=_CLIENTE_REPLY),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída', f'Esperado Concluída (Fix G), got: {status} | {motivo}'
+
+
+def test_status_fixg_fp_com_pergunta_nao_conclui():
+    """Fix G — falso positivo: obrigado + ação própria + pergunta → AF (? veta)."""
+    corpo = 'Obrigado, realizaremos. Mas poderia verificar se está correto?'
+    msgs = [_msg(_CLIENTE_VIA, corpo=corpo, reply_to=_CLIENTE_REPLY)]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+
+
+def test_status_fixg_fp_segue_antes_nao_conclui():
+    """Fix G — falso positivo: 'Segue' antes de 'obrigado' → AF (§8.8b bloqueia)."""
+    corpo = 'Segue o arquivo. Obrigado, enviaremos a confirmação ao BCB.'
+    msgs = [_msg(_CLIENTE_VIA, corpo=corpo, reply_to=_CLIENTE_REPLY)]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
