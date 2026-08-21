@@ -2,6 +2,44 @@
 
 ---
 
+## 2026-08-21 — Telas: modo escuro + painel de evolução em todas as páginas + layout igual ao protótipo
+
+### 21/08 — Fix: painel "Evolução histórica" aparecia em todas as páginas
+
+**🔎 Em miúdos:** o painel de evolução histórica aparecia em cima das páginas "Bloqueados por filtro" e "Admin" porque estava fora da seção da página 1.
+
+**Problema:** o `<div class="evo">` estava posicionado DEPOIS do `</section>` que fecha a página 1, ficando solto no DOM — visível em todas as páginas, não só na 1.
+
+**Correção:** moveu `</section>` para depois do `</div>` do painel evo, colocando o painel dentro da seção `pag-classificados`.
+
+**Validação:** ✅ VALIDADO — navegação entre Bloqueados, Admin e Classificação confirmada no browser.
+
+---
+
+### 21/08 — Fix: fundos brancos em modo escuro (21 regras CSS com cores fixas)
+
+**🔎 Em miúdos:** ao trocar para o tema escuro, topbar, tabela, modais e cards admin ficavam com fundo branco porque o CSS usava `#fff`, `#f8f9fa` etc. no lugar de variáveis de tema.
+
+**Problema:** 21 regras CSS usavam cores literais que ignoravam os tokens `--surface`, `--bg`, `--border` do tema escuro.
+
+**Correção:** substituiu todas as cores fixas por variáveis: `.topbar`, `.tabela-wrap`, `.tabela th`, `.tabela tbody tr:hover td`, `.tabela .tfoot td`, `.modal`, `.modal-head`, `.modal-fechar`, `.modal-tabs`, `.tab-count`, `.msg-card`, `.msg-head`, `.msg-anexos span`, `.select-cat`, `.btn-sec`, `.busca-wrap`, `.busca-input`, `.admin-card`.
+
+**Validação:** ✅ VALIDADO — modo escuro testado em todas as páginas + modal de categoria no browser.
+
+---
+
+### 21/08 — Fix: layout da tabela principal diferente do protótipo
+
+**🔎 Em miúdos:** o título "Classificação e Status" ficava acima da tabela (fora do card) e os cabeçalhos AG.FINAUD, AG.CLIENTE, CONCLUÍDAS não tinham as cores laranja/azul/verde do protótipo.
+
+**Problema:** (1) `.page-header` separado do `.tabela-wrap` — no protótipo ambos ficam num único card; (2) `<th>` sem `style="color:var(--af-c)"` etc.
+
+**Correção:** (1) removeu `.page-header` da página 1 e criou `.card-hd` dentro do `.tabela-wrap` com título, subtítulo e countdown; (2) adicionou `style="color:var(--af-c)"`, `style="color:var(--ac-c)"`, `style="color:var(--co-c)"` nos respectivos `<th>`; (3) adicionou CSS `.card-hd`, `.card-title`, `.card-sub`, `.refresh-info`.
+
+**Validação:** ✅ VALIDADO — layout idêntico ao protótipo confirmado no browser em modo escuro.
+
+---
+
 ## 2026-08-20 — Banco: "De acordo" + assinatura corporativa sem sign-off ficava como AF
 
 ### 20/08 — Fix F: confirmação no 1º parágrafo ignorada por assinatura sem sign-off (<4 linhas em branco)
