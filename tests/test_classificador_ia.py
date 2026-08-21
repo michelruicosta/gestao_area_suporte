@@ -1612,3 +1612,29 @@ def test_correcao60_regress_balancete_sem_dlo_nao_adiciona_indevido():
     )
     assert 'DLO_2061' not in r['categorias'], \
         f"C60 FP: DLO_2061 não deve aparecer quando 'balanço' só no corpo; obtido {r['categorias']}"
+
+
+# ── C61: "rejeitado pelo BACEN" no corpo → RETORNO_BACEN ─────────────────────
+
+@pytest.mark.parametrize("corpo", [
+    "O envio do DLO de junho foi rejeitado pelo BACEN.",
+    "Informamos que o arquivo foi rejeitado pelo BC.",
+])
+def test_correcao61_rejeitado_pelo_bacen_corpo_retorna_retorno(corpo):
+    """C61 — 'rejeitado pelo BACEN/BC' no corpo → RETORNO_BACEN."""
+    r = _classificar(
+        assunto='Documentos retificados junho/2025',
+        corpo=corpo,
+    )
+    assert r['categorias'] == ['RETORNO_BACEN'], \
+        f"C61: esperado RETORNO_BACEN; obtido {r['categorias']}"
+
+
+def test_correcao61_fp_rejeitado_sem_bacen_nao_dispara():
+    """C61 FP — 'rejeitado pelo sistema' no corpo NÃO vira RETORNO_BACEN."""
+    r = _classificar(
+        assunto='DLO JUNHO 2026',
+        corpo='O arquivo foi rejeitado pelo sistema de validação interna.',
+    )
+    assert r['categorias'] != ['RETORNO_BACEN'], \
+        f"C61 FP: RETORNO_BACEN indevido quando BACEN não é mencionado; obtido {r['categorias']}"

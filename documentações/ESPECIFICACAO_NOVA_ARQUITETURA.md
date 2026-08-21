@@ -1856,6 +1856,9 @@ Validado em 196 threads reais (29/07/2026). Cobertura: 100%. R5 se aplica.
 - "Protocolo" ou "Resultado" referindo-se à entrega normal já aceita → é o **CADOC da entrega**
 - Finaud ou cliente **enviando** remessa ao BACEN ("Seguem as remessas DLO e DLI a serem transmitidas ao BC", "Segue o arquivo transmitido") → é o **CADOC da entrega** (DLO_2061, DLI_2062, DDR_2011 etc.) — o fato de mencionar "BACEN" ou "BC" no corpo não torna RETORNO_BACEN
 
+**Regra — Retificação com rejeição do BACEN (aprovada por Michel em 21/08/2026):**
+Quando o corpo do e-mail diz explicitamente que o BACEN rejeitou o documento ("foi rejeitado pelo BACEN", "foi rejeitado pelo BC") → classificar como RETORNO_BACEN, mesmo que o assunto mencione "retificação" ou "substituição" sem qualquer sinal de retorno do BACEN. Se a retificação foi entregue e aceita (sem rejeição do BACEN), classificar como DLO_2061 (ou o CADOC correspondente).
+
 **Prazo:** prazo informado pelo BACEN na crítica (extraído do corpo do e-mail ou da imagem). Se o BACEN não informar prazo explícito: D+3 úteis após a data do e-mail como padrão.
 
 > ⚠️ **Nota de amostra:** o histórico disponível (sistema de teste) tem apenas 6 threads RETORNO_BACEN. Os padrões documentados são reais, mas a variedade de códigos de crítica crescerá à medida que o histórico de produção for integrado.

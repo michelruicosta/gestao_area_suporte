@@ -140,6 +140,10 @@ def _tem_retorno_bacen(assunto_u: str, corpo_u: str) -> bool:
     # REJEITADO: só no assunto — no corpo aparece em contextos normais (ex.: "o arquivo foi rejeitado")
     if 'REJEITADO' in assunto_u:
         return True
+    # C61: "rejeitado pelo BACEN/BC" no corpo → o BACEN especificamente rejeitou (sinal forte)
+    # Regra aprovada por Michel em 21/08/2026
+    if re.search(r'REJEITADO PELO (?:BACEN|BC\b)', corpo_u):
+        return True
     return False
 
 
