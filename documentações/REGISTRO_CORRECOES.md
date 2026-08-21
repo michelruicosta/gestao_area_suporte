@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-08-21 — Correção de classificação: 2 threads SUPORTE com conteúdo de CADOC
+
+### 21/08 17:XX — Reclassificação manual: BALANCETE JULHO 2026 e Documentos retificados junho/2025
+
+**🔎 Em miúdos:** duas threads estavam marcadas como "SUPORTE" mas na verdade tratavam de entregas de CADOC. O classificador as enviou para SUPORTE porque não identificou corretamente o padrão de entrega de balancete/DLO e de rejeição do BACEN.
+
+**Problema:** o classificador não tinha regras claras para distinguir:
+- Entrega de balancete/COS4010 (geração de DLO) → estava indo para SUPORTE
+- Retificação de DLO com retorno/crítica do BACEN → estava indo para SUPORTE
+
+**Correção:** 2 threads corrigidas diretamente no banco (`data/oraculo360.db`):
+- "BALANCETE JULHO 2026": SUPORTE → **DLO_2061** (entrega de COS4010 + balancete = geração de DLO)
+- "Documentos retificados junho/2025": SUPORTE → **RETORNO_BACEN** (DLO rejeitado pelo BACEN)
+
+**Regras confirmadas por Michel (21/08/2026):**
+1. Balancete/balanço (base para gerar DLO) → DLO_2061; só vira SUPORTE se for dúvida/pergunta sobre o balancete
+2. Retificação de DLO + retorno/crítica do BACEN → RETORNO_BACEN; retificação sem BACEN → DLO_2061
+
+**Validação:** ✅ APLICADO — banco atualizado. Regras a serem adicionadas à spec (§10) em etapa separada, uma por vez com amostra de 20 threads antes de cada.
+
+---
+
 ## 2026-08-21 — Fix H: cliente agradece sem pergunta ficava AF indevidamente
 
 ### 21/08 — Fix H: threads onde cliente fechou o assunto permaneciam em "Aguardando Finaud"

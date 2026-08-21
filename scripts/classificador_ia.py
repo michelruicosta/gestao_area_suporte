@@ -341,6 +341,11 @@ def _classificar_deterministico(
     # Códigos COS DLO solo no assunto (ex.: '4010 Trinus', 'COSIF'S 4010') — no corpo podem ser contexto (C30)
     if re.search(r'\b(?:4010|4016|4060|4066)\b', au):
         cats.add('DLO_2061')
+    # C60: "BALANCETE" ou "BALANÇO" no assunto → entrega de dados para geração do DLO
+    # Exceção: 4111 no nome do anexo → entregável principal é SCD, não DLO
+    # Regra aprovada por Michel em 21/08/2026
+    if re.search(r'\bBALAN[CÇ](?:ETE|O)\b', au) and not re.search(r'\b4111\b', xu_norm):
+        cats.add('DLO_2061')
     # C40: "DDR2011" colado (sem espaço) no assunto — ex.: "VIS STA - DDR2011 e demais não disponíveis"
     # No corpo pode ser referência ao relatório do cliente ("nosso relatório de DDR2011") — restrito ao assunto
     if re.search(r'(?<!\w)DDR\d{4}(?!\w)', au):

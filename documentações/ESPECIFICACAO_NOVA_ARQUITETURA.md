@@ -1543,6 +1543,9 @@ A classificação entre DLO_2061 e DLI_2062 é determinada pelo que o assunto ou
 
 **Nota:** a presença dos arquivos COS4010, COS4016 ou outros COSIF não determina sozinha a categoria — é o texto do e-mail que decide. A planilha LEC continua sendo sinal de Alta confiança para DLO_2061 (ver tabela de sinais acima).
 
+**Regra — Balancete e balanço contábil (aprovada por Michel em 21/08/2026):**
+E-mail em que o assunto menciona "balancete" ou "balanço" (base de dados entregue pelo cliente para geração do DLO) → classificar como DLO_2061. Só classificar como SUPORTE se o e-mail for uma dúvida ou pergunta sobre como montar o balancete, sem entrega do arquivo.
+
 **Fluxo típico:**
 1. Cliente envia `COS4010.xml` + planilha LEC à Finaud — "Seguem 4010 e planilha LEC, para que seja gerado o DLO"
 2. Pode haver troca de mensagens sobre ajustes ou metodologia antes de finalizar

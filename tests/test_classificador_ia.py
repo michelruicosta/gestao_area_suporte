@@ -1587,3 +1587,28 @@ def test_correcao59_dlo_e_dli_dlo_e_principal():
     assert r['categorias'][0] == 'DLO_2061', \
         f"C59: DLO_2061 deve ser [0] quando ambos presentes; obtido {r['categorias']}"
     assert 'DLI_2062' in r['categorias']
+
+
+# ── C60: BALANCETE/BALANÇO no assunto → DLO_2061 ─────────────────────────────
+
+@pytest.mark.parametrize("assunto", [
+    "BALANCETE JULHO 2026",
+    "BALANCETE E COS4010 JUNHO 2026",
+    "BALANÇO JUNHO 2026",
+    "BALANCO JULHO 2026",
+])
+def test_correcao60_balancete_no_assunto_retorna_dlo(assunto):
+    """C60 — assunto com BALANCETE ou BALANÇO → DLO_2061 (entrega de dados para gerar DLO)."""
+    r = _classificar(assunto)
+    assert 'DLO_2061' in r['categorias'], \
+        f"C60: esperado DLO_2061 para '{assunto}'; obtido {r['categorias']}"
+
+
+def test_correcao60_regress_balancete_sem_dlo_nao_adiciona_indevido():
+    """C60 regressão — thread de DRM com 'balanço' no corpo (não no assunto) não vira DLO."""
+    r = _classificar(
+        assunto='DRM JUNHO 2026',
+        corpo='O balanço do período está correto.',
+    )
+    assert 'DLO_2061' not in r['categorias'], \
+        f"C60 FP: DLO_2061 não deve aparecer quando 'balanço' só no corpo; obtido {r['categorias']}"
