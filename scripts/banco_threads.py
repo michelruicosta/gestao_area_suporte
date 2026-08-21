@@ -513,6 +513,13 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         return 'Concluída', 'Cliente confirmou — sem pendência'
     if _so_cortesia(texto_novo):
         return 'Aguardando Finaud', 'Cliente enviou saudação — possível entrega de arquivo'
+    # Fix F: confirmação curta + assinatura corporativa sem sign-off explícito
+    # Ex.: "De acordo\r\n\r\nEduardo Galasini\r\nFinance\r\nActivTrades CCTVM..."
+    _primeiro_para = re.split(r'\r?\n\s*\r?\n', texto_novo)[0].strip()
+    if ('?' not in texto_novo
+            and _so_cortesia(_primeiro_para)
+            and _CONFIRMACAO_EXPLICITA.search(_primeiro_para.lower())):
+        return 'Concluída', 'Cliente confirmou — sem pendência'
     return 'Aguardando Finaud', 'Cliente escreveu — aguarda resposta da Finaud'
 
 

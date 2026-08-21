@@ -1017,4 +1017,58 @@ def test_status_segue_em_anexo_quebrado_por_linha_conclui():
     )
     msgs = [_msg(FINAUD, corpo=corpo, nomes_anexos=['02276653_2011_20260430_S_4.zip'])]
     status, motivo = bt._determinar_status(msgs)
-    assert status == 'Concluída', f'Esperado Concluída, got: {status} | {motivo}'
+    assert status == 'Concluída', f'Esperado Concluída (Fix C), got: {status} | {motivo}'
+
+
+# ── Fix F — confirmação curta + assinatura corporativa sem sign-off (20/08/2026) ──
+
+def test_status_deacordo_com_assinatura_corporativa_conclui():
+    """Fix F: 'De acordo' + assinatura corporativa sem sign-off → Concluída.
+    Caso real: OP. SELIC ACTIVTRADES — 'De acordo\\r\\n\\r\\nEduardo Galasini\\r\\nFinance...'
+    ficava AF porque _so_cortesia() falhava na assinatura (sem sign-off, <4 linhas em branco).
+    """
+    corpo = (
+        'De acordo\r\n\r\n'
+        'Eduardo Galasini\r\nFinance\r\n\r\n'
+        'ActivTrades CCTVM\r\nRua Ângelo La Porta, 53 - Ático 1 e 2\r\n'
+        'Florianópolis/SC - 88020-600\r\nBrasil\r\n'
+        'egalasini@activtrades.com<mailto:egalasini@activtrades.com>\r\n'
+        'www.activtrades.com.br<http://www.activtrades.com.br/>\r\n'
+        'Ouvidoria: 0800-228-4827\r\n\r\n'
+        'ActivTrades CCTVM is authorized and regulated in Brazil by BACEN/CVM\r\n'
+        'Check here our Legal Disclaimer<https://activtrades.com.br/go/governanca/>'
+    )
+    msgs = [
+        _msg(FINAUD, corpo='Segue em anexo o comprovante da operação SELIC.'),
+        _msg(CLIENTE, corpo=corpo),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída', f'Esperado Concluída (Fix F), got: {status} | {motivo}'
+
+
+def test_status_fixf_fp_conteudo_apos_deacordo_com_pergunta_nao_conclui():
+    """Fix F — falso positivo: 'De acordo. [parágrafo] Pode reenviar?' → Aguardando Finaud.
+    O '?' no texto todo veta o Fix F.
+    """
+    corpo = 'De acordo.\r\n\r\nPor favor, pode reenviar o arquivo atualizado?'
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+
+
+def test_status_fixf_fp_primeiro_para_longo_nao_e_cortesia():
+    """Fix F — falso positivo: primeiro parágrafo longo com 'de acordo' não deve concluir.
+    'De acordo com o pedido, precisamos da planilha atualizada.' → _so_cortesia = False.
+    """
+    corpo = 'De acordo com o pedido, precisamos da planilha atualizada.\r\n\r\nAtenciosamente,\r\nJoão Silva\r\nEmpresa X'
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+
+
+def test_status_fixf_fp_segue_antes_da_confirmacao_nao_conclui():
+    """Fix F — regressão: 'Segue em anexo.' no início → linha 508 bloqueia antes do Fix F."""
+    corpo = 'Segue em anexo o arquivo.\r\n\r\nObrigado.\r\n\r\nJoão Silva\r\nEmpresa X'
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'

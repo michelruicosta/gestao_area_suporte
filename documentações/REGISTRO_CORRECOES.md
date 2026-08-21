@@ -1,5 +1,30 @@
 # Registro de Correções — Oráculo 360 (Nova Arquitetura)
 
+---
+
+## 2026-08-20 — Banco: "De acordo" + assinatura corporativa sem sign-off ficava como AF
+
+### 20/08 — Fix F: confirmação no 1º parágrafo ignorada por assinatura sem sign-off (<4 linhas em branco)
+
+**🔎 Em miúdos:** quando o cliente respondia apenas "De acordo" mas a assinatura vinha logo abaixo separada por 1 linha em branco (sem "Atenciosamente"), a thread ficava como "Aguardando Finaud" — porque o sistema não conseguia ver que tudo depois do "De acordo" era só assinatura.
+
+**Problema:** `_so_cortesia()` trunca em sign-off explícito ou em 4+ linhas em branco (Fix E). Assinaturas corporativas que usam apenas 1 linha em branco de separação não eram detectadas. Com a assinatura inteira (nome / cargo / endereço / e-mail / URL / aviso legal) no texto, o residual após remover "de acordo" ficava enorme → `_so_cortesia()` = False → `_CONFIRMACAO_EXPLICITA` nunca checado → AF incorreto.
+
+**Correção (scripts/banco_threads.py, Fix F, 20/08/2026):**
+- Em `_determinar_status()`, logo antes do fallback final (no branch de remetente externo/cliente), adicionada checagem:
+  1. Extrair o 1º parágrafo do texto (tudo antes do primeiro `\r\n\r\n`)
+  2. Se `_so_cortesia()` no 1º parágrafo = True E `_CONFIRMACAO_EXPLICITA` no 1º parágrafo = True E não há `?` no texto todo → Concluída
+- Protege falsos positivos: o `?` no texto todo veta a condição; parágrafo longo (com conteúdo real além da confirmação) falha no `_so_cortesia()` do 1º parágrafo.
+
+**Caso real:** OP. SELIC ACTIVTRADES — cliente respondeu "De acordo" seguido de assinatura corporativa completa (Eduardo Galasini / Finance / ActivTrades CCTVM / endereço / e-mail / URL / aviso legal) com apenas 1 linha em branco de separação.
+
+**Impacto:** 14 threads corrigidas (AF → Concluída). Placar: AF=839, C=260, AC=58.
+
+**Validação:** `pytest tests/ -q` → ✅ 318/318 — 4 novos testes (1 caso real + 3 falsos positivos). Zero regressões. Recálculo: 1157 threads. Auditoria seeds 0–10: seed=10 limpa, sem novos padrões.
+
+---
+
+
 **Início:** 28/07/2026 — nova arquitetura (Gmail API + IA Classificadora)
 
 > Histórico do sistema antigo (pipeline de 16 scripts, até 22/07/2026) →
