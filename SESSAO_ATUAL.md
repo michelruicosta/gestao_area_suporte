@@ -51,13 +51,38 @@ Commit: `d99110a` — push realizado.
 
 ---
 
+---
+
+#### Frente 3 — Varredura SUPORTE: 2 threads mal classificadas corrigidas + regras C60/C61
+
+Após o fechar da sessão anterior, Michel pediu para rodar o pipeline e verificar a classificação. O pipeline rodou (coletor + classificador). A varredura de threads SUPORTE com conteúdo de CADOC encontrou **5 candidatos**:
+
+| Thread | Era | Deve ser | Resultado |
+|---|---|---|---|
+| BALANCETE JULHO 2026 | SUPORTE | DLO_2061 | ✅ Corrigida no banco |
+| Documentos retificados junho/2025 | SUPORTE | RETORNO_BACEN | ✅ Corrigida no banco |
+| ENC: PR | SUPORTE | SUPORTE | ✅ Correto (problema no Risk Driver) |
+| Acesso B&T — XBase Não Localizada | SUPORTE | SUPORTE | ✅ Correto (acesso ao S4) |
+| Freex Câmbio — Login Riskdriver | SUPORTE | SUPORTE | ✅ Correto (acesso ao S5) |
+
+**Regras novas aprovadas por Michel e implementadas no classificador:**
+
+- **C60** — "BALANCETE" ou "BALANÇO" no assunto → DLO_2061 (exceto se 4111 no nome do anexo → SCD prevalece). 5 testes novos. Commit `53876b2`.
+- **C61** — "rejeitado pelo BACEN/BC" no corpo → RETORNO_BACEN. Antes, a função `_tem_retorno_bacen` só detectava "REJEITADO" no assunto. 3 testes novos. Commit `60f70e9`.
+
+Spec (`ESPECIFICACAO_NOVA_ARQUITETURA.md`) atualizada com as duas regras (§10 DLO_2061 e §10 RETORNO_BACEN).
+
+**Suite de testes:** 225 passando (test_classificador_ia.py) + 100 passando (test_banco_threads.py). Zero regressões.
+
+---
+
 ### Estado atual
 
-**Suite de testes:** 100/100 passando (`test_banco_threads.py`).
-**Banco:** pós-Fix H: **AF reduzido em 42** threads (movidas para Concluída). Snapshot delta funcional.
-**GitHub:** sincronizado — push realizado ao final da sessão (`d99110a` mais recente).
-**PENDENCIAS.md:** painel delta marcado como ✅ resolvido (implementado como colunas VAR na tabela, não painel separado — abordagem aprovada por Michel).
-**REGISTRO_CORRECOES.md:** entrada do Fix H adicionada durante a sessão.
+**Suíte de testes:** 225/225 (`test_classificador_ia.py`) + 100/100 (`test_banco_threads.py`).
+**Banco:** pós-Fix H + 2 reclassificações manuais. Snapshot delta funcional.
+**GitHub:** sincronizado — push realizado. Commits `53876b2` (C60) e `60f70e9` (C61) mais recentes.
+**PENDENCIAS.md:** sem alterações nesta rodada.
+**REGISTRO_CORRECOES.md:** entradas de C60 e C61 adicionadas.
 
 ---
 
@@ -65,11 +90,11 @@ Commit: `d99110a` — push realizado.
 
 **🟢 FASE 1 — Implementação do coletor em produção**
 
-Telas e lógica de status estáveis. Próximas tarefas por prioridade:
+Telas, classificação e lógica de status estáveis. Próximas tarefas por prioridade:
 
-1. **Rodar o coletor novamente** — capturar e-mails novos com a lógica de status corrigida (Fix A–H). Script já existe: `scripts/coletor_gmail.py`
-2. **Definir comportamento em produção** — threads novas vs. já classificadas (ver PENDENCIAS.md §8 — ciclo de vida)
-3. **Corrigir "Abraço" singular** no detector de assinatura (ver PENDENCIAS.md — item 🟡)
+1. **Definir comportamento em produção** — threads novas vs. já classificadas (ver PENDENCIAS.md — item 🟡 "SPEC — threads novas vs. já classificadas")
+2. **Corrigir "Abraço" singular** no detector de assinatura (ver PENDENCIAS.md — item 🟡)
+3. **Campo `tipo_status`** — rastreabilidade estruturada (ver PENDENCIAS.md — item 🟡)
 
 Último /fechar: 2026-08-21 — memórias revisadas ✅
 

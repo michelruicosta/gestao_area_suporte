@@ -4,7 +4,7 @@
 
 ## 2026-08-21 — Correção de classificação: 2 threads SUPORTE com conteúdo de CADOC
 
-### 21/08 17:XX — Reclassificação manual: BALANCETE JULHO 2026 e Documentos retificados junho/2025
+### 21/08 17:30 — Reclassificação manual: BALANCETE JULHO 2026 e Documentos retificados junho/2025
 
 **🔎 Em miúdos:** duas threads estavam marcadas como "SUPORTE" mas na verdade tratavam de entregas de CADOC. O classificador as enviou para SUPORTE porque não identificou corretamente o padrão de entrega de balancete/DLO e de rejeição do BACEN.
 
@@ -21,6 +21,43 @@
 2. Retificação de DLO + retorno/crítica do BACEN → RETORNO_BACEN; retificação sem BACEN → DLO_2061
 
 **Validação:** ✅ APLICADO — banco atualizado. Regras a serem adicionadas à spec (§10) em etapa separada, uma por vez com amostra de 20 threads antes de cada.
+
+---
+
+## 2026-08-21 — C60: balancete no assunto não virava DLO_2061
+
+### 21/08 18:00 — C60: "BALANCETE" ou "BALANÇO" no assunto → DLO_2061
+
+**🔎 Em miúdos:** quando o e-mail tinha "BALANCETE JULHO 2026" no assunto, o sistema o classificava como SUPORTE — como se fosse um pedido de ajuda genérico. Na verdade, o cliente estava enviando os dados do balancete para a Finaud gerar o DLO.
+
+**Problema:** o classificador só detectava o padrão de balancete quando "4010" ou "COS4010" apareciam no *nome do arquivo anexado*. Se o nome do assunto dizia "BALANCETE" sem os nomes de arquivo reconhecíveis, o e-mail caía no SUPORTE.
+
+**Causa raiz:** "BALANCETE" e "BALANÇO" não estavam na lista de sinais que disparam DLO_2061 na Camada 1b (assunto) de `classificador_ia.py`.
+
+**Correção:** adicionada regra C60 em `scripts/classificador_ia.py` (Camada 1b, assunto):
+- `BALANCETE` ou `BALANÇO` no assunto → adiciona DLO_2061
+- Guard: se "4111" estiver no nome do anexo, a entrega principal é SCD — DLO_2061 não é adicionado
+- Spec (`documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md`) atualizada com a regra no §10 DLO_2061
+
+**Validação:** ✅ VALIDADO — 5 novos testes (4 positivos + 1 regressão), 222 passando. Commit `53876b2`, push realizado.
+
+---
+
+## 2026-08-21 — C61: "rejeitado pelo BACEN" no corpo não virava RETORNO_BACEN
+
+### 21/08 18:30 — C61: "rejeitado pelo BACEN/BC" no corpo → RETORNO_BACEN
+
+**🔎 Em miúdos:** quando o cliente escrevia "O envio do DLO de junho foi rejeitado pelo BACEN", o sistema não entendia que era o BACEN rejeitando o arquivo — classificava como SUPORTE em vez de RETORNO_BACEN.
+
+**Problema:** a função que detecta retorno do BACEN (`_tem_retorno_bacen`) verificava "REJEITADO" somente no assunto do e-mail, nunca no corpo. A razão era evitar falsos positivos ("o arquivo foi rejeitado pelo sistema"), mas "rejeitado pelo BACEN" é específico o suficiente para ser seguro no corpo.
+
+**Causa raiz:** comentário no código dizia "REJEITADO: só no assunto — no corpo aparece em contextos normais". A expressão "rejeitado pelo BACEN" não foi considerada quando a regra foi escrita.
+
+**Correção:** adicionada regra C61 em `scripts/classificador_ia.py` (função `_tem_retorno_bacen`):
+- Regex `REJEITADO PELO (?:BACEN|BC\b)` no corpo → retorna True (RETORNO_BACEN)
+- Spec (`documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md`) atualizada com a regra no §10 RETORNO_BACEN
+
+**Validação:** ✅ VALIDADO — 3 novos testes (2 positivos + 1 FP guard), 225 passando. Commit `60f70e9`, push realizado.
 
 ---
 
