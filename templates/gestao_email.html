@@ -97,7 +97,7 @@ body { margin: 0; background: var(--bg); display: flex; min-height: 100vh; }
 /* ─── Main ─────────────────────────────────────────────────────────── */
 .main-wrap { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .topbar {
-  height: 56px; background: #fff; border-bottom: 1px solid var(--border);
+  height: 56px; background: var(--surface); border-bottom: 1px solid var(--border);
   display: flex; align-items: center; gap: 1rem;
   padding: 0 1.5rem; flex-shrink: 0;
 }
@@ -283,15 +283,15 @@ body { margin: 0; background: var(--bg); display: flex; min-height: 100vh; }
 .page-header-left { min-width: 0; }
 
 /* ─── Tabela ────────────────────────────────────────────────────────── */
-.tabela-wrap { background: #fff; border: 1px solid var(--border); border-radius: 10px; overflow-x: auto; }
+.tabela-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow-x: auto; }
 .tabela { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.875rem; }
-.tabela th, .tabela td { padding: 0.65rem 0.85rem; border-bottom: 1px solid #eef0f2; text-align: left; vertical-align: middle; }
-.tabela th { background: #f8f9fa; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; color: #64748b; font-weight: 600; position: sticky; top: 0; z-index: 1; border-top: 1px solid #eef0f2; }
+.tabela th, .tabela td { padding: 0.65rem 0.85rem; border-bottom: 1px solid var(--border); text-align: left; vertical-align: middle; }
+.tabela th { background: var(--bg); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted); font-weight: 600; position: sticky; top: 0; z-index: 1; border-top: 1px solid var(--border); }
 .tabela tr:last-child td { border-bottom: 0; }
 .tabela tbody tr { cursor: pointer; }
-.tabela tbody tr:hover td { background: #f8faff; }
+.tabela tbody tr:hover td { background: var(--accent-bg); }
 .tabela .num { text-align: right; font-variant-numeric: tabular-nums; }
-.tabela .tfoot td { font-weight: 700; background: #f8f9fa; border-top: 2px solid #e2e5ea; border-bottom: 0; }
+.tabela .tfoot td { font-weight: 700; background: var(--bg); border-top: 2px solid var(--border); border-bottom: 0; }
 
 /* Chips de status */
 .chip {
@@ -332,22 +332,22 @@ body { margin: 0; background: var(--bg); display: flex; min-height: 100vh; }
 }
 .modal-backdrop.aberto { display: flex; }
 .modal {
-  background: #fff; border: 1px solid #d9e0ea; border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
   box-shadow: 0 24px 80px rgba(15,23,42,0.28);
   width: min(900px, 100%); max-height: calc(100vh - 5rem);
   display: flex; flex-direction: column; overflow: hidden;
 }
 .modal-head {
   display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-  padding: 1rem 1.25rem; border-bottom: 1px solid #e6ebf2; background: #f8fafc; flex-shrink: 0;
+  padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); background: var(--bg); flex-shrink: 0;
 }
 .modal-head h2 { margin: 0; font-size: 1.1rem; color: var(--text); }
 .modal-fechar {
-  width: 2rem; height: 2rem; border: 1px solid #cfd6df; border-radius: 6px;
-  background: #fff; color: #334155; cursor: pointer; font-size: 1.3rem; line-height: 1;
+  width: 2rem; height: 2rem; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--surface); color: var(--text); cursor: pointer; font-size: 1.3rem; line-height: 1;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-.modal-fechar:hover { background: #eef2ff; color: var(--marca); }
+.modal-fechar:hover { background: var(--accent-bg); color: var(--marca); }
 .modal-body { overflow-y: auto; padding: 1.1rem 1.25rem; flex: 1; }
 
 /* Modal largo (categoria) */
@@ -362,7 +362,7 @@ body { margin: 0; background: var(--bg); display: flex; min-height: 100vh; }
 /* Abas do modal de categoria */
 .modal-tabs {
   display: flex; border-bottom: 2px solid var(--border);
-  background: #f8fafc; flex-shrink: 0; padding: 0 1.25rem;
+  background: var(--bg); flex-shrink: 0; padding: 0 1.25rem;
 }
 .tab-btn {
   padding: 0.75rem 1.1rem; border: none; background: none; cursor: pointer;
@@ -375,33 +375,33 @@ body { margin: 0; background: var(--bg); display: flex; min-height: 100vh; }
 .tab-btn.ativo { color: var(--marca); border-bottom-color: var(--marca); font-weight: 600; }
 .tab-count {
   font-size: 0.73rem; font-weight: 700; padding: 0.1rem 0.45rem;
-  border-radius: 999px; background: #e2e5ea; color: #475569;
+  border-radius: 999px; background: var(--border); color: var(--muted);
   min-width: 1.4rem; text-align: center;
 }
-.tab-btn.ativo .tab-count { background: #eef0ff; color: var(--marca); }
+.tab-btn.ativo .tab-count { background: var(--accent-bg); color: var(--marca); }
 .tab-panel { display: none; }
 .tab-panel.ativo { display: block; }
 
 /* Thread messages */
 .msg-card {
-  border: 1px solid #e2e5ea; border-radius: 8px; margin-bottom: 0.75rem; overflow: hidden;
+  border: 1px solid var(--border); border-radius: 8px; margin-bottom: 0.75rem; overflow: hidden;
 }
 .msg-head {
-  background: #f8f9fa; padding: 0.65rem 0.85rem;
-  border-bottom: 1px solid #eef0f2;
+  background: var(--bg); padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid var(--border);
   display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem;
   font-size: 0.83rem; color: var(--muted);
 }
 .msg-head strong { color: var(--text); }
 .msg-body { padding: 0.85rem; font-size: 0.88rem; white-space: pre-wrap; line-height: 1.6; max-height: 14rem; overflow-y: auto; }
 .msg-anexos { padding: 0.35rem 0.85rem 0.65rem; font-size: 0.8rem; color: var(--muted); }
-.msg-anexos span { background: #f0f2f5; padding: 0.18rem 0.5rem; border-radius: 4px; margin-right: 0.35rem; }
+.msg-anexos span { background: var(--bg); padding: 0.18rem 0.5rem; border-radius: 4px; margin-right: 0.35rem; }
 
 /* Modal classificar */
 .modal-class { width: min(480px, 100%); }
-.select-cat { width: 100%; padding: 0.6rem 0.75rem; border: 1px solid #c5cad3; border-radius: 8px; font: inherit; background: #fff; color: var(--text); margin-bottom: 1rem; }
+.select-cat { width: 100%; padding: 0.6rem 0.75rem; border: 1px solid var(--border); border-radius: 8px; font: inherit; background: var(--surface); color: var(--text); margin-bottom: 1rem; }
 .modal-class-acoes { display: flex; justify-content: flex-end; gap: 0.75rem; }
-.btn-sec { padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 6px; background: #fff; color: var(--text); font: inherit; cursor: pointer; }
+.btn-sec { padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); font: inherit; cursor: pointer; }
 .btn-prim { padding: 0.5rem 1rem; border: none; border-radius: 6px; background: var(--marca); color: #fff; font: inherit; cursor: pointer; }
 .btn-prim:hover { background: #2828a0; }
 
@@ -411,12 +411,12 @@ body { margin: 0; background: var(--bg); display: flex; min-height: 100vh; }
 /* ─── Busca no modal de categoria ───────────────────────────────────── */
 .busca-wrap {
   padding: 0.55rem 1.25rem; border-bottom: 1px solid var(--border);
-  background: #fafbfc; flex-shrink: 0;
+  background: var(--bg); flex-shrink: 0;
 }
 .busca-input {
   width: 100%; padding: 0.45rem 0.75rem;
-  border: 1px solid #c5cad3; border-radius: 6px;
-  font: inherit; font-size: 0.88rem; background: #fff;
+  border: 1px solid var(--border); border-radius: 6px;
+  font: inherit; font-size: 0.88rem; background: var(--surface);
   color: var(--text); outline: none; transition: border-color 0.12s;
 }
 .busca-input:focus { border-color: var(--marca); box-shadow: 0 0 0 2px rgba(51,51,168,0.12); }
@@ -424,7 +424,7 @@ body { margin: 0; background: var(--bg); display: flex; min-height: 100vh; }
 
 /* ─── Admin ─────────────────────────────────────────────────── */
 .admin-card {
-  background: #fff; border: 1px solid var(--border); border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
   padding: 1.25rem 1.5rem; margin-bottom: 1.25rem;
 }
 .admin-card h2 { margin: 0 0 1rem; font-size: 0.95rem; font-weight: 700; color: var(--text); }
@@ -569,7 +569,6 @@ body { margin: 0; background: var(--bg); display: flex; min-height: 100vh; }
           <tfoot id="tfoot-resumo"></tfoot>
         </table>
       </div>
-    </section>
 
     <!-- ── Painel Evolução Histórica ──────────────────────────────── -->
     <div class="evo" id="evo">
@@ -627,6 +626,7 @@ body { margin: 0; background: var(--bg); display: flex; min-height: 100vh; }
         </div>
       </div>
     </div>
+    </section>
 
     <!-- ── Página 2: Não classificados ────────────────────────────── -->
     <section class="page" id="pag-nao-classificados">
