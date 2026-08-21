@@ -297,10 +297,6 @@ def coletar() -> int | None:
     try:
         criar_banco()
 
-        # Snapshot do estado antes desta rodada — base para o delta exibido na tela
-        salvar_snapshot()
-        print('Snapshot de contadores salvo.')
-
         service = _conectar_gmail()
 
         start_hist_id = get_controle_sync('last_history_id')
@@ -324,6 +320,10 @@ def coletar() -> int | None:
 
         duracao = time.time() - _inicio
         log_id = registrar_coleta(tipo, threads_proc, total_erros, duracao, 'concluida')
+
+        # Snapshot salvo ao final — captura o estado completo após a carga e o classificador
+        salvar_snapshot()
+        print('Snapshot de contadores salvo.')
 
         print()
         print('=' * 60)
