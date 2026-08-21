@@ -40,6 +40,21 @@
 
 ---
 
+### 21/08 — Fix: cores de categorias, chips e texto de modal invisíveis no modo escuro
+
+**🔎 Em miúdos:** em modo escuro, (1) os números de "Ag. Finaud / Ag. Cliente / Concluídas" na tabela principal ficavam com cores de fundo claro (invisíveis), (2) os chips de status nos modais ficavam com cores claras incompatíveis, (3) o token `--marca` (cor de destaque) não estava definido no tema escuro, causando itens de navegação e abas ativas invisíveis.
+
+**Problema:** 17 regras CSS usavam cores literais específicas para fundo claro (ex.: `.n-af { color: #8a5b00 }`, `.chip-ok { background: #dff3e6 }`). O token `--marca` estava definido apenas no `:root` como `#3333a8` (azul escuro) mas ausente em `[data-theme="escuro"]` — resultando em texto azul-escuro sobre fundo escuro.
+
+**Correção:**
+- Adicionou `--marca: #60a5fa` ao bloco `[data-theme="escuro"]`
+- Substituiu cores literais por tokens: `.n-af/ac/co/zero`, `.delta-ruim/bom`, `.chip-af/ac/co`, `.chip-ok/erro/inc/hist`, `.cpill-princ/desc/rev`, `.status-dot.ok/erro`, `.refresh-spinner`
+- Chips vermelhos (`.chip-erro`, `.cpill-rev`) receberam override `[data-theme="escuro"]` para `background: #3b0a0a; color: #f87171`
+
+**Validação:** ✅ VALIDADO — modo escuro verificado em todas as páginas (Classificação, Modal, Bloqueados, Admin) e modo claro verificado em todas as páginas no browser.
+
+---
+
 ## 2026-08-20 — Banco: "De acordo" + assinatura corporativa sem sign-off ficava como AF
 
 ### 20/08 — Fix F: confirmação no 1º parágrafo ignorada por assinatura sem sign-off (<4 linhas em branco)
