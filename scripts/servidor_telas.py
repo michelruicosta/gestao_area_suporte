@@ -225,18 +225,20 @@ def api_resumo():
     total = total_af + total_ac + total_co
     cd    = bt.contar_por_destino()
 
-    # Delta: compara estado atual com snapshot da rodada anterior
-    snapshot = bt.ler_ultimo_snapshot()
+    # Delta: compara estado atual com o penúltimo snapshot (= fim da rodada anterior)
+    snapshot = bt.ler_penultimo_snapshot()
     for cat in categorias:
         snap = snapshot.get(cat['id'])
         if snap:
-            cat['delta_af'] = cat['af'] - snap['af']
-            cat['delta_ac'] = cat['ac'] - snap['ac']
-            cat['delta_co'] = cat['co'] - snap['co']
+            cat['delta_af']  = cat['af']    - snap['af']
+            cat['delta_ac']  = cat['ac']    - snap['ac']
+            cat['delta_co']  = cat['co']    - snap['co']
+            cat['delta_tot'] = cat['total'] - snap['total']
         else:
-            cat['delta_af'] = None
-            cat['delta_ac'] = None
-            cat['delta_co'] = None
+            cat['delta_af']  = None
+            cat['delta_ac']  = None
+            cat['delta_co']  = None
+            cat['delta_tot'] = None
 
     return jsonify({
         'categorias': categorias,

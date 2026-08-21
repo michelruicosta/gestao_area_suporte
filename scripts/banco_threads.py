@@ -800,6 +800,22 @@ def ler_ultimo_snapshot() -> dict[str, dict]:
     return {r['categoria']: dict(r) for r in rows}
 
 
+def ler_penultimo_snapshot() -> dict[str, dict]:
+    """Retorna o penúltimo snapshot (rodada anterior à última) para calcular o delta exibido na tabela principal.
+    Com snapshots salvos no FIM de cada rodada, penúltimo = estado antes da última rodada = variação real."""
+    with _conectar() as conn:
+        row = conn.execute(
+            'SELECT DISTINCT data_hora FROM snapshots ORDER BY data_hora DESC LIMIT 1 OFFSET 1'
+        ).fetchone()
+        if not row:
+            return {}
+        rows = conn.execute(
+            'SELECT categoria, af, ac, co, total FROM snapshots WHERE data_hora = ?',
+            (row['data_hora'],)
+        ).fetchall()
+    return {r['categoria']: dict(r) for r in rows}
+
+
 # ── Log de execuções do coletor ───────────────────────────────────────────────
 
 def registrar_coleta(tipo: str, threads_proc: int, erros: int,
