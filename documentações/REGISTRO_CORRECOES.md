@@ -2,6 +2,67 @@
 
 ---
 
+## 2026-08-21 — FOG: integração com API real + correções de exibição
+
+### 21/08 19:00 — FOG integrado como seção interna da SPA gestao_area_suporte
+
+**🔎 Em miúdos:** ao clicar em "FOG → Casos" no menu, o site navegava para a tela antiga do Oráculo 360 (layout completamente diferente). Corrigido: o FOG agora abre dentro do mesmo site, sem trocar de tela.
+
+**Problema:** links usavam `<a href="/fog/operacional">` que abriam rotas com `layout.html` do oraculo_finaud.
+
+**Correção:** seções `<section id="pag-fog-casos">` e `<section id="pag-fog-kpis">` embutidas no `gestao_email.html`, acessadas pelo mesmo `navegar()` da SPA. Commits `dcc10ea`, `0f6ffe1`, `5035141`.
+
+**Validação:** ✅ VALIDADO — FOG abre dentro do site; URL permanece em `127.0.0.1:5001`.
+
+---
+
+### 21/08 19:30 — FOG: substituição de dados fictícios por API real do FogBugz
+
+**🔎 Em miúdos:** a tela do FOG mostrava nomes e casos inventados — por isso o responsável mostrado no sistema (Andrea Inácio) não batia com o do FogBugz (Rodrigo). Corrigido: agora busca os dados reais direto do FogBugz.
+
+**Problema:** `_FOG_DADOS` era uma lista estática de 14 casos fictícios em `servidor_telas.py`.
+
+**Correção:** substituído por `_buscar_fog()` que consulta `https://finaud.fogbugz.com/api.asp`:
+- Token lido de `FOGBUGZ_TOKEN` no `.env` (nunca hardcoded)
+- Filtro `218`, casos desde `2025/01/01`
+- Parser: `xml.etree.ElementTree` (lib padrão Python — sem dependência externa; `xmltodict` não estava instalado)
+- Campo `fOpen` para determinar Ativo/Fechado
+- `dias_responsavel` = dias desde `dtLastUpdated`
+
+Commit `cd8024d` (dados reais) + `2f5010f` (fix xmltodict) + `8845ec0` (fix fOpen).
+
+**Validação:** ✅ VALIDADO — 414 casos reais carregados; Ativo/Fechado correto; caso 8233 aparece como Ativo.
+
+---
+
+### 21/08 20:00 — FOG Casos: bug todos os casos aparecendo como "Fechado"
+
+**🔎 Em miúdos:** todos os 414 casos do FogBugz apareciam como "Fechado" na tela, mesmo os que estavam abertos.
+
+**Causa raiz:** o código verificava `'active' in sStatus.lower()`, mas `sStatus` retorna o nome do *milestone* (ex.: "Atendimento de Suporte Técnico"), nunca a palavra "Active". O campo correto é `fOpen` (true/false).
+
+**Correção:** substituída a checagem de `sStatus` por `fOpen == 'true'`. Commit `8845ec0`.
+
+**Validação:** ✅ VALIDADO — Ativos aparecem em verde/âmbar/vermelho; Fechados em cinza.
+
+---
+
+### 21/08 20:30 — FOG Casos: coluna Abertura + ordenação por cabeçalho
+
+**🔎 Em miúdos:** a tabela não mostrava a data de abertura dos casos e não tinha como ordenar clicando nas colunas.
+
+**Correção em `gestao_email.html`:**
+- Nova coluna "Abertura" (antes de "Caso") com data em formato DD/MM/AAAA
+- Todos os cabeçalhos clicáveis: clique ordena, clique de novo inverte — seta ↑/↓ indica coluna ativa
+- Função JS `fogSortCol()` + `_fogAplicarOrdem()` adicionadas
+- Larguras ajustadas: "Sem atualização" e "Ação" enxugadas para ampliar "Assunto"
+
+Commits `70ac6db`, `37c1360`, `7f61831`, `19af671`, `5d7683b`.
+
+**Validação:** ✅ VALIDADO — data visível; ordenação funcional em todas as colunas.
+
+---
+
 ## 2026-08-21 — Correção de classificação: 2 threads SUPORTE com conteúdo de CADOC
 
 ### 21/08 17:30 — Reclassificação manual: BALANCETE JULHO 2026 e Documentos retificados junho/2025

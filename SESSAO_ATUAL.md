@@ -8,7 +8,7 @@
 
 ---
 
-## 📓 Diário da sessão (2026-08-21) — Telas: painel delta + Fix H (agradecimento sem pergunta)
+## 📓 Diário da sessão (2026-08-21) — Telas: painel delta + Fix H + FOG integrado com dados reais
 
 ### O que foi feito hoje
 
@@ -51,6 +51,39 @@ Commit: `d99110a` — push realizado.
 
 ---
 
+#### Frente 4 — FOG integrado como SPA no gestao_area_suporte + dados reais
+
+As telas FOG (Casos e KPIs) foram movidas para dentro do site `gestao_area_suporte` — ao clicar em "FOG → Casos" ou "FOG → KPIs" no menu lateral, o usuário permanece no mesmo site (URL `127.0.0.1:5001`) sem navegar para o oraculo_finaud.
+
+**Problema original:** os links FOG usavam `<a href="/fog/operacional">` que abriam rotas separadas com o layout antigo do Oráculo 360. Michel: *"está erradissimo, abandone isso"*.
+
+**Solução:** seções `<section id="pag-fog-casos">` e `<section id="pag-fog-kpis">` embutidas no `gestao_email.html`, acessadas via `navegar()` (mesmo mecanismo do resto da SPA). As rotas `/fog/operacional` e `/fog/gerencial` continuam existindo mas agora são secundárias.
+
+**Dados reais do FogBugz:** substituiu `_FOG_DADOS` (14 casos fictícios) pela função `_buscar_fog()` em `servidor_telas.py`:
+- Lê `FOGBUGZ_TOKEN` do `.env` (nunca hardcoded)
+- Força filtro `218`, busca casos abertos desde 2025-01-01
+- Usa `xml.etree.ElementTree` (lib padrão Python — sem dependência externa)
+- Usa campo `fOpen` da API para determinar Ativo/Fechado (não `sStatus`, que retorna nome do milestone)
+- Calcula `dias_responsavel` como dias desde `dtLastUpdated`
+
+**Correções de bug durante a sessão:**
+- `xmltodict` não instalado no ambiente → substituído por `xml.etree.ElementTree`
+- `sStatus` retornava nome do milestone ("Atendimento de Suporte Técnico"), não "Active" → corrigido usando `fOpen`
+- Todos os 414 casos estavam aparecendo como "Fechado" → corrigido
+
+---
+
+#### Frente 5 — Melhorias visuais na tabela FOG Casos
+
+| Melhoria | Detalhe |
+|---|---|
+| Coluna "Abertura" separada | Data de abertura em coluna própria, antes de "Caso" |
+| Formato brasileiro | Data exibida como DD/MM/AAAA (era YYYY-MM-DD) |
+| Ordenação por coluna | Clicar em qualquer cabeçalho ordena; clicar de novo inverte. Seta indica coluna e direção ativa |
+| Ajuste de proporções | "Sem atualização" e "Ação" enxugadas para dar mais espaço ao "Assunto" |
+
+---
+
 ---
 
 #### Frente 3 — Varredura SUPORTE: 2 threads mal classificadas corrigidas + regras C60/C61
@@ -80,9 +113,9 @@ Spec (`ESPECIFICACAO_NOVA_ARQUITETURA.md`) atualizada com as duas regras (§10 D
 
 **Suíte de testes:** 225/225 (`test_classificador_ia.py`) + 100/100 (`test_banco_threads.py`).
 **Banco:** pós-Fix H + 2 reclassificações manuais. Snapshot delta funcional.
-**GitHub:** sincronizado — push realizado. Commits `53876b2` (C60) e `60f70e9` (C61) mais recentes.
-**PENDENCIAS.md:** sem alterações nesta rodada.
-**REGISTRO_CORRECOES.md:** entradas de C60 e C61 adicionadas.
+**GitHub:** sincronizado — push realizado. Último commit: `5d7683b` (ajuste de colunas tabela FOG).
+**PENDENCIAS.md:** sem alterações nesta rodada (item FOG/Google Chat continua como backlog futuro).
+**REGISTRO_CORRECOES.md:** entradas de C60, C61 e FOG adicionadas.
 
 ---
 
@@ -90,12 +123,13 @@ Spec (`ESPECIFICACAO_NOVA_ARQUITETURA.md`) atualizada com as duas regras (§10 D
 
 **🟢 FASE 1 — Implementação do coletor em produção**
 
-Telas, classificação e lógica de status estáveis. Próximas tarefas por prioridade:
+Telas, classificação, lógica de status e tela FOG estáveis. Próximas tarefas por prioridade:
 
 1. **Definir comportamento em produção** — threads novas vs. já classificadas (ver PENDENCIAS.md — item 🟡 "SPEC — threads novas vs. já classificadas")
 2. **Corrigir "Abraço" singular** no detector de assinatura (ver PENDENCIAS.md — item 🟡)
 3. **Campo `tipo_status`** — rastreabilidade estruturada (ver PENDENCIAS.md — item 🟡)
+4. **Discussões Google Chat no FOG** — avaliar integração futura (ver PENDENCIAS.md — item 🟡 "TELA FOG")
 
-Último /fechar: 2026-08-21 — memórias revisadas ✅
+Último /fechar: 2026-08-21 17:00 — memórias revisadas ✅
 
 ---
