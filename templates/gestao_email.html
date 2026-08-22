@@ -533,7 +533,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .fog-leg-sq  { display: inline-block; width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0 }
 
 .fog-tbl-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden }
-.fog-cols { grid-template-columns: 4px 52px 1fr 110px 82px 130px 100px 165px 68px }
+.fog-cols { grid-template-columns: 4px 78px 1fr 110px 82px 130px 100px 165px 68px }
 .fog-tbl-head {
   display: grid; align-items: center; padding: 0 16px; height: 36px;
   border-bottom: 1px solid var(--border); background: var(--bg);
@@ -546,7 +546,11 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .fog-tbl-row:last-child { border-bottom: none }
 .fog-tbl-row:hover  { background: var(--accent-bg) }
 .fog-tbl-row.cinza  { opacity: .5 }
-.fog-cell-id    { font-size: 12px; font-weight: 800; color: var(--text); font-family: monospace; padding-left: 8px }
+.fog-cell-id    { font-size: 12px; font-weight: 800; color: var(--text); font-family: monospace; padding-left: 8px; line-height: 1.3 }
+.fog-cell-date  { font-size: 9px; font-weight: 400; color: var(--muted); font-family: inherit; margin-top: 2px }
+.fog-th-sort    { cursor: pointer; user-select: none; transition: color .1s }
+.fog-th-sort:hover { color: var(--accent) }
+.fog-sort-ico   { opacity: .45; margin-left: 3px }
 .fog-cell-title { padding: 0 10px; min-width: 0 }
 .fog-cell-main  { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
 .fog-cell-proj  { font-size: 10px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .04em; padding: 0 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
@@ -950,13 +954,13 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
       <div class="fog-tbl-wrap">
         <div class="fog-tbl-head fog-cols">
           <div></div>
-          <div class="fog-th" style="padding-left:8px">Caso</div>
-          <div class="fog-th" style="padding-left:10px">Assunto</div>
-          <div class="fog-th" style="padding-left:6px">Projeto</div>
-          <div class="fog-th" style="padding-left:4px">Status</div>
-          <div class="fog-th" style="padding-left:4px">Responsável</div>
-          <div class="fog-th" style="padding-left:6px">Área</div>
-          <div class="fog-th" style="padding-left:6px">Sem atualização</div>
+          <div class="fog-th fog-th-sort" data-col="id" onclick="fogSortCol(this)" style="padding-left:8px">Caso<span class="fog-sort-ico">↕</span></div>
+          <div class="fog-th fog-th-sort" data-col="assunto" onclick="fogSortCol(this)" style="padding-left:10px">Assunto<span class="fog-sort-ico">↕</span></div>
+          <div class="fog-th fog-th-sort" data-col="projeto" onclick="fogSortCol(this)" style="padding-left:6px">Projeto<span class="fog-sort-ico">↕</span></div>
+          <div class="fog-th fog-th-sort" data-col="status" onclick="fogSortCol(this)" style="padding-left:4px">Status<span class="fog-sort-ico">↕</span></div>
+          <div class="fog-th fog-th-sort" data-col="responsavel" onclick="fogSortCol(this)" style="padding-left:4px">Responsável<span class="fog-sort-ico">↕</span></div>
+          <div class="fog-th fog-th-sort" data-col="area" onclick="fogSortCol(this)" style="padding-left:6px">Área<span class="fog-sort-ico">↕</span></div>
+          <div class="fog-th fog-th-sort" data-col="dias" onclick="fogSortCol(this)" style="padding-left:6px">Sem atualização<span class="fog-sort-ico">↓</span></div>
           <div class="fog-th" style="text-align:center">Ação</div>
         </div>
         <div id="fogBody">
@@ -973,13 +977,19 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
             {% set cor = '#10b981' %}{% set cls = 'fog-green' %}{% set st_label = 'Ativo'   %}{% set st_dot = '#10b981' %}
           {% endif %}
           <div class="fog-tbl-row fog-cols {% if is_fechado %}cinza{% endif %}"
+               data-id="{{ t.id|default('0') }}"
+               data-assunto="{{ t.assunto|default('')|lower }}"
                data-projeto="{{ t.projeto|default('') }}"
                data-responsavel="{{ t.responsavel|default('') }}"
                data-status="{{ 'fechado' if is_fechado else 'ativo' }}"
                data-area="{{ t.area|default('') }}"
-               data-dias="{{ dias }}">
+               data-dias="{{ dias }}"
+               data-data="{{ t.data|default('') }}">
             <div style="width:4px;height:40px;background:{{ cor }};border-radius:2px;margin-left:-16px"></div>
-            <div class="fog-cell-id">{{ t.id|default('—') }}</div>
+            <div class="fog-cell-id">
+              <div>{{ t.id|default('—') }}</div>
+              <div class="fog-cell-date">{{ t.data|default('') }}</div>
+            </div>
             <div class="fog-cell-title"><div class="fog-cell-main">{{ t.assunto|default('—') }}</div></div>
             <div class="fog-cell-proj">{{ t.projeto|default('—') }}</div>
             <div class="fog-cell-status {{ 'fog-slate' if is_fechado else 'fog-green' }}">
@@ -2069,15 +2079,41 @@ function fogFiltrar() {
   fogOrdenar();
 }
 
+let _fogSortColAtual = 'dias', _fogSortDir = -1;
+
 function fogOrdenar() {
   const modo = document.getElementById('fOrdem')?.value || 'dias_desc';
+  _fogSortColAtual = 'dias';
+  _fogSortDir = modo === 'dias_asc' ? 1 : -1;
+  _fogAplicarOrdem();
+}
+
+function fogSortCol(th) {
+  const col = th.dataset.col;
+  if (_fogSortColAtual === col) {
+    _fogSortDir = -_fogSortDir;
+  } else {
+    _fogSortColAtual = col;
+    _fogSortDir = (col === 'id' || col === 'dias') ? -1 : 1;
+  }
+  document.querySelectorAll('#pag-fog-casos .fog-th-sort .fog-sort-ico').forEach(el => {
+    el.textContent = el.closest('[data-col]').dataset.col === _fogSortColAtual
+      ? (_fogSortDir === -1 ? '↓' : '↑') : '↕';
+  });
+  _fogAplicarOrdem();
+}
+
+function _fogAplicarOrdem() {
   const body = document.getElementById('fogBody');
   if (!body) return;
+  const col = _fogSortColAtual, dir = _fogSortDir;
   const rows = Array.from(body.querySelectorAll('.fog-tbl-row'))
                     .filter(r => r.style.display !== 'none');
-  rows.sort((a, b) => modo === 'dias_asc'
-    ? Number(a.dataset.dias) - Number(b.dataset.dias)
-    : Number(b.dataset.dias) - Number(a.dataset.dias));
+  rows.sort((a, b) => {
+    const va = a.dataset[col] ?? '', vb = b.dataset[col] ?? '';
+    if (col === 'id' || col === 'dias') return (Number(va) - Number(vb)) * dir;
+    return va.localeCompare(vb, 'pt-BR') * dir;
+  });
   rows.forEach(r => body.appendChild(r));
 }
 
