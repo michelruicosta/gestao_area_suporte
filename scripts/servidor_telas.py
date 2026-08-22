@@ -13,7 +13,7 @@ import re
 import sys
 import threading
 import requests
-import xmltodict
+import xml.etree.ElementTree as _ET
 from datetime import datetime, timezone
 from functools import wraps
 
@@ -552,31 +552,29 @@ def _buscar_fog() -> list[dict]:
             'cols': 'ixBug,sTitle,sStatus,sPersonAssignedTo,dtOpened,dtLastUpdated,sProject,sArea',
         }, timeout=30)
         resp.raise_for_status()
-        dados = xmltodict.parse(resp.text)
-        casos_raw = dados.get('response', {}).get('cases', {}).get('case', [])
-        if isinstance(casos_raw, dict):
-            casos_raw = [casos_raw]
+        root = _ET.fromstring(resp.text)
         hoje = datetime.now(timezone.utc).date()
         resultado = []
-        for c in casos_raw:
-            status_fog = c.get('sStatus', '') or ''
+        for c in root.findall('.//case'):
+            def _t(tag): return (c.findtext(tag) or '').strip()
+            status_fog = _t('sStatus')
             is_ativo = 'active' in status_fog.lower()
             status = 'Ativo' if is_ativo else 'Fechado'
-            dt_str = c.get('dtLastUpdated') or c.get('dtOpened') or ''
+            dt_str = _t('dtLastUpdated') or _t('dtOpened')
             try:
                 dt_upd = datetime.fromisoformat(dt_str.replace('Z', '+00:00')).date()
                 dias = (hoje - dt_upd).days
             except Exception:
                 dias = 0
             resultado.append({
-                'id':               c.get('ixBug', ''),
-                'assunto':          c.get('sTitle', ''),
-                'projeto':          c.get('sProject', ''),
-                'area':             c.get('sArea', ''),
-                'responsavel':      c.get('sPersonAssignedTo', ''),
+                'id':               _t('ixBug'),
+                'assunto':          _t('sTitle'),
+                'projeto':          _t('sProject'),
+                'area':             _t('sArea'),
+                'responsavel':      _t('sPersonAssignedTo'),
                 'status':           status,
                 'dias_responsavel': dias,
-                'data':             (c.get('dtOpened') or '')[:10],
+                'data':             _t('dtOpened')[:10],
             })
         resultado.sort(key=lambda x: x['dias_responsavel'], reverse=True)
         return resultado
