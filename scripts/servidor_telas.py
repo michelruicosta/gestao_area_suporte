@@ -549,7 +549,7 @@ def _buscar_fog() -> list[dict]:
             'token': token,
             'cmd': 'search',
             'q': 'opened:"2025/01/01..today"',
-            'cols': 'ixBug,sTitle,sStatus,sPersonAssignedTo,dtOpened,dtLastUpdated,sProject,sArea',
+            'cols': 'ixBug,sTitle,fOpen,sPersonAssignedTo,dtOpened,dtLastUpdated,sProject,sArea',
         }, timeout=30)
         resp.raise_for_status()
         root = _ET.fromstring(resp.text)
@@ -557,9 +557,7 @@ def _buscar_fog() -> list[dict]:
         resultado = []
         for c in root.findall('.//case'):
             def _t(tag): return (c.findtext(tag) or '').strip()
-            status_fog = _t('sStatus')
-            is_ativo = 'active' in status_fog.lower()
-            status = 'Ativo' if is_ativo else 'Fechado'
+            status = 'Ativo' if _t('fOpen') == 'true' else 'Fechado'
             dt_str = _t('dtLastUpdated') or _t('dtOpened')
             try:
                 dt_upd = datetime.fromisoformat(dt_str.replace('Z', '+00:00')).date()
