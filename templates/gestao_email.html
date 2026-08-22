@@ -954,8 +954,8 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
       <div class="fog-tbl-wrap">
         <div class="fog-tbl-head fog-cols">
           <div></div>
-          <div class="fog-th fog-th-sort" data-col="id" onclick="fogSortCol(this)" style="padding-left:8px">Caso<span class="fog-sort-ico">↕</span></div>
           <div class="fog-th fog-th-sort" data-col="data" onclick="fogSortCol(this)" style="padding-left:6px">Abertura<span class="fog-sort-ico">↕</span></div>
+          <div class="fog-th fog-th-sort" data-col="id" onclick="fogSortCol(this)" style="padding-left:8px">Caso<span class="fog-sort-ico">↕</span></div>
           <div class="fog-th fog-th-sort" data-col="assunto" onclick="fogSortCol(this)" style="padding-left:10px">Assunto<span class="fog-sort-ico">↕</span></div>
           <div class="fog-th fog-th-sort" data-col="projeto" onclick="fogSortCol(this)" style="padding-left:6px">Projeto<span class="fog-sort-ico">↕</span></div>
           <div class="fog-th fog-th-sort" data-col="status" onclick="fogSortCol(this)" style="padding-left:4px">Status<span class="fog-sort-ico">↕</span></div>
@@ -987,11 +987,11 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
                data-dias="{{ dias }}"
                data-data="{{ t.data|default('') }}">
             <div style="width:4px;height:40px;background:{{ cor }};border-radius:2px;margin-left:-16px"></div>
-            <div class="fog-cell-id">{{ t.id|default('—') }}</div>
             <div class="fog-cell-id" style="font-size:11px;font-weight:500;color:var(--muted);font-family:inherit;padding-left:6px">
               {%- set d = t.data|default('') -%}
               {{ d[8:10] ~ '/' ~ d[5:7] ~ '/' ~ d[0:4] if d|length >= 10 else '—' }}
             </div>
+            <div class="fog-cell-id">{{ t.id|default('—') }}</div>
             <div class="fog-cell-title"><div class="fog-cell-main">{{ t.assunto|default('—') }}</div></div>
             <div class="fog-cell-proj">{{ t.projeto|default('—') }}</div>
             <div class="fog-cell-status {{ 'fog-slate' if is_fechado else 'fog-green' }}">
