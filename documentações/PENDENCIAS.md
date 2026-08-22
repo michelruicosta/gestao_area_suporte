@@ -536,3 +536,16 @@ O README antigo foi arquivado. Escrever o novo só quando algo estiver funcionan
 **Quando fazer:** após a Fase 1 estar funcional.
 
 ---
+
+### 🟡 TELA FOG — Discussões do Google Chat vinculadas a casos (identificado 21/08/2026)
+
+No projeto antigo, alguns cards da tela operacional do FOG mostravam mensagens do Google Chat vinculadas ao número do caso. Michel confirmou que quer avaliar manter esse recurso, mas foi postergado para não bloquear a implementação principal das telas FOG.
+
+**O que decidir antes de implementar:**
+1. O vínculo Google Chat ↔ caso FOG ainda acontece? Por qual mecanismo?
+2. Onde estão esses dados hoje? (No projeto antigo vinham de `massa_bruta_fog.json`)
+3. A exibição seria dentro do card (colapsável) ou em tela separada ao clicar?
+
+**Quando fazer:** após as telas FOG (operacional + gerencial) estarem funcionando em produção.
+
+---
