@@ -533,7 +533,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .fog-leg-sq  { display: inline-block; width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0 }
 
 .fog-tbl-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden }
-.fog-cols { grid-template-columns: 4px 78px 1fr 110px 82px 130px 100px 165px 68px }
+.fog-cols { grid-template-columns: 4px 52px 88px 1fr 110px 82px 130px 100px 165px 68px }
 .fog-tbl-head {
   display: grid; align-items: center; padding: 0 16px; height: 36px;
   border-bottom: 1px solid var(--border); background: var(--bg);
@@ -955,6 +955,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
         <div class="fog-tbl-head fog-cols">
           <div></div>
           <div class="fog-th fog-th-sort" data-col="id" onclick="fogSortCol(this)" style="padding-left:8px">Caso<span class="fog-sort-ico">↕</span></div>
+          <div class="fog-th fog-th-sort" data-col="data" onclick="fogSortCol(this)" style="padding-left:6px">Abertura<span class="fog-sort-ico">↕</span></div>
           <div class="fog-th fog-th-sort" data-col="assunto" onclick="fogSortCol(this)" style="padding-left:10px">Assunto<span class="fog-sort-ico">↕</span></div>
           <div class="fog-th fog-th-sort" data-col="projeto" onclick="fogSortCol(this)" style="padding-left:6px">Projeto<span class="fog-sort-ico">↕</span></div>
           <div class="fog-th fog-th-sort" data-col="status" onclick="fogSortCol(this)" style="padding-left:4px">Status<span class="fog-sort-ico">↕</span></div>
@@ -986,9 +987,10 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
                data-dias="{{ dias }}"
                data-data="{{ t.data|default('') }}">
             <div style="width:4px;height:40px;background:{{ cor }};border-radius:2px;margin-left:-16px"></div>
-            <div class="fog-cell-id">
-              <div>{{ t.id|default('—') }}</div>
-              <div class="fog-cell-date">{{ t.data|default('') }}</div>
+            <div class="fog-cell-id">{{ t.id|default('—') }}</div>
+            <div class="fog-cell-id" style="font-size:11px;font-weight:500;color:var(--muted);font-family:inherit;padding-left:6px">
+              {%- set d = t.data|default('') -%}
+              {{ d[8:10] ~ '/' ~ d[5:7] ~ '/' ~ d[0:4] if d|length >= 10 else '—' }}
             </div>
             <div class="fog-cell-title"><div class="fog-cell-main">{{ t.assunto|default('—') }}</div></div>
             <div class="fog-cell-proj">{{ t.projeto|default('—') }}</div>
