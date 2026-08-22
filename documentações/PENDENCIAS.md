@@ -537,6 +537,23 @@ O README antigo foi arquivado. Escrever o novo só quando algo estiver funcionan
 
 ---
 
+### 🟡 STATUS — Pente fino em todas as categorias e status do banco (identificado 21/08/2026)
+
+Ao rodar o pipeline em 21/08/2026, Michel identificou que existem threads em **RETORNO_BACEN** com status **Aguardando Cliente** sendo que o cliente já agradeceu e o assunto estava encerrado — o status deveria ser **Concluída**. É provável que o mesmo problema ocorra em outras categorias e outros status.
+
+**O que fazer:**
+1. Varrer todas as threads do banco por categoria e status
+2. Para cada combinação, pegar uma amostra do último e-mail e verificar se o status está correto
+3. Identificar padrões de erro por categoria (ex.: RETORNO_BACEN com AC quando cliente agradeceu)
+4. Propor regras de correção para os casos encontrados
+5. Executar recálculo retroativo com aprovação de Michel
+
+**Escopo:** banco completo — todas as categorias, todos os status.
+
+**Quando fazer:** sessão dedicada após as prioridades atuais (Fase 1 em produção).
+
+---
+
 ### 🟡 TELA FOG — Discussões do Google Chat vinculadas a casos (identificado 21/08/2026)
 
 No projeto antigo, alguns cards da tela operacional do FOG mostravam mensagens do Google Chat vinculadas ao número do caso. Michel confirmou que quer avaliar manter esse recurso, mas foi postergado para não bloquear a implementação principal das telas FOG.

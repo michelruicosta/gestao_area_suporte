@@ -86,6 +86,28 @@ As telas FOG (Casos e KPIs) foram movidas para dentro do site `gestao_area_supor
 
 ---
 
+#### Frente 6 — Pipeline rodado + verificação das classificações
+
+Pipeline completo executado ao final da sessão (pós-/fechar das 17:00):
+
+- **Etapa 1 (coleta):** 33 threads atualizadas/coletadas do Gmail
+- **Etapa 2 (classificação):** 23 threads classificadas — 18 para `principal`, 5 para `descartes`, 0 para `revisão`
+
+Backup criado antes da rodada em `data/backups/20260821_2308_pipeline_coleta/`.
+
+4 classificações questionáveis foram inspecionadas e confirmadas corretas por Michel:
+
+| Thread | Categoria | Status | Resultado |
+|---|---|---|---|
+| PI Exposure MiraeAsset | DDR_2011 | Concluída | ✅ Correto |
+| ENC: COLOP UNICAD PL MINIMO | DLI_2062 | Concluída | ✅ Correto |
+| REMITLY - Atualização de Movimentos Jul/Ago | SUPORTE | Aguardando Finaud | ✅ Correto |
+| BARU - Verificar INDICADOR DE BASILEIA | SUPORTE | Aguardando Finaud | ✅ Correto |
+
+Michel observou que existem threads em RETORNO_BACEN com status AC indevido (cliente agradeceu mas status não atualizou). Problema registrado em `PENDENCIAS.md` para pente fino dedicado.
+
+---
+
 #### Frente 3 — Varredura SUPORTE: 2 threads mal classificadas corrigidas + regras C60/C61
 
 Após o fechar da sessão anterior, Michel pediu para rodar o pipeline e verificar a classificação. O pipeline rodou (coletor + classificador). A varredura de threads SUPORTE com conteúdo de CADOC encontrou **5 candidatos**:
@@ -112,10 +134,10 @@ Spec (`ESPECIFICACAO_NOVA_ARQUITETURA.md`) atualizada com as duas regras (§10 D
 ### Estado atual
 
 **Suíte de testes:** 225/225 (`test_classificador_ia.py`) + 100/100 (`test_banco_threads.py`).
-**Banco:** pós-Fix H + 2 reclassificações manuais. Snapshot delta funcional.
+**Banco:** pós-Fix H + 2 reclassificações manuais + pipeline 21/08 (33 threads coletadas, 23 classificadas).
 **GitHub:** sincronizado — push realizado. Último commit: `5d7683b` (ajuste de colunas tabela FOG).
-**PENDENCIAS.md:** sem alterações nesta rodada (item FOG/Google Chat continua como backlog futuro).
-**REGISTRO_CORRECOES.md:** entradas de C60, C61 e FOG adicionadas.
+**PENDENCIAS.md:** novo item adicionado — pente fino em todas as categorias e status do banco (21/08).
+**REGISTRO_CORRECOES.md:** entradas de C60, C61, FOG e pipeline verificado adicionadas.
 
 ---
 
@@ -123,13 +145,13 @@ Spec (`ESPECIFICACAO_NOVA_ARQUITETURA.md`) atualizada com as duas regras (§10 D
 
 **🟢 FASE 1 — Implementação do coletor em produção**
 
-Telas, classificação, lógica de status e tela FOG estáveis. Próximas tarefas por prioridade:
+Telas, classificação, lógica de status e tela FOG estáveis. Pipeline já rodou com sucesso. Próximas tarefas por prioridade:
 
-1. **Definir comportamento em produção** — threads novas vs. já classificadas (ver PENDENCIAS.md — item 🟡 "SPEC — threads novas vs. já classificadas")
-2. **Corrigir "Abraço" singular** no detector de assinatura (ver PENDENCIAS.md — item 🟡)
-3. **Campo `tipo_status`** — rastreabilidade estruturada (ver PENDENCIAS.md — item 🟡)
-4. **Discussões Google Chat no FOG** — avaliar integração futura (ver PENDENCIAS.md — item 🟡 "TELA FOG")
+1. **Pente fino de status** — varredura de todas as categorias para encontrar status incorretos (ex.: RETORNO_BACEN com AC quando cliente agradeceu). Ver PENDENCIAS.md — item 🟡 "STATUS — Pente fino em todas as categorias e status do banco".
+2. **Definir comportamento em produção** — threads novas vs. já classificadas (ver PENDENCIAS.md — item 🟡 "SPEC — threads novas vs. já classificadas")
+3. **Corrigir "Abraço" singular** no detector de assinatura (ver PENDENCIAS.md — item 🟡)
+4. **Campo `tipo_status`** — rastreabilidade estruturada (ver PENDENCIAS.md — item 🟡)
 
-Último /fechar: 2026-08-21 17:00 — memórias revisadas ✅
+Último /fechar: 2026-08-21 23:30 — memórias revisadas ✅
 
 ---

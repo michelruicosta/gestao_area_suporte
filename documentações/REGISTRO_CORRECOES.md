@@ -2,6 +2,31 @@
 
 ---
 
+## 2026-08-21 — Pipeline rodado + 4 classificações verificadas e confirmadas
+
+### 21/08 23:00 — Pipeline executado; 4 classificações questionáveis confirmadas corretas por Michel
+
+**🔎 Em miúdos:** rodamos o coletor + classificador ao vivo. O sistema coletou 33 threads e classificou 23 delas. Verificamos as 4 que pareciam erradas — Michel confirmou que todas estavam certas.
+
+**Pipeline:** `executar_pipeline.py` — Etapa 1 (coletor) + Etapa 2 (classificador)
+- 33 threads atualizadas/coletadas
+- 23 classificadas: 18 → `principal`, 5 → `descartes`, 0 → `revisão`
+
+**4 threads inspecionadas (conteúdo + status verificados):**
+
+| Thread | Categoria | Status | Confirmação |
+|---|---|---|---|
+| PI Exposure MiraeAsset | DDR_2011 | Concluída | ✅ Michel confirmou |
+| ENC: COLOP UNICAD PL MINIMO | DLI_2062 | Concluída | ✅ Michel confirmou |
+| REMITLY - Atualização de Movimentos Jul/Ago | SUPORTE | Aguardando Finaud | ✅ Michel confirmou |
+| BARU - Verificar INDICADOR DE BASILEIA | SUPORTE | Aguardando Finaud | ✅ Michel confirmou |
+
+**Observação de Michel:** existem threads em RETORNO_BACEN (e possivelmente outras categorias) com status incorreto — ex.: AC quando o cliente já agradeceu e o assunto estava encerrado. Registrado em `PENDENCIAS.md` para pente fino dedicado em sessão futura.
+
+**Validação:** ✅ CONFIRMADO POR MICHEL — sem correção necessária nesta rodada.
+
+---
+
 ## 2026-08-21 — FOG: integração com API real + correções de exibição
 
 ### 21/08 19:00 — FOG integrado como seção interna da SPA gestao_area_suporte
