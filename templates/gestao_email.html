@@ -487,6 +487,133 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 /* dark mode: chip-erro and cpill-rev (red chips) */
 [data-theme="escuro"] .chip-erro  { background: #3b0a0a; color: #f87171; }
 [data-theme="escuro"] .cpill-rev  { background: #3b0a0a; color: #f87171; }
+
+/* ─── FOG ─────────────────────────────────────────────────────────── */
+.fog-green { color: #10b981 }
+.fog-amber { color: #f59e0b }
+.fog-red   { color: #ef4444 }
+.fog-slate { color: var(--muted) }
+
+.fog-simulado-banner {
+  margin-bottom: 12px; padding: 8px 16px; border-radius: 8px;
+  border: 1px solid rgba(245,158,11,.3); background: rgba(245,158,11,.08);
+  color: #b45309; font-size: 12px; font-weight: 700;
+  display: flex; gap: 8px; align-items: center;
+}
+[data-theme="escuro"] .fog-simulado-banner { color: #fbbf24; }
+
+.fog-fbar {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 14px; margin-bottom: 12px;
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+}
+.fog-fi {
+  background: var(--bg); border: 1px solid var(--border);
+  color: var(--text); font-size: 11px; border-radius: 6px;
+  padding: 6px 9px; font-family: inherit;
+}
+.fog-fi::placeholder { color: var(--muted) }
+.fog-bw { position: relative; flex: 1; min-width: 180px }
+.fog-bw .fog-fi { width: 100%; }
+.fog-btn-up {
+  display: flex; align-items: center; gap: 5px; padding: 6px 13px;
+  background: var(--accent); color: #fff; border: none; border-radius: 6px;
+  font-size: 11px; font-weight: 700; cursor: pointer; font-family: inherit; margin-left: auto;
+}
+.fog-cd {
+  font-size: 11px; color: var(--muted); display: flex;
+  align-items: center; justify-content: space-between; margin-bottom: 12px;
+}
+.fog-cd-left { display: flex; align-items: center; gap: 7px }
+.fog-cd-v    { font-weight: 700; color: var(--accent) }
+.fog-cd-t    { font-weight: 700; color: var(--text) }
+.fog-cd-dot  { color: var(--border) }
+.fog-leg     { display: flex; align-items: center; gap: 10px; font-size: 10px }
+.fog-leg span { display: flex; align-items: center; gap: 4px }
+.fog-leg-sq  { display: inline-block; width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0 }
+
+.fog-tbl-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden }
+.fog-cols { grid-template-columns: 4px 52px 1fr 110px 82px 130px 100px 165px 68px }
+.fog-tbl-head {
+  display: grid; align-items: center; padding: 0 16px; height: 36px;
+  border-bottom: 1px solid var(--border); background: var(--bg);
+}
+.fog-th { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .07em }
+.fog-tbl-row {
+  display: grid; align-items: center; padding: 0 16px; min-height: 54px;
+  border-bottom: 1px solid var(--border); transition: background .12s;
+}
+.fog-tbl-row:last-child { border-bottom: none }
+.fog-tbl-row:hover  { background: var(--accent-bg) }
+.fog-tbl-row.cinza  { opacity: .5 }
+.fog-cell-id    { font-size: 12px; font-weight: 800; color: var(--text); font-family: monospace; padding-left: 8px }
+.fog-cell-title { padding: 0 10px; min-width: 0 }
+.fog-cell-main  { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.fog-cell-proj  { font-size: 10px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .04em; padding: 0 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.fog-cell-status { padding: 0 4px; display: flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; white-space: nowrap }
+.fog-cell-resp  { font-size: 11px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px }
+.fog-cell-area  { font-size: 11px; color: var(--text); padding: 0 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.fog-cell-atualiz { padding: 0 6px }
+.fog-atualiz-label { font-size: 9px; color: var(--muted); margin-bottom: 1px }
+.fog-atualiz-num   { font-size: 14px; font-weight: 800; line-height: 1.2 }
+.fog-cell-btn   { display: flex; justify-content: center }
+.fog-btn-open   {
+  font-size: 10px; font-weight: 700; color: var(--accent);
+  border: 1px solid rgba(51,51,168,.25); border-radius: 5px; padding: 4px 10px;
+  background: rgba(51,51,168,.06); text-decoration: none; transition: all .12s;
+}
+.fog-btn-open:hover { background: var(--accent); color: #fff }
+
+.fog-kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 22px }
+.fog-kpi {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 16px 14px; transition: transform .12s;
+}
+.fog-kpi:hover { transform: translateY(-2px) }
+.fog-kpi-lbl { font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px }
+.fog-kpi-num { font-size: 30px; font-weight: 900; line-height: 1 }
+.fog-kpi-row { display: flex; justify-content: space-between; align-items: center }
+.fog-kpi-pct { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px }
+.fog-kpi-bar { height: 4px; background: var(--border); border-radius: 2px; margin-top: 8px; overflow: hidden }
+.fog-kpi-fill { height: 100%; border-radius: 2px }
+.fog-kpi-sub { font-size: 10px; color: var(--text); margin-top: 5px }
+
+.fog-rk-head {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px 10px 0 0;
+  border-bottom: none; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;
+}
+.fog-rk-wrap  { display: flex; align-items: flex-start; gap: 8px }
+.fog-rk-title { font-size: 13px; font-weight: 700; color: var(--text) }
+.fog-rk-desc  { font-size: 11px; color: var(--muted); margin-top: 2px }
+.fog-tgl      { display: flex; gap: 5px }
+.fog-tgl-btn  {
+  padding: 5px 13px; font-size: 11px; font-weight: 700; border-radius: 6px;
+  border: 1px solid var(--border); cursor: pointer; font-family: inherit;
+  color: var(--muted); background: transparent;
+}
+.fog-tgl-btn.on { background: var(--accent); color: #fff; border-color: var(--accent) }
+.fog-rk-table  { background: var(--surface); border: 1px solid var(--border); border-radius: 0 0 10px 10px; border-top: none; overflow: hidden }
+.fog-rk-cols   { grid-template-columns: 36px 1fr 70px 80px 120px }
+.fog-rk-thead  {
+  display: grid; padding: 0 16px; height: 32px;
+  background: var(--bg); border-bottom: 1px solid var(--border); align-items: center;
+}
+.fog-rk-th    { font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .07em }
+.fog-rk-row   {
+  display: grid; padding: 12px 16px; border-bottom: 1px solid var(--border);
+  align-items: center; transition: background .12s;
+}
+.fog-rk-row:last-child { border-bottom: none }
+.fog-rk-row:hover      { background: var(--accent-bg) }
+.fog-rk-av    {
+  width: 28px; height: 28px; border-radius: 50%; background: var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 800; color: var(--muted);
+}
+.fog-rk-nome  { font-size: 12px; font-weight: 600; color: var(--text); padding: 0 12px }
+.fog-rk-num   { font-size: 12px; font-weight: 700; color: var(--text); text-align: center }
+.fog-rk-antigo { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.fog-rk-dias  { font-size: 13px; font-weight: 800; text-align: right }
 </style>
 </head>
 <body>
@@ -520,15 +647,15 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 
     <div class="nav-label" style="margin-top:0.5rem;">FOG</div>
 
-    <a class="nav-item" href="/fog/operacional" style="text-decoration:none;color:inherit">
+    <button class="nav-item" data-pagina="fog-casos" onclick="navegar(this)">
       <span class="nav-ico">📋</span>
       Casos
-    </a>
+    </button>
 
-    <a class="nav-item" href="/fog/gerencial" style="text-decoration:none;color:inherit">
+    <button class="nav-item" data-pagina="fog-kpis" onclick="navegar(this)">
       <span class="nav-ico">📈</span>
       KPIs
-    </a>
+    </button>
 
     <div class="nav-label" style="margin-top:0.5rem;">Sistema</div>
 
@@ -771,6 +898,205 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
       </div>
     </section>
 
+    <!-- ── Página FOG: Casos ────────────────────────────────────── -->
+    <section class="page" id="pag-fog-casos">
+
+      {% if fog_simulado %}
+      <div class="fog-simulado-banner">⚗ DADOS SIMULADOS — protótipo para validação visual.</div>
+      {% endif %}
+
+      <div class="fog-fbar">
+        <div class="fog-bw">
+          <input class="fog-fi" id="fBusca" oninput="fogFiltrar()" placeholder="🔍  Buscar caso ou título…">
+        </div>
+        <select class="fog-fi" id="fProjeto" onchange="fogFiltrar()">
+          <option value="">Todos os Projetos</option>
+          {% for p in fog_projetos %}<option value="{{ p }}">{{ p }}</option>{% endfor %}
+        </select>
+        <select class="fog-fi" id="fResponsavel" onchange="fogFiltrar()">
+          <option value="">Todos os Responsáveis</option>
+          {% for r in fog_responsaveis %}<option value="{{ r }}">{{ r }}</option>{% endfor %}
+        </select>
+        <select class="fog-fi" id="fStatus" onchange="fogFiltrar()">
+          <option value="">Todos os Status</option>
+          <option value="ativo">Ativo</option>
+          <option value="fechado">Fechado</option>
+        </select>
+        <select class="fog-fi" id="fArea" onchange="fogFiltrar()">
+          <option value="">Todas as Áreas</option>
+          {% for a in fog_areas %}<option value="{{ a }}">{{ a }}</option>{% endfor %}
+        </select>
+        <select class="fog-fi" id="fOrdem" onchange="fogOrdenar()"
+                style="color:var(--accent);border-color:rgba(51,51,168,.25);background:rgba(51,51,168,.04);font-weight:700">
+          <option value="dias_desc">Mais tempo sem atualização</option>
+          <option value="dias_asc">Mais recentes</option>
+        </select>
+        <button class="fog-btn-up" onclick="fogReset()">↺ Atualizar</button>
+      </div>
+
+      <div class="fog-cd">
+        <div class="fog-cd-left">
+          🕐 Próxima atualização em <span class="fog-cd-v" id="fog-countdown">15:00</span>
+          <span class="fog-cd-dot">·</span>
+          <span class="fog-cd-t" id="fog-totalVis">{{ fog_tarefas|length }}</span> casos visíveis
+        </div>
+        <div class="fog-leg">
+          <span><span class="fog-leg-sq" style="background:#10b981"></span> Verde &lt; 8 dias</span>
+          <span><span class="fog-leg-sq" style="background:#f59e0b"></span> Âmbar 8–14 dias</span>
+          <span><span class="fog-leg-sq" style="background:#ef4444"></span> Vermelho ≥ 15 dias</span>
+        </div>
+      </div>
+
+      <div class="fog-tbl-wrap">
+        <div class="fog-tbl-head fog-cols">
+          <div></div>
+          <div class="fog-th" style="padding-left:8px">Caso</div>
+          <div class="fog-th" style="padding-left:10px">Assunto</div>
+          <div class="fog-th" style="padding-left:6px">Projeto</div>
+          <div class="fog-th" style="padding-left:4px">Status</div>
+          <div class="fog-th" style="padding-left:4px">Responsável</div>
+          <div class="fog-th" style="padding-left:6px">Área</div>
+          <div class="fog-th" style="padding-left:6px">Sem atualização</div>
+          <div class="fog-th" style="text-align:center">Ação</div>
+        </div>
+        <div id="fogBody">
+        {% for t in fog_tarefas %}
+          {% set is_fechado = t.status == 'Fechado' %}
+          {% set dias = t.dias_responsavel|default(0) %}
+          {% if is_fechado %}
+            {% set cor = '#6b7280' %}{% set cls = 'fog-slate' %}{% set st_label = 'Fechado' %}{% set st_dot = '#6b7280' %}
+          {% elif dias >= 15 %}
+            {% set cor = '#ef4444' %}{% set cls = 'fog-red'   %}{% set st_label = 'Ativo'   %}{% set st_dot = '#10b981' %}
+          {% elif dias >= 8 %}
+            {% set cor = '#f59e0b' %}{% set cls = 'fog-amber' %}{% set st_label = 'Ativo'   %}{% set st_dot = '#10b981' %}
+          {% else %}
+            {% set cor = '#10b981' %}{% set cls = 'fog-green' %}{% set st_label = 'Ativo'   %}{% set st_dot = '#10b981' %}
+          {% endif %}
+          <div class="fog-tbl-row fog-cols {% if is_fechado %}cinza{% endif %}"
+               data-projeto="{{ t.projeto|default('') }}"
+               data-responsavel="{{ t.responsavel|default('') }}"
+               data-status="{{ 'fechado' if is_fechado else 'ativo' }}"
+               data-area="{{ t.area|default('') }}"
+               data-dias="{{ dias }}">
+            <div style="width:4px;height:40px;background:{{ cor }};border-radius:2px;margin-left:-16px"></div>
+            <div class="fog-cell-id">{{ t.id|default('—') }}</div>
+            <div class="fog-cell-title"><div class="fog-cell-main">{{ t.assunto|default('—') }}</div></div>
+            <div class="fog-cell-proj">{{ t.projeto|default('—') }}</div>
+            <div class="fog-cell-status {{ 'fog-slate' if is_fechado else 'fog-green' }}">
+              <span style="width:6px;height:6px;border-radius:50%;background:{{ st_dot }};flex-shrink:0"></span>
+              {{ st_label }}
+            </div>
+            <div class="fog-cell-resp">{{ t.responsavel|default('—') }}</div>
+            <div class="fog-cell-area">{{ t.area|default('—') }}</div>
+            <div class="fog-cell-atualiz">
+              {% if is_fechado %}
+                <div class="fog-atualiz-num fog-slate" style="font-size:12px">{{ dias }} dia(s) total</div>
+                <div class="fog-atualiz-label">duração do caso</div>
+              {% else %}
+                <div class="fog-atualiz-label">Sem atualização há:</div>
+                <div class="fog-atualiz-num {{ cls }}">{{ dias }} dia(s)</div>
+              {% endif %}
+            </div>
+            <div class="fog-cell-btn">
+              <a class="fog-btn-open"
+                 href="https://finaud.fogbugz.com/f/cases/{{ t.id|default('') }}"
+                 target="_blank">Abrir ↗</a>
+            </div>
+          </div>
+        {% else %}
+          <div style="padding:32px;text-align:center;color:var(--muted);font-size:13px">Nenhum caso encontrado.</div>
+        {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Página FOG: KPIs ─────────────────────────────────────── -->
+    <section class="page" id="pag-fog-kpis">
+
+      {% if fog_simulado %}
+      <div class="fog-simulado-banner">⚗ DADOS SIMULADOS — protótipo para validação visual.</div>
+      {% endif %}
+
+      <div class="fog-kpi-grid">
+        <div class="fog-kpi" style="border-left:3px solid var(--accent);cursor:pointer" onclick="navegar(document.querySelector('[data-pagina=fog-casos]'))">
+          <div class="fog-kpi-lbl">Total Ativos</div>
+          <div class="fog-kpi-num" style="color:var(--text)">{{ fog_stats.total_ativos }}</div>
+          <div class="fog-kpi-sub">casos em aberto</div>
+        </div>
+        <div class="fog-kpi" style="border-left:3px solid #10b981">
+          <div class="fog-kpi-lbl">Em Andamento</div>
+          <div class="fog-kpi-row">
+            <div class="fog-kpi-num" style="color:#10b981">{{ fog_stats.em_andamento.qtd }}</div>
+            <span class="fog-kpi-pct" style="background:rgba(16,185,129,.1);color:#10b981">{{ fog_stats.em_andamento.perc }}%</span>
+          </div>
+          <div class="fog-kpi-bar"><div class="fog-kpi-fill" style="width:{{ fog_stats.em_andamento.perc }}%;background:#10b981"></div></div>
+          <div class="fog-kpi-sub">menos de 8 dias</div>
+        </div>
+        <div class="fog-kpi" style="border-left:3px solid #f59e0b">
+          <div class="fog-kpi-lbl">Atenção</div>
+          <div class="fog-kpi-row">
+            <div class="fog-kpi-num" style="color:#f59e0b">{{ fog_stats.atencao.qtd }}</div>
+            <span class="fog-kpi-pct" style="background:rgba(245,158,11,.1);color:#f59e0b">{{ fog_stats.atencao.perc }}%</span>
+          </div>
+          <div class="fog-kpi-bar"><div class="fog-kpi-fill" style="width:{{ fog_stats.atencao.perc }}%;background:#f59e0b"></div></div>
+          <div class="fog-kpi-sub">parado há 8–14 dias</div>
+        </div>
+        <div class="fog-kpi" style="border-left:3px solid #ef4444">
+          <div class="fog-kpi-lbl">Crítico</div>
+          <div class="fog-kpi-row">
+            <div class="fog-kpi-num" style="color:#ef4444">{{ fog_stats.critico.qtd }}</div>
+            <span class="fog-kpi-pct" style="background:rgba(239,68,68,.1);color:#ef4444">{{ fog_stats.critico.perc }}%</span>
+          </div>
+          <div class="fog-kpi-bar"><div class="fog-kpi-fill" style="width:{{ fog_stats.critico.perc }}%;background:#ef4444"></div></div>
+          <div class="fog-kpi-sub">parado há ≥ 15 dias</div>
+        </div>
+        <div class="fog-kpi" style="border-left:3px solid var(--accent)">
+          <div class="fog-kpi-lbl">Concluídos</div>
+          <div class="fog-kpi-num" style="color:var(--text)">{{ fog_stats.total_concluidos }}</div>
+          <div class="fog-kpi-sub" style="color:var(--accent);font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:.06em;margin-top:10px">total encerrado</div>
+        </div>
+      </div>
+
+      <div class="fog-rk-head">
+        <div class="fog-rk-wrap">
+          <span style="color:var(--accent);margin-top:3px;flex-shrink:0">📊</span>
+          <div>
+            <div class="fog-rk-title">Ranking de Responsáveis</div>
+            <div class="fog-rk-desc" id="rkDesc">ordenado pelo caso mais antigo em cada responsável</div>
+          </div>
+        </div>
+        <div class="fog-tgl">
+          <button class="fog-tgl-btn on" id="bA" onclick="fogSort('antigo')">⏰ Mais antigo</button>
+          <button class="fog-tgl-btn" id="bV" onclick="fogSort('volume')">⊞ Mais casos</button>
+        </div>
+      </div>
+
+      <div class="fog-rk-table">
+        <div class="fog-rk-thead fog-rk-cols">
+          <div></div>
+          <div class="fog-rk-th" style="padding-left:12px">Responsável</div>
+          <div class="fog-rk-th" style="text-align:center">Casos</div>
+          <div class="fog-rk-th">Caso mais antigo</div>
+          <div class="fog-rk-th" style="text-align:right">Parado há</div>
+        </div>
+        <div id="rkBody">
+        {% for p in fog_stats.ranking %}
+          {% set iniciais = (p.nome.split()[0][0] + (p.nome.split()[1][0] if p.nome.split()|length > 1 else ''))|upper %}
+          {% set cls_dias = 'color:#ef4444' if p.dias_mais_antigo >= 15 else ('color:#f59e0b' if p.dias_mais_antigo >= 8 else 'color:#10b981') %}
+          <div class="fog-rk-row fog-rk-cols" data-dias="{{ p.dias_mais_antigo }}" data-casos="{{ p.casos }}">
+            <div class="fog-rk-av">{{ iniciais }}</div>
+            <div class="fog-rk-nome">{{ p.nome }}</div>
+            <div class="fog-rk-num">{{ p.casos }}</div>
+            <div class="fog-rk-antigo">{{ p.caso_mais_antigo }}</div>
+            <div class="fog-rk-dias" style="{{ cls_dias }}">{{ p.dias_mais_antigo }}d</div>
+          </div>
+        {% else %}
+          <div style="padding:24px;text-align:center;color:var(--muted);font-size:13px">Nenhum responsável com casos ativos.</div>
+        {% endfor %}
+        </div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -902,11 +1228,14 @@ function navegar(btn) {
     'nao-classificados':'Não classificados',
     'bloqueados':       'Bloqueados por filtro',
     'admin':            'Admin',
+    'fog-casos':        'FOG · Casos',
+    'fog-kpis':         'FOG · KPIs',
   };
   document.getElementById('topbar-titulo').textContent = titulos[pag] || '';
   if (pag === 'nao-classificados') carregarNaoClassificados();
   if (pag === 'bloqueados') carregarBloqueados();
   if (pag === 'admin') { _atualizarStatusColeta(); carregarLogColetas(); }
+  if (pag === 'fog-casos') { fogFiltrar(); _fogStartCountdown(); }
 }
 
 // ── Auto-refresh ──────────────────────────────────────────────────────
@@ -1699,6 +2028,80 @@ document.addEventListener('DOMContentLoaded', () => {
     if (rStart&&!rEnd) document.querySelectorAll('.cday').forEach(d=>d.classList.remove('cin-range'));
   });
 });
+
+// ── FOG: Countdown ────────────────────────────────────────────────────
+let _fogSecs = 900, _fogTimer = null;
+
+function _fogStartCountdown() {
+  if (_fogTimer) return;
+  _fogSecs = 900;
+  _fogTimer = setInterval(() => {
+    _fogSecs--;
+    const m = String(Math.floor(_fogSecs / 60)).padStart(2, '0');
+    const s = String(_fogSecs % 60).padStart(2, '0');
+    const el = document.getElementById('fog-countdown');
+    if (el) el.textContent = m + ':' + s;
+    if (_fogSecs <= 0) _fogSecs = 900;
+  }, 1000);
+}
+
+// ── FOG: Filtro e ordenação ───────────────────────────────────────────
+function fogFiltrar() {
+  const busca = (document.getElementById('fBusca')?.value || '').toUpperCase();
+  const proj  = document.getElementById('fProjeto')?.value || '';
+  const resp  = document.getElementById('fResponsavel')?.value || '';
+  const stat  = document.getElementById('fStatus')?.value || '';
+  const area  = document.getElementById('fArea')?.value || '';
+  const rows  = document.querySelectorAll('#fogBody .fog-tbl-row');
+  let vis = 0;
+  rows.forEach(r => {
+    let ok = true;
+    if (busca && !r.textContent.toUpperCase().includes(busca)) ok = false;
+    if (proj && r.dataset.projeto    !== proj) ok = false;
+    if (resp && r.dataset.responsavel !== resp) ok = false;
+    if (stat && r.dataset.status     !== stat) ok = false;
+    if (area && r.dataset.area       !== area) ok = false;
+    r.style.display = ok ? '' : 'none';
+    if (ok) vis++;
+  });
+  const tv = document.getElementById('fog-totalVis');
+  if (tv) tv.textContent = vis;
+  fogOrdenar();
+}
+
+function fogOrdenar() {
+  const modo = document.getElementById('fOrdem')?.value || 'dias_desc';
+  const body = document.getElementById('fogBody');
+  if (!body) return;
+  const rows = Array.from(body.querySelectorAll('.fog-tbl-row'))
+                    .filter(r => r.style.display !== 'none');
+  rows.sort((a, b) => modo === 'dias_asc'
+    ? Number(a.dataset.dias) - Number(b.dataset.dias)
+    : Number(b.dataset.dias) - Number(a.dataset.dias));
+  rows.forEach(r => body.appendChild(r));
+}
+
+function fogReset() {
+  _fogSecs = 900;
+  fogFiltrar();
+}
+
+// ── FOG: Ranking sort ─────────────────────────────────────────────────
+function fogSort(m) {
+  const body = document.getElementById('rkBody');
+  if (!body) return;
+  const rows = Array.from(body.querySelectorAll('.fog-rk-row'));
+  rows.sort((a, b) => m === 'volume'
+    ? Number(b.dataset.casos) - Number(a.dataset.casos)
+    : Number(b.dataset.dias)  - Number(a.dataset.dias));
+  rows.forEach(r => body.appendChild(r));
+  document.getElementById('bA')?.classList.toggle('on', m === 'antigo');
+  document.getElementById('bV')?.classList.toggle('on', m === 'volume');
+  const desc = document.getElementById('rkDesc');
+  if (desc) desc.textContent = m === 'volume'
+    ? 'ordenado por quem tem mais casos ativos'
+    : 'ordenado pelo caso mais antigo em cada responsável';
+}
 
 // ── Inicialização ─────────────────────────────────────────────────────
 carregarResumo();

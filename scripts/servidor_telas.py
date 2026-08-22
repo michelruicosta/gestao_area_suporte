@@ -32,6 +32,24 @@ app.secret_key = os.environ.get('SECRET_KEY', 'oraculo360-gestao-secret')
 
 _coleta_em_andamento = False
 
+
+class _Usuario:
+    """Mock de current_user para compatibilidade com layout.html (que usa Flask-Login)."""
+    def __init__(self, autenticado: bool, email: str = ''):
+        self.is_authenticated = autenticado
+        self.role  = 'admin' if autenticado else ''
+        self.email = email
+        self.nome  = email.split('@')[0] if email else ''
+        self.name  = self.nome   # layout.html: current_user.name
+        self.id    = self.nome   # layout.html: current_user.id
+
+
+@app.context_processor
+def _injetar_usuario():
+    logado = bool(session.get('logado'))
+    return {'current_user': _Usuario(logado, session.get('email', ''))}
+
+
 # Credencial de acesso (variáveis de ambiente sobrescrevem o padrão)
 _ADMIN_EMAIL = os.environ.get('GESTAO_EMAIL', 'michel@finaud.com.br')
 _ADMIN_SENHA = os.environ.get('GESTAO_SENHA', 'finaud2026')
@@ -183,7 +201,46 @@ def sair():
 @app.route('/')
 @_requer_login
 def index():
-    return render_template('gestao_email.html', email=session.get('email', ''))
+    from collections import defaultdict
+    ativos   = [t for t in _FOG_DADOS if t['status'] == 'Ativo']
+    fechados = [t for t in _FOG_DADOS if t['status'] == 'Fechado']
+    n = len(ativos) or 1
+    em_and  = sum(1 for t in ativos if t['dias_responsavel'] < 8)
+    atencao = sum(1 for t in ativos if 8 <= t['dias_responsavel'] < 15)
+    critico = sum(1 for t in ativos if t['dias_responsavel'] >= 15)
+    by_resp: dict = defaultdict(list)
+    for t in ativos:
+        by_resp[t['responsavel']].append(t)
+    ranking = sorted([
+        {
+            'nome':             nome,
+            'casos':            len(casos),
+            'caso_mais_antigo': max(casos, key=lambda x: x['dias_responsavel'])['assunto'],
+            'dias_mais_antigo': max(casos, key=lambda x: x['dias_responsavel'])['dias_responsavel'],
+        }
+        for nome, casos in by_resp.items()
+    ], key=lambda x: x['dias_mais_antigo'], reverse=True)
+    fog_stats = {
+        'total_ativos':     len(ativos),
+        'em_andamento':     {'qtd': em_and,  'perc': round(em_and  / n * 100)},
+        'atencao':          {'qtd': atencao, 'perc': round(atencao / n * 100)},
+        'critico':          {'qtd': critico, 'perc': round(critico / n * 100)},
+        'total_concluidos': len(fechados),
+        'ranking':          ranking,
+    }
+    fog_projetos     = sorted({t['projeto']     for t in _FOG_DADOS})
+    fog_areas        = sorted({t['area']        for t in _FOG_DADOS})
+    fog_responsaveis = sorted({t['responsavel'] for t in _FOG_DADOS if t['status'] == 'Ativo'})
+    return render_template(
+        'gestao_email.html',
+        email=session.get('email', ''),
+        fog_tarefas=_FOG_DADOS,
+        fog_projetos=fog_projetos,
+        fog_areas=fog_areas,
+        fog_responsaveis=fog_responsaveis,
+        fog_stats=fog_stats,
+        fog_simulado=True,
+    )
 
 
 # ── API: Resumo ───────────────────────────────────────────────────────────────
@@ -446,6 +503,101 @@ def api_historico_limites():
     with bt._conectar() as conn:
         row = conn.execute('SELECT MIN(data_hora), MAX(data_hora) FROM snapshots').fetchone()
     return jsonify({'min': row[0], 'max': row[1]})
+
+
+# ── Rotas stub (referenciadas no layout.html mas não implementadas aqui) ──────
+
+@app.route('/custos')
+@_requer_login
+def page_custos():
+    return render_template('monitor_custos_ia.html')
+
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+
+@app.route('/perfil')
+@_requer_login
+def perfil():
+    return render_template('perfil.html')
+
+
+@app.route('/configuracoes')
+@_requer_login
+def configuracoes():
+    return render_template('configuracoes.html')
+
+
+# ── FOG: Telas de Casos ───────────────────────────────────────────────────────
+
+_FOG_DADOS: list[dict] = [
+    # Críticos (+15 dias)
+    {'id': 8441, 'assunto': 'Erro no cálculo RWACPAD - Banco Safra',          'projeto': 'RISK DRIVER',    'area': 'RWACPAD',           'responsavel': 'Andrea Inácio',        'status': 'Ativo',   'prioridade': 'Urgente',   'categoria': 'Falha Encontrada',   'dias_responsavel': 45, 'data': '2026-07-07'},
+    {'id': 8476, 'assunto': 'Planejamento nova versão módulo DLO',             'projeto': 'RISK DRIVER',    'area': 'DLO',               'responsavel': 'Andrea Inácio',        'status': 'Ativo',   'prioridade': 'Urgente',   'categoria': 'Planejamento',       'dias_responsavel': 32, 'data': '2026-07-20'},
+    {'id': 8469, 'assunto': 'Cálculo de capital incorreto - Banco PINE',       'projeto': 'FORCAPITAL',     'area': 'Geral',             'responsavel': 'Rodrigo',              'status': 'Ativo',   'prioridade': 'Urgente',   'categoria': 'Falha Encontrada',   'dias_responsavel': 25, 'data': '2026-07-27'},
+    {'id': 8480, 'assunto': 'Divergência DLO - Banco Modal',                   'projeto': 'RISK DRIVER',    'area': 'DLO',               'responsavel': 'Suporte Finaud',       'status': 'Ativo',   'prioridade': 'Alta',      'categoria': 'Falha Encontrada',   'dias_responsavel': 28, 'data': '2026-07-24'},
+    {'id': 8483, 'assunto': 'Novo relatório regulatório Circular 4011',        'projeto': 'GOVECOMPLIANCE', 'area': 'REGULATÓRIO',       'responsavel': 'Marcio Vellani',       'status': 'Ativo',   'prioridade': 'Emergente', 'categoria': 'Recurso Necessario', 'dias_responsavel': 18, 'data': '2026-08-03'},
+    {'id': 8504, 'assunto': 'Campo ausente no DLI - Banco Neon',               'projeto': 'RISK DRIVER',    'area': 'DLI',               'responsavel': 'Nivaldo',              'status': 'Ativo',   'prioridade': 'Alta',      'categoria': 'Falha Encontrada',   'dias_responsavel': 21, 'data': '2026-07-31'},
+    {'id': 8528, 'assunto': 'Cálculo COSIF incorreto - Banco BTG',             'projeto': 'RISK DRIVER',    'area': 'COSIF',             'responsavel': 'Nivaldo',              'status': 'Ativo',   'prioridade': 'Média',     'categoria': 'Falha Encontrada',   'dias_responsavel': 19, 'data': '2026-08-02'},
+    # Atenção (8–14 dias)
+    {'id': 8530, 'assunto': 'Painel de Controle não carrega relatório',        'projeto': 'RISK DRIVER',    'area': 'PAINEL DE CONTROLE','responsavel': 'Andrea Inácio',        'status': 'Ativo',   'prioridade': 'Emergente', 'categoria': 'Falha Encontrada',   'dias_responsavel': 12, 'data': '2026-08-09'},
+    {'id': 8542, 'assunto': 'Mapeamento COSIF - Banco Daycoval',               'projeto': 'RISK DRIVER',    'area': 'COSIF',             'responsavel': 'Jorge Bastos',         'status': 'Ativo',   'prioridade': 'Média',     'categoria': 'Falha Encontrada',   'dias_responsavel':  9, 'data': '2026-08-12'},
+    # Em andamento (<8 dias)
+    {'id': 8557, 'assunto': 'Recurso RWAOPAD - Banco Santander',               'projeto': 'RISK DRIVER',    'area': 'RWAOPAD',           'responsavel': 'Rodrigo',              'status': 'Ativo',   'prioridade': 'Média',     'categoria': 'Recurso Necessario', 'dias_responsavel':  3, 'data': '2026-08-18'},
+    {'id': 6171, 'assunto': 'Atualização biblioteca de normas - agosto 2026',  'projeto': 'GOVECOMPLIANCE', 'area': 'Biblioteca',        'responsavel': 'Suporte Finaud',       'status': 'Ativo',   'prioridade': 'Média',     'categoria': 'Recurso Necessario', 'dias_responsavel':  5, 'data': '2026-08-16'},
+    {'id': 8354, 'assunto': 'Integração sistema legado S5 - Banco Triângulo',  'projeto': 'S5',             'area': 'COSIF',             'responsavel': 'Fabio Silva Ferreira', 'status': 'Ativo',   'prioridade': 'Média',     'categoria': 'Esclarecimento',     'dias_responsavel':  7, 'data': '2026-08-14'},
+    # Fechados
+    {'id': 8001, 'assunto': 'Erro DDR transmissão dezembro 2025',               'projeto': 'RISK DRIVER',    'area': 'DDR',               'responsavel': 'Andrea Inácio',        'status': 'Fechado', 'prioridade': 'Alta',      'categoria': 'Falha Encontrada',   'dias_responsavel': 14, 'data': '2026-08-07'},
+    {'id': 8002, 'assunto': 'Atualização parâmetros RWAJUR',                   'projeto': 'RISK DRIVER',    'area': 'RWAJUR',            'responsavel': 'Nivaldo',              'status': 'Fechado', 'prioridade': 'Média',     'categoria': 'Recurso Necessario', 'dias_responsavel':  5, 'data': '2026-08-10'},
+]
+
+
+@app.route('/fog/operacional')
+@_requer_login
+def fog_operacional():
+    projetos     = sorted({t['projeto']    for t in _FOG_DADOS})
+    areas        = sorted({t['area']       for t in _FOG_DADOS})
+    responsaveis = sorted({t['responsavel'] for t in _FOG_DADOS if t['status'] == 'Ativo'})
+    return render_template('fog_operacional.html',
+                           tarefas=_FOG_DADOS, projetos=projetos,
+                           areas=areas, responsaveis=responsaveis,
+                           simulado=True)
+
+
+@app.route('/fog/gerencial')
+@_requer_login
+def fog_gerencial():
+    from collections import defaultdict
+    ativos   = [t for t in _FOG_DADOS if t['status'] == 'Ativo']
+    fechados = [t for t in _FOG_DADOS if t['status'] == 'Fechado']
+    n = len(ativos) or 1
+    em_and  = sum(1 for t in ativos if t['dias_responsavel'] < 8)
+    atencao = sum(1 for t in ativos if 8 <= t['dias_responsavel'] < 15)
+    critico = sum(1 for t in ativos if t['dias_responsavel'] >= 15)
+    by_resp: dict = defaultdict(list)
+    for t in ativos:
+        by_resp[t['responsavel']].append(t)
+    ranking = sorted([
+        {
+            'nome':             nome,
+            'casos':            len(casos),
+            'caso_mais_antigo': max(casos, key=lambda x: x['dias_responsavel'])['assunto'],
+            'dias_mais_antigo': max(casos, key=lambda x: x['dias_responsavel'])['dias_responsavel'],
+        }
+        for nome, casos in by_resp.items()
+    ], key=lambda x: x['dias_mais_antigo'], reverse=True)
+    stats = {
+        'total_ativos':     len(ativos),
+        'em_andamento':     {'qtd': em_and,  'perc': round(em_and  / n * 100)},
+        'atencao':          {'qtd': atencao, 'perc': round(atencao / n * 100)},
+        'critico':          {'qtd': critico, 'perc': round(critico / n * 100)},
+        'total_concluidos': len(fechados),
+        'ranking':          ranking,
+    }
+    return render_template('fog_gerencial.html', stats=stats, simulado=True)
 
 
 # ── Inicialização ─────────────────────────────────────────────────────────────
