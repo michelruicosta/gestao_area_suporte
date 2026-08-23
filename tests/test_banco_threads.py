@@ -1238,3 +1238,45 @@ def test_status_fixh_fp_segue_mid_sentence():
     msgs = [_msg(_CLIENTE_VIA, corpo=corpo, reply_to=_CLIENTE_REPLY)]
     status, _ = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud'
+
+
+# ── Fix I — aceite do BACEN ───────────────────────────────────────────────────
+
+def test_status_fixi_robson_protocolo_aceito():
+    """Fix I — 'Segue protocolo de arquivo aceito' → Concluída.
+
+    Caso Robson/Banvox: cliente envia protocolo de aceite do BACEN.
+    Deve rodar antes de §8.8b ('Segue' no início de linha → AF).
+    Michel confirmou em 23/08/2026: se o protocolo foi aceito pelo BACEN, o caso fechou.
+    """
+    corpo = (
+        'Miguel,\n\n'
+        'Segue protocolo de arquivo aceito do COS4111 de 30/06/2026 da Banvox DTVM.\n\n'
+        'Atenciosamente,\n\n'
+        'Robson S. Neves\n'
+    )
+    msgs = [_msg(_CLIENTE_VIA, corpo=corpo, reply_to=_CLIENTE_REPLY)]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Concluída'
+
+
+def test_status_fixi_arquivo_aceito():
+    """Fix I — 'arquivo aceito' no corpo → Concluída."""
+    corpo = 'Bom dia, o arquivo foi aceito pelo BACEN. Atenciosamente, João.'
+    msgs = [_msg(_CLIENTE_VIA, corpo=corpo, reply_to=_CLIENTE_REPLY)]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Concluída'
+
+
+def test_status_fixi_fp_protocolo_aceito_com_pergunta():
+    """Fix I — falso positivo: 'protocolo aceito' + pergunta → AF (não é encerramento)."""
+    corpo = (
+        'Miguel,\n\n'
+        'Segue protocolo de arquivo aceito do COS4111.\n\n'
+        'Poderia confirmar o recebimento?\n\n'
+        'Atenciosamente,\n\n'
+        'Robson S. Neves\n'
+    )
+    msgs = [_msg(_CLIENTE_VIA, corpo=corpo, reply_to=_CLIENTE_REPLY)]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'

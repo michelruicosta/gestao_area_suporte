@@ -253,6 +253,12 @@ _SAUDACAO_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Fix I: cliente confirma que o BACEN aceitou o arquivo → processo encerrado
+_ACEITACAO_BACEN = re.compile(
+    r'(?:protocolo|arquivo)\s+(?:(?:de\s+arquivo|foi)\s+)?aceito\b',
+    re.IGNORECASE,
+)
+
 
 def _extrair_texto_novo(corpo: str) -> str:
     """Remove histórico citado do corpo do e-mail; retorna só o texto novo."""
@@ -504,6 +510,13 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     # §8.8: cliente encaminhou algo (ENC:/FWD: ou assunto com EXTRATO) com texto vazio → Finaud precisa processar
     if _so_cortesia(texto_novo) and (_ENC_PREFIX.match(assunto.strip()) or _EXTRATO_RE.search(assunto)):
         return 'Aguardando Finaud', 'Cliente encaminhou — aguarda processamento da Finaud'
+    # Fix I: cliente informa que o BACEN aceitou o arquivo → processo encerrado
+    # Roda ANTES de §8.8b para não ser bloqueado por "Segue" no início da frase.
+    # Ex.: "Segue protocolo de arquivo aceito do COS4111" — aceite do BACEN encerra o caso.
+    _texto_sem_url_fi = re.sub(r'<https?://[^>]+>|https?://\S+', '', texto_novo)
+    if (_ACEITACAO_BACEN.search(texto_lower)
+            and '?' not in _texto_sem_url_fi):
+        return 'Concluída', 'Cliente informou aceite do BACEN — assunto encerrado'
     # §8.8b: "Segue [algo]" no início de linha = cliente entregando conteúdo — nunca é confirmação conclusiva
     if re.search(r'(?:^|\r?\n)\s*segue\b', texto_lower):
         return 'Aguardando Finaud', 'Cliente enviou conteúdo — aguarda processamento da Finaud'
