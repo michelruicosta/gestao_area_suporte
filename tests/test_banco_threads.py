@@ -1280,3 +1280,39 @@ def test_status_fixi_fp_protocolo_aceito_com_pergunta():
     msgs = [_msg(_CLIENTE_VIA, corpo=corpo, reply_to=_CLIENTE_REPLY)]
     status, _ = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud'
+
+
+# ── Fix H — strip de ?? informal ─────────────────────────────────────────────
+
+def test_status_fixh_obrigado_com_dupla_interrogacao():
+    """Fix H — 'Obrigado pelo aviso ??' → Concluída.
+
+    Caso Paulo/CADOC 4111 27/07: '??' é ênfase informal (emoji garbado), não pergunta.
+    Michel confirmou em 23/08/2026: cliente agradeceu pelo aviso, assunto encerrado.
+    """
+    corpo = (
+        'Oi Sarah! Bom dia\r\n\r\n'
+        'Obrigado pelo aviso ??\r\n\r\n'
+        'Att\r\n\r\n'
+        'Paulo Henrique\r\n'
+        'Planner SCD\r\n'
+    )
+    msgs = [_msg(_CLIENTE_VIA, corpo=corpo, reply_to=_CLIENTE_REPLY)]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Concluída'
+
+
+def test_status_fixh_fp_dupla_interrogacao_com_pedido():
+    """Fix H — falso positivo: '??' com pedido explícito → AF.
+
+    'Tudo bem?' (simples) ainda bloqueia Fix H mesmo depois do strip de '??'.
+    """
+    corpo = (
+        'Monica, bom dia.\n'
+        'Tudo bem?\n\n'
+        'Poderia verificar o arquivo ??\n\n'
+        'Obrigada.\n'
+    )
+    msgs = [_msg(_CLIENTE_VIA, corpo=corpo, reply_to=_CLIENTE_REPLY)]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'

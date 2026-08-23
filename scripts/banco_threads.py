@@ -560,10 +560,11 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         r'\bprecis[ao]mos?\b|\bnecessit[ao]mos?\b|\bgostar[íi]amos?\b|\bprecisaria\b',
         re.IGNORECASE,
     )
-    # Remove só ? de URLs antes de checar perguntas reais — não remove "Tudo bem?" nem
-    # outros ? do texto, para que pedidos educados (ex.: "Peço que verifique. Obrigada")
-    # continuem bloqueando Fix H via "Tudo bem?" ou outro ? presente.
+    # Remove URLs e "??" (duplo ponto de interrogação informal/emoji) antes de checar
+    # perguntas reais. "??" é ênfase informal ("Obrigado pelo aviso ??") — não é pergunta.
+    # Mantém "?" simples: "Tudo bem?" e perguntas reais continuam bloqueando Fix H.
     _texto_sem_url_q = re.sub(r'<https?://[^>]+>|https?://\S+', '', texto_novo)
+    _texto_sem_url_q = re.sub(r'\?\?+', '', _texto_sem_url_q)
     if ('?' not in _texto_sem_url_q
             and _CONFIRMACAO_EXPLICITA.search(texto_lower)
             and not _ENTREGA_DOC_CLI.search(texto_lower)
