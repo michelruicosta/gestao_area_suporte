@@ -158,7 +158,7 @@ def _agora() -> str:
 # ── Helpers de detecção de status (§8.1, §8.2, §8.3 da spec) ─────────────────
 
 _SEP_HISTORICO = re.compile(
-    r'^(-{3,}|_{3,}|from:|de:|on\s.{3,120}wrote:|em\s.{3,120}escreveu:)',
+    r'^(-{3,}|_{3,}|\*?from:\*?|\*?de:\*?|on\s.{3,120}wrote:|em\s.{3,120}escreveu:)',
     re.IGNORECASE,
 )
 
@@ -547,7 +547,11 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         r'\bprecis[ao]mos?\b|\bnecessit[ao]mos?\b|\bgostar[íi]amos?\b|\bprecisaria\b',
         re.IGNORECASE,
     )
-    if ('?' not in texto_novo
+    # Remove só ? de URLs antes de checar perguntas reais — não remove "Tudo bem?" nem
+    # outros ? do texto, para que pedidos educados (ex.: "Peço que verifique. Obrigada")
+    # continuem bloqueando Fix H via "Tudo bem?" ou outro ? presente.
+    _texto_sem_url_q = re.sub(r'<https?://[^>]+>|https?://\S+', '', texto_novo)
+    if ('?' not in _texto_sem_url_q
             and _CONFIRMACAO_EXPLICITA.search(texto_lower)
             and not _ENTREGA_DOC_CLI.search(texto_lower)
             and not _PEDIDO_IMPLICITO.search(texto_lower)):

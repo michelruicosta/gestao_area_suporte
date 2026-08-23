@@ -1134,6 +1134,27 @@ def test_status_fixh_wilson_lima_vou_fazer():
     assert status == 'Concluída'
 
 
+def test_status_fixh_wilson_lima_com_citacao_asterisco():
+    """Fix H + SEP_HISTORICO — *De:* (formato Gmail) é tratado como separador de histórico.
+
+    O corpo real de Wilson Lima incluía '*De: Andrea Inacio...' seguido do histórico
+    de Andrea que continha 'segue'. Sem o fix, §8.8b disparava 'AF'. Com o fix,
+    _extrair_texto_novo corta no *De:* e Fix H detecta Concluída.
+    """
+    corpo = (
+        'Boa noite Andrea\n\n'
+        'Muito obrigado, vou fazer de acordo com a orientação.\n\n\n'
+        'Abraço e fique com Deus.\n\n'
+        '*De:* Andrea Inacio <andrea.inacio@finaud.com.br>\n'
+        '*Enviada em:* sexta-feira, 3 de julho de 2026\n'
+        'Segue o exemplo abaixo:\n\n'
+        '...'
+    )
+    msgs = [_msg(_CLIENTE_VIA, corpo=corpo, reply_to=_CLIENTE_REPLY)]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Concluída'
+
+
 def test_status_fixh_obrigada_pelo_retorno():
     """Fix H — agradecimento simples sem ação → Concluída."""
     corpo = 'Obrigada pelo retorno.'
@@ -1153,6 +1174,59 @@ def test_status_fixh_conseguindo_gerar_arquivo():
 def test_status_fixh_fp_com_pergunta():
     """Fix H — falso positivo: obrigado + pergunta → AF (? veta)."""
     corpo = 'Obrigado! Mas tenho uma dúvida: quando chega o arquivo?'
+    msgs = [_msg(_CLIENTE_VIA, corpo=corpo, reply_to=_CLIENTE_REPLY)]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+
+
+def test_status_fixh_talita_obrigada_era_erro_bc():
+    """Fix H — 'Obrigada, era erro do próprio Bc.' com ? somente em URL de assinatura → Concluída.
+
+    O corpo real da Talita tinha '?' numa URL do bloco de assinatura — isso bloqueava
+    Fix H com a checagem '?' not in texto_novo. Com o fix, somente URLs são removidas
+    antes de checar o ?, então o ? da assinatura não veta mais.
+    """
+    corpo = (
+        'Boa tarde @Andrea Inacio<mailto:andrea.inacio@finaud.com.br>,\n\n'
+        'Obrigada,\n'
+        'era erro do próprio Bc.\n\n'
+        'Atenciosamente,\n\n'
+        'Talita Santana\n'
+        'Tesouraria\n'
+        'Tel: (11) 2626-9780\n'
+        'https://www.empresa.com.br/portal?token=abc123\n'
+    )
+    msgs = [_msg(_CLIENTE_VIA, corpo=corpo, reply_to=_CLIENTE_REPLY)]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Concluída'
+
+
+def test_status_fixh_fp_pergunta_real_nao_vira_concluida():
+    """Fix H — pergunta real (não URL) ainda veta Fix H após o fix."""
+    corpo = (
+        'Obrigada!\n\n'
+        'Mas quando vocês conseguem corrigir isso?\n\n'
+        'Atenciosamente,\nTalita\n'
+    )
+    msgs = [_msg(_CLIENTE_VIA, corpo=corpo, reply_to=_CLIENTE_REPLY)]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+
+
+def test_status_fixh_fp_cvpar_peco_que_verifique():
+    """Fix H — 'Peço que verifique... Obrigada.' com 'Tudo bem?' → AF.
+
+    CVPAR encerrou com 'Obrigada' mas o conteúdo é um pedido ativo à Finaud.
+    'Tudo bem?' está no texto e NÃO é URL, portanto não é removido — mantém ? e
+    bloqueia Fix H corretamente.
+    """
+    corpo = (
+        'Monica, bom dia.\n'
+        'Tudo bem?\n\n'
+        'Não recebemos nenhum apontamento no CRD.\n\n'
+        'Peço por gentileza, que verifique as informações e realize o reprocessamento.\n\n'
+        'Obrigada.\n'
+    )
     msgs = [_msg(_CLIENTE_VIA, corpo=corpo, reply_to=_CLIENTE_REPLY)]
     status, _ = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud'
