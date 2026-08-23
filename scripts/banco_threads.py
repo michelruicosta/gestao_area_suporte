@@ -242,6 +242,7 @@ _FRASES_PEDIDO_EXPLICITO = (
     'solicitamos que encaminhe',
     'solicitamos que envie',
     'solicitamos enviar',   # Fix J: "Obrigado. Solicitamos enviar também o COS4016..."
+    'orientamos que',       # Fix J: "Tudo bem? Orientamos que seja realizada uma conferência..."
     'poderia encaminhar por gentileza',
     'pode encaminhar por gentileza',
     'por gentileza, encaminhe',

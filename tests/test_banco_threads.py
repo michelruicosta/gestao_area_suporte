@@ -1338,3 +1338,24 @@ def test_status_fixj_solicitamos_enviar():
     msgs = [_msg(FINAUD, corpo=corpo)]
     status, _ = bt._determinar_status(msgs)
     assert status == 'Aguardando Cliente'
+
+
+def test_status_fixj_orientamos_que():
+    """Fix J — Finaud: 'Tudo bem? Orientamos que seja realizada uma conferência...' → AC.
+
+    Caso SUPORTE Re: COLOP UNICAD PL MINIMO: Finaud repassa orientação e pede
+    que cliente confira informações no sistema. Sistema retornava AF por confundir
+    'Tudo bem?' com cortesia pura. Michel confirmou em 23/08/2026: AC.
+    """
+    corpo = (
+        'Prezada Marcia, boa tarde.\n\n'
+        'Tudo bem?\n\n'
+        'Segue transcrito abaixo a orientação do nosso gestor:\n\n'
+        'Em relação à comunicação do Banco Central sobre a IN BCB nº 754/2026,'
+        ' orientamos que seja realizada uma conferência das informações cadastradas'
+        ' no módulo "Operações" do Unicad.\n\n'
+        'Atenciosamente,\nEquipe de Suporte Finaud\n'
+    )
+    msgs = [_msg(FINAUD, corpo=corpo)]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Cliente'
