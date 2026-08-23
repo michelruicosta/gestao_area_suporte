@@ -1316,3 +1316,25 @@ def test_status_fixh_fp_dupla_interrogacao_com_pedido():
     msgs = [_msg(_CLIENTE_VIA, corpo=corpo, reply_to=_CLIENTE_REPLY)]
     status, _ = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud'
+
+
+# ── Fix J — Finaud pede algo ao cliente após cortesia ────────────────────────
+
+def test_status_fixj_solicitamos_enviar():
+    """Fix J — Finaud: 'Obrigado. Solicitamos enviar o COS4016...' → AC.
+
+    Caso DLO_2061 Re: COS 4010 junho/2026: Finaud recebe arquivo do cliente
+    mas pede o COS4016 também. Sistema estava retornando AF por confundir
+    'Obrigado' inicial com cortesia pura. Michel confirmou em 23/08/2026: AC.
+    """
+    corpo = (
+        'Prezado Silvio, boa tarde.\n\n'
+        'Obrigado.\n'
+        'Por se tratar de mês de fechamento de semestre, solicitamos enviar também o'
+        ' COS4016 06/2026.\n\n'
+        'Grata.\n\n'
+        'Andrea Inacio\nCoordenadora de Suporte\n'
+    )
+    msgs = [_msg(FINAUD, corpo=corpo)]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Cliente'
