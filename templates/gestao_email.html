@@ -274,6 +274,14 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .evo-ft { padding: 10px 18px; border-top: 1px solid var(--border); font-size: 11px;
   color: var(--muted); display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 
+/* ─── Abas horizontais de e-mails ────────────────────────────────────── */
+.email-tabbar { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.25rem; }
+.email-tab { padding: 9px 16px; border: none; background: none; color: var(--muted);
+  font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color .15s, border-color .15s; }
+.email-tab:hover { color: var(--text); }
+.email-tab.ativa { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+
 .content { flex: 1; padding: 1.5rem 1.75rem 2rem; overflow-y: auto; }
 .page { display: none; }
 .page.ativa { display: block; }
@@ -634,18 +642,23 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 
     <button class="nav-item ativo" data-pagina="classificados" onclick="navegar(this)">
       <span class="nav-ico">📊</span>
-      Classificação e Status
+      Situação Atual
+    </button>
+
+    <button class="nav-item" data-pagina="historico" onclick="navegar(this)">
+      <span class="nav-ico">📈</span>
+      Histórico
     </button>
 
     <button class="nav-item" data-pagina="nao-classificados" onclick="navegar(this)">
       <span class="nav-ico">📥</span>
-      Não classificados
+      Não Classificados
       <span class="nav-badge" id="badge-nao-class">—</span>
     </button>
 
     <button class="nav-item" data-pagina="bloqueados" onclick="navegar(this)">
       <span class="nav-ico">🚫</span>
-      Bloqueados por filtro
+      Bloqueados por Filtro
       <span class="nav-badge" id="badge-bloqueados">—</span>
     </button>
 
@@ -677,7 +690,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 
   <!-- Topbar -->
   <header class="topbar">
-    <span class="topbar-titulo" id="topbar-titulo">Classificação e Status</span>
+    <span class="topbar-titulo" id="topbar-titulo">Situação Atual</span>
     <div class="topbar-direita">
       <span class="refresh-spinner" id="spinner"></span>
       <div class="user-wrap">
@@ -713,12 +726,18 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
   <!-- Conteúdo -->
   <main class="content">
 
-    <!-- ── Página 1: Classificação e Status ───────────────────────── -->
+    <!-- ── Página 1: Situação Atual ────────────────────────────────── -->
     <section class="page ativa" id="pag-classificados">
+      <div class="email-tabbar">
+        <button class="email-tab ativa" data-pagina="classificados" onclick="navegar(this)">Situação Atual</button>
+        <button class="email-tab" data-pagina="historico" onclick="navegar(this)">Histórico</button>
+        <button class="email-tab" data-pagina="nao-classificados" onclick="navegar(this)">Não Classificados</button>
+        <button class="email-tab" data-pagina="bloqueados" onclick="navegar(this)">Bloqueados por Filtro</button>
+      </div>
       <div class="tabela-wrap">
         <div class="card-hd" onclick="toggleTblResumo()" title="Clique para minimizar / expandir">
           <div>
-            <div class="card-title">Classificação e Status</div>
+            <div class="card-title">Situação Atual</div>
             <div class="card-sub">Agrupadas por categoria · atualizadas a cada 5 minutos</div>
           </div>
           <div class="card-hd-right">
@@ -748,69 +767,77 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
         </table>
       </div>
 
-    <!-- ── Painel Evolução Histórica ──────────────────────────────── -->
-    <div class="evo" id="evo">
-      <button class="evo-trig" onclick="toggleEvo()" aria-expanded="false">
-        <div class="evo-left">
-          <div class="evo-ico">📈</div>
-          <div><span class="evo-lbl">Evolução histórica</span><span class="evo-hint">— variação por período</span></div>
-        </div>
-        <span class="chev">▼</span>
-      </button>
-      <div class="evo-body">
-        <div class="p-bar">
-          <span class="p-lbl">Período</span>
-          <button class="p-btn" onclick="selPeriod('hoje',this)">Hoje</button>
-          <button class="p-btn active" onclick="selPeriod('semana',this)">Semana</button>
-          <button class="p-btn" onclick="selPeriod('quinzena',this)">Quinzena</button>
-          <button class="p-btn" onclick="selPeriod('mes',this)">Mês</button>
-          <button class="p-btn" onclick="selPeriod('semestre',this)">Semestre</button>
-          <button class="p-btn" onclick="selPeriod('custom',this)">Personalizado</button>
-        </div>
-        <div class="cat-bar" id="cat-bar"></div>
-        <div class="evo-cal" id="evo-cal" hidden>
-          <div class="cal-months" id="cal-months"></div>
-          <div class="cal-range-note" id="cal-range-note"></div>
-          <div class="cal-acts">
-            <span class="cal-hint" id="cal-hint">Selecione a data de início</span>
-            <div class="cal-btns">
-              <button class="btn-cal-clear" onclick="clearRange()">Limpar</button>
-              <button class="btn-cal-apply" id="btn-apply" onclick="applyRange()" disabled>Aplicar período</button>
-            </div>
-          </div>
-        </div>
-        <div class="evo-p-note" id="evo-p-note"></div>
-        <div class="evo-tw"><table class="evo-table">
-          <thead><tr>
-            <th class="sortable" data-s="n" onclick="evoSort('n')">CATEGORIA<span class="si" id="esi-n"></span></th>
-            <th class="sortable" style="color:var(--af-c)" data-s="af" onclick="evoSort('af')">AG.FINAUD<span class="si" id="esi-af"></span></th>
-            <th class="sortable" style="color:var(--af-c);font-weight:400" data-s="daf" onclick="evoSort('daf')">variação<span class="si" id="esi-daf"></span></th>
-            <th class="sortable" style="color:var(--ac-c)" data-s="ac" onclick="evoSort('ac')">AG.CLIENTE<span class="si" id="esi-ac"></span></th>
-            <th class="sortable" style="color:var(--ac-c);font-weight:400" data-s="dac" onclick="evoSort('dac')">variação<span class="si" id="esi-dac"></span></th>
-            <th class="sortable" style="color:var(--co-c)" data-s="co" onclick="evoSort('co')">CONCLUÍDAS<span class="si" id="esi-co"></span></th>
-            <th class="sortable" style="color:var(--co-c);font-weight:400" data-s="dco" onclick="evoSort('dco')">variação<span class="si" id="esi-dco"></span></th>
-            <th class="sortable" data-s="tot" onclick="evoSort('tot')">TOTAL<span class="si" id="esi-tot"></span></th>
-            <th style="font-weight:400;color:var(--muted)">variação</th>
-          </tr></thead>
-          <tbody id="evo-tbody"><tr><td colspan="9" style="text-align:center;color:var(--muted);padding:20px">Abra o painel para carregar o histórico.</td></tr></tbody>
-          <tfoot id="evo-tfoot"></tfoot>
-        </table></div>
-        <div class="evo-ft">
-          Leitura:
-          <span><span class="evo-badge evo-bneg">▲</span> AF/AC cresceu — mais trabalho</span>
-          <span><span class="evo-badge evo-bpos">▼</span> AF/AC caiu — mais resolvido</span>
-          <span><span class="evo-badge evo-bpos">▲</span> Concluídas cresceu</span>
-          <span><span class="evo-badge evo-bneu">—</span> sem variação</span>
-        </div>
-      </div>
-    </div>
     </section>
 
-    <!-- ── Página 2: Não classificados ────────────────────────────── -->
+    <!-- ── Página 2: Histórico ─────────────────────────────────────── -->
+    <section class="page" id="pag-historico">
+      <div class="email-tabbar">
+        <button class="email-tab" data-pagina="classificados" onclick="navegar(this)">Situação Atual</button>
+        <button class="email-tab ativa" data-pagina="historico" onclick="navegar(this)">Histórico</button>
+        <button class="email-tab" data-pagina="nao-classificados" onclick="navegar(this)">Não Classificados</button>
+        <button class="email-tab" data-pagina="bloqueados" onclick="navegar(this)">Bloqueados por Filtro</button>
+      </div>
+      <div class="evo open" id="evo">
+        <div class="evo-body">
+          <div class="p-bar">
+            <span class="p-lbl">Período</span>
+            <button class="p-btn" onclick="selPeriod('hoje',this)">Hoje</button>
+            <button class="p-btn active" onclick="selPeriod('semana',this)">Semana</button>
+            <button class="p-btn" onclick="selPeriod('quinzena',this)">Quinzena</button>
+            <button class="p-btn" onclick="selPeriod('mes',this)">Mês</button>
+            <button class="p-btn" onclick="selPeriod('semestre',this)">Semestre</button>
+            <button class="p-btn" onclick="selPeriod('custom',this)">Personalizado</button>
+          </div>
+          <div class="cat-bar" id="cat-bar"></div>
+          <div class="evo-cal" id="evo-cal" hidden>
+            <div class="cal-months" id="cal-months"></div>
+            <div class="cal-range-note" id="cal-range-note"></div>
+            <div class="cal-acts">
+              <span class="cal-hint" id="cal-hint">Selecione a data de início</span>
+              <div class="cal-btns">
+                <button class="btn-cal-clear" onclick="clearRange()">Limpar</button>
+                <button class="btn-cal-apply" id="btn-apply" onclick="applyRange()" disabled>Aplicar período</button>
+              </div>
+            </div>
+          </div>
+          <div class="evo-p-note" id="evo-p-note"></div>
+          <div class="evo-tw"><table class="evo-table">
+            <thead><tr>
+              <th class="sortable" data-s="n" onclick="evoSort('n')">CATEGORIA<span class="si" id="esi-n"></span></th>
+              <th class="sortable" style="color:var(--af-c)" data-s="af" onclick="evoSort('af')">AG.FINAUD<span class="si" id="esi-af"></span></th>
+              <th class="sortable" style="color:var(--af-c);font-weight:400" data-s="daf" onclick="evoSort('daf')">variação<span class="si" id="esi-daf"></span></th>
+              <th class="sortable" style="color:var(--ac-c)" data-s="ac" onclick="evoSort('ac')">AG.CLIENTE<span class="si" id="esi-ac"></span></th>
+              <th class="sortable" style="color:var(--ac-c);font-weight:400" data-s="dac" onclick="evoSort('dac')">variação<span class="si" id="esi-dac"></span></th>
+              <th class="sortable" style="color:var(--co-c)" data-s="co" onclick="evoSort('co')">CONCLUÍDAS<span class="si" id="esi-co"></span></th>
+              <th class="sortable" style="color:var(--co-c);font-weight:400" data-s="dco" onclick="evoSort('dco')">variação<span class="si" id="esi-dco"></span></th>
+              <th class="sortable" data-s="tot" onclick="evoSort('tot')">TOTAL<span class="si" id="esi-tot"></span></th>
+              <th style="font-weight:400;color:var(--muted)">variação</th>
+            </tr></thead>
+            <tbody id="evo-tbody"><tr><td colspan="9" style="text-align:center;color:var(--muted);padding:20px">Carregando histórico…</td></tr></tbody>
+            <tfoot id="evo-tfoot"></tfoot>
+          </table></div>
+          <div class="evo-ft">
+            Leitura:
+            <span><span class="evo-badge evo-bneg">▲</span> AF/AC cresceu — mais trabalho</span>
+            <span><span class="evo-badge evo-bpos">▼</span> AF/AC caiu — mais resolvido</span>
+            <span><span class="evo-badge evo-bpos">▲</span> Concluídas cresceu</span>
+            <span><span class="evo-badge evo-bneu">—</span> sem variação</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Página 3: Não Classificados ────────────────────────────── -->
     <section class="page" id="pag-nao-classificados">
+      <div class="email-tabbar">
+        <button class="email-tab" data-pagina="classificados" onclick="navegar(this)">Situação Atual</button>
+        <button class="email-tab" data-pagina="historico" onclick="navegar(this)">Histórico</button>
+        <button class="email-tab ativa" data-pagina="nao-classificados" onclick="navegar(this)">Não Classificados</button>
+        <button class="email-tab" data-pagina="bloqueados" onclick="navegar(this)">Bloqueados por Filtro</button>
+      </div>
       <div class="page-header">
         <div>
-          <h1 class="page-titulo">Não classificados</h1>
+          <h1 class="page-titulo">Não Classificados</h1>
           <p class="page-sub">Threads aguardando classificação manual</p>
         </div>
       </div>
@@ -875,11 +902,17 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
       </div>
     </section>
 
-    <!-- ── Página 3: Bloqueados ────────────────────────────────────── -->
+    <!-- ── Página 5: Bloqueados ────────────────────────────────────── -->
     <section class="page" id="pag-bloqueados">
+      <div class="email-tabbar">
+        <button class="email-tab" data-pagina="classificados" onclick="navegar(this)">Situação Atual</button>
+        <button class="email-tab" data-pagina="historico" onclick="navegar(this)">Histórico</button>
+        <button class="email-tab" data-pagina="nao-classificados" onclick="navegar(this)">Não Classificados</button>
+        <button class="email-tab ativa" data-pagina="bloqueados" onclick="navegar(this)">Bloqueados por Filtro</button>
+      </div>
       <div class="page-header">
         <div>
-          <h1 class="page-titulo">Bloqueados por filtro</h1>
+          <h1 class="page-titulo">Bloqueados por Filtro</h1>
           <p class="page-sub">Threads descartadas pelo filtro §4 — não chegam à classificação</p>
         </div>
       </div>
@@ -1230,20 +1263,28 @@ let _threadParaClassificar = null;
 
 // ── Navegação ─────────────────────────────────────────────────────────
 function navegar(btn) {
-  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('ativo'));
-  btn.classList.add('ativo');
   const pag = btn.dataset.pagina;
+  // sidebar
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('ativo'));
+  const sidebarItem = document.querySelector(`.nav-item[data-pagina="${pag}"]`);
+  if (sidebarItem) sidebarItem.classList.add('ativo');
+  // abas horizontais de e-mail
+  document.querySelectorAll('.email-tab').forEach(t => t.classList.remove('ativa'));
+  document.querySelectorAll(`.email-tab[data-pagina="${pag}"]`).forEach(t => t.classList.add('ativa'));
+  // página
   document.querySelectorAll('.page').forEach(p => p.classList.remove('ativa'));
   document.getElementById('pag-' + pag).classList.add('ativa');
   const titulos = {
-    'classificados':    'Classificação e Status',
-    'nao-classificados':'Não classificados',
-    'bloqueados':       'Bloqueados por filtro',
+    'classificados':    'Situação Atual',
+    'historico':        'Histórico',
+    'nao-classificados':'Não Classificados',
+    'bloqueados':       'Bloqueados por Filtro',
     'admin':            'Coletor',
     'fog-casos':        'FOGBUGZ · Casos',
     'fog-kpis':         'FOGBUGZ · Gerencial',
   };
   document.getElementById('topbar-titulo').textContent = titulos[pag] || '';
+  if (pag === 'historico') { if (!evoHistorico.length) carregarHistorico(); else renderEvo(); }
   if (pag === 'nao-classificados') carregarNaoClassificados();
   if (pag === 'bloqueados') carregarBloqueados();
   if (pag === 'admin') { _atualizarStatusColeta(); carregarLogColetas(); }
@@ -1622,7 +1663,7 @@ async function carregarLogColetas() {
         classifHtml = `<div class="classif-pills">${pills.join('')}</div>`;
       }
       return `<tr>
-        <td style="white-space:nowrap;font-size:0.87rem;">${escHtml(l.data_hora)}</td>
+        <td style="white-space:nowrap;font-size:0.87rem;">${escHtml(fmtDataHora(l.data_hora))}</td>
         <td>${chipTipo}</td>
         <td>${coletadas}</td>
         <td>${classifHtml}</td>
@@ -1644,6 +1685,18 @@ function fecharModal(id) { document.getElementById(id).classList.remove('aberto'
 document.querySelectorAll('.modal-backdrop').forEach(m => {
   m.addEventListener('click', e => { if (e.target === m) m.classList.remove('aberto'); });
 });
+
+// ── Formatação de data ISO → DD/MM/AAAA HH:MM ─────────────────────────
+function fmtDataHora(s) {
+  if (!s) return '—';
+  const d = new Date(String(s).replace(' ', 'T'));
+  if (isNaN(d)) return s;
+  const dd = String(d.getDate()).padStart(2,'0');
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mi = String(d.getMinutes()).padStart(2,'0');
+  return `${dd}/${mm}/${d.getFullYear()} ${hh}:${mi}`;
+}
 
 // ── Escape HTML ───────────────────────────────────────────────────────
 function escHtml(s) {
@@ -1875,13 +1928,6 @@ function toggleTblResumo() {
   document.querySelector('#pag-classificados .tabela-wrap').classList.toggle('collapsed');
 }
 
-function toggleEvo() {
-  const p = document.getElementById('evo');
-  const open = p.classList.toggle('open');
-  p.querySelector('.evo-trig').setAttribute('aria-expanded', open);
-  if (open && !evoHistorico.length) carregarHistorico();
-  else if (open) renderEvo();
-}
 
 function selPeriod(p, btn) {
   activePeriod = p;
