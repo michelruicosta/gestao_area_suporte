@@ -1359,3 +1359,42 @@ def test_status_fixj_orientamos_que():
     msgs = [_msg(FINAUD, corpo=corpo)]
     status, _ = bt._determinar_status(msgs)
     assert status == 'Aguardando Cliente'
+
+
+def test_status_fixj_verifique():
+    """Fix J — Finaud: 'Certo, verifique com a contabilidade se...' → AC.
+
+    Caso DDR_2011 Re: DÚVIDA DDR - 49820 obrigações ME: Finaud pede ao cliente
+    que verifique internamente os dados contábeis. Sistema retornava AF por
+    confundir 'Certo' inicial com cortesia pura. Michel confirmou 23/08/2026: AC.
+    """
+    corpo = (
+        'Prezado Isaac, boa tarde.\n\n'
+        'Certo, verifique com a contabilidade se a composição do registro do saldo'
+        ' do cosif 4.9.8.20.00.00-7 corresponde ao registro do mesmo saldo na'
+        ' 3.2.8.20.00.00-7.\n\n'
+        'Atenciosamente,\nMonica\nFinaud\n'
+    )
+    msgs = [_msg(FINAUD, corpo=corpo)]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Cliente'
+
+
+def test_status_fixj_fp_verifiquei():
+    """Fix J — falso positivo: 'verifiquei' (passado) não aciona 'verifique ' (imperativo).
+
+    'Certo, verifiquei os dados e está correto.' — Finaud confirmando, não pedindo
+    ao cliente — _eh_cortesia_finaud deve continuar retornando True. O espaço em
+    'verifique ' garante que 'verifiquei' (letra 'i' ≠ espaço) não seja capturado.
+    Com 1 msg de Finaud e cortesia pura → 'Aguardando Finaud' (acusou recibo).
+    Nota: usa 'Prezado' (singular) — '_SAUDACAO_RE' filtra singular/a, não 's'.
+    """
+    corpo = (
+        'Prezado Isaac, boa tarde.\n\n'
+        'Certo, verifiquei os dados e está tudo correto.\n\n'
+        'Atenciosamente,\nMonica\nFinaud\n'
+    )
+    msgs = [_msg(FINAUD, corpo=corpo)]
+    status, _ = bt._determinar_status(msgs)
+    # Finaud só confirmou (não pediu nada) — deve ser AF (acusou recibo), não AC
+    assert status == 'Aguardando Finaud'
