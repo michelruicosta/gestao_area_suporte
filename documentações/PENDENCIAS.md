@@ -551,18 +551,9 @@ O README antigo foi arquivado. Escrever o novo só quando algo estiver funcionan
 
 ---
 
-### 🟡 STATUS — Pente fino das AF (817 threads) — próxima sessão (identificado 21/08/2026, parcialmente resolvido 24/08/2026)
+### ✅ STATUS — Pente fino das AF — concluído (24/08/2026)
 
-Em 24/08/2026: pente fino das **Concluídas** concluído (339 threads, 12 corrigidas). Restam as threads com status **Aguardando Finaud** (817 threads).
-
-**O que fazer:**
-1. Varrer todas as threads AF do banco por categoria
-2. Para cada thread suspeita: ler o conteúdo completo, verificar com Michel
-3. Corrigir no banco e/ou no código conforme o padrão identificado
-
-**Escopo:** somente as 817 threads com `status_workflow = 'Aguardando Finaud'`.
-
-**Quando fazer:** próxima sessão dedicada.
+Pente fino completo das AF (todas as categorias). 8 correções manuais no banco. ~99% das threads estavam corretas. Ver `REGISTRO_CORRECOES.md` entrada 24/08 para detalhes.
 
 ---
 

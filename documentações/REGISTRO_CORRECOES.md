@@ -2,6 +2,64 @@
 
 ---
 
+## 2026-08-24 — Pente fino AF: 5 fixes manuais DDR_2011 + SUPORTE + regra nova
+
+### 24/08 — 3 fixes manuais DDR_2011
+
+**🔎 Em miúdos:** 3 threads DDR_2011 com status errado — uma empresa em liquidação que não precisa mais agir, um recall do Outlook que não tem ação pendente e um cliente que simplesmente agradeceu.
+
+- `19f8f9f0654b67b6` (Sefer — DDR_2011): AF → **Aguardando Cliente** — Alison informou que a empresa está em liquidação judicial, aguardando o liquidante; pendência está no cliente, não na Finaud
+- `19fdcf7196aeab45` (DDR 2011 05/08): AF → **Concluída** — última mensagem é cancelamento Outlook ("X deseja cancelar mensagem Y"); sem ação pendente
+- `19ff395ba30ae31d` (Trustee Robson): AF → **Concluída** — Robson agradeceu pós-processamento da Finaud ("Obrigado!"); padrão agradecimento confirmado
+
+### 24/08 — 2 fixes manuais SUPORTE
+
+**🔎 Em miúdos:** 2 threads SUPORTE onde o assunto foi resolvido (uma com orientações agradecidas, outra com ligação agendada + agradecimento) mas ficaram como AF.
+
+- `19ff217723ecef34` (GREEN DTVM - UNICAD): AF → **Concluída** — Barbara agradeceu orientações de Tiberio sobre comunicado do BACEN; padrão agradecimento pós-orientação
+- `19fa8b23951d204f` (Kinel - Arquivos para Bacen): AF → **Concluída** — Carlos Seratto disse "Hoje às 11hrs te chamo. Grato mais uma vez pela colaboração"; resolução encaminhada para ligação telefônica
+
+**Regra nova definida por Michel (24/08/2026):**
+- **Cliente diz que vai ligar (ou chamar) + agradece → Concluída.** Resolução encaminhada para canal síncrono (ligação); sem follow-up digital pendente. Adicionada ao CLAUDE.md.
+
+**Resultado completo do pente fino das AF — esta sessão:**
+- DDR_2011 (472 threads): 3 corrigidas (1 AC + 2 Concluída) — 469 corretas
+- DRM_2060 (20 threads): 0 correções — todas corretas
+- DRL_2160 (21 threads): 0 correções — todas corretas
+- SUPORTE (37 threads): 2 corrigidas (+ 3 de sessão anterior) — 32 corretas
+
+**Validação:** fixes aplicados diretamente no banco (`data/oraculo360.db`) via Python. ✅
+
+---
+
+## 2026-08-24 — Pente fino AF: 3 fixes manuais SUPORTE + 2 regras novas
+
+### 24/08 — 3 fixes manuais SUPORTE AF → Concluída
+
+- `19fccea0784fd94f` (Alinhamento mudança de controle acionário): AF → **Concluída** — cliente confirmou horário da reunião (06/08 10:00); se nova mensagem chegar, status atualiza conforme o texto
+- `19fdcb95bea2bb54` (Cancelar: Accredito_NE 21_ Basileia): AF → **Concluída** — notificação de recall de e-mail (Outlook "Cancelar mensagem") — sem ação pendente da Finaud
+- `19f43206115c5b7c` (ARQUIVOS — aviso de ausência): AF → **Concluída** — Simone redireciona para o Silvio; período 13-17/07 encerrado, Silvio cuida
+
+**Regras novas definidas por Michel (24/08/2026):**
+- **Cliente confirma horário proposto pela Finaud → Concluída.** Se nova mensagem chegar na thread, atualiza o status conforme o texto.
+- **"Cancelar mensagem" do Outlook (recall) → sempre Concluída.** Sem ação pendente da Finaud.
+
+**Resultado parcial SUPORTE:** 37 ✅, 3 corrigidas → Concluída
+
+---
+
+## 2026-08-24 — Pente fino AF: 3 fixes manuais INTERNO + S5
+
+### 24/08 — 3 fixes manuais AF → Concluída
+
+- `19f386377cf9de8a` (Robson convidou para Teams — INTERNO): AF → **Concluída** — convite automático do Microsoft Teams, sem ação pendente da Finaud
+- `19f66dd1ac884324` (RE: Comunicado de saída — INTERNO): AF → **Concluída** — e-mail social de despedida ("Te desejo sorte"), sem ação pendente
+- `19f6b1cf9af0e81b` (Aceita: Risk S5 — S5): AF → **Concluída** — resposta automática de calendário (aceite de reunião), sem ação pendente
+
+**Resultado:** FORCAPITAL 2 ✅, INTERNO 2 corrigidas, S5 3 ✅ + 1 corrigida
+
+---
+
 ## 2026-08-24 — Fix U + Fix V: "Favor" e "e retorno" bloqueiam Fix H
 
 ### Fix U — "Favor + verbo" do cliente bloqueia Fix H → AF

@@ -438,6 +438,23 @@ Após revisar, registrar no `SESSAO_ATUAL.md`:
 ```
 Essa linha é o sinal que o `/iniciar` usa para saber se a sessão anterior foi fechada corretamente.
 
+## Regras de negócio de status — aprovadas por Michel no pente fino (24/08/2026)
+
+Estas regras definem o status correto para padrões específicos de e-mail, independente do que o código calculou. Aplicar manualmente no banco quando identificadas durante o pente fino ou em revisões futuras.
+
+| Padrão no e-mail | Status correto | Motivo |
+|---|---|---|
+| Última mensagem é um **cancelamento Outlook** ("X deseja cancelar a mensagem Y") | Concluída | Cliente retirou o próprio e-mail; não há ação pendente |
+| Última mensagem é um **convite de reunião** (Google Meet, Teams, calendar invite) | Concluída | Resolução encaminhada para canal síncrono; sem follow-up digital |
+| Cliente confirma **horário de reunião proposto pela Finaud** | Concluída | Reunião agendada; se a thread atualizar, o status atualiza conforme o novo conteúdo |
+| Cliente informa que **arquivos foram submetidos ao BACEN** | Concluída | Responsabilidade passou para o cliente com o BACEN; Finaud não tem mais ação pendente |
+| Cliente confirma que DLO/sistema está **"normalizado"** + agradece | Concluída | Issue resolvida no lado do cliente |
+| Cliente diz que vai **ligar** (ou chamar) para a Finaud + agradece | Concluída | Resolução encaminhada para canal síncrono (ligação); sem follow-up digital pendente |
+
+> Estas regras complementam o código em `scripts/banco_threads.py`. Candidatas a virarem Fixes de código em sessão futura.
+
+---
+
 ## Regra: abrir o artifact da especificação ao iniciar toda sessão
 
 Ao executar o `/iniciar`, **sempre** abrir o artifact da especificação da nova arquitetura

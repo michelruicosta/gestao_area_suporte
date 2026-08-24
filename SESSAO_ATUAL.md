@@ -8,66 +8,73 @@
 
 ---
 
-## 📓 Diário da sessão (2026-08-24) — Pente fino das Concluídas + Fix U + Fix V
+## 📓 Diário da sessão (2026-08-24) — Pente fino completo das AF
 
 ### O que foi feito hoje
 
-**Frente única: pente fino completo de todas as 339 threads Concluídas + 2 fixes de código**
+**Frente única: pente fino completo de todas as threads Aguardando Finaud**
+
+Varredura categoria por categoria. Para cada thread suspeita: conteúdo lido, apresentado a Michel, corrigido no banco com status e motivo corretos.
 
 ---
 
-#### Pente fino das Concluídas — 339 threads revisadas, 12 corrigidas manualmente
+#### Pente fino das AF — resumo completo (2 sessões em 24/08/2026)
 
-Varredura completa por categoria, da menor para a maior. Para cada thread suspeita: lido o conteúdo completo, apresentado a Michel, corrigido no banco com o status e motivo certos.
-
-| Categoria | Threads | Corretas | Fixes manuais |
+| Categoria | Threads AF | Corretas | Fixes manuais |
 |---|---|---|---|
-| FORCAPITAL, INTERNO, DRM, DLI, SALDOS, DRL | pequenas | ✅ | sessão anterior (resumida) |
-| SUPORTE (33) | 31 ✅ | 2 → AF |
-| RETORNO_BACEN (37) | 34 ✅ | 3 → AF (incluindo 2 threads de 1 msg sem resposta da Finaud) |
-| DLO_2061 (47) | 45 ✅ | 2 → AF |
-| DDR_2011 (132) | 127 ✅ | 4 → AF, 1 → AC |
+| FORCAPITAL | 2 | 2 ✅ | 0 |
+| INTERNO | 2 | 0 | 2 → Concluída |
+| S5 | 3 | 2 ✅ | 1 → Concluída |
+| DLI_2062 | 0 | — | 0 |
+| DDR_2011 | 472 | 469 ✅ | 3 (1 AC + 2 Concluída) |
+| DRM_2060 | 20 | 20 ✅ | 0 |
+| DRL_2160 | 21 | 21 ✅ | 0 |
+| SUPORTE (parcial sessão 1) | 37 | 32 ✅ | 3 → Concluída |
+| SUPORTE (parcial sessão 2) | — | — | 2 → Concluída |
 
-**Total: 12 threads corrigidas no banco. 327 corretas (96,5%).**
-
-**Padrões encontrados:**
-- Cliente promete retornar ("retornaremos", "retornarei", "e retorno") → deve ser AC, estava Concluída
-- Cliente envia pedido de ação + "Obrigado" sem pergunta ("Favor considerar...") → deve ser AF, estava Concluída
-- Threads de 1 mensagem do cliente sem resposta da Finaud → deve ser AF, estava Concluída
-
----
-
-#### Fix U — "Favor + verbo" do cliente bloqueia Fix H → AF
-
-**Problema:** "Favor considerar estes documentos. Obrigado." → "Obrigado" ativava Fix H → Concluída.
-**Correção:** adicionado `\bfavor\b` ao `_PEDIDO_IMPLICITO` em `scripts/banco_threads.py`.
-**Testes:** 3 novos casos (2 positivos + 1 regressão). 374 passando, zero regressões.
+**Total: 8 fixes manuais no banco. Taxa de acerto: ~99% das threads AF estavam corretas.**
 
 ---
 
-#### Fix V — "e retorno" do cliente → Aguardando Cliente (AC)
+#### Regras de negócio novas aprovadas por Michel (24/08/2026)
 
-**Problema:** "vou confirmar com o extrato amanhã e retorno" → "ok" ativava Fix H → Concluída.
-**Correção:** adicionado `\be\s+retorno\b` ao `_CLIENTE_VAI_RETORNAR` em `scripts/banco_threads.py`.
-**Testes:** 2 novos casos (1 positivo + 1 regressão). 374 passando.
+Adicionadas ao CLAUDE.md (tabela de regras de status):
+
+- **Empresa em liquidação, cliente aguardando liquidante → AC** (pendência está no cliente)
+- **Agradecimento do cliente pós-processamento da Finaud → Concluída**
+- **Cliente diz que vai ligar + agradece → Concluída** (resolução encaminhada para canal síncrono)
+
+---
+
+#### Sessão anterior (mesmo dia) — Pente fino das Concluídas + Fix U + Fix V
+
+| O que | Resultado |
+|---|---|
+| Pente fino das 339 Concluídas | 12 corrigidas (11 → AF, 1 → AC) |
+| Fix U — "Favor + verbo" bloqueia Fix H | Implementado, 374 testes ✅ |
+| Fix V — "e retorno" → AC | Implementado, 374 testes ✅ |
 
 ---
 
 ### Estado atual
 
-**Suíte de testes:** 374/374 (`tests/test_banco_threads.py`) + suíte do classificador inalterada.
-**Banco:** pente fino das Concluídas concluído — 12 correções manuais aplicadas.
-**GitHub:** pendente de push (commit será feito ao fechar).
-**REGISTRO_CORRECOES.md:** 4 entradas novas (DDR_2011, Fix U, Fix V, SUPORTE, RETORNO_BACEN, DLO_2061).
-**PENDENCIAS.md:** pente fino das Concluídas removido; item de threads de 1 msg atualizado.
+**Suíte de testes:** 374/374 (`tests/test_banco_threads.py`) — inalterada nesta sessão.
+**Banco:** pente fino completo — Concluídas (12 correções) + AF (8 correções) — total 20 correções manuais.
+**GitHub:** pendente de push (commit feito ao fechar).
+**PENDENCIAS.md:** item "Pente fino das AF" removido — concluído.
 
 ---
 
 ### Próximo passo
 
-**🟡 Pente fino das AF (817 threads)** — mesmo processo das Concluídas: varrer por categoria, identificar status incorretos, corrigir no banco e/ou no código.
+**🟡 Construir Fase 1 — código de produção**
 
-Após o pente fino das AF: definir comportamento em produção (threads novas vs. já classificadas — ver PENDENCIAS.md).
+- `coletor_gmail.py` — lê e-mails da caixa de coleta via Gmail API
+- Pipeline de processamento — classifica e grava no banco
+- 3 telas Flask (§14 da spec): painel principal + revisão + histórico
+
+Detalhes e contexto → `documentações/PENDENCIAS.md` (seção "⏭ ETAPA ATUAL")
+Spec completa → `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md`
 
 Último /fechar: 2026-08-24 — memórias revisadas ✅
 
