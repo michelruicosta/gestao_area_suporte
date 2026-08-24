@@ -1680,3 +1680,178 @@ def test_status_fixq_to_preenchido_cc_ignorado():
     # To: tem externo → para_finaud=False → Finaud→Cliente → AC
     status, _ = bt._determinar_status(msgs)
     assert status == 'Aguardando Cliente'
+
+
+def test_status_fixr_cliente_vai_retornar_ac():
+    """Fix R — cliente diz 'Vamos analisar e retornamos' → Aguardando Cliente.
+
+    Mesmo com 'obrigada' (que ativaria Fix H → Concluída), a promessa do cliente
+    de retornar indica que a ação pendente é do cliente → AC, não Concluída.
+    """
+    corpo = 'Boa tarde, Rodrigo.\n\nVamos analisar e retornamos.\n\nObrigada pelo envio.\n\nJuliana\n'
+    msgs = [
+        _msg(FINAUD, corpo='Seguem em anexo as projeções de capital.', assunto='Projeção de Capital'),
+        _msg('juliana@agkcorretora.com.br', corpo=corpo, assunto='Re: Projeção de Capital'),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Cliente'
+    assert 'Fix R' in motivo
+
+
+def test_status_fixr_retornarei_ac():
+    """Fix R — cliente diz 'retornarei amanhã' → Aguardando Cliente."""
+    corpo = 'Muito obrigado, retornarei amanhã com mais detalhes.\n\nAtt, Carlos\n'
+    msgs = [
+        _msg(FINAUD, corpo='Segue o relatório conforme solicitado.', assunto='Relatório'),
+        _msg('carlos@cliente.com.br', corpo=corpo, assunto='Re: Relatório'),
+    ]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Cliente'
+
+
+def test_status_fixr_nao_afeta_agradecimento_simples():
+    """Fix R — regressão: agradecimento simples sem promessa de retorno → Fix H (Concluída)."""
+    corpo = 'Muito obrigado! Tudo certo.\n\nAtt, Carlos\n'
+    msgs = [
+        _msg(FINAUD, corpo='Segue o relatório conforme solicitado.', assunto='Relatório'),
+        _msg('carlos@cliente.com.br', corpo=corpo, assunto='Re: Relatório'),
+    ]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Concluída'
+
+
+def test_status_fixs_no_aguardo_finaud_ac():
+    """Fix S — Finaud diz 'No aguardo' → Aguardando Cliente.
+
+    "Certo, podemos agendar... No aguardo." começa com 'Certo' (palavra de cortesia),
+    mas 'No aguardo' indica que a Finaud está esperando resposta — deve ser AC, não Concluída.
+    """
+    corpo = (
+        'Certo, podemos agendar para o dia 21/07 às 10 hrs ou as 11 hrs.\n\n'
+        'No aguardo.\nGrata.\n\nAndrea Inacio\nCoordenadora de Suporte\n'
+    )
+    msgs = [
+        _msg('henrique@cliente.com.br', corpo='Gostaria de agendar uma visita.', assunto='Re: Visita Finaud'),
+        _msg(FINAUD, corpo=corpo, assunto='Re: Visita Finaud'),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Cliente'
+
+
+def test_status_fixs_nao_afeta_cortesia_sem_aguardo():
+    """Fix S — regressão: 'Certo, à disposição.' sem 'no aguardo' → Concluída (cortesia pura)."""
+    corpo = 'Certo, qualquer dúvida estou à disposição.\n\nAndrea Inacio\n'
+    msgs = [
+        _msg('henrique@cliente.com.br', corpo='Obrigado pelo atendimento.', assunto='Re: Suporte'),
+        _msg(FINAUD, corpo=corpo, assunto='Re: Suporte'),
+    ]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Concluída'
+
+
+def test_status_fixt_peco_que_cliente_bloqueia_fixh_af():
+    """Fix T — cliente diz 'Peço que inclua... Obrigado.' → Aguardando Finaud.
+
+    'Obrigado' ativaria Fix H → Concluída, mas 'Peço que' é pedido explícito do cliente.
+    Fix T adiciona 'peço ' ao _PEDIDO_IMPLICITO → Fix H bloqueado → AF.
+    """
+    corpo = 'Peço que inclua esta aplicação no DRM – 06-2026.\n\nObrigado.\n\nIvan Cândido\n'
+    msgs = [
+        _msg(FINAUD, corpo='Segue remessa DRM conforme solicitado.', assunto='DRM 2060'),
+        _msg('ivan@colunadtvm.com.br', corpo=corpo, assunto='DRM 2060'),
+    ]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+
+
+def test_status_fixt_nao_afeta_obrigado_simples():
+    """Fix T — regressão: 'Obrigado.' sem pedido → Fix H ainda funciona → Concluída."""
+    corpo = 'Obrigado pelo envio!\n\nIvan Cândido\n'
+    msgs = [
+        _msg(FINAUD, corpo='Segue remessa DRM conforme solicitado.', assunto='DRM 2060'),
+        _msg('ivan@colunadtvm.com.br', corpo=corpo, assunto='DRM 2060'),
+    ]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Concluída'
+
+
+# ── Fix U: "Favor + verbo" do cliente bloqueia Fix H → AF ────────────────────
+
+def test_status_fixu_favor_considerar_bloqueia_fixh_af():
+    """Fix U — 'Favor considerar estes documentos. Obrigado.' → AF.
+
+    O 'Obrigado' ativaria o Fix H → Concluída, mas 'Favor + verbo'
+    indica pedido de ação ao Finaud — deve bloquear Fix H e retornar AF.
+    Caso real: Jair Bonetti (Western Union), posição de câmbio 02/07/2026.
+    """
+    corpo = (
+        'Bom dia, pessoal!\n\n'
+        'Favor considerar estes documentos para a posição do dia 02/07/2026.\n\n'
+        'Obrigado.\n\nJair Bonetti\n'
+    )
+    msgs = [_msg('jair@wu.com', corpo=corpo, assunto='Posição de Câmbio 02/07')]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+
+
+def test_status_fixu_favor_desconsiderar_bloqueia_fixh_af():
+    """Fix U — 'Favor, desconsiderar e-mail anterior e considerar este.' → AF.
+
+    Cliente pede ao Finaud para usar dados corrigidos — pedido de ação sem resposta.
+    Caso real: Fernando de Sales Santos (Travelex), RD MES 07-2026.
+    """
+    corpo = (
+        'Prezados (as),\n'
+        'Favor, desconsiderar e-mail anterior e considerar este.\n\n'
+        '31/07/2026\nSALDOS BANCOS\nMOEDA\nUSD 197,97\n'
+    )
+    msgs = [_msg('fernando@travelex.com', corpo=corpo, assunto='RD MES 07-2026 - DESCONSIDERAR')]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+
+
+def test_status_fixu_nao_afeta_obrigado_sem_favor():
+    """Fix U — regressão: 'Obrigado.' sem 'Favor' → Fix H ainda funciona → Concluída."""
+    corpo = 'Obrigado pela atenção!\n\nCarlos\n'
+    msgs = [
+        _msg(FINAUD, corpo='Segue o DDR 2011 conforme solicitado.', assunto='DDR 2011'),
+        _msg('carlos@cliente.com', corpo=corpo, assunto='Re: DDR 2011'),
+    ]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Concluída'
+
+
+# ── Fix V: "e retorno" do cliente → Aguardando Cliente (AC) ──────────────────
+
+def test_status_fixv_e_retorno_cliente_prometeu_voltar_ac():
+    """Fix V — 'vou confirmar com o extrato amanhã e retorno' → Aguardando Cliente.
+
+    'ok' ativaria Fix H → Concluída, mas o cliente prometeu voltar
+    com confirmação — ação pendente do cliente → AC.
+    Caso real: Celso Julich Jr. (Unicred), fluxo de caixa ZIIN 08/07/2026.
+    """
+    corpo = (
+        'Boa noite!\n\n'
+        'A principio está ok, vou confirmar com o extrato amanha e retorno.\n\n'
+        'Celso Julich Junior\nUnicred do Brasil\n'
+    )
+    msgs = [
+        _msg('celso@unicred.com', corpo='Bom dia! Segue até o dia 08/07', assunto='FLUXO DE CAIXA - ZIIN'),
+        _msg('celso@unicred.com', corpo=corpo, assunto='FLUXO DE CAIXA - ZIIN'),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Cliente'
+    assert 'Fix R' in motivo
+
+
+def test_status_fixv_nao_afeta_retorno_bacen():
+    """Fix V — regressão: 'retorno' como substantivo ('retorno BACEN') → não ativa Fix V."""
+    corpo = (
+        'Obrigado pela transmissão. O retorno do BACEN foi positivo.\n\nAtt, Ana\n'
+    )
+    msgs = [
+        _msg(FINAUD, corpo='Segue DDR transmitido ao BACEN.', assunto='DDR 2011'),
+        _msg('ana@cliente.com', corpo=corpo, assunto='Re: DDR 2011'),
+    ]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Concluída'

@@ -2,6 +2,183 @@
 
 ---
 
+## 2026-08-24 — Fix U + Fix V: "Favor" e "e retorno" bloqueiam Fix H
+
+### Fix U — "Favor + verbo" do cliente bloqueia Fix H → AF
+
+**🔎 Em miúdos:** quando o cliente dizia "Favor considerar estes documentos. Obrigado.", o "Obrigado" ativava o Fix H e o sistema marcava Concluída — mas o pedido de ação não tinha sido atendido.
+
+**Problema:** "Favor + verbo" é sempre um pedido ao Finaud, mas não estava na lista de bloqueadores do Fix H (`_PEDIDO_IMPLICITO`). Fix H só bloqueava quando havia "?", entrega de documento ou "precisamos/peço".
+
+**Correção:** adicionado `\bfavor\b` ao `_PEDIDO_IMPLICITO` em `scripts/banco_threads.py`. Qualquer mensagem do cliente com "favor" bloqueia Fix H → retorna AF.
+
+**Validação:** ✅ `pytest tests/ -q` → 374 passed. Casos reais cobertos: Jair (Western Union, posição câmbio 02/07) e Fernando (Travelex, RD MES 07-2026).
+
+---
+
+### Fix V — "e retorno" do cliente → Aguardando Cliente (AC)
+
+**🔎 Em miúdos:** quando o cliente dizia "vou confirmar com o extrato amanhã e retorno", o "ok" na frase ativava Fix H → Concluída. Mas o cliente prometeu voltar — a ação pendente era dele.
+
+**Problema:** Fix R só pegava "retornaremos", "retornarei", "retornamos", "vamos analisar". "e retorno" (primeira pessoa, forma mais curta) não estava coberto.
+
+**Correção:** adicionado `\be\s+retorno\b` ao `_CLIENTE_VAI_RETORNAR` em `scripts/banco_threads.py`.
+
+**Validação:** ✅ `pytest tests/ -q` → 374 passed. Regressão verificada: "retorno BACEN" como substantivo continua Concluída.
+
+---
+
+## 2026-08-24 — Pente fino Concluídas: 5 fixes manuais DDR_2011
+
+### 24/08 — 5 fixes manuais DDR_2011
+
+- `19f5ba8915ea7697` (FLUXO DE CAIXA - ZIIN): Concluída → **AC** — cliente disse "vou confirmar com o extrato amanhã e retorno" — prometeu voltar; ambas as msgs são do cliente, Finaud nunca respondeu
+- `19fb340dcd329e3b` (DDR - Base 29/07): Concluída → **AF** — 1 msg do cliente "Considerar o valor +USD $331,463.18 para DDR 29/07" — pedido de ação sem resposta da Finaud
+- `19fc7f496bb81657` (RD MES 07-2026 - DESCONSIDERAR): Concluída → **AF** — 1 msg do cliente "desconsiderar e-mail anterior e considerar este" com dados corrigidos — pedido de ação sem resposta
+- `19f3d09cc358a746` (Posição de Câmbio corretora 02/07): Concluída → **AF** — 1 msg do cliente "Favor considerar estes documentos para posição do dia 02/07" — pedido de ação sem resposta
+- `19ff639a33df6a84` (Re: Finaud + StarkBank): Concluída → **AF** — cliente propôs horários de reunião (17/08 14h e 18/08 10h); Finaud não confirmou
+
+**Resultado DDR_2011:** 127 corretas ✅, 5 corrigidas (1 → AC, 4 → AF)
+
+---
+
+## 2026-08-24 — Pente fino Concluídas: Fix R + fixes manuais FORCAPITAL
+
+### 24/08 — Fix R: cliente prometeu retornar → Aguardando Cliente (AC)
+
+**🔎 Em miúdos:** quando o cliente responde "Vamos analisar e retornamos" (com um agradecimento junto), o sistema marcava Concluída — porque o "obrigada" ativava o Fix H. Na verdade, quem tem ação pendente é o cliente (ele prometeu voltar), então o correto é AC.
+
+**Problema:** o Fix H só bloqueia quando o cliente faz uma pergunta ("?"), entrega um documento ou usa palavras de pedido explícito. A promessa de retorno ("retornamos", "retornarei") não estava na lista de bloqueadores.
+
+**Correção:** adicionado bloco Fix R ANTES do Fix H em `scripts/banco_threads.py`. Detecta `retornaremos|retornamos|retornarei|vamos analisar` na última mensagem do cliente e retorna AC diretamente.
+
+**Fixes manuais associados:**
+- `1a010fc65f131056` (FORCAPITAL "Projeções JUN26 - AGK"): Concluída → AC
+- `1a02492bce9413fc` (FORCAPITAL "Requerimento Projeção de Capital"): Concluída → AF (cliente fez pedido novo, Finaud não respondeu)
+
+**Validação:** ✅ `pytest tests/ -q` → 365 passed. Varredura prévia: 0 outras threads Concluídas afetadas.
+
+---
+
+## 2026-08-24 — Pente fino Concluídas: 2 fixes manuais DLO_2061
+
+### 24/08 — 2 fixes manuais DLO_2061
+
+- `19f3ccef32170533` (Re: DLO/DLI maio/2026): Concluída → AF — Monica pediu planilha LEC ao cliente; cliente respondeu que Finaud deveria fazer a planilha (acordo anterior)
+- `19f8b0152ee78c65` (Re: [CV INVEST] DLO junho/2026): Concluída → AF — Andrea disse "retornaremos em breve" após enviar cálculos DLI/DLO — promessa de retorno da Finaud
+
+**Resultado DLO_2061:** 45 corretas ✅, 2 corrigidas → AF
+
+**Validação:** ⚠️ só no banco.
+
+---
+
+## 2026-08-24 — Pente fino Concluídas: 3 fixes manuais RETORNO_BACEN
+
+### 24/08 — 3 fixes manuais RETORNO_BACEN
+
+- `19f626acb06193ba` (Arquivo DLO maio rejeitado): Concluída → AF — Monica disse "Retornaremos em breve" após encaminhar crítica para TI
+- `19ff7486cc830e8c` (DRL 07 2026 rejeitado): Concluída → AF — 1 única msg do cliente pedindo ajuda; Finaud nunca respondeu
+- `1a02411449b1e9c8` (FW: inconsistência DRM 2060): Concluída → AF — 1 única msg do cliente "Favor verificar"; Finaud nunca respondeu
+
+**Padrão de bug identificado:** threads de 1 única mensagem do cliente (sem resposta da Finaud) sendo classificadas como Concluída. Ver pendência para análise do código.
+
+**Resultado RETORNO_BACEN:** 34 corretas ✅, 3 corrigidas → AF
+
+**Validação:** ⚠️ só no banco.
+
+---
+
+## 2026-08-24 — Pente fino Concluídas: 2 fixes manuais SUPORTE
+
+### 24/08 — 2 fixes manuais SUPORTE
+
+- `19f4c631b3b7defd` (ENC: PR): Concluída → AF — Monica disse "encaminhamos para tecnologia e retornaremos quando regularizado" — promessa de retorno da Finaud
+- `19fd827f51136e3b` (Re: Dúvida FIDC - reportes): Concluída → AF — Andrea propôs reunião ("No aguardo"), cliente confirmou horário; dúvida sobre conta 530.22/530.23 não resolvida, reunião ainda pendente
+
+**Resultado SUPORTE:** 31 corretas ✅, 2 corrigidas → AF
+
+**Validação:** ⚠️ só no banco.
+
+---
+
+## 2026-08-24 — Pente fino Concluídas: fixes manuais DRL_2160
+
+### 24/08 — 2 fixes manuais DRL_2160
+
+- `1a00194531fa83e7` (DRLs TRANSFERWISE): Concluída → AF — Andrea entregou parte e disse "estamos providenciando os demais"
+- `19ffcdf20b8e6c78` (Planilha DRL ACCREDITO): Concluída → AC — Andrea encontrou erro na planilha do cliente e pediu correção
+
+**Validação:** ⚠️ só no banco.
+
+---
+
+## 2026-08-24 — Pente fino Concluídas: fixes manuais SALDOS_4111
+
+### 24/08 — 3 fixes manuais SALDOS_CONTABEIS_DIARIOS_4111
+
+- `19fb387b28e1008b` (CADOC 4111 29/07): Concluída → AF — cliente pediu envio do CADOC
+- `19fa8bfc1501ff06` (Saldos 20-22/07): Concluída → AF — cliente disse faltou o 2011, ficou no aguardo
+- `19fb9de13f4ccea4` (4111 30/06 Substituição FAIR): Concluída → AC — Andrea entregou arquivo e pediu composição de moedas estrangeiras ao cliente
+
+**Validação:** ⚠️ só no banco.
+
+---
+
+## 2026-08-24 — Pente fino Concluídas: fixes manuais DLI_2062
+
+### 24/08 — 6 fixes manuais DLI_2062
+
+**🔎 Em miúdos:** 5 threads estavam como Concluída mas a bola ainda estava com a Finaud; 1 estava na categoria errada.
+
+**Correções:**
+- `1a0008028d7949de` (ENC: COLOP UNICAD PL MINIMO): Concluída → AF — cliente disse "fico aguardando a resposta de Rodrigo Tiberio"
+- `19f5d87558b90a5d` (ENC: DLI MAIO): Concluída → AF — cliente pediu envio adicional SCD Abril e Maio
+- `19febd764256a459` (Layout DLI 07.2026): Concluída → AF — cliente disse "ficamos no aguardo"
+- `19fc937607b12ee0` (Arquivo 2061/2062 ACCREDITO): Concluída → AF — Andrea prometeu enviar DLO em breve
+- `19f3cd9bc78ea8b0` (Arquivo 2062 05/2026 ACCREDITO): Concluída → AF — Andrea prometeu providenciar DLO e retornar
+- `19ff6e0506a96007` (Projeções Fourtrade): categoria DLI_2062 → FORCAPITAL — thread é sobre projeções de capital
+
+**Padrões de código a investigar:**
+- "fico/ficamos no aguardo" do cliente → Fix H não bloqueou → Concluída errado (deveria ser AF)
+- "Enviaremos em breve" / "já retornamos" com "segue anexo" → entrega detectada mas promessa de retorno ignorada
+
+**Validação:** ⚠️ correções só no banco, sem alteração de código nesta rodada.
+
+---
+
+## 2026-08-24 — Pente fino Concluídas: Fix T + fix manual DRM [4]
+
+### 24/08 — Fix T: "peço que" do cliente bloqueia Fix H → Aguardando Finaud
+
+**🔎 Em miúdos:** quando o cliente escrevia "Peço que inclua... Obrigado", o sistema via o "Obrigado" e marcava Concluída. Mas o cliente estava fazendo um pedido à Finaud — a bola está com a Finaud.
+
+**Problema:** "peço que" não estava na lista de bloqueadores do Fix H. O "Obrigado" educado que acompanha o pedido ativava o Fix H → Concluída.
+
+**Correção:** adicionado `\bpe[çc]o\s` ao `_PEDIDO_IMPLICITO` em `scripts/banco_threads.py`. Quando o cliente usa "Peço que...", o Fix H não dispara e o resultado cai em AF.
+
+**Fix manual associado:** `19f432d6a3480a16` (DRM_2060 "DRM 2060 - BASE 06/26"): Concluída → AF. Ivan pediu à Finaud incluir uma aplicação.
+
+**Validação:** ✅ `pytest tests/ -q` → 369 passed.
+
+---
+
+## 2026-08-24 — Pente fino Concluídas: Fix S + fix manual INTERNO [6]
+
+### 24/08 — Fix S: "no aguardo" da Finaud bloqueia cortesia → Aguardando Cliente
+
+**🔎 Em miúdos:** quando a Finaud terminava a mensagem com "No aguardo" mas começava com "Certo" (palavra de cortesia), o sistema marcava Concluída. Na verdade, "No aguardo" significa que a Finaud está esperando o cliente responder → AC.
+
+**Problema:** a função que detecta "é só cortesia" verificava só o início do texto. "Certo" no início → cortesia → Concluída. O "No aguardo" que vinha depois era ignorado.
+
+**Correção:** adicionado `'no aguardo'` à lista `_FRASES_PEDIDO_EXPLICITO` em `scripts/banco_threads.py`. Quando "no aguardo" aparece em qualquer parte do texto da Finaud, a função de cortesia retorna False e o código cai em AC.
+
+**Fix manual associado:** `19f384bd4b14a6d6` (INTERNO "Re: Visita Finaud"): Concluída → AC.
+
+**Validação:** ✅ `pytest tests/ -q` → 367 passed.
+
+---
+
 ## 2026-08-24 — Rename: classificador_ia.py → classificador_regras.py
 
 ### 24/08 — Rename do classificador: nome corrigido para refletir implementação real

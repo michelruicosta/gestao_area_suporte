@@ -8,150 +8,67 @@
 
 ---
 
-## 📓 Diário da sessão (2026-08-21) — Telas: painel delta + Fix H + FOG integrado com dados reais
+## 📓 Diário da sessão (2026-08-24) — Pente fino das Concluídas + Fix U + Fix V
 
 ### O que foi feito hoje
 
-**Duas frentes concluídas:**
+**Frente única: pente fino completo de todas as 339 threads Concluídas + 2 fixes de código**
 
 ---
 
-#### Frente 1 — Telas: painel delta na tabela principal
+#### Pente fino das Concluídas — 339 threads revisadas, 12 corrigidas manualmente
 
-Implementadas melhorias visuais e funcionais na tela `templates/gestao_email.html`:
+Varredura completa por categoria, da menor para a maior. Para cada thread suspeita: lido o conteúdo completo, apresentado a Michel, corrigido no banco com o status e motivo certos.
 
-| Melhoria | Detalhe |
-|---|---|
-| Chevron ▼ movido para canto direito do card-hd | Igual ao padrão do painel "Evolução histórica" |
-| Contador regressivo virou chip destacado | Borda + cor da marca + peso de fonte, id `refresh-info` |
-| Colunas VAR separadas (10 colunas total) | AF / VAR / AC / VAR / CO / VAR / TOTAL / VAR — cada métrica tem sua própria coluna de variação |
-| Footer da tabela | Linha de legenda (▲▼ — símbolos) + intervalo dinâmico ("a cada 5 min") |
-| `ler_penultimo_snapshot()` no banco | Calcula delta entre fim da rodada N-1 e fim da rodada N (antes era início vs. início — delta era zero) |
-| `delta_tot` no servidor | Campo novo para variação do TOTAL |
-| `_chipVar()` no JS | Função nova para chips de variação nas colunas VAR |
-| `_REFRESH_INTERVAL = 300` | Constante central — usada no contador E no footer |
-
-Commits: vários (`facf13c` mais recente da frente de telas). Push realizado.
-
----
-
-#### Frente 2 — Fix H: cliente agradece sem pergunta ficava AF indevidamente
-
-**Problema identificado:** Michel mostrou thread onde Wilson Lima escreveu "Muito obrigado, vou fazer de acordo com a orientação." — o sistema deixava como Aguardando Finaud mesmo o assunto estando encerrado.
-
-**Diagnóstico:** mapeamento de 846 threads AF → 821 com cliente como último remetente → 9 "obrigado simples" + 53 "outros" incorretos. Causa: Fix G só entendia verbos plurais ("realizaremos") — singular ("vou fazer") e agradecimentos simples não eram cobertos.
-
-**Correção — Fix H** em `scripts/banco_threads.py`:
-- Condição: `_CONFIRMACAO_EXPLICITA` + sem "?" + sem entrega de doc (`seguem?`, `anexo`, `encaminho`) + sem pedido implícito (`precisamos`, `necessitamos`) → Concluída
-- 5 novos testes (`tests/test_banco_threads.py`) — 100 total, zero regressões
-- `scripts/recalcular_status_af.py` — script retroativo (pode rodar novamente se necessário)
-- 42 threads corrigidas retroativamente no banco
-
-Commit: `d99110a` — push realizado.
-
----
-
-#### Frente 4 — FOG integrado como SPA no gestao_area_suporte + dados reais
-
-As telas FOG (Casos e KPIs) foram movidas para dentro do site `gestao_area_suporte` — ao clicar em "FOG → Casos" ou "FOG → KPIs" no menu lateral, o usuário permanece no mesmo site (URL `127.0.0.1:5001`) sem navegar para o oraculo_finaud.
-
-**Problema original:** os links FOG usavam `<a href="/fog/operacional">` que abriam rotas separadas com o layout antigo do Oráculo 360. Michel: *"está erradissimo, abandone isso"*.
-
-**Solução:** seções `<section id="pag-fog-casos">` e `<section id="pag-fog-kpis">` embutidas no `gestao_email.html`, acessadas via `navegar()` (mesmo mecanismo do resto da SPA). As rotas `/fog/operacional` e `/fog/gerencial` continuam existindo mas agora são secundárias.
-
-**Dados reais do FogBugz:** substituiu `_FOG_DADOS` (14 casos fictícios) pela função `_buscar_fog()` em `servidor_telas.py`:
-- Lê `FOGBUGZ_TOKEN` do `.env` (nunca hardcoded)
-- Força filtro `218`, busca casos abertos desde 2025-01-01
-- Usa `xml.etree.ElementTree` (lib padrão Python — sem dependência externa)
-- Usa campo `fOpen` da API para determinar Ativo/Fechado (não `sStatus`, que retorna nome do milestone)
-- Calcula `dias_responsavel` como dias desde `dtLastUpdated`
-
-**Correções de bug durante a sessão:**
-- `xmltodict` não instalado no ambiente → substituído por `xml.etree.ElementTree`
-- `sStatus` retornava nome do milestone ("Atendimento de Suporte Técnico"), não "Active" → corrigido usando `fOpen`
-- Todos os 414 casos estavam aparecendo como "Fechado" → corrigido
-
----
-
-#### Frente 5 — Melhorias visuais na tabela FOG Casos
-
-| Melhoria | Detalhe |
-|---|---|
-| Coluna "Abertura" separada | Data de abertura em coluna própria, antes de "Caso" |
-| Formato brasileiro | Data exibida como DD/MM/AAAA (era YYYY-MM-DD) |
-| Ordenação por coluna | Clicar em qualquer cabeçalho ordena; clicar de novo inverte. Seta indica coluna e direção ativa |
-| Ajuste de proporções | "Sem atualização" e "Ação" enxugadas para dar mais espaço ao "Assunto" |
-
----
-
----
-
-#### Frente 6 — Pipeline rodado + verificação das classificações
-
-Pipeline completo executado ao final da sessão (pós-/fechar das 17:00):
-
-- **Etapa 1 (coleta):** 33 threads atualizadas/coletadas do Gmail
-- **Etapa 2 (classificação):** 23 threads classificadas — 18 para `principal`, 5 para `descartes`, 0 para `revisão`
-
-Backup criado antes da rodada em `data/backups/20260821_2308_pipeline_coleta/`.
-
-4 classificações questionáveis foram inspecionadas e confirmadas corretas por Michel:
-
-| Thread | Categoria | Status | Resultado |
+| Categoria | Threads | Corretas | Fixes manuais |
 |---|---|---|---|
-| PI Exposure MiraeAsset | DDR_2011 | Concluída | ✅ Correto |
-| ENC: COLOP UNICAD PL MINIMO | DLI_2062 | Concluída | ✅ Correto |
-| REMITLY - Atualização de Movimentos Jul/Ago | SUPORTE | Aguardando Finaud | ✅ Correto |
-| BARU - Verificar INDICADOR DE BASILEIA | SUPORTE | Aguardando Finaud | ✅ Correto |
+| FORCAPITAL, INTERNO, DRM, DLI, SALDOS, DRL | pequenas | ✅ | sessão anterior (resumida) |
+| SUPORTE (33) | 31 ✅ | 2 → AF |
+| RETORNO_BACEN (37) | 34 ✅ | 3 → AF (incluindo 2 threads de 1 msg sem resposta da Finaud) |
+| DLO_2061 (47) | 45 ✅ | 2 → AF |
+| DDR_2011 (132) | 127 ✅ | 4 → AF, 1 → AC |
 
-Michel observou que existem threads em RETORNO_BACEN com status AC indevido (cliente agradeceu mas status não atualizou). Problema registrado em `PENDENCIAS.md` para pente fino dedicado.
+**Total: 12 threads corrigidas no banco. 327 corretas (96,5%).**
+
+**Padrões encontrados:**
+- Cliente promete retornar ("retornaremos", "retornarei", "e retorno") → deve ser AC, estava Concluída
+- Cliente envia pedido de ação + "Obrigado" sem pergunta ("Favor considerar...") → deve ser AF, estava Concluída
+- Threads de 1 mensagem do cliente sem resposta da Finaud → deve ser AF, estava Concluída
 
 ---
 
-#### Frente 3 — Varredura SUPORTE: 2 threads mal classificadas corrigidas + regras C60/C61
+#### Fix U — "Favor + verbo" do cliente bloqueia Fix H → AF
 
-Após o fechar da sessão anterior, Michel pediu para rodar o pipeline e verificar a classificação. O pipeline rodou (coletor + classificador). A varredura de threads SUPORTE com conteúdo de CADOC encontrou **5 candidatos**:
+**Problema:** "Favor considerar estes documentos. Obrigado." → "Obrigado" ativava Fix H → Concluída.
+**Correção:** adicionado `\bfavor\b` ao `_PEDIDO_IMPLICITO` em `scripts/banco_threads.py`.
+**Testes:** 3 novos casos (2 positivos + 1 regressão). 374 passando, zero regressões.
 
-| Thread | Era | Deve ser | Resultado |
-|---|---|---|---|
-| BALANCETE JULHO 2026 | SUPORTE | DLO_2061 | ✅ Corrigida no banco |
-| Documentos retificados junho/2025 | SUPORTE | RETORNO_BACEN | ✅ Corrigida no banco |
-| ENC: PR | SUPORTE | SUPORTE | ✅ Correto (problema no Risk Driver) |
-| Acesso B&T — XBase Não Localizada | SUPORTE | SUPORTE | ✅ Correto (acesso ao S4) |
-| Freex Câmbio — Login Riskdriver | SUPORTE | SUPORTE | ✅ Correto (acesso ao S5) |
+---
 
-**Regras novas aprovadas por Michel e implementadas no classificador:**
+#### Fix V — "e retorno" do cliente → Aguardando Cliente (AC)
 
-- **C60** — "BALANCETE" ou "BALANÇO" no assunto → DLO_2061 (exceto se 4111 no nome do anexo → SCD prevalece). 5 testes novos. Commit `53876b2`.
-- **C61** — "rejeitado pelo BACEN/BC" no corpo → RETORNO_BACEN. Antes, a função `_tem_retorno_bacen` só detectava "REJEITADO" no assunto. 3 testes novos. Commit `60f70e9`.
-
-Spec (`ESPECIFICACAO_NOVA_ARQUITETURA.md`) atualizada com as duas regras (§10 DLO_2061 e §10 RETORNO_BACEN).
-
-**Suite de testes:** 225 passando (test_classificador_ia.py) + 100 passando (test_banco_threads.py). Zero regressões.
+**Problema:** "vou confirmar com o extrato amanhã e retorno" → "ok" ativava Fix H → Concluída.
+**Correção:** adicionado `\be\s+retorno\b` ao `_CLIENTE_VAI_RETORNAR` em `scripts/banco_threads.py`.
+**Testes:** 2 novos casos (1 positivo + 1 regressão). 374 passando.
 
 ---
 
 ### Estado atual
 
-**Suíte de testes:** 225/225 (`test_classificador_ia.py`) + 100/100 (`test_banco_threads.py`).
-**Banco:** pós-Fix H + 2 reclassificações manuais + pipeline 21/08 (33 threads coletadas, 23 classificadas).
-**GitHub:** sincronizado — push realizado. Último commit: `5d7683b` (ajuste de colunas tabela FOG).
-**PENDENCIAS.md:** novo item adicionado — pente fino em todas as categorias e status do banco (21/08).
-**REGISTRO_CORRECOES.md:** entradas de C60, C61, FOG e pipeline verificado adicionadas.
+**Suíte de testes:** 374/374 (`tests/test_banco_threads.py`) + suíte do classificador inalterada.
+**Banco:** pente fino das Concluídas concluído — 12 correções manuais aplicadas.
+**GitHub:** pendente de push (commit será feito ao fechar).
+**REGISTRO_CORRECOES.md:** 4 entradas novas (DDR_2011, Fix U, Fix V, SUPORTE, RETORNO_BACEN, DLO_2061).
+**PENDENCIAS.md:** pente fino das Concluídas removido; item de threads de 1 msg atualizado.
 
 ---
 
 ### Próximo passo
 
-**🟢 FASE 1 — Implementação do coletor em produção**
+**🟡 Pente fino das AF (817 threads)** — mesmo processo das Concluídas: varrer por categoria, identificar status incorretos, corrigir no banco e/ou no código.
 
-Telas, classificação, lógica de status e tela FOG estáveis. Pipeline já rodou com sucesso. Próximas tarefas por prioridade:
+Após o pente fino das AF: definir comportamento em produção (threads novas vs. já classificadas — ver PENDENCIAS.md).
 
-1. **Pente fino de status** — varredura de todas as categorias para encontrar status incorretos (ex.: RETORNO_BACEN com AC quando cliente agradeceu). Ver PENDENCIAS.md — item 🟡 "STATUS — Pente fino em todas as categorias e status do banco".
-2. **Definir comportamento em produção** — threads novas vs. já classificadas (ver PENDENCIAS.md — item 🟡 "SPEC — threads novas vs. já classificadas")
-3. **Corrigir "Abraço" singular** no detector de assinatura (ver PENDENCIAS.md — item 🟡)
-4. **Campo `tipo_status`** — rastreabilidade estruturada (ver PENDENCIAS.md — item 🟡)
-
-Último /fechar: 2026-08-21 23:30 — memórias revisadas ✅
+Último /fechar: 2026-08-24 — memórias revisadas ✅
 
 ---

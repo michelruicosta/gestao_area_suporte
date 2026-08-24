@@ -277,6 +277,20 @@ Alguns e-mails gerados pelo Outlook têm um rótulo de classificação automáti
 
 ---
 
+### ✅ STATUS — Threads de 1 msg do cliente com "Favor + verb" classificadas como Concluída — resolvido em 24/08/2026 (Fix U)
+
+Causa real identificada: "Favor considerar... Obrigado." → "Obrigado" ativava Fix H → Concluída. A hipótese original (`_eh_cortesia_finaud("")`) estava incorreta — essa função só é chamada no branch Finaud, não no branch cliente.
+
+Fix U aplicado: `\bfavor\b` adicionado ao `_PEDIDO_IMPLICITO` → bloqueia Fix H para qualquer mensagem com "Favor". 3 testes novos. 374 passando.
+
+Casos originais corrigidos manualmente no banco (24/08/2026):
+- `19ff7486cc830e8c` → AF
+- `1a02411449b1e9c8` → AF
+
+**Risco residual:** clientes que enviam pedidos sem a palavra "Favor" (ex.: "Considerar o valor +USD $331,463.18. Obrigado.") ainda caem no Fix H → Concluída. Corrigidos manualmente onde identificados; sem regra automática para cobrir imperativo sem "Favor".
+
+---
+
 ### 🟡 CLASSIFICADOR — Palavra de fechamento "Abraço" (singular) não está no detector de assinatura (identificado 30/07/2026)
 
 O padrão atual reconhece `abraços` (plural) mas não `abraço` (singular). São a mesma coisa na prática — e-mails que fecham com "Abraço," não terão a assinatura removida. A IA vai receber nome, cargo e telefone junto com o texto.
@@ -537,20 +551,18 @@ O README antigo foi arquivado. Escrever o novo só quando algo estiver funcionan
 
 ---
 
-### 🟡 STATUS — Pente fino em todas as categorias e status do banco (identificado 21/08/2026)
+### 🟡 STATUS — Pente fino das AF (817 threads) — próxima sessão (identificado 21/08/2026, parcialmente resolvido 24/08/2026)
 
-Ao rodar o pipeline em 21/08/2026, Michel identificou que existem threads em **RETORNO_BACEN** com status **Aguardando Cliente** sendo que o cliente já agradeceu e o assunto estava encerrado — o status deveria ser **Concluída**. É provável que o mesmo problema ocorra em outras categorias e outros status.
+Em 24/08/2026: pente fino das **Concluídas** concluído (339 threads, 12 corrigidas). Restam as threads com status **Aguardando Finaud** (817 threads).
 
 **O que fazer:**
-1. Varrer todas as threads do banco por categoria e status
-2. Para cada combinação, pegar uma amostra do último e-mail e verificar se o status está correto
-3. Identificar padrões de erro por categoria (ex.: RETORNO_BACEN com AC quando cliente agradeceu)
-4. Propor regras de correção para os casos encontrados
-5. Executar recálculo retroativo com aprovação de Michel
+1. Varrer todas as threads AF do banco por categoria
+2. Para cada thread suspeita: ler o conteúdo completo, verificar com Michel
+3. Corrigir no banco e/ou no código conforme o padrão identificado
 
-**Escopo:** banco completo — todas as categorias, todos os status.
+**Escopo:** somente as 817 threads com `status_workflow = 'Aguardando Finaud'`.
 
-**Quando fazer:** sessão dedicada após as prioridades atuais (Fase 1 em produção).
+**Quando fazer:** próxima sessão dedicada.
 
 ---
 

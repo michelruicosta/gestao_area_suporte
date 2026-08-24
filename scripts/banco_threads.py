@@ -254,6 +254,7 @@ _FRASES_PEDIDO_EXPLICITO = (
     'por gentileza, encaminhe',
     'solicito ',        # forma singular: "solicito também os balanços", "solicito que envie"
     'vou precisar',    # "vou precisar dos COSIFs", "vou precisar que você"
+    'no aguardo',      # Fix S: "No aguardo." = Finaud está aguardando resposta do cliente → AC
 )
 
 _SAUDACAO_RE = re.compile(
@@ -573,6 +574,15 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
             and _CONFIRMACAO_EXPLICITA.search(texto_lower)
             and _ACAO_PROPRIA.search(texto_lower)):
         return 'Concluída', 'Cliente confirmou e comprometeu-se a agir — sem pendência para a Finaud'
+    # Fix R: cliente prometeu retornar — ação pendente do cliente, não da Finaud
+    # Ex.: "Vamos analisar e retornamos." / "Obrigada, retornarei amanhã."
+    _CLIENTE_VAI_RETORNAR = re.compile(
+        r'\bretornaremos\b|\bretornamos\b|\bretornarei\b|\bvamos\s+analisar\b'
+        r'|\be\s+retorno\b',   # Fix V: "vou confirmar e retorno" — cliente prometeu voltar → AC
+        re.IGNORECASE,
+    )
+    if _CLIENTE_VAI_RETORNAR.search(texto_lower):
+        return 'Aguardando Cliente', 'Fix R: cliente prometeu retornar — aguardando o cliente'
     # Fix H: cliente agradece sem pergunta e sem entrega de documento → Concluída
     # Regra aprovada por Michel em 21/08/2026: "se não houver perguntas, observações e
     # documento é concluída". Mais amplo que Fix G — não exige verbo de ação específico.
@@ -586,7 +596,9 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         re.IGNORECASE,
     )
     _PEDIDO_IMPLICITO = re.compile(
-        r'\bprecis[ao]mos?\b|\bnecessit[ao]mos?\b|\bgostar[íi]amos?\b|\bprecisaria\b',
+        r'\bprecis[ao]mos?\b|\bnecessit[ao]mos?\b|\bgostar[íi]amos?\b|\bprecisaria\b'
+        r'|\bpe[çc]o\s'    # Fix T: "Peço que inclua..." — pedido educado do cliente → AF
+        r'|\bfavor\b',     # Fix U: "Favor considerar/enviar/verificar..." — pedido ao Finaud → AF
         re.IGNORECASE,
     )
     # Remove URLs e "??" (duplo ponto de interrogação informal/emoji) antes de checar
