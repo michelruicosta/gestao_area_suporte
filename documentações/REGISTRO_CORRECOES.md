@@ -2,6 +2,159 @@
 
 ---
 
+## 2026-08-24 — Rename: classificador_ia.py → classificador_regras.py
+
+### 24/08 — Rename do classificador: nome corrigido para refletir implementação real
+
+**🔎 Em miúdos:** o arquivo que classifica os e-mails se chamava `classificador_ia.py`, mas ele não usa IA — usa regras determinísticas. O nome causava confusão (inclusive levou a IA assistente a afirmar erroneamente que o sistema usa GPT-4o-mini). Nome corrigido para `classificador_regras.py`.
+
+**Arquivos alterados:**
+- `scripts/classificador_ia.py` → `scripts/classificador_regras.py` (renomeado)
+- `tests/test_classificador_ia.py` → `tests/test_classificador_regras.py` (renomeado)
+- `scripts/executar_pipeline.py`, `scripts/chat_ensino.py`, `scripts/servidor_telas.py`, `scripts/validador_classificacao.py` — imports atualizados
+- `CLAUDE.md` — 2 referências atualizadas
+- `documentações/PENDENCIAS.md` — 2 referências atualizadas
+
+**Validação:** ✅ `pytest tests/ -q` → 587 passed. Nenhuma referência a `classificador_ia` restante em `.py`.
+
+---
+
+## 2026-08-24 — Pente fino AC: Fix Q + fixes manuais #29, #36, #40, G3-4
+
+### 24/08 — Fix manual G3-4: Indício de Problema Bacen (1201 PIX) → Concluída
+
+**🔎 Em miúdos:** o sistema marcava AC porque a Finaud enviou um arquivo (normativa), mas esqueceu de usar frase de entrega. Na verdade a Finaud só respondeu a dúvida do cliente enviando a normativa IN BCB nº 32 — sem pedir nada em retorno.
+
+**Correção:** banco atualizado manualmente (thread_id: `19f2999883174706`): AC → Concluída.
+
+**Validação:** ⚠️ VALIDAÇÃO PENDENTE — alteração só no banco.
+
+---
+
+## 2026-08-24 — Pente fino AC: Fix Q + fixes manuais #29, #36, #40
+
+### 24/08 — Fix Q: quando campo "Para" está vazio, o código verifica o CC
+
+**🔎 Em miúdos:** quando alguém da Finaud encaminha um e-mail internamente usando só o campo "Cópia" (CC) sem colocar ninguém no "Para", o sistema não entendia para quem estava escrevendo e classificava errado.
+
+**Problema:** o campo `destinatarios` (o "Para") vinha vazio porque Monica enviou uma notificação interna colocando `suporte@finaud.com.br` só no CC — o Gmail não gera header `To:` nesse caso. Com `destinatarios` vazio, `para_finaud` retornava False e o código caía no caminho errado (Finaud→Cliente), dando AC em vez de AF.
+
+**Causa raiz confirmada:** verificado diretamente via API do Gmail — a mensagem realmente não tem `To:` header. O coletor está correto; o problema era que o código não tentava o CC como alternativa.
+
+**Correção:** em `scripts/banco_threads.py`, quando `destinatarios` está vazio, o código agora usa o campo `cc` para determinar `para_finaud`. Se todos os endereços do CC forem Finaud → mensagem interna. Se CC tiver endereço externo → Finaud→Cliente (comportamento unchanged).
+
+```python
+# Fix Q: To: vazio → verifica CC (encaminhamento interno via lista/grupo)
+_campo_para = destinatario if destinatario.strip() else cc_campo
+para_finaud = _todos_destinatarios_finaud(_campo_para)
+```
+
+**Impacto em regressões:** zero — apenas 2 mensagens em 2.138 tinham `destinatarios` vazio; a outra (DRL-Brazabank, msg#0 de remetente externo) não é afetada porque `para_finaud` não importa quando `eh_finaud=False`.
+
+**Validação:** `pytest tests/test_banco_threads.py -q` → 126 passed ✅
+
+---
+
+### 24/08 — Fix manual #29: FW: BANCO CENTRAL - COMUNICACAO DE INCONSISTENCIA NO DRM - 2060 → Concluída
+
+**🔎 Em miúdos:** Andrea orientou o cliente Raphael a desconsiderar a inconsistência no DRM porque a retificação já havia sido enviada. O sistema marcou AC, mas a conversa estava encerrada.
+
+**Correção:** banco atualizado manualmente (thread_id: `19f7fc00d85fc8af`): AC → Concluída.
+
+**Por que não tem fix de código:** o texto_novo continha "A princípio podemos desconsiderar" — variação que não está na lista de frases conclusivas. Caso isolado, Michel aprovou correção manual.
+
+**Validação:** ⚠️ VALIDAÇÃO PENDENTE — sem novo pytest necessário (alteração só no banco, não no código).
+
+---
+
+### 24/08 — Fix manual #36: RES: SSG - ENVIAR POSIÇÃO - 4111 → Aguardando Finaud
+
+**🔎 Em miúdos:** Monica prometeu ao cliente que faria as alterações e enviaria — então quem tem trabalho a fazer é a Finaud, não o cliente. O sistema marcava AC.
+
+**Correção:** banco atualizado manualmente (thread_id: `19f422edc9eb4f89`): AC → Aguardando Finaud.
+
+**Observação:** o status calculado pelo código ainda seria AC via §8.6 (o corpo contém um encaminhamento de Monica para o cliente que o código detecta). Se uma nova mensagem chegar nessa thread, o status será recalculado. Caso a recorrência apareça, reavaliar adição de frase conclusiva para "as alterações serão efetuadas".
+
+**Validação:** ⚠️ VALIDAÇÃO PENDENTE — sem novo pytest necessário (alteração só no banco, não no código).
+
+---
+
+### 24/08 — Fix manual #40: RES: Norma BCB - Risco de Liquidez e LCR → Concluída
+
+**🔎 Em miúdos:** Rodrigo respondeu completamente a dúvida do cliente sobre quem é responsável pelo envio do DRL no conglomerado prudencial. Sem pedir nada do cliente. O sistema marcava AC.
+
+**Correção:** banco atualizado manualmente (thread_id: `19f28dcdfa5070d9`): AC → Concluída.
+
+**Padrão:** mesmo caso do CV INVEST DLO (#12) — Finaud respondeu tecnicamente com completeza sem frase conclusiva reconhecida pelo código. Fix P ("permanecemos à disposição para eventuais esclarecimentos") previne recorrência para respostas que usem essa frase.
+
+**Validação:** ⚠️ VALIDAÇÃO PENDENTE — sem novo pytest necessário (alteração só no banco, não no código).
+
+---
+
+## 2026-08-23 — Pente fino AC: Fix L e Fix M
+
+### 23/08 — Fix L: "estarei colocando" agora marca Aguardando Finaud, não Aguardando Cliente
+
+**🔎 Em miúdos:** quando a Finaud escrevia "Logo, estarei colocando as remessas em dia", o sistema marcava como Aguardando Cliente — errado, porque quem tinha trabalho a fazer era a Finaud.
+
+**Problema:** a frase "estarei colocando" não estava na lista de frases que indicam "Finaud prometeu agir". O sistema caia no caminho padrão e marcava AC.
+
+**Correção:** adicionado `'estarei colocando'` à tupla `_FRASES_AGUARDANDO_FINAUD_ATIVA` em `scripts/banco_threads.py`. 1 thread corrigida no banco (DDR_2011 "Re: VIS - ENVIAR CADOC e DDR": AC → AF).
+
+**Validação:** `pytest tests/ -q` → 351 passed ✅
+
+### 23/08 — Fix M: "Qualquer dúvida fico a disposição" agora marca Concluída, não AC
+
+**🔎 Em miúdos:** quando a Finaud respondia uma pergunta do cliente com um arquivo e encerrava com "Qualquer dúvida fico a disposição", o sistema marcava como Aguardando Cliente — errado, porque a Finaud já respondeu e ninguém tem mais nada a fazer.
+
+**Problema:** a frase "Qualquer dúvida fico a disposição" não estava na lista de frases que indicam que a Finaud encerrou a conversa. Diferente de "Qualquer dúvida retorne" (que aparece também em e-mails onde a Finaud pediu algo ao cliente, por isso não foi adicionada).
+
+**Correção:** adicionado `'qualquer dúvida fico a disposição'` à tupla `_FRASES_ENTREGA` em `scripts/banco_threads.py`. 1 thread corrigida no banco (SUPORTE "Credencias web api": AC → Concluída).
+
+**Validação:** `pytest tests/ -q` → 352 passed ✅
+
+### 23/08 — DLI_2062 "ENC: COLOP UNICAD PL MINIMO": Concluída → AC (correção de divergência)
+
+**🔎 Em miúdos:** o banco dizia Concluída (confirmado em 21/08), mas Fix J fez o sistema calcular AC porque tem "orientamos que" no texto. Michel decidiu aceitar AC por ora — quando a Finaud repassa orientação do gestor ao cliente sem que haja ação pendente, revisar futuramente.
+
+**Correção:** status atualizado manualmente no banco para Aguardando Cliente. sem teste: divergência de regra de negócio, não de código.
+
+### 24/08 — Fix P: "permanecemos à disposição para esclarecer/esclarecimentos" agora marca Concluída
+
+**🔎 Em miúdos:** quando a Finaud respondia todas as dúvidas do cliente com uma análise longa e fechava com "Permanecemos à disposição para esclarecer qualquer ponto adicional", o sistema marcava como Aguardando Cliente — errado, porque a Finaud já respondeu tudo.
+
+**Problema:** a frase "permanecemos à disposição" (curta) não foi adicionada porque aparece também em e-mails onde a Finaud pediu algo ao cliente (ex: Guru CTVM: "poderiam enviar o 2060... Permanecemos à disposição"). Só as formas longas com "para esclarecer" ou "para eventuais esclarecimentos" são exclusivas de respostas finais sem pedido.
+
+**Correção:** adicionadas duas frases à `_FRASES_CONCLUSIVAS_FINAUD`:
+- `'permanecemos à disposição para esclarecer'`
+- `'permanecemos à disposição para eventuais esclarecimentos'`
+
+A thread CV INVEST DLO 05/2026 foi corrigida manualmente no banco antes do fix. Fix P garante casos futuros semelhantes.
+
+**Validação:** `pytest tests/ -q` → 359 passed ✅ (inclui teste de falso positivo com forma curta)
+
+### 23/08 — Fix O: detecção de forward para cliente agora exige que "De:" seja Finaud
+
+**🔎 Em miúdos:** quando a Andrea encaminhava internamente uma notificação do BC para a Monica, o sistema identificava erroneamente que era um "forward para o cliente" — porque o BC tinha um endereço externo no campo "Para:". O resultado: a thread ficava como Aguardando Cliente sendo que o trabalho era interno da Finaud.
+
+**Problema:** a função que detecta "Finaud encaminhou para cliente" (Formato A) verificava só o "Para:" dentro do forward. Se o "Para:" era externo, disparava — independentemente de quem era o "De:". Uma notificação do BC encaminhada pelo cliente, com "De: bc@bacen.gov.br" e "Para: cliente@ext.com", disparava indevidamente.
+
+**Correção:** no Formato A de `_eh_forward_para_cliente`, antes de checar "Para:", verificar que "De:" dentro do forward é um endereço Finaud. Se "De:" for externo (ex: BC, outro órgão), a função retorna False e o e-mail é tratado como interno genuíno (Cenário 3 → AF). 1 thread corrigida no banco (RETORNO_BACEN "Re: 1ª REITERAÇÃO - COMUNICAÇÃO DE VARIAÇÃO RELEVANTE NO DDR": AC → AF).
+
+**Validação:** `pytest tests/ -q` → 356 passed ✅
+
+### 23/08 — Fix N: forward com corpo vazio agora verifica frase conclusiva no corpo completo
+
+**🔎 Em miúdos:** quando a Finaud encaminhava internamente um e-mail com a resposta de uma corretora dizendo "As opções de ação já foram cadastradas", o sistema marcava como Aguardando Cliente — errado, porque a confirmação estava dentro do corpo do e-mail encaminhado.
+
+**Problema:** `_extrair_texto_novo` remove tudo a partir do separador de forward `----------`, deixando `texto_novo` vazio. O código só checava `_FRASES_CONCLUSIVAS_FINAUD` em `texto_flat` (que é derivado de `texto_novo`) — então a frase dentro do forward nunca era encontrada.
+
+**Correção:** no sub-caso 1b do §8.6 (forward Finaud→Finaud→cliente), quando `texto_novo.strip()` está vazio, checamos também `corpo_raw` completo contra `_FRASES_CONCLUSIVAS_FINAUD`. 1 thread corrigida no banco (DDR_2011 "Monte Bravo | Cadastro de Ações e Opções | 2026-07-15": AC → Concluída).
+
+**Validação:** `pytest tests/ -q` → 354 passed ✅
+
+---
+
 ## 2026-08-21 — Pipeline rodado + 4 classificações verificadas e confirmadas
 
 ### 21/08 23:00 — Pipeline executado; 4 classificações questionáveis confirmadas corretas por Michel

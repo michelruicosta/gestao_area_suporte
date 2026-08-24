@@ -29,6 +29,7 @@ def _msg(
     nomes_anexos: list | None = None,
     destinatarios: str = '',
     reply_to: str = '',
+    cc: str = '',
 ) -> dict:
     return {
         'remetente': remetente,
@@ -37,6 +38,7 @@ def _msg(
         'nomes_anexos': nomes_anexos or [],
         'destinatarios': destinatarios,
         'reply_to': reply_to,
+        'cc': cc,
     }
 
 
@@ -1420,3 +1422,261 @@ def test_status_fixk_prezados_cortesia_pura():
     msgs = [_msg(FINAUD, corpo=corpo)]
     status, _ = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud'
+
+
+def test_status_fixl_estarei_colocando_remessas():
+    """Fix L — 'Agradeço pelo envio. Logo, estarei colocando as remessas em dia.' → AF.
+
+    Finaud agradeceu o envio do cliente e prometeu agir (colocar remessas em dia).
+    Sem o fix, o texto não iniciava com palavra de cortesia reconhecida ('agradeço'
+    não estava na lista) e não havia frase de pedido → _eh_cortesia_finaud retornava
+    False → AC (errado). Fix: adicionar 'estarei colocando' a
+    _FRASES_AGUARDANDO_FINAUD_ATIVA → Finaud prometeu retornar → AF.
+    """
+    corpo = (
+        'Bruno,\n\n'
+        'Agradeço pelo envio.\n'
+        'Logo, estarei colocando as remessas em dia.\n\n'
+        'Att.\n\nMônica Macedo\nAnalista de Suporte Jr.\nSuporte\n'
+    )
+    msgs = [_msg(FINAUD, corpo=corpo)]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+
+
+def test_status_fixm_qualquer_duvida_fico_disposicao_conclui():
+    """Fix M — Finaud responde pergunta com arquivo + 'Qualquer dúvida fico a disposição' → Concluída.
+
+    Quando Finaud envia mensagem com anexo 'noname' e texto informacional encerrado com
+    'Qualquer dúvida fico a disposição', o sistema marcava AC 'sem linguagem de entrega'
+    porque não havia frase de entrega explícita. Fix: adicionar a frase a _FRASES_ENTREGA.
+    Diferente de 'Qualquer dúvida retorne' (usado também em e-mails com pedido ao cliente).
+    """
+    corpo = (
+        'Prezado Paulo, boa noite.\n\n'
+        'Recebemos a informação interna de que o usuário e a senha para autenticação\n'
+        'na WebApi são os mesmos para acessar o Risk Driver.\n\n'
+        'Qualquer dúvida fico a disposição.\n\n'
+        'Andrea Inacio\nCoordenadora de Suporte\n'
+    )
+    msgs = [_msg(FINAUD, corpo=corpo, nomes_anexos=['noname', 'image.png'])]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Concluída'
+
+
+# ── Fix N — forward com texto_novo vazio: verificar corpo completo (23/08/2026) ──
+
+def test_status_fixn_forward_vazio_frase_conclusiva_no_corpo():
+    """Fix N — §8.6 forward (para_finaud=True): texto_novo vazio + frase conclusiva no corpo → Concluída.
+
+    Monte Bravo | Cadastro de Ações e Opções | 2026-07-15: Finaud encaminhou
+    internamente um forward cujo "Para:" é o cliente externo (ops@montebravo.com.br) e
+    a resposta dentro do forward dizia 'As opções de ação já foram cadastradas'.
+    _extrair_texto_novo strip tudo a partir do '----------', então texto_novo ficava vazio.
+    Sem Fix N, o código caía em AC 'sem sinal claro'.
+    Fix: quando texto_novo.strip() está vazio, checar _FRASES_CONCLUSIVAS_FINAUD
+    no corpo completo → Concluída.
+    """
+    sep = '---------- Forwarded message ---------\r\n'
+    corpo = (
+        sep
+        + 'De: Bruno Finaud <bruno@finaud.com.br>\r\n'
+        + 'Para: ops@montebravo.com.br\r\n\r\n'
+        + 'As opções de ação já foram cadastradas. '
+        + 'Desde já agradeço e permaneço à disposição.\r\n'
+    )
+    msgs = [_msg(
+        SUPORTE,
+        corpo=corpo,
+        destinatarios='suporte@finaud.com.br',
+    )]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Concluída'
+
+
+def test_status_fixn_fp_forward_vazio_sem_frase_conclusiva():
+    """Fix N — falso positivo: texto_novo vazio mas corpo sem frase conclusiva → AC (padrão).
+
+    Garante que o Fix N não altera o comportamento padrão quando o forward não
+    contém nenhuma frase conclusiva reconhecida.
+    """
+    sep = '---------- Forwarded message ---------\r\n'
+    corpo = (
+        sep
+        + 'De: Bruno Finaud <bruno@finaud.com.br>\r\n'
+        + 'Para: ops@montebravo.com.br\r\n\r\n'
+        + 'Segue o pedido de cadastro das opções de ação.\r\n'
+    )
+    msgs = [_msg(
+        SUPORTE,
+        corpo=corpo,
+        destinatarios='suporte@finaud.com.br',
+    )]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Cliente'
+
+
+# ── Fix O — _eh_forward_para_cliente exige De: seja Finaud no Format A (23/08/2026) ──
+
+def test_status_fixo_forward_de_externo_nao_ativa_secao_86():
+    """Fix O — §8.6 Format A: Se De: no forward é externo (ex: BC), não ativa §8.6 → AF (cenário 3).
+
+    Re: 1ª REITERAÇÃO - COMUNICAÇÃO DE VARIAÇÃO RELEVANTE NO DDR: Andrea (Finaud) escreve
+    a Rodrigo (Finaud) com corpo contendo uma notificação do BC que tinha um "Para:" externo
+    no forward header. Sem Fix O, _eh_forward_para_cliente disparava com o Para: do BC
+    (externo), mandando para §8.6 AC. Com Fix O, De: é BC (externo, não Finaud) → não ativa
+    §8.6 → cai em Cenário 3 (e-mail interno) → AF.
+    """
+    sep = '---------- Forwarded message ---------\r\n'
+    corpo = (
+        'Rodrigo e Monica, boa tarde.\n\n'
+        'Conforme a comunicação do BC, há variação cambial acima da média.\n\n'
+        + sep
+        + 'De: Banco Central <noreply@bacen.gov.br>\r\n'
+        + 'Para: andrea.inacio@finaud.com.br\r\n\r\n'
+        + 'Prezados, variação cambial detectada em 23/06/2026.\r\n'
+    )
+    msgs = [_msg(
+        FINAUD,
+        corpo=corpo,
+        destinatarios='rodrigo.tiberio@finaud.com.br',
+    )]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado AF (Fix O), got: {status} | {motivo}'
+
+
+def test_status_fixp_permanecemos_esclarecer_conclui():
+    """Fix P — 'Permanecemos à disposição para esclarecer qualquer ponto adicional' → Concluída.
+
+    CV INVEST DLO 05/2026: Rodrigo respondeu todas as dúvidas do cliente sobre
+    diferenças entre projeções e fechou com oferta opcional de reunião.
+    Sem Fix P, nenhuma frase conclusiva era detectada → AC (errado).
+    Fix: adicionar forma longa de 'permanecemos à disposição para esclarecer'
+    a _FRASES_CONCLUSIVAS_FINAUD.
+    """
+    corpo = (
+        'Prezados,\n\n'
+        'Analisamos os pontos levantados e gostaríamos de compartilhar nossas considerações.\n\n'
+        'O capital social de R$ 8.350.000,00 decorre da premissa adotada para a simulação.\n\n'
+        'Permanecemos à disposição para esclarecer qualquer ponto adicional.\n\n'
+        'Atenciosamente,\nRodrigo Tiberio\nGerente de Riscos\n'
+    )
+    msgs = [_msg(FINAUD, corpo=corpo)]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Concluída'
+
+
+def test_status_fixp_permanecemos_eventuais_esclarecimentos_conclui():
+    """Fix P — 'Permanecemos à disposição para eventuais esclarecimentos' → Concluída."""
+    corpo = (
+        'Prezados,\n\n'
+        'Segue a projeção de capital conforme cenários solicitados.\n\n'
+        'Permanecemos à disposição para eventuais esclarecimentos.\n\n'
+        'Atenciosamente,\nRodrigo Tiberio\n'
+    )
+    msgs = [_msg(FINAUD, corpo=corpo, nomes_anexos=['projecao.pdf'])]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Concluída'
+
+
+def test_status_fixp_fp_permanecemos_curto_com_pedido_nao_conclui():
+    """Fix P — falso positivo: 'permanecemos à disposição' curto + pedido explícito → AC.
+
+    Guru CTVM: Finaud pede que o cliente envie o 2060 e fecha com 'Permanecemos à disposição'.
+    A forma CURTA sem 'para esclarecer/esclarecimentos' não está em _FRASES_CONCLUSIVAS_FINAUD.
+    """
+    corpo = (
+        'Prezada Andrea,\n\n'
+        'Por último, poderiam enviar o 2060 antes de protocolarem, por favor?\n\n'
+        'Permanecemos à disposição.\n\n'
+        'Andrea Inacio\nCoordenadora de Suporte\n'
+    )
+    msgs = [_msg(FINAUD, corpo=corpo)]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Cliente'
+
+
+def test_status_fixo_forward_de_finaud_ainda_ativa_secao_86():
+    """Fix O — regressão: Format A com De: Finaud E Para: externo continua ativando §8.6.
+
+    Garante que o Fix O não quebra o caso correto: quando Finaud realmente encaminhou
+    para o cliente (De: Finaud, Para: externo) o §8.6 ainda deve ativar.
+    Corpo sem frase conclusiva → AC 1b-padrão (Fix N não interfere: texto_novo não é vazio).
+    """
+    sep = '---------- Forwarded message ---------\r\n'
+    # Corpo com texto ANTES do forward (texto_novo não-vazio) e sem frase conclusiva
+    corpo = (
+        'Fyi — encaminhei ao cliente.\r\n\r\n'
+        + sep
+        + 'De: Andrea Inacio <andrea.inacio@finaud.com.br>\r\n'
+        + 'Para: ops@montebravo.com.br\r\n\r\n'
+        + 'Prezada, por favor verifique o status do arquivo.\r\n'
+    )
+    msgs = [_msg(
+        SUPORTE,
+        corpo=corpo,
+        destinatarios='suporte@finaud.com.br',
+    )]
+    # §8.6 ativa (De: Finaud, Para: externo) + sem frase conclusiva → AC (1b-padrão)
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Cliente'
+
+
+# ── Fix Q — To: vazio → fallback para CC ─────────────────────────────────────
+
+def test_status_fixq_to_vazio_cc_so_finaud_cenario3_af():
+    """Fix Q — To: vazio, CC: só Finaud, sem forward no corpo → Cenário 3 → AF.
+
+    Monica envia notificação interna (To: vazio, CC: suporte@finaud.com.br).
+    Sem encaminhamento para cliente no corpo → Cenário 3 → AF.
+    """
+    corpo = (
+        'Fyi — enviei confirmação ao cliente.\n\n'
+        'Mônica Macedo\nAnalista de Suporte Jr.\n'
+    )
+    msgs = [_msg(
+        FINAUD,
+        corpo=corpo,
+        assunto='Fwd: SSG - ENVIAR POSIÇÃO - 4111',
+        destinatarios='',
+        cc='suporte <suporte@finaud.com.br>',
+    )]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+
+
+def test_status_fixq_to_vazio_cc_externo_nao_muda_caminho():
+    """Fix Q — To: vazio, CC: endereço externo → para_finaud=False → Finaud→Cliente.
+
+    Quando o CC tem endereço externo, o fallback não trata como interno.
+    Sem frase conclusiva e assunto sem RES: → AC.
+    """
+    corpo = 'Verificamos a situação e aguardamos seu retorno.\n\nAndrea Inacio\n'
+    msgs = [_msg(
+        FINAUD,
+        corpo=corpo,
+        assunto='Acompanhamento do caso',
+        destinatarios='',
+        cc='cliente@externo.com.br',
+    )]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Cliente'
+
+
+def test_status_fixq_to_preenchido_cc_ignorado():
+    """Fix Q — regressão: quando To: está preenchido, CC não afeta para_finaud.
+
+    Garante que o fallback só age quando To: está vazio — comportamento normal inalterado.
+    To: externo + CC: Finaud → para_finaud=False (To: tem precedência) → AC.
+    """
+    corpo = 'Verificamos a situação e aguardamos seu retorno.\n\nAndrea Inacio\n'
+    msgs = [_msg(
+        FINAUD,
+        corpo=corpo,
+        assunto='Acompanhamento do caso',
+        destinatarios='cliente@externo.com.br',
+        cc='suporte@finaud.com.br',
+    )]
+    # To: tem externo → para_finaud=False → Finaud→Cliente → AC
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Cliente'

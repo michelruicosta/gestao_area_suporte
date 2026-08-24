@@ -448,7 +448,7 @@ def api_admin_coletar():
         try:
             sys.path.insert(0, _SCRIPTS_DIR)
             from coletor_gmail import coletar
-            from classificador_ia import classificar_banco
+            from classificador_regras import classificar_banco
             log_id = coletar()
             contagens = classificar_banco()
             if log_id:

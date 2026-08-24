@@ -1,5 +1,5 @@
 """
-classificador_ia.py
+classificador_regras.py
 Classifica threads de e-mail usando regras determinísticas (sem chamada a IA).
 A fonte de verdade das regras está em documentações/regras_classificador_threads.json.
 

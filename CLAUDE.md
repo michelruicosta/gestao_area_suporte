@@ -56,7 +56,7 @@ O Michel escolhe ou sugere um nome alternativo antes de qualquer linha de códig
 
 > **Por que esta regra existe:** em 24/06/2026 o nome `_par_conclusivo` foi criado sem aprovação. Michel identificou que não é intuitivo — "par" é jargão interno sem significado claro para quem lê de fora. Nomes ruins acumulam e tornam o sistema difícil de entender e manter.
 >
-> **Padrão aprovado (28/07/2026):** `ação_domínio.py` — ex.: `coletor_gmail.py`, `classificador_ia.py`.
+> **Padrão aprovado (28/07/2026):** `ação_domínio.py` — ex.: `coletor_gmail.py`, `classificador_regras.py`.
 
 ### Protocolo "parquear e continuar" — dúvidas que surgem no meio do trabalho
 
@@ -92,7 +92,7 @@ Mesmo sem digitar os atalhos, estes rituais valem em toda sessão.
 - Mensagens no padrão: `fix:`, `feat:`, `test:`, `refactor:`, `docs:` (+ escopo), em português
 - `.gitignore` blinda segredos e dados — nunca forçá-los para dentro
 - **Faxina antes de cada commit:** varrer arquivos temporários soltos (`tmp*`, `_probe_*`, `*.out`, scripts one-off) → mover para `_archive/` na subpasta certa. Script nomeado só após `grep` confirmar que ninguém o importa e OK do Michel
-- **Commitar spec + script após cada rodada aprovada:** após qualquer rodada de validação com resultado satisfatório (novo baseline), commitar imediatamente `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` + `scripts/classificador_ia.py` e criar tag git (`git tag rodada-N-baseline`). Sem esse commit, não há ponto seguro para restaurar se a próxima rodada regredir. *(Lição de 06/08/2026: R2 não foi commitada — quando R3 regrediu, não havia estado limpo para restaurar.)*
+- **Commitar spec + script após cada rodada aprovada:** após qualquer rodada de validação com resultado satisfatório (novo baseline), commitar imediatamente `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` + `scripts/classificador_regras.py` e criar tag git (`git tag rodada-N-baseline`). Sem esse commit, não há ponto seguro para restaurar se a próxima rodada regredir. *(Lição de 06/08/2026: R2 não foi commitada — quando R3 regrediu, não havia estado limpo para restaurar.)*
 
 ## Permissões
 Este projeto usa `--dangerously-skip-permissions`. Claude pode executar scripts e modificar arquivos sem pedir confirmação individual.

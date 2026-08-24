@@ -32,7 +32,7 @@ BASE = r'D:\02_Finaud\Projetos\ativos\gestao_area_suporte'
 sys.path.insert(0, os.path.join(BASE, 'scripts'))
 load_dotenv(os.path.join(BASE, '.env'))
 
-from classificador_ia import _SISTEMA, CAMINHO_REGRAS, buscar_imagens, _extrair_texto_ocr
+from classificador_regras import _SISTEMA, CAMINHO_REGRAS, buscar_imagens, _extrair_texto_ocr
 
 cliente = OpenAI()
 

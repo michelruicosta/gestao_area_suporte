@@ -229,7 +229,7 @@ Durante os testes do gabarito (v1.0 a v1.3), ficou claro que a IA não tem regra
 
 ### 🟡 CLASSIFICADOR — Gabarito v2.0: validar e expandir (atualizado 12/08/2026)
 
-**Estado atual (12/08/2026):** `documentações/gabarito.json` v2.0 criado — 18 regras + 24 gabaritos. Integrado ao `classificador_ia.py` e ao `chat_ensino.py`. Amostra de controle: REPROVADA (15/20 — ver item 🔴 acima).
+**Estado atual (12/08/2026):** `documentações/gabarito.json` v2.0 criado — 18 regras + 24 gabaritos. Integrado ao `classificador_regras.py` e ao `chat_ensino.py`. Amostra de controle: REPROVADA (15/20 — ver item 🔴 acima).
 
 **O que resta:**
 1. Corrigir os 3 casos reprovados na amostra (item 🔴 acima)
@@ -487,7 +487,7 @@ Hoje o classificador lê apenas as 3 primeiras mensagens de cada thread. Uma sim
 2. Revisar as 5 threads onde a categoria *muda* (não adiciona) para confirmar se a nova classificação seria correta
 3. Decidir se threads multi-categoria (DLO+DLI genuínos) devem ou não aparecer nas duas filas
 
-**Arquivo a alterar:** `scripts/classificador_ia.py` — linha `for msg in mensagens[:3]`
+**Arquivo a alterar:** `scripts/classificador_regras.py` — linha `for msg in mensagens[:3]`
 
 ---
 

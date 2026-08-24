@@ -2,7 +2,7 @@
 executar_pipeline.py
 O que faz: roda o pipeline completo do Oráculo 360 em sequência:
            1. Coleta e-mails novos do Gmail (coletor_gmail.py)
-           2. Classifica threads sem categoria (classificador_ia.py)
+           2. Classifica threads sem categoria (classificador_regras.py)
 Rodar: python scripts/executar_pipeline.py
 """
 
@@ -14,7 +14,7 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from coletor_gmail import coletar
-from classificador_ia import classificar_banco
+from classificador_regras import classificar_banco
 
 
 def _linha(char: str = '─', n: int = 60) -> str:

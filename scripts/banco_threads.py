@@ -205,6 +205,9 @@ _FRASES_CONCLUSIVAS_FINAUD = (
     'recebido e enviado', 'ok, recebido e enviado',
     'obrigada pelo retorno', 'obrigado pelo retorno',
     'certo, providenciamos', 'certo, verificamos',
+    # Fix P: Finaud respondeu perguntas e ofereceu suporte adicional (sem pedir ação)
+    'permanecemos à disposição para esclarecer',
+    'permanecemos à disposição para eventuais esclarecimentos',
 )
 
 # Finaud prometeu retornar — bola ainda está com a Finaud
@@ -217,6 +220,7 @@ _FRASES_AGUARDANDO_FINAUD_ATIVA = (
     'assim que tiver',
     'pedi para',
     'pedimos para',
+    'estarei colocando',  # Fix L: "estarei colocando as remessas em dia" — Finaud prometeu agir
 )
 
 # Frases de entrega usadas no branch com arquivo real (superset de _FRASES_CONCLUSIVAS_FINAUD)
@@ -234,6 +238,7 @@ _FRASES_ENTREGA = _FRASES_CONCLUSIVAS_FINAUD + (
     'providenciamos a correção',
     'já concluímos', 'concluímos',
     'enviando em anexo',
+    'qualquer dúvida fico a disposição',  # Fix M: Finaud respondeu pergunta e encerrou
 )
 
 # Bloqueiam detecção de cortesia — Finaud está pedindo algo ao cliente
@@ -337,6 +342,7 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     remetente     = (ultimo.get('remetente')     or '').lower()
     reply_to      = (ultimo.get('reply_to')      or '').lower()
     destinatario  = (ultimo.get('destinatarios') or '')
+    cc_campo      = (ultimo.get('cc')            or '')
     assunto       = (ultimo.get('assunto')       or '')
     corpo_raw     = (ultimo.get('corpo_texto')   or '')
 
@@ -357,7 +363,9 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     # Se From=suporte@ mas Reply-To é externo → é cliente enviando via suporte (§7)
     via_suporte = (eh_finaud_raw and reply_to and not _eh_finaud_addr(reply_to))
     eh_finaud   = eh_finaud_raw and not via_suporte
-    para_finaud = _todos_destinatarios_finaud(destinatario)
+    # Fix Q: To: vazio → verifica CC (encaminhamento interno via lista/grupo)
+    _campo_para = destinatario if destinatario.strip() else cc_campo
+    para_finaud = _todos_destinatarios_finaud(_campo_para)
 
     texto_novo  = _extrair_texto_novo(corpo_raw)
     texto_lower = texto_novo.lower()
@@ -380,24 +388,37 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         return False
 
     def _eh_forward_para_cliente(texto: str) -> bool:
-        """§8.6: True se o corpo contém forward cujo Para: aponta para cliente externo."""
+        """§8.6: True se o corpo contém forward cujo De: é Finaud e Para: aponta para cliente externo."""
         # Formato A: separador com traços
         m = _FORWARD_SEP_RE.search(texto)
         if m:
             trecho = texto[m.end():]
-            mp = re.search(
-                r'(?:^|\n)[>\s]*(?:para|to)\s*:\s*(.+)',
-                trecho[:600], re.IGNORECASE,
-            )
-            if mp:
-                emails = re.findall(r'<([^>]+)>', mp.group(1))
-                if not emails:
-                    emails = re.findall(
+            # Fix O: De: no forward deve ser Finaud (evita falso positivo quando cliente encaminha notif. do BC)
+            md = re.search(r'(?:^|\n)[>\s]*(?:de|from)\s*:\s*(.+)', trecho[:400], re.IGNORECASE)
+            if md:
+                emails_de = re.findall(r'<([^>]+)>', md.group(1))
+                if not emails_de:
+                    emails_de = re.findall(
                         r'[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}',
-                        mp.group(1),
+                        md.group(1),
                     )
-                if emails and any(not _eh_finaud_addr(e) for e in emails):
-                    return True
+                de_eh_finaud = bool(emails_de) and all(_eh_finaud_addr(e) for e in emails_de)
+            else:
+                de_eh_finaud = False
+            if de_eh_finaud:
+                mp = re.search(
+                    r'(?:^|\n)[>\s]*(?:para|to)\s*:\s*(.+)',
+                    trecho[:600], re.IGNORECASE,
+                )
+                if mp:
+                    emails = re.findall(r'<([^>]+)>', mp.group(1))
+                    if not emails:
+                        emails = re.findall(
+                            r'[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}',
+                            mp.group(1),
+                        )
+                    if emails and any(not _eh_finaud_addr(e) for e in emails):
+                        return True
         # Formato B: headers citados com > (> De: @finaud ... > Para: cliente)
         de_m = re.search(
             r'(?:^|\n)\s*>\s*(?:de|from)\s*:.*?@(?:finaud|finaudtec)',
@@ -468,6 +489,11 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
                     return 'Concluída', 'Finaud encaminhou confirmação ao cliente e registrou internamente'
                 if any(f in texto_flat for f in _FRASES_CONCLUSIVAS_FINAUD):
                     return 'Concluída', 'Finaud encaminhou confirmação ao cliente e registrou internamente'
+                # Fix N: texto_novo vazio = conteúdo dentro do forward; checar corpo completo
+                if not texto_novo.strip():
+                    corpo_flat_fwd = re.sub(r'\s+', ' ', corpo_raw).lower()
+                    if any(f in corpo_flat_fwd for f in _FRASES_CONCLUSIVAS_FINAUD):
+                        return 'Concluída', 'Finaud encaminhou confirmação ao cliente e registrou internamente'
                 # 1b-padrão: sem sinal claro → Aguardando Cliente (erro mais seguro)
                 return 'Aguardando Cliente', 'Finaud escreveu ao cliente — aguarda retorno'
             # E-mail interno genuíno (Cenário 3)

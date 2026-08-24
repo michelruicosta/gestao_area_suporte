@@ -21,7 +21,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 sys.path.insert(0, str(Path(__file__).parent))
-from classificador_ia import classificar_thread
+from classificador_regras import classificar_thread
 
 load_dotenv()
 

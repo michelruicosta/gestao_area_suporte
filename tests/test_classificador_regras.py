@@ -1,6 +1,6 @@
 """
-test_classificador_ia.py
-Testes para scripts/classificador_ia.py — classificador determinístico de threads.
+test_classificador_regras.py
+Testes para scripts/classificador_regras.py — classificador determinístico de threads.
 """
 from __future__ import annotations
 
@@ -82,7 +82,7 @@ def test_regras_ids_unicos():
 
 def test_normalizacao_saldos_contabeis():
     """Variações do nome legível de SALDOS_CONTABEIS_DIARIOS_4111 são normalizadas."""
-    mod = importlib.import_module('classificador_ia')
+    mod = importlib.import_module('classificador_regras')
     norm = mod._NORM_CATEGORIAS
     variacoes = [
         'Saldos Contábeis Diários 4111',
@@ -99,7 +99,7 @@ def test_normalizacao_saldos_contabeis():
 
 def _classificar(assunto: str, corpo: str = '', nomes_anexos: list | None = None) -> dict:
     """Atalho para chamar classificar_thread com thread simples."""
-    mod = importlib.import_module('classificador_ia')
+    mod = importlib.import_module('classificador_regras')
     thread = {
         'assunto': assunto,
         'mensagens': [{'corpo_texto': corpo, 'nomes_anexos': nomes_anexos or []}],
@@ -190,7 +190,7 @@ def test_classificar_drl_typo_dlr():
 
 def test_registro_thread_confirmada_nao_reprocessa(monkeypatch):
     """Thread com status_regra 'confirmada' no registro retorna resultado salvo sem reclassificar."""
-    mod = importlib.import_module('classificador_ia')
+    mod = importlib.import_module('classificador_regras')
 
     registro_mock = {
         'threads': {
@@ -220,7 +220,7 @@ def test_registro_thread_confirmada_nao_reprocessa(monkeypatch):
 
 def test_registro_thread_incerta_classifica_deterministicamente(monkeypatch):
     """Thread com status_regra 'incerta' no registro passa pelo classificador determinístico."""
-    mod = importlib.import_module('classificador_ia')
+    mod = importlib.import_module('classificador_regras')
 
     registro_mock = {
         'threads': {
@@ -249,14 +249,14 @@ def test_registro_thread_incerta_classifica_deterministicamente(monkeypatch):
 
 def test_ocr_ignorado_sem_imagens():
     """_extrair_texto_ocr com lista vazia retorna string vazia."""
-    mod = importlib.import_module('classificador_ia')
+    mod = importlib.import_module('classificador_regras')
     resultado = mod._extrair_texto_ocr([])
     assert resultado == '', '_extrair_texto_ocr([]) deve retornar string vazia'
 
 
 def test_buscar_imagens_pasta_inexistente(tmp_path, monkeypatch):
     """buscar_imagens retorna lista vazia quando pasta de anexos não existe."""
-    mod = importlib.import_module('classificador_ia')
+    mod = importlib.import_module('classificador_regras')
     monkeypatch.setattr(mod, 'PASTA_ANEXOS', str(tmp_path / 'nao_existe'))
     resultado = mod.buscar_imagens(0)
     assert resultado == [], 'buscar_imagens deve retornar [] quando pasta não existe'
@@ -264,7 +264,7 @@ def test_buscar_imagens_pasta_inexistente(tmp_path, monkeypatch):
 
 def test_buscar_imagens_filtra_por_indice(tmp_path, monkeypatch):
     """buscar_imagens retorna só as imagens do índice correto."""
-    mod = importlib.import_module('classificador_ia')
+    mod = importlib.import_module('classificador_regras')
     monkeypatch.setattr(mod, 'PASTA_ANEXOS', str(tmp_path))
 
     (tmp_path / '3_image001.png').write_bytes(b'')
