@@ -537,6 +537,10 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .fog-cd-t    { font-weight: 700; color: var(--text) }
 .fog-cd-dot  { color: var(--border) }
 .fog-leg     { display: flex; align-items: center; gap: 10px; font-size: 10px }
+.fog-urg-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px;
+  border-radius: 10px; font-size: 11px; font-weight: 600; border: none; cursor: pointer;
+  background: var(--accent-bg); color: var(--accent); transition: opacity .15s; }
+.fog-urg-badge:hover { opacity: .75; }
 .fog-leg span { display: flex; align-items: center; gap: 4px }
 .fog-leg-sq  { display: inline-block; width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0 }
 
@@ -976,6 +980,9 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
           🕐 Próxima atualização em <span class="fog-cd-v" id="fog-countdown">15:00</span>
           <span class="fog-cd-dot">·</span>
           <span class="fog-cd-t" id="fog-totalVis">{{ fog_tarefas|length }}</span> casos visíveis
+          <button id="fog-urgencia-badge" class="fog-urg-badge" hidden
+            onclick="_fogUrgenciaFiltro='';fogFiltrar()">
+          </button>
         </div>
         <div class="fog-leg">
           <span><span class="fog-leg-sq" style="background:#10b981"></span> Verde &lt; 8 dias</span>
@@ -1063,12 +1070,12 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
       {% endif %}
 
       <div class="fog-kpi-grid">
-        <div class="fog-kpi" style="border-left:3px solid var(--accent);cursor:pointer" onclick="navegar(document.querySelector('[data-pagina=fog-casos]'))">
+        <div class="fog-kpi" style="border-left:3px solid var(--accent);cursor:pointer" title="Ver todos os casos ativos" onclick="fogFiltrarPorUrgencia('')">
           <div class="fog-kpi-lbl">Total Ativos</div>
           <div class="fog-kpi-num" style="color:var(--text)">{{ fog_stats.total_ativos }}</div>
           <div class="fog-kpi-sub">casos em aberto</div>
         </div>
-        <div class="fog-kpi" style="border-left:3px solid #10b981">
+        <div class="fog-kpi" style="border-left:3px solid #10b981;cursor:pointer" title="Ver casos em andamento (< 8 dias)" onclick="fogFiltrarPorUrgencia('verde')">
           <div class="fog-kpi-lbl">Em Andamento</div>
           <div class="fog-kpi-row">
             <div class="fog-kpi-num" style="color:#10b981">{{ fog_stats.em_andamento.qtd }}</div>
@@ -1077,7 +1084,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
           <div class="fog-kpi-bar"><div class="fog-kpi-fill" style="width:{{ fog_stats.em_andamento.perc }}%;background:#10b981"></div></div>
           <div class="fog-kpi-sub">menos de 8 dias</div>
         </div>
-        <div class="fog-kpi" style="border-left:3px solid #f59e0b">
+        <div class="fog-kpi" style="border-left:3px solid #f59e0b;cursor:pointer" title="Ver casos em atenção (8–14 dias)" onclick="fogFiltrarPorUrgencia('ambar')">
           <div class="fog-kpi-lbl">Atenção</div>
           <div class="fog-kpi-row">
             <div class="fog-kpi-num" style="color:#f59e0b">{{ fog_stats.atencao.qtd }}</div>
@@ -1086,7 +1093,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
           <div class="fog-kpi-bar"><div class="fog-kpi-fill" style="width:{{ fog_stats.atencao.perc }}%;background:#f59e0b"></div></div>
           <div class="fog-kpi-sub">parado há 8–14 dias</div>
         </div>
-        <div class="fog-kpi" style="border-left:3px solid #ef4444">
+        <div class="fog-kpi" style="border-left:3px solid #ef4444;cursor:pointer" title="Ver casos críticos (≥ 15 dias)" onclick="fogFiltrarPorUrgencia('vermelho')">
           <div class="fog-kpi-lbl">Crítico</div>
           <div class="fog-kpi-row">
             <div class="fog-kpi-num" style="color:#ef4444">{{ fog_stats.critico.qtd }}</div>
@@ -1095,7 +1102,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
           <div class="fog-kpi-bar"><div class="fog-kpi-fill" style="width:{{ fog_stats.critico.perc }}%;background:#ef4444"></div></div>
           <div class="fog-kpi-sub">parado há ≥ 15 dias</div>
         </div>
-        <div class="fog-kpi" style="border-left:3px solid var(--accent)">
+        <div class="fog-kpi" style="border-left:3px solid var(--accent);cursor:pointer" title="Ver casos concluídos" onclick="fogFiltrarPorUrgencia('concluido')">
           <div class="fog-kpi-lbl">Concluídos</div>
           <div class="fog-kpi-num" style="color:var(--text)">{{ fog_stats.total_concluidos }}</div>
           <div class="fog-kpi-sub" style="color:var(--accent);font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:.06em;margin-top:10px">total encerrado</div>
@@ -2103,6 +2110,23 @@ function _fogStartCountdown() {
   }, 1000);
 }
 
+// ── FOG: Filtro de urgência (vem do Gerencial) ────────────────────────
+let _fogUrgenciaFiltro = ''; // '' | 'verde' | 'ambar' | 'vermelho' | 'concluido'
+
+function fogFiltrarPorUrgencia(urgencia) {
+  _fogUrgenciaFiltro = urgencia;
+  navegar(document.querySelector('[data-pagina="fog-casos"]'));
+}
+
+function _atualizarBadgeUrgencia() {
+  const badge = document.getElementById('fog-urgencia-badge');
+  if (!badge) return;
+  if (!_fogUrgenciaFiltro) { badge.hidden = true; return; }
+  const labels = {verde: '< 8 dias', ambar: '8–14 dias', vermelho: '≥ 15 dias', concluido: 'Concluídos'};
+  badge.textContent = `Filtro: ${labels[_fogUrgenciaFiltro]}  ✕`;
+  badge.hidden = false;
+}
+
 // ── FOG: Filtro e ordenação ───────────────────────────────────────────
 function fogFiltrar() {
   const busca = (document.getElementById('fBusca')?.value || '').toUpperCase();
@@ -2119,11 +2143,20 @@ function fogFiltrar() {
     if (resp && r.dataset.responsavel !== resp) ok = false;
     if (stat && r.dataset.status     !== stat) ok = false;
     if (area && r.dataset.area       !== area) ok = false;
+    if (_fogUrgenciaFiltro) {
+      const dias = Number(r.dataset.dias || 0);
+      const st   = r.dataset.status || '';
+      if (_fogUrgenciaFiltro === 'verde'    && !(st === 'ativo' && dias < 8))          ok = false;
+      if (_fogUrgenciaFiltro === 'ambar'    && !(st === 'ativo' && dias >= 8 && dias < 15)) ok = false;
+      if (_fogUrgenciaFiltro === 'vermelho' && !(st === 'ativo' && dias >= 15))        ok = false;
+      if (_fogUrgenciaFiltro === 'concluido' && st !== 'fechado')                       ok = false;
+    }
     r.style.display = ok ? '' : 'none';
     if (ok) vis++;
   });
   const tv = document.getElementById('fog-totalVis');
   if (tv) tv.textContent = vis;
+  _atualizarBadgeUrgencia();
   fogOrdenar();
 }
 
@@ -2166,6 +2199,7 @@ function _fogAplicarOrdem() {
 }
 
 function fogReset() {
+  _fogUrgenciaFiltro = '';
   _fogSecs = 900;
   fogFiltrar();
 }
