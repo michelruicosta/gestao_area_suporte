@@ -649,7 +649,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
       <span class="nav-badge" id="badge-bloqueados">—</span>
     </button>
 
-    <div class="nav-label" style="margin-top:0.5rem;">FOG</div>
+    <div class="nav-label" style="margin-top:0.5rem;">FOGBUGZ</div>
 
     <button class="nav-item" data-pagina="fog-casos" onclick="navegar(this)">
       <span class="nav-ico">📋</span>
@@ -658,7 +658,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 
     <button class="nav-item" data-pagina="fog-kpis" onclick="navegar(this)">
       <span class="nav-ico">📈</span>
-      KPIs
+      Gerencial
     </button>
 
     <div class="nav-label" style="margin-top:0.5rem;">Administração</div>
@@ -1240,8 +1240,8 @@ function navegar(btn) {
     'nao-classificados':'Não classificados',
     'bloqueados':       'Bloqueados por filtro',
     'admin':            'Coletor',
-    'fog-casos':        'FOG · Casos',
-    'fog-kpis':         'FOG · KPIs',
+    'fog-casos':        'FOGBUGZ · Casos',
+    'fog-kpis':         'FOGBUGZ · Gerencial',
   };
   document.getElementById('topbar-titulo').textContent = titulos[pag] || '';
   if (pag === 'nao-classificados') carregarNaoClassificados();
