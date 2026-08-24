@@ -879,7 +879,7 @@ def atualizar_senha_esquecida():
 @app.route('/perfil')
 @login_required
 def perfil():
-    return render_template('perfil.html')
+    abort(404)  # template arquivado — funcionalidade não existe no sistema atual
 
 @app.route('/editar_dados', methods=['GET', 'POST'])
 @login_required
@@ -913,7 +913,7 @@ def alterar_senha():
 @app.route('/configuracoes')
 @login_required
 def configuracoes():
-    return render_template('configuracoes.html')      
+    abort(404)  # template arquivado — aparência configurada diretamente em gestao_email.html
 
 # --- ROTAS PRINCIPAIS ---
 @app.route('/')
@@ -2688,65 +2688,12 @@ def api_fog_resumo_dia():
 @app.route('/fog/operacional')
 @login_required
 def fog_operacional_page():
-    eventos = _carregar_eventos_fog()
-    ativos_fog = buscar_usuarios_ativos_fog()
-    tarefas_tecnicas = []
-    hoje = datetime.now()
-    for e in eventos:
-        responsavel_real = extrair_usuario_real(e)
-        try:
-            data_raw = e.get('data_iso') or e.get('data') or ''
-            dt = datetime.strptime(data_raw[:10], '%Y-%m-%d') if 'T' in data_raw else datetime.strptime(data_raw[:10], '%d/%m/%Y')
-            e['idade_dias'] = (hoje - dt).days
-        except Exception:
-            e['idade_dias'] = 0
-        e['responsavel_exibicao'] = responsavel_real
-        tarefas_tecnicas.append(e)
-    tarefas_tecnicas.sort(key=lambda x: x.get('idade_dias', 0), reverse=True)
-    chat_por_fog = _chat_por_fog()
-    return render_template('fog_operacional.html', tarefas=tarefas_tecnicas, ativos_fog=ativos_fog, chat_por_fog=chat_por_fog)
+    abort(404)  # template arquivado — FOG embutido em gestao_email.html (pag-fog-casos)
     
 @app.route('/fog/gerencial')
 @login_required 
 def fog_gerencial_page():
-    if current_user.role != 'admin':
-        return render_template('403.html'), 403
-    eventos = _carregar_eventos_fog()
-    ativos_fog = buscar_usuarios_ativos_fog()
-    ranking_responsaveis = {}
-    total_ativos, total_critico = _resumo_fog_ativos_criticos(eventos)
-    total_atencao = total_recentes = total_concluidos = 0
-    hoje = datetime.now()
-    for e in eventos:
-        resp = extrair_usuario_real(e)
-        try:
-            data_raw = e.get('data_iso') or e.get('data') or ''
-            dt = datetime.strptime(data_raw[:10], '%Y-%m-%d') if 'T' in data_raw else datetime.strptime(data_raw[:10], '%d/%m/%Y')
-            idade = (hoje - dt).days
-        except Exception:
-            idade = 0
-        is_ativo = "fechado" not in str(e.get('conteudo') or e.get('status', '')).lower()
-        if is_ativo:
-            if idade < 15:
-                if idade >= 8: total_atencao += 1
-                else: total_recentes += 1
-            if resp not in ranking_responsaveis:
-                ranking_responsaveis[resp] = {"dias_acumulados": 0, "tickets": 0, "criticos": 0}
-            ranking_responsaveis[resp]["dias_acumulados"] += idade
-            ranking_responsaveis[resp]["tickets"] += 1
-            if idade >= 8: ranking_responsaveis[resp]["criticos"] += 1
-        else:
-            total_concluidos += 1
-    total_ativos_denom = total_ativos or 1
-    stats = {
-        "total_ativos": total_ativos,
-        "total_concluidos": total_concluidos,
-        "ranking": ranking_responsaveis,
-        "recentes": {"qtd": total_recentes, "perc": round((total_recentes / total_ativos_denom) * 100, 1)},
-        "atencao": {"qtd": total_atencao, "perc": round((total_atencao / total_ativos_denom) * 100, 1)},
-        "critico": {"qtd": total_critico, "perc": round((total_critico / total_ativos_denom) * 100, 1)},
-    }
-    return render_template('fog_gerencial.html', stats=stats)
+    abort(404)  # template arquivado — FOG embutido em gestao_email.html (pag-fog-kpis)
 
 
 def _patch_cadoc_desde_cartao_overrides(eventos_lista, threads_lista, overrides: dict) -> None:
@@ -5820,15 +5767,7 @@ def serve_pdf(filename):
 @app.route('/custos')
 @login_required
 def page_custos():
-    if current_user.role != 'admin': return render_template('403.html'), 403
-    stats = ler_estatisticas()
-    hoje = datetime.now().strftime("%Y-%m-%d")
-    from gemini_engine import get_model_name, MODELOS_DISPONIVEIS
-    return render_template('monitor_custos_ia.html',
-                           dados=stats.get(hoje, {}), historico=stats,
-                           taxa_dolar=obter_dolar_atual(),
-                           gemini_model_atual=get_model_name(),
-                           gemini_modelos=MODELOS_DISPONIVEIS)
+    abort(404)  # template arquivado — monitor de custos de IA não faz parte do sistema atual
 
 @app.route('/api/custos/gemini-model', methods=['POST'])
 @login_required
