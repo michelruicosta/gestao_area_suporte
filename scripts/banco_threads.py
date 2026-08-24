@@ -252,7 +252,7 @@ _FRASES_PEDIDO_EXPLICITO = (
 )
 
 _SAUDACAO_RE = re.compile(
-    r'^(prezad[ao]|bom\s+dia|boa\s+tarde|boa\s+noite|ol[aá]|caro|cara)\b',
+    r'^(prezad[ao]s?|bom\s+dia|boa\s+tarde|boa\s+noite|ol[aá]|caro|cara)\b',
     re.IGNORECASE,
 )
 

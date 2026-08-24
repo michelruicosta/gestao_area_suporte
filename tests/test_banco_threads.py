@@ -1398,3 +1398,25 @@ def test_status_fixj_fp_verifiquei():
     status, _ = bt._determinar_status(msgs)
     # Finaud só confirmou (não pediu nada) — deve ser AF (acusou recibo), não AC
     assert status == 'Aguardando Finaud'
+
+
+# ── Fix K — _SAUDACAO_RE filtra plural (Prezados/Prezadas) ───────────────────
+
+def test_status_fixk_prezados_cortesia_pura():
+    """Fix K — 'Prezados, boa tarde. Recebido. Obrigada.' → AF, não AC.
+
+    _SAUDACAO_RE só filtrava 'Prezado'/'Prezada' (singular). Com 'Prezados'
+    (plural) não filtrado, o texto 'prezados, boa tarde. recebido. obrigada.'
+    não começava com cortesia → _eh_cortesia_finaud retornava False → AC (errado).
+    Correção: adicionar 's?' ao padrão → 'prezad[ao]s?'.
+    Impacto nos dados atuais: 0 threads (Finaud usa Prezados em e-mails com
+    conteúdo substantivo, não em acuses de recibo puros).
+    """
+    corpo = (
+        'Prezados, boa tarde.\n\n'
+        'Recebido. Obrigada!\n\n'
+        'Atenciosamente,\nAndrea Inacio\nCoordenadora de Suporte\n'
+    )
+    msgs = [_msg(FINAUD, corpo=corpo)]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
