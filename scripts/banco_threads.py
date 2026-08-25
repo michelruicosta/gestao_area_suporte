@@ -12,7 +12,7 @@ import sqlite3
 from datetime import datetime
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BANCO    = os.path.join(BASE_DIR, 'data', 'oraculo360.db')
+BANCO    = os.path.join(BASE_DIR, 'data', 'gestao.db')
 
 # §8.7 — assuntos de e-mails internos informativos (Finaud→Finaud sem ação pendente)
 _ASSUNTOS_INFORMATIVOS = (

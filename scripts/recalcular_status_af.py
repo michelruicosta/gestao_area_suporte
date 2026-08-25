@@ -14,7 +14,7 @@ import argparse, json, sqlite3, sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 import banco_threads as bt
 
-BANCO = os.path.join(os.path.dirname(__file__), '..', 'data', 'oraculo360.db')
+BANCO = os.path.join(os.path.dirname(__file__), '..', 'data', 'gestao.db')
 
 
 def main():
