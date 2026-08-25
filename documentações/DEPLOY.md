@@ -22,16 +22,28 @@ Aplicação web em Flask (Python) que centraliza a gestão da área de suporte d
 
 Criar um arquivo `.env` no servidor com estas variáveis (nunca commitar o `.env` real):
 
+Criar o arquivo `.env` no servidor copiando o bloco abaixo e preenchendo os valores:
+
+```
+# Gestão Área Suporte — variáveis de ambiente
+# Copie este bloco, preencha os valores e salve como .env na raiz do projeto
+
+SECRET_KEY=coloque-aqui-uma-string-longa-e-aleatoria
+GESTAO_EMAIL=michel@finaud.com.br
+GESTAO_SENHA=sua-senha-aqui
+FOGBUGZ_TOKEN=seu-token-do-fogbugz-aqui
+PORT=5001
+```
+
 | Variável | Descrição | Obrigatória |
 |---|---|---|
-| `SECRET_KEY` | Chave secreta do Flask (qualquer string longa e aleatória) | Sim |
+| `SECRET_KEY` | Chave secreta do Flask — qualquer texto longo e aleatório | Sim |
 | `GESTAO_EMAIL` | E-mail de login na tela web | Sim |
 | `GESTAO_SENHA` | Senha de login na tela web | Sim |
-| `FOGBUGZ_TOKEN` | Token da API do FogBugz (gerar em Configurações > API) | Sim |
+| `FOGBUGZ_TOKEN` | Token da API do FogBugz — gerar em Configurações > API no FogBugz | Sim |
 | `PORT` | Porta onde o servidor sobe (padrão: 5001) | Não |
 
-**Variáveis que NÃO são mais necessárias** (eram do Oráculo, não do Gestão):
-`OPENAI_API_KEY`, `GEMINI_API_KEY`, `GMAIL_USER`, `GMAIL_APP_PASS`, `CHAT_CREDENTIALS_JSON`
+⚠️ **Lembrete:** a senha do Gmail (`GMAIL_APP_PASS`) está em `_archive/arquivos_raiz/chave_app_coleta.oraculo@finaud.com.br.txt` — adicionar ao `.env` quando necessário.
 
 ---
 
