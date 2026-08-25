@@ -1,7 +1,7 @@
 """
 classificador_regras.py
 Classifica threads de e-mail usando regras determinísticas (sem chamada a IA).
-A fonte de verdade das regras está em documentações/regras_classificador_threads.json.
+A fonte de verdade das regras está em config/regras_classificador_threads.json.
 
 Fluxo:
   1. Thread confirmada no registro → retorna o que está salvo sem reprocessar.
@@ -28,7 +28,7 @@ except ImportError:
 # ── Caminhos ──────────────────────────────────────────────────────────────────
 
 BASE_DIR         = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CAMINHO_REGRAS   = os.path.join(BASE_DIR, 'documentações', 'regras_classificador_threads.json')
+CAMINHO_REGRAS   = os.path.join(BASE_DIR, 'config', 'regras_classificador_threads.json')
 PASTA_ANEXOS     = os.path.join(BASE_DIR, 'data', 'email_anexos')
 ARQUIVO_REGISTRO = os.path.join(BASE_DIR, 'data', 'registro_definitivo_threads.json')
 

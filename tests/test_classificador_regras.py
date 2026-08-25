@@ -17,7 +17,7 @@ _scripts_dir = os.path.join(RAIZ, 'scripts')
 if _scripts_dir not in sys.path:
     sys.path.insert(0, _scripts_dir)
 
-CAMINHO_REGRAS = os.path.join(RAIZ, 'documentações', 'regras_classificador_threads.json')
+CAMINHO_REGRAS = os.path.join(RAIZ, 'config', 'regras_classificador_threads.json')
 
 CATEGORIAS_VALIDAS = {
     'DDR_2011', 'SALDOS_CONTABEIS_DIARIOS_4111', 'DRM_2060', 'DLO_2061', 'DLI_2062',
@@ -30,7 +30,7 @@ CATEGORIAS_VALIDAS = {
 
 def test_regras_arquivo_existe():
     """regras_classificador_threads.json existe e tem as seções regras_prioridade, regras e gabaritos."""
-    assert os.path.isfile(CAMINHO_REGRAS), 'regras_classificador_threads.json não encontrado em documentações/'
+    assert os.path.isfile(CAMINHO_REGRAS), 'regras_classificador_threads.json não encontrado em config/'
     with open(CAMINHO_REGRAS, encoding='utf-8') as f:
         dados = json.load(f)
     assert isinstance(dados.get('regras_prioridade'), list), "deve ter campo 'regras_prioridade' (lista)"

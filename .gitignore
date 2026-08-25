@@ -37,6 +37,7 @@ logs/
 *.log
 
 # --- Desenvolvimento / debug ---
+ferramentas_dev/
 _debug/
 cookies.txt
 *.bak_passo*
