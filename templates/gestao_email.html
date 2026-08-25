@@ -947,6 +947,11 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
     <!-- ── Página FOG: Casos ────────────────────────────────────── -->
     <section class="page" id="pag-fog-casos">
 
+      <div class="email-tabbar">
+        <button class="email-tab ativa" data-pagina="fog-casos" onclick="navegar(this)">Casos</button>
+        <button class="email-tab" data-pagina="fog-kpis" onclick="navegar(this)">Gerencial</button>
+      </div>
+
       {% if fog_simulado %}
       <div class="fog-simulado-banner">⚗ DADOS SIMULADOS — protótipo para validação visual.</div>
       {% endif %}
@@ -1069,6 +1074,11 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 
     <!-- ── Página FOG: KPIs ─────────────────────────────────────── -->
     <section class="page" id="pag-fog-kpis">
+
+      <div class="email-tabbar">
+        <button class="email-tab" data-pagina="fog-casos" onclick="navegar(this)">Casos</button>
+        <button class="email-tab ativa" data-pagina="fog-kpis" onclick="navegar(this)">Gerencial</button>
+      </div>
 
       {% if fog_simulado %}
       <div class="fog-simulado-banner">⚗ DADOS SIMULADOS — protótipo para validação visual.</div>
