@@ -8,6 +8,20 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ---
 
+## PRÉ-DEPLOY — Limpeza de código (identificado em 25/08/2026)
+
+### 🟡 SERVIDOR — Rotas /fog/gerencial e /fog/operacional sem template (identificado 25/08/2026)
+
+As rotas `/fog/gerencial` e `/fog/operacional` existem em `scripts/servidor_telas.py` (linhas 761 e 774) mas os templates `fog_gerencial.html` e `fog_operacional.html` **nunca foram criados**. A SPA não usa essas rotas — tudo o que a tela mostra do FOGBUGZ está embutido em `gestao_email.html` via JavaScript. Se alguém digitar as URLs diretamente, recebe 500.
+
+**O que fazer:** remover as duas rotas do `servidor_telas.py` (são código morto — nunca foram usadas).
+
+**Impacto:** nenhum para o usuário final; a SPA continua funcionando normalmente.
+
+**Arquivo a alterar:** `scripts/servidor_telas.py` — remover funções `fog_operacional()` e `fog_gerencial()` e as anotações `@app.route` correspondentes.
+
+---
+
 ## ✅ CLASSIFICADOR DETERMINÍSTICO — CONCLUÍDO (placar: 764/768 — 99,5%)
 
 > Ciclo de revisão completo em 17/08/2026. C40–C57 aplicados. Objetivo ≥750/768 **superado**.
