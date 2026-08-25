@@ -1523,7 +1523,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 <!-- Modal: Meu Perfil -->
 <div class="perfil-backdrop" id="perfil-modal" onclick="fecharPerfil()">
   <div class="perfil-card" onclick="event.stopPropagation()">
-    <div class="perfil-topo">
+    <div class="perfil-topo" id="perfil-topo">
       <div class="perfil-avatar-lg" id="perfil-av">MC</div>
       <div class="perfil-id">
         <div class="perfil-nome" id="perfil-nome">Michel Costa</div>
@@ -1551,6 +1551,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 
     <!-- Painel 2: alterar senha -->
     <div id="painel-senha" style="display:none">
+      <h2 class="page-titulo" style="font-size:1.1rem;margin:0 0 0.2rem">Alterar senha</h2>
       <p class="senha-sub">Crie uma senha forte para proteger sua conta.</p>
       <div class="senha-field">
         <label class="senha-label">Senha atual</label>
@@ -2355,6 +2356,7 @@ function fecharPerfil() {
   _voltarPerfil();
 }
 function _irParaSenha() {
+  document.getElementById('perfil-topo').style.display   = 'none';
   document.getElementById('painel-perfil').style.display = 'none';
   document.getElementById('painel-senha').style.display  = '';
   document.getElementById('senha-atual').value = '';
@@ -2365,6 +2367,7 @@ function _irParaSenha() {
 function _voltarPerfil() {
   document.getElementById('painel-senha').style.display  = 'none';
   document.getElementById('painel-perfil').style.display = '';
+  document.getElementById('perfil-topo').style.display   = '';
 }
 function _toggleSenha(id, btn) {
   const inp = document.getElementById(id);
