@@ -470,6 +470,12 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 }
 .btn-coletar:hover:not(:disabled) { background: #2828a0; }
 .btn-coletar:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn-log-det {
+  background: none; border: 1px solid var(--borda); border-radius: 6px;
+  color: var(--txt-sec); font-size: 1.1rem; line-height: 1;
+  padding: 2px 8px; cursor: pointer; transition: background .15s, color .15s;
+}
+.btn-log-det:hover { background: var(--accent-bg); color: var(--marca); }
 .status-linha {
   display: flex; align-items: center; gap: 0.55rem;
   font-size: 0.86rem; color: var(--muted); margin-top: 0.85rem;
@@ -901,10 +907,11 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
                 <th>Classificadas</th>
                 <th class="num">Duração</th>
                 <th>Status</th>
+                <th></th>
               </tr>
             </thead>
             <tbody id="tbody-log">
-              <tr><td colspan="6" class="vazio">Carregando…</td></tr>
+              <tr><td colspan="7" class="vazio">Carregando…</td></tr>
             </tbody>
           </table>
         </div>
@@ -1251,6 +1258,18 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
         <button class="btn-sec" onclick="fecharModal('modal-class')">Cancelar</button>
         <button class="btn-prim" onclick="confirmarClassificacao()">Classificar</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-log-detalhe">
+  <div class="modal" style="max-width:720px;width:95%;">
+    <div class="modal-head">
+      <h2 id="modal-log-titulo">Detalhe da execução</h2>
+      <button class="modal-fechar" onclick="fecharModal('modal-log-detalhe')">×</button>
+    </div>
+    <div class="modal-body" id="modal-log-corpo" style="max-height:70vh;overflow-y:auto;padding:0 1.25rem 1.25rem;">
+      <p>Carregando…</p>
     </div>
   </div>
 </div>
@@ -1676,12 +1695,12 @@ async function dispararColeta() {
 
 async function carregarLogColetas() {
   document.getElementById('tbody-log').innerHTML =
-    '<tr><td colspan="6" class="vazio">Carregando…</td></tr>';
+    '<tr><td colspan="7" class="vazio">Carregando…</td></tr>';
   try {
     const d = await _get('/api/admin/log-coletas');
     if (!d.logs.length) {
       document.getElementById('tbody-log').innerHTML =
-        '<tr><td colspan="6" class="vazio">Nenhuma execução registrada ainda.</td></tr>';
+        '<tr><td colspan="7" class="vazio">Nenhuma execução registrada ainda.</td></tr>';
       return;
     }
     document.getElementById('tbody-log').innerHTML = d.logs.map(l => {
@@ -1708,6 +1727,7 @@ async function carregarLogColetas() {
         if (l.classif_revisao)   pills.push(`<span class="cpill cpill-rev">! ${l.classif_revisao} revisão</span>`);
         classifHtml = `<div class="classif-pills">${pills.join('')}</div>`;
       }
+      const btnDetalhe = `<button class="btn-log-det" onclick="abrirDetalheLog(${l.id},'${escHtml(fmtDataHora(l.data_hora))}','${l.status}')" title="Ver detalhe">⋯</button>`;
       return `<tr>
         <td style="white-space:nowrap;font-size:0.87rem;">${escHtml(fmtDataHora(l.data_hora))}</td>
         <td>${chipTipo}</td>
@@ -1715,12 +1735,60 @@ async function carregarLogColetas() {
         <td>${classifHtml}</td>
         <td class="num" style="white-space:nowrap;">${dur}</td>
         <td>${chipStatus}</td>
+        <td style="text-align:center;">${btnDetalhe}</td>
       </tr>`;
     }).join('');
   } catch (e) {
     const detalhe = e && e.message ? ` — ${escHtml(e.message)}` : '';
     document.getElementById('tbody-log').innerHTML =
-      `<tr><td colspan="6" class="vazio" style="color:#c0392b;">Erro ao carregar log${detalhe}</td></tr>`;
+      `<tr><td colspan="7" class="vazio" style="color:#c0392b;">Erro ao carregar log${detalhe}</td></tr>`;
+  }
+}
+
+async function abrirDetalheLog(logId, dataHora, status) {
+  document.getElementById('modal-log-titulo').textContent = `Execução de ${dataHora}`;
+  document.getElementById('modal-log-corpo').innerHTML = '<p style="padding:1rem 0;">Carregando…</p>';
+  abrirModal('modal-log-detalhe');
+  try {
+    const d = await _get(`/api/admin/log-detalhe/${logId}`);
+    if (d.status === 'erro') {
+      document.getElementById('modal-log-corpo').innerHTML = `
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:1rem 1.25rem;">
+          <p style="margin:0 0 0.5rem;font-weight:600;color:#dc2626;">Motivo do erro:</p>
+          <code style="font-size:0.85rem;color:#7f1d1d;word-break:break-all;">${escHtml(d.mensagem || 'Sem detalhe disponível')}</code>
+        </div>`;
+    } else if (!d.threads || !d.threads.length) {
+      document.getElementById('modal-log-corpo').innerHTML =
+        '<p style="color:#64748b;padding:1rem 0;">Nenhuma thread processada nesta execução.</p>';
+    } else {
+      const linhas = d.threads.map(t => {
+        const cat = t.categoria || '<span style="color:#94a3b8;font-style:italic;">Não classificada</span>';
+        const st  = t.status   || '—';
+        const mot = t.motivo   || '—';
+        const catLabel = t.categoria
+          ? `<span class="chip chip-inc" style="font-size:0.72rem;">${escHtml(t.categoria)}</span>`
+          : `<span style="color:#94a3b8;font-size:0.82rem;font-style:italic;">Não classificada</span>`;
+        return `<tr>
+          <td style="font-size:0.82rem;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(t.assunto)}">${escHtml(t.assunto)}</td>
+          <td style="white-space:nowrap;">${catLabel}</td>
+          <td style="font-size:0.82rem;white-space:nowrap;">${escHtml(st)}</td>
+          <td style="font-size:0.79rem;color:#475569;">${escHtml(mot)}</td>
+        </tr>`;
+      }).join('');
+      document.getElementById('modal-log-corpo').innerHTML = `
+        <p style="margin:0.5rem 0 0.75rem;font-size:0.85rem;color:#64748b;">${d.threads.length} thread(s) processada(s)</p>
+        <div style="overflow-x:auto;">
+          <table class="tabela" style="font-size:0.83rem;">
+            <thead><tr>
+              <th>Assunto</th><th>Categoria</th><th>Status</th><th>Motivo</th>
+            </tr></thead>
+            <tbody>${linhas}</tbody>
+          </table>
+        </div>`;
+    }
+  } catch (e) {
+    document.getElementById('modal-log-corpo').innerHTML =
+      `<p style="color:#dc2626;">Erro ao carregar detalhe: ${escHtml(e.message || '')}</p>`;
   }
 }
 

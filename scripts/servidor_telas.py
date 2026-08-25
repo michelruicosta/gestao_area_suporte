@@ -492,6 +492,46 @@ def api_admin_log_coletas():
     return jsonify({'logs': logs})
 
 
+@app.route('/api/admin/log-detalhe/<int:log_id>')
+@_requer_login
+def api_admin_log_detalhe(log_id):
+    with bt._conectar() as conn:
+        log = conn.execute(
+            'SELECT id, data_hora, status, mensagem, duracao_seg FROM log_coletas WHERE id = ?',
+            (log_id,)
+        ).fetchone()
+        if not log:
+            abort(404)
+        resultado = {
+            'id': log['id'],
+            'status': log['status'],
+            'mensagem': log['mensagem'] or '',
+            'threads': [],
+        }
+        if log['status'] == 'concluida':
+            dur = log['duracao_seg'] or 0
+            janela = int(dur + 30)
+            rows = conn.execute(
+                '''SELECT assunto, categoria, status_workflow, motivo_status, destino
+                   FROM threads
+                   WHERE ultima_sync >= datetime(?, ? || ' seconds')
+                     AND ultima_sync <= datetime(?, '+5 seconds')
+                   ORDER BY ultima_sync, assunto''',
+                (log['data_hora'], f'-{janela}', log['data_hora'])
+            ).fetchall()
+            resultado['threads'] = [
+                {
+                    'assunto': r['assunto'],
+                    'categoria': r['categoria'],
+                    'status': r['status_workflow'],
+                    'motivo': r['motivo_status'],
+                    'destino': r['destino'],
+                }
+                for r in rows
+            ]
+    return jsonify(resultado)
+
+
 @app.route('/api/historico')
 @_requer_login
 def api_historico():
