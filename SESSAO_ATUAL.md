@@ -8,6 +8,71 @@
 
 ---
 
+## 📓 Diário da sessão (2026-08-24 — noite) — Melhorias de UI + Coletor
+
+### O que foi feito hoje (sessão da noite — UI)
+
+**Frente única: melhorias visuais e funcionais na tela web (Flask/localhost:5001)**
+
+---
+
+#### 1. FOGBUGZ — abas horizontais e sort
+
+- Submenus do FOGBUGZ (Casos / Gerencial) convertidos para abas horizontais, igual ao padrão do E-MAILS
+- `fogSort()` atualizado com: toggle de direção, indicadores de coluna (`▲`/`▼`), texto descritivo do sort ativo
+- Botões redundantes "Mais antigo" / "Mais casos" removidos da tela Gerencial (duplicavam o sort)
+- Badge CSS fix: `.fog-urg-badge[hidden] { display: none !important; }` — bug onde badge ficava visível mesmo com `hidden`
+
+#### 2. Coletor — erro + auto-refresh + UTF-8
+
+- **Auto-refresh do log:** `setInterval` de 15s na página do Coletor; limpo ao navegar para outra seção
+- **Captura de erro:** `_rodar()` tinha `try/finally` sem `except` — exceções eram engolidas silenciosamente; corrigido com `except Exception as e` que grava em `_ultimo_erro_coleta`
+- **UTF-8 no Windows:** `coletor_gmail.py` tem emojis nos `print()` — quebravam com `charmap` (Windows-1252). Corrigido reconfigurando `sys.stdout`/`sys.stderr` para UTF-8 na inicialização do servidor
+- Endpoint `/api/admin/status-coleta` atualizado para retornar `ultimo_erro`
+
+#### 3. Tela de detalhe da execução (nova)
+
+- Botão `⋯` em cada linha do histórico de coletas → abre tela completa `#pag-admin-detalhe`
+- **Linhas de erro:** mostra explicação em português + como resolver (função `_traduzirErro()`)
+- **Linhas concluídas:** tabela com threads processadas (assunto, categoria, status, motivo)
+- Filtros client-side por Categoria e Status (atributos `data-cat` / `data-st`)
+- "Bloqueada por filtro" como opção no filtro de Categoria
+- Layout: título alinhado à esquerda, botão "← Voltar" à direita, sem breadcrumb "Coletor"
+- Cores usando CSS custom properties (`--neg-bg`, `--neg`, `--accent-bg`, `--accent`) — funciona em dark/light mode
+
+#### 4. Fix no banco — 5 threads FogBugz com destino=NULL
+
+- Coleta com erro às 22:21 atualizou `ultima_sync` de 5 threads FogBugz antes de quebrar, deixando `destino=NULL`
+- Corrigido: `UPDATE threads SET destino='descartes' WHERE assunto LIKE 'FogBugz%' AND destino IS NULL`
+- Backup criado em `data/backups/20260824_2257_fogbugz_destino_nulo/`
+- "Não Classificados" voltou a 0; "Bloqueados por Filtro" subiu de 258 → 263
+
+---
+
+### Estado atual
+
+**GitHub:** 10 commits enviados (push confirmado por Michel) — repositório sincronizado.
+**Git:** limpo (sem arquivos pendentes).
+**Banco:** corrigido (5 FogBugz threads restauradas para `destino='descartes'`).
+**Servidor:** Michel precisa reiniciar o servidor na porta 5001 para a correção UTF-8 ter efeito.
+
+---
+
+### Próximo passo
+
+**🟡 Construir Fase 1 — código de produção**
+
+- `coletor_gmail.py` — lê e-mails da caixa de coleta via Gmail API
+- Pipeline de processamento — classifica e grava no banco
+- 3 telas Flask (§14 da spec): painel principal + revisão + histórico
+
+Detalhes e contexto → `documentações/PENDENCIAS.md` (seção "⏭ ETAPA ATUAL")
+Spec completa → `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md`
+
+Último /fechar: 2026-08-24 23:59 — memórias revisadas ✅
+
+---
+
 ## 📓 Diário da sessão (2026-08-24) — Pente fino completo das AF
 
 ### O que foi feito hoje

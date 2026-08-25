@@ -2,6 +2,79 @@
 
 ---
 
+## 2026-08-24 (noite) — Melhorias de UI + Coletor + Fix banco FogBugz
+
+### 23:00 — Badge CSS fix (FOGBUGZ)
+
+**🔎 Em miúdos:** o ícone de urgência no FOGBUGZ ficava aparecendo mesmo quando deveria estar escondido.
+
+- **Problema:** `.fog-urg-badge { display: inline-flex }` sobrescrevia o `[hidden] { display: none }` do browser (sem `!important`)
+- **Correção:** adicionado `.fog-urg-badge[hidden] { display: none !important; }` no CSS
+- **Validação:** ✅ testado no browser — badge some corretamente ao filtrar
+
+### 23:05 — FOGBUGZ — abas horizontais
+
+**🔎 Em miúdos:** os submenus do FOGBUGZ (Casos / Gerencial) ficavam como lista vertical em vez de abas iguais às do E-MAILS.
+
+- **Problema:** seção FOGBUGZ não usava o padrão de abas horizontais já definido para E-MAILS
+- **Correção:** aplicado mesmo padrão de `.tab-bar` + `.tab-btn` com `data-alvo` e seleção JS
+- **Validação:** ✅ abas funcionando com navegação correta entre Casos e Gerencial
+
+### 23:10 — Remoção de botões redundantes no Gerencial
+
+**🔎 Em miúdos:** havia botões "Mais antigo" e "Mais casos" que faziam a mesma coisa que clicar no cabeçalho da tabela.
+
+- **Correção:** botões removidos; `fogSort()` atualizado com toggle de direção e indicadores `▲`/`▼` nas colunas
+- **Validação:** ✅ sort funciona pelo cabeçalho, sem duplicação de controles
+
+### 23:20 — Coletor: erros engolidos silenciosamente
+
+**🔎 Em miúdos:** quando o robô de coleta dava erro, o log mostrava como "Erro" mas não havia como saber o que havia acontecido.
+
+- **Problema:** `_rodar()` em `servidor_telas.py` tinha `try/finally` sem `except` — exceções sumiam sem registro
+- **Correção:** adicionado `except Exception as e` que grava mensagem em `_ultimo_erro_coleta` global; endpoint `/api/admin/status-coleta` atualizado para retornar o erro
+- **Validação:** ✅ erro aparece na tela de detalhe da execução
+
+### 23:25 — Coletor: log não atualizava sozinho
+
+**🔎 Em miúdos:** ao clicar no robô para rodar a coleta, era preciso atualizar a página manualmente para ver o resultado.
+
+- **Correção:** adicionado `setInterval` de 15 segundos na página do Coletor (`_iniciarAutoRefreshLog`); limpo com `clearInterval` ao navegar para outra seção
+- **Validação:** ✅ log atualiza automaticamente sem interação do usuário
+
+### 23:30 — Coletor: erro UTF-8 no Windows (emoji quebrando o servidor)
+
+**🔎 Em miúdos:** o servidor quebrava ao tentar rodar a coleta porque alguns e-mails têm emoji no assunto, e o Windows não sabe lidar com isso por padrão.
+
+- **Problema:** Python no Windows usa encoding Windows-1252 (cp1252) por padrão; `coletor_gmail.py` imprime assuntos com emoji → `UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f4e2'`
+- **Correção:** adicionado bloco de inicialização em `servidor_telas.py` que reconfigura `sys.stdout` e `sys.stderr` para UTF-8 ao detectar Windows (`sys.platform == 'win32'`)
+- **Validação:** ✅ VALIDADO — erro não ocorre mais; Michel precisa reiniciar o servidor para o fix ter efeito
+- **Arquivo:** `scripts/servidor_telas.py` (início do arquivo)
+
+### 23:40 — Fix banco: 5 threads FogBugz com destino=NULL
+
+**🔎 Em miúdos:** 5 threads do FogBugz apareciam na coluna "Não Classificadas" quando deveriam estar em "Bloqueadas por Filtro" — era resquício da coleta que deu erro às 22:21.
+
+- **Problema:** a coleta com erro às 22:21 atualizou `ultima_sync` de 5 threads FogBugz antes de quebrar, mas não chegou a gravar `destino='descartes'`; ficaram com `destino=NULL`
+- **Correção:** `UPDATE threads SET destino='descartes' WHERE assunto LIKE 'FogBugz%' AND destino IS NULL` — 5 threads atualizadas
+- **Backup:** `data/backups/20260824_2257_fogbugz_destino_nulo/` com `CONTEXTO.md`
+- **Resultado:** "Não Classificados" = 0; "Bloqueados por Filtro" 258 → 263
+- **Validação:** ✅ confirmado na tela
+
+### 23:50 — Tela de detalhe da execução (nova funcionalidade)
+
+**🔎 Em miúdos:** ao clicar no ícone de detalhe de uma execução, agora abre uma tela completa com o que aconteceu: se foi erro, explica em português o que houve e como resolver; se foi concluída, lista todas as threads processadas com filtros.
+
+- **Novo endpoint:** `/api/admin/log-detalhe/<int:log_id>` — retorna metadados + threads processadas na janela temporal da coleta
+- **Nova seção HTML:** `#pag-admin-detalhe` — página completa (não modal)
+- **Erro:** função `_traduzirErro()` mapeia mensagens técnicas para português + solução
+- **Concluída:** tabela com assunto, categoria, status, motivo; "Bloqueada por filtro" para `destino='descartes'`
+- **Filtros:** Categoria e Status com dropdowns populados dinamicamente; contagem de linhas visíveis
+- **Layout:** título à esquerda, botão "← Voltar" à direita, cores via CSS custom properties (dark/light mode)
+- **Validação:** ✅ testado para linhas de erro e de concluída; filtros funcionando
+
+---
+
 ## 2026-08-24 — Pente fino AF: 5 fixes manuais DDR_2011 + SUPORTE + regra nova
 
 ### 24/08 — 3 fixes manuais DDR_2011
