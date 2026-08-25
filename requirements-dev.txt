@@ -1,7 +1,6 @@
-# Dependências MÍNIMAS para rodar a suíte de testes "offline" no CI.
-# (NÃO inclui torch/easyocr/opencv/selenium/google-* — pesados e desnecessários
-#  para os testes marcados "not agent and not pdf and not integration".)
-# Versões alinhadas ao requirements.txt do projeto.
+# DESENVOLVIMENTO — apenas para rodar testes locais: pip install -r requirements-dev.txt
+# NÃO instalar no servidor de produção.
+# Para produção, use requirements.txt
 
 # --- Test runner ---
 pytest==8.3.5
