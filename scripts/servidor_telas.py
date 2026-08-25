@@ -7,11 +7,17 @@ Porta: 5000   Rodar: python scripts/servidor_telas.py
 
 from __future__ import annotations
 
+import io
 import json
 import os
 import re
 import sys
 import threading
+
+# Windows usa charmap por padrão — força UTF-8 para suportar emojis nos logs
+if sys.platform == 'win32' and hasattr(sys.stdout, 'buffer'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 import requests
 import xml.etree.ElementTree as _ET
 from datetime import datetime, timezone
@@ -33,6 +39,7 @@ app = Flask(
 app.secret_key = os.environ.get('SECRET_KEY', 'oraculo360-gestao-secret')
 
 _coleta_em_andamento = False
+_ultimo_erro_coleta: str | None = None
 
 
 class _Usuario:
@@ -444,7 +451,8 @@ def api_admin_coletar():
         return jsonify({'erro': 'Coleta já em andamento. Aguarde o término.'}), 409
 
     def _rodar():
-        global _coleta_em_andamento
+        global _coleta_em_andamento, _ultimo_erro_coleta
+        _ultimo_erro_coleta = None
         try:
             sys.path.insert(0, _SCRIPTS_DIR)
             from coletor_gmail import coletar
@@ -458,6 +466,11 @@ def api_admin_coletar():
                     contagens.get('descartes', 0),
                     contagens.get('revisao', 0),
                 )
+        except Exception as e:
+            import traceback
+            _ultimo_erro_coleta = str(e)
+            print(f'[ERRO] Coleta falhou: {e}')
+            traceback.print_exc()
         finally:
             _coleta_em_andamento = False
 
@@ -469,7 +482,7 @@ def api_admin_coletar():
 @app.route('/api/admin/status-coleta')
 @_requer_login
 def api_admin_status_coleta():
-    return jsonify({'em_andamento': _coleta_em_andamento})
+    return jsonify({'em_andamento': _coleta_em_andamento, 'ultimo_erro': _ultimo_erro_coleta})
 
 
 @app.route('/api/admin/log-coletas')

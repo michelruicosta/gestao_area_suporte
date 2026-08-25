@@ -1310,7 +1310,8 @@ function navegar(btn) {
   if (pag === 'historico') { if (!evoHistorico.length) carregarHistorico(); else renderEvo(); }
   if (pag === 'nao-classificados') carregarNaoClassificados();
   if (pag === 'bloqueados') carregarBloqueados();
-  if (pag === 'admin') { _atualizarStatusColeta(); carregarLogColetas(); }
+  if (pag === 'admin') { _atualizarStatusColeta(); carregarLogColetas(); _iniciarAutoRefreshLog(); }
+  else { _pararAutoRefreshLog(); }
   if (pag === 'fog-casos') {
     if (!_keepFogFiltros) {
       _fogUrgenciaFiltro = '';
@@ -1611,6 +1612,17 @@ async function confirmarClassificacao() {
 
 // ── Admin: coletor ────────────────────────────────────────────────────
 let _pollTimer = null;
+let _logRefreshTimer = null;
+
+function _iniciarAutoRefreshLog() {
+  _pararAutoRefreshLog();
+  _logRefreshTimer = setInterval(() => {
+    if (document.querySelector('.page.ativa')?.id === 'pag-admin') carregarLogColetas();
+  }, 15000);
+}
+function _pararAutoRefreshLog() {
+  if (_logRefreshTimer) { clearInterval(_logRefreshTimer); _logRefreshTimer = null; }
+}
 
 async function _atualizarStatusColeta() {
   try {
@@ -1634,8 +1646,10 @@ async function _atualizarStatusColeta() {
         }, 3000);
       }
     } else {
-      dot.className = 'status-dot ok';
-      txt.textContent = 'Coletor parado. Pronto para nova rodada.';
+      dot.className = d.ultimo_erro ? 'status-dot erro' : 'status-dot ok';
+      txt.innerHTML = d.ultimo_erro
+        ? `<strong style="color:#ef4444">Erro na última coleta:</strong> ${d.ultimo_erro}`
+        : 'Coletor parado. Pronto para nova rodada.';
       btn.disabled = false;
       btn.textContent = '▶ Rodar coletor agora';
     }
