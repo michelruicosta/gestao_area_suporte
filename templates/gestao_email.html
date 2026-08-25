@@ -672,6 +672,60 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 [data-theme="escuro"] .cpill-rev  { background: #3b0a0a; color: #f87171; }
 [data-theme="escuro"] .cpill-sinc { background: #0a2a3b; color: #60b8e8; }
 
+/* ─── FOG Evolução ────────────────────────────────────────────────── */
+.fevo-kpis { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px; }
+.fevo-kpi { background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px; }
+.fevo-kpi-lbl { font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px; }
+.fevo-kpi-val { font-size:1.6rem;font-weight:800;color:var(--text);line-height:1.1;font-variant-numeric:tabular-nums; }
+.fevo-kpi-sub { font-size:.74rem;color:var(--muted);margin-top:3px; }
+.fevo-kpi-delta { font-size:.74rem;font-weight:700;margin-top:3px; }
+.fevo-kpi-delta.up { color:var(--neg); }
+.fevo-kpi-delta.down { color:var(--pos); }
+.fevo-chart-card { background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:16px; }
+.fevo-chart-hd { display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px; }
+.fevo-chart-titulo { font-size:.92rem;font-weight:700;color:var(--text); }
+.fevo-chart-sub { font-size:.78rem;color:var(--muted);margin-top:2px; }
+.fevo-chart-leg { display:flex;gap:16px;font-size:.76rem;color:var(--muted);align-items:center; }
+.fevo-leg-dot { width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:4px; }
+.fevo-bars-wrap { overflow-x:auto; }
+.fevo-bars-inner { display:flex;align-items:flex-end;gap:8px;height:180px;padding-bottom:28px;position:relative;min-width:300px; }
+.fevo-bar-group { display:flex;flex-direction:column;align-items:center;flex:1;min-width:36px;position:relative; }
+.fevo-bar-pair { display:flex;gap:2px;align-items:flex-end;width:100%;height:150px; }
+.fevo-bar { border-radius:3px 3px 0 0;cursor:default;transition:opacity .15s;width:50%; }
+.fevo-bar:hover { opacity:.7; }
+.fevo-bar.open { background:var(--accent);opacity:.85; }
+.fevo-bar.closed { background:var(--pos);opacity:.8; }
+.fevo-bar-lbl { font-size:10px;color:var(--muted);text-align:center;margin-top:4px;position:absolute;bottom:-22px;width:100%; }
+.fevo-grid3 { display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px; }
+.fevo-card { background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px; }
+.fevo-card-titulo { font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px; }
+.fevo-rank-bloco { display:grid;grid-template-columns:1fr 1fr;gap:14px; }
+.fevo-rank-gtitle { font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px; }
+.fevo-rank-gtitle.up { color:var(--pos); }
+.fevo-rank-gtitle.down { color:var(--neg); }
+.fevo-rank-item { display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border); }
+.fevo-rank-item:last-child { border-bottom:none; }
+.fevo-rank-nome { flex:1;font-size:.78rem;color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.fevo-rank-bar-w { width:60px;height:5px;background:var(--border);border-radius:3px;flex-shrink:0; }
+.fevo-rank-bar { height:5px;border-radius:3px; }
+.fevo-rank-bar.up { background:var(--pos); }
+.fevo-rank-bar.down { background:var(--neg); }
+.fevo-rank-val { font-size:.76rem;font-weight:700;width:32px;text-align:right;flex-shrink:0; }
+.fevo-rank-val.up { color:var(--pos); }
+.fevo-rank-val.down { color:var(--neg); }
+.fevo-rank-val.neut { color:var(--muted); }
+.fevo-parados-tbl { width:100%;border-collapse:collapse; }
+.fevo-parados-tbl th { font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border); }
+.fevo-parados-tbl td { padding:10px;font-size:.8rem;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle; }
+.fevo-parados-tbl tr:last-child td { border-bottom:none; }
+.fevo-dias { display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:.76rem;font-weight:700; }
+.fevo-dias.red { background:var(--red-bg);color:var(--red); }
+.fevo-dias.amber { background:var(--neg-bg);color:var(--neg); }
+.fevo-dias.green { background:var(--pos-bg);color:var(--pos); }
+.fevo-nota { font-size:.74rem;color:var(--muted);margin-top:10px; }
+.fevo-periodo-wrap { background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 16px;margin-bottom:16px; }
+.fevo-loading { display:flex;align-items:center;justify-content:center;padding:40px;color:var(--muted);font-size:.85rem;gap:8px; }
+
 /* ─── FOG ─────────────────────────────────────────────────────────── */
 .fog-green { color: #10b981 }
 .fog-amber { color: #f59e0b }
@@ -1383,6 +1437,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
       <div class="email-tabbar">
         <button class="email-tab" data-pagina="fog-kpis" onclick="navegar(this)">Visão Consolidada</button>
         <button class="email-tab ativa" data-pagina="fog-casos" onclick="navegar(this)">Lista de Casos</button>
+        <button class="email-tab" data-pagina="fog-evolucao" onclick="navegar(this)">Evolução</button>
       </div>
 
       <div class="page-header" style="margin-bottom:0.75rem">
@@ -1517,6 +1572,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
       <div class="email-tabbar">
         <button class="email-tab ativa" data-pagina="fog-kpis" onclick="navegar(this)">Visão Consolidada</button>
         <button class="email-tab" data-pagina="fog-casos" onclick="navegar(this)">Lista de Casos</button>
+        <button class="email-tab" data-pagina="fog-evolucao" onclick="navegar(this)">Evolução</button>
       </div>
 
       <div class="page-header" style="margin-bottom:0.75rem">
@@ -1609,6 +1665,45 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
         {% endfor %}
         </div>
       </div>
+    </section>
+
+    <!-- ── Página FOG: Evolução ──────────────────────────────────── -->
+    <section class="page" id="pag-fog-evolucao">
+
+      <div class="email-tabbar">
+        <button class="email-tab" data-pagina="fog-kpis" onclick="navegar(this)">Visão Consolidada</button>
+        <button class="email-tab" data-pagina="fog-casos" onclick="navegar(this)">Lista de Casos</button>
+        <button class="email-tab ativa" data-pagina="fog-evolucao" onclick="navegar(this)">Evolução</button>
+      </div>
+
+      <div class="page-header" style="margin-bottom:0.75rem">
+        <div class="page-header-left">
+          <h1 class="page-titulo">Evolução</h1>
+          <p class="page-sub">Tendências de casos ao longo do tempo — aberturas, fechamentos, projetos e áreas.</p>
+        </div>
+      </div>
+
+      <!-- Filtro de período -->
+      <div class="fevo-periodo-wrap">
+        <div class="p-bar" id="fog-periodo-bar">
+          <span class="p-lbl">Período</span>
+          <button class="p-btn" onclick="fogSelPeriod('3m',this)">3 meses</button>
+          <button class="p-btn active" onclick="fogSelPeriod('6m',this)">6 meses</button>
+          <button class="p-btn" onclick="fogSelPeriod('12m',this)">12 meses</button>
+          <button class="p-btn" onclick="fogSelPeriod('todo',this)">Todo</button>
+          <button class="p-btn" onclick="fogSelPeriod('custom',this)">Personalizado</button>
+        </div>
+        <div class="evo-cal" id="fog-evo-cal" hidden>
+          <div class="cal-months" id="fog-cal-months"></div>
+          <div class="cal-range-note" id="fog-cal-range-note">Clique no dia de início e depois no dia de fim.</div>
+        </div>
+      </div>
+
+      <!-- Conteúdo dinâmico -->
+      <div id="fog-evo-corpo">
+        <div class="fevo-loading">Carregando dados…</div>
+      </div>
+
     </section>
 
   </main>
@@ -1847,6 +1942,7 @@ function navegar(btn) {
     'usuarios':          'Administração · Usuários e Perfis',
     'fog-casos':         'FOGBUGZ · Lista de Casos',
     'fog-kpis':          'FOGBUGZ · Visão Consolidada',
+    'fog-evolucao':      'FOGBUGZ · Evolução',
   };
   const titulosAdmin = {
     'coletor':      'Administração · Coletor',
@@ -1867,6 +1963,7 @@ function navegar(btn) {
   }
   if (pag === 'usuarios') { _usrRenderTabela(); }
   else { _pararAutoRefreshLog(); }
+  if (pag === 'fog-evolucao') carregarFogEvo();
   if (pag === 'fog-casos') {
     if (!_keepFogFiltros) {
       _fogUrgenciaFiltro = '';
@@ -3115,6 +3212,7 @@ const _USR_TELAS = [
   ['bloqueados',       'E-MAILS · Bloqueadas por Regras',  'Conversas descartadas pelos filtros automáticos — não entram na classificação.'],
   ['fog-kpis',         'FOGBUGZ · Visão Consolidada',      'Visão consolidada por status, responsável, casos mais antigos e parados há quantos dias.'],
   ['fog-casos',        'FOGBUGZ · Lista de Casos',         'Listagem de casos por projeto, responsável e status.'],
+  ['fog-evolucao',     'FOGBUGZ · Evolução',               'Tendências de casos ao longo do tempo — aberturas, fechamentos, projetos e áreas.'],
   ['admin',            'Administração · Coletor',          'Controles do robô de coleta. (Administrador)'],
   ['usuarios',         'Administração · Usuários e Perfis','Gestão de usuários e permissões. (Administrador)'],
 ];
@@ -3284,6 +3382,289 @@ function _usrExcluir(id) {
 })();
 carregarResumo();
 _timer = setInterval(_tick, 1000);
+
+// ── FOG Evolução ──────────────────────────────────────────────────────
+let _fogEvoData = null;
+let _fogEvoPeriod = '6m';
+let _fogRStart = null, _fogREnd = null, _fogCalBase = null;
+const _fogMnames = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const _fogMnamesFull = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+function carregarFogEvo() {
+  if (_fogEvoData !== null) { renderFogEvo(); return; }
+  fetch('/api/fog-evolucao')
+    .then(r => r.json())
+    .then(d => { _fogEvoData = d; renderFogEvo(); })
+    .catch(() => {
+      const el = document.getElementById('fog-evo-corpo');
+      if (el) el.innerHTML = '<div class="fevo-loading">Erro ao carregar dados do FOG.</div>';
+    });
+}
+
+function fogSelPeriod(p, btn) {
+  _fogEvoPeriod = p;
+  document.querySelectorAll('#fog-periodo-bar .p-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const cal = document.getElementById('fog-evo-cal');
+  cal.hidden = (p !== 'custom');
+  if (p === 'custom') renderFogCal();
+  else renderFogEvo();
+}
+
+function _fogPeriodDates() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  if (_fogEvoPeriod === 'custom' && _fogRStart && _fogREnd) return [_fogRStart, _fogREnd];
+  const start = new Date(today);
+  if (_fogEvoPeriod === '3m')  start.setMonth(start.getMonth() - 3);
+  else if (_fogEvoPeriod === '12m') start.setFullYear(start.getFullYear() - 1);
+  else if (_fogEvoPeriod === 'todo') return [new Date(2025, 0, 1), today];
+  else start.setMonth(start.getMonth() - 6); // default 6m
+  return [start, today];
+}
+
+function renderFogEvo() {
+  if (!_fogEvoData) return;
+  const [start, end] = _fogPeriodDates();
+  const sStr = start.toISOString().slice(0,10), eStr = end.toISOString().slice(0,10);
+  const todos = _fogEvoData;
+  const abertos  = todos.filter(c => c.data >= sStr && c.data <= eStr);
+  const fechados  = todos.filter(c => c.data_fechamento && c.data_fechamento >= sStr && c.data_fechamento <= eStr);
+  const ativos    = todos.filter(c => c.status === 'Ativo');
+  const maisAntigo = ativos.reduce((max, c) => c.dias_responsavel > max.dias_responsavel ? c : max, ativos[0] || {dias_responsavel:0});
+
+  const corpo = document.getElementById('fog-evo-corpo');
+  if (!corpo) return;
+
+  const delta = abertos.length - fechados.length;
+  const deltaHtml = delta > 0
+    ? `<div class="fevo-kpi-delta up">▲ +${delta} — backlog crescendo</div>`
+    : delta < 0
+      ? `<div class="fevo-kpi-delta down">▼ ${Math.abs(delta)} a mais fechados</div>`
+      : `<div class="fevo-kpi-delta" style="color:var(--muted)">= Backlog estável</div>`;
+
+  corpo.innerHTML = `
+    <div class="fevo-kpis">
+      <div class="fevo-kpi">
+        <div class="fevo-kpi-lbl">Casos em aberto</div>
+        <div class="fevo-kpi-val">${ativos.length}</div>
+        <div class="fevo-kpi-sub">total ativos hoje</div>
+      </div>
+      <div class="fevo-kpi">
+        <div class="fevo-kpi-lbl">Abertos no período</div>
+        <div class="fevo-kpi-val">${abertos.length}</div>
+        ${deltaHtml}
+      </div>
+      <div class="fevo-kpi">
+        <div class="fevo-kpi-lbl">Fechados no período</div>
+        <div class="fevo-kpi-val">${fechados.length}</div>
+        <div class="fevo-kpi-sub">${abertos.length ? Math.round(fechados.length/abertos.length*100) : 0}% do que abriu</div>
+      </div>
+      <div class="fevo-kpi">
+        <div class="fevo-kpi-lbl">Mais antigo sem resposta</div>
+        <div class="fevo-kpi-val">${maisAntigo.dias_responsavel || '—'}</div>
+        <div class="fevo-kpi-sub">${maisAntigo.id ? 'dias · caso #' + maisAntigo.id : '—'}</div>
+      </div>
+    </div>
+    <div class="fevo-chart-card">
+      <div class="fevo-chart-hd">
+        <div>
+          <div class="fevo-chart-titulo">Casos por mês</div>
+          <div class="fevo-chart-sub">Abertos vs. fechados no período</div>
+        </div>
+        <div class="fevo-chart-leg">
+          <span><span class="fevo-leg-dot" style="background:var(--accent)"></span>Abertos</span>
+          <span><span class="fevo-leg-dot" style="background:var(--pos)"></span>Fechados</span>
+        </div>
+      </div>
+      <div class="fevo-bars-wrap"><div class="fevo-bars-inner" id="fog-evo-bars"></div></div>
+    </div>
+    <div class="fevo-grid3">
+      <div class="fevo-card"><div class="fevo-card-titulo">Por Projeto</div><div id="fevo-rank-proj"></div></div>
+      <div class="fevo-card"><div class="fevo-card-titulo">Por Área</div><div id="fevo-rank-area"></div></div>
+      <div class="fevo-card">
+        <div class="fevo-card-titulo">Por Responsável <span style="font-size:.7rem;font-weight:400;color:var(--muted)">(abertos)</span></div>
+        <div id="fevo-rank-resp"></div>
+        <div class="fevo-nota">⚠ Casos fechados perdem o responsável na API — ranking só reflete abertos.</div>
+      </div>
+    </div>
+    <div class="fevo-card" style="margin-bottom:16px">
+      <div class="fevo-card-titulo">Casos mais antigos sem atualização</div>
+      <div style="overflow-x:auto"><table class="fevo-parados-tbl">
+        <thead><tr><th>Caso</th><th>Assunto</th><th>Projeto</th><th>Área</th><th>Responsável</th><th style="text-align:right">Sem atualização</th></tr></thead>
+        <tbody id="fog-evo-parados"></tbody>
+      </table></div>
+    </div>`;
+
+  _renderFogChart(start, end, todos);
+  _renderFogRank('fevo-rank-proj', abertos, fechados, 'projeto');
+  _renderFogRank('fevo-rank-area', abertos, fechados, 'area');
+  _renderFogRankResp('fevo-rank-resp', ativos);
+  _renderFogParados(ativos);
+}
+
+function _renderFogChart(start, end, todos) {
+  const months = [];
+  const cur = new Date(start.getFullYear(), start.getMonth(), 1);
+  const endM = new Date(end.getFullYear(), end.getMonth(), 1);
+  while (cur <= endM) {
+    months.push(`${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}`);
+    cur.setMonth(cur.getMonth()+1);
+  }
+  const abPM = {}, fePM = {};
+  months.forEach(m => { abPM[m]=0; fePM[m]=0; });
+  todos.forEach(c => {
+    const mA = c.data?.slice(0,7), mF = c.data_fechamento?.slice(0,7);
+    if (mA && abPM[mA] !== undefined) abPM[mA]++;
+    if (mF && fePM[mF] !== undefined) fePM[mF]++;
+  });
+  const maxV = Math.max(...months.map(m => Math.max(abPM[m], fePM[m])), 1);
+  const container = document.getElementById('fog-evo-bars');
+  if (!container) return;
+  const showYear = months.length > 12;
+  container.innerHTML = months.map(m => {
+    const [yr, mo] = m.split('-');
+    const lbl = _fogMnames[+mo-1] + (showYear ? ` ${yr.slice(2)}` : '');
+    const hA = Math.max(Math.round((abPM[m]/maxV)*140), abPM[m]>0?4:0);
+    const hF = Math.max(Math.round((fePM[m]/maxV)*140), fePM[m]>0?4:0);
+    return `<div class="fevo-bar-group">
+      <div class="fevo-bar-pair">
+        <div class="fevo-bar open" style="height:${hA}px" title="${abPM[m]} abertos em ${lbl}"></div>
+        <div class="fevo-bar closed" style="height:${hF}px" title="${fePM[m]} fechados em ${lbl}"></div>
+      </div>
+      <div class="fevo-bar-lbl">${lbl}</div>
+    </div>`;
+  }).join('');
+}
+
+function _groupCount(arr, field) {
+  return arr.reduce((acc, c) => { const v=c[field]||'?'; acc[v]=(acc[v]||0)+1; return acc; }, {});
+}
+
+function _renderFogRank(id, abertos, fechados, field) {
+  const abC = _groupCount(abertos, field);
+  const feC = _groupCount(fechados, field);
+  const topAb = Object.entries(abC).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const topFe = Object.entries(feC).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const maxAb = topAb[0]?.[1]||1, maxFe = topFe[0]?.[1]||1;
+  const rowAb = topAb.map(([n,v]) => `<div class="fevo-rank-item">
+    <span class="fevo-rank-nome" title="${n}">${n}</span>
+    <div class="fevo-rank-bar-w"><div class="fevo-rank-bar up" style="width:${Math.round(v/maxAb*100)}%"></div></div>
+    <span class="fevo-rank-val up">+${v}</span></div>`).join('') || '<div style="color:var(--muted);font-size:.78rem;padding:4px 0">—</div>';
+  const rowFe = topFe.map(([n,v]) => `<div class="fevo-rank-item">
+    <span class="fevo-rank-nome" title="${n}">${n}</span>
+    <div class="fevo-rank-bar-w"><div class="fevo-rank-bar down" style="width:${Math.round(v/maxFe*100)}%"></div></div>
+    <span class="fevo-rank-val down">-${v}</span></div>`).join('') || '<div style="color:var(--muted);font-size:.78rem;padding:4px 0">—</div>';
+  document.getElementById(id).innerHTML = `<div class="fevo-rank-bloco">
+    <div><div class="fevo-rank-gtitle up">▲ Mais abertos</div>${rowAb}</div>
+    <div><div class="fevo-rank-gtitle down">▼ Mais fechados</div>${rowFe}</div>
+  </div>`;
+}
+
+function _renderFogRankResp(id, ativos) {
+  const respC = _groupCount(ativos.filter(c => c.responsavel && c.responsavel !== 'CLOSED'), 'responsavel');
+  const sorted = Object.entries(respC).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const maxN = sorted[0]?.[1]||1;
+  document.getElementById(id).innerHTML = sorted.map(([n,v]) => `<div class="fevo-rank-item">
+    <span class="fevo-rank-nome" title="${n}">${n}</span>
+    <div class="fevo-rank-bar-w"><div class="fevo-rank-bar up" style="width:${Math.round(v/maxN*100)}%"></div></div>
+    <span class="fevo-rank-val neut">${v}</span></div>`).join('') || '<div style="color:var(--muted);font-size:.78rem;padding:4px 0">—</div>';
+}
+
+function _renderFogParados(ativos) {
+  const top = ativos.slice(0, 10);
+  const tbody = document.getElementById('fog-evo-parados');
+  if (!tbody) return;
+  tbody.innerHTML = top.map(c => {
+    const cls = c.dias_responsavel >= 15 ? 'red' : c.dias_responsavel >= 8 ? 'amber' : 'green';
+    const proj = `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:.72rem;font-weight:700;background:var(--accent-bg);color:var(--accent)">${c.projeto}</span>`;
+    return `<tr>
+      <td style="font-weight:700;color:var(--accent)">#${c.id}</td>
+      <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.assunto}">${c.assunto}</td>
+      <td>${proj}</td>
+      <td style="font-size:.78rem">${c.area}</td>
+      <td style="font-size:.78rem;color:var(--muted)">${c.responsavel}</td>
+      <td style="text-align:right"><span class="fevo-dias ${cls}">${c.dias_responsavel} dias</span></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted)">—</td></tr>';
+}
+
+// Calendário do FOG Evolução (variáveis separadas para não conflitar com o de e-mails)
+function renderFogCal() {
+  if (!_fogCalBase) {
+    const now = new Date();
+    _fogCalBase = new Date(now.getFullYear(), now.getMonth()-1, 1);
+  }
+  const container = document.getElementById('fog-cal-months');
+  if (!container) return;
+  container.innerHTML = '';
+  for (let i = 0; i < 2; i++) {
+    const d = new Date(_fogCalBase.getFullYear(), _fogCalBase.getMonth()+i, 1);
+    container.innerHTML += _buildFogMonth(d, i===0, i===1);
+  }
+  container.querySelector('.fog-cal-nav-back')?.addEventListener('click', () => { _fogCalBase = new Date(_fogCalBase.getFullYear(), _fogCalBase.getMonth()-1, 1); renderFogCal(); });
+  container.querySelector('.fog-cal-nav-fwd')?.addEventListener('click', () => { _fogCalBase = new Date(_fogCalBase.getFullYear(), _fogCalBase.getMonth()+1, 1); renderFogCal(); });
+  container.querySelectorAll('.fog-cday:not(.cdisabled)').forEach(el => {
+    el.addEventListener('click', () => _fogPickDay(el));
+    el.addEventListener('mouseenter', () => _fogHoverDay(el));
+  });
+  _fogUpdateCalNote();
+}
+
+function _buildFogMonth(d, isFirst, isLast) {
+  const yr=d.getFullYear(), mo=d.getMonth();
+  const today=new Date(); today.setHours(0,0,0,0);
+  let h=`<div class="cal-m"><div class="cal-mhd">
+    ${isFirst?'<button class="cal-nav fog-cal-nav-back">‹</button>':'<span style="width:26px"></span>'}
+    <span class="cal-mname">${_fogMnamesFull[mo]} ${yr}</span>
+    ${isLast?'<button class="cal-nav fog-cal-nav-fwd">›</button>':'<span style="width:26px"></span>'}
+  </div><div class="cal-grid">
+  <div class="cdow">D</div><div class="cdow">S</div><div class="cdow">T</div><div class="cdow">Q</div>
+  <div class="cdow">Q</div><div class="cdow">S</div><div class="cdow">S</div>`;
+  const first=new Date(yr,mo,1).getDay();
+  for(let i=0;i<first;i++) h+='<div></div>';
+  const days=new Date(yr,mo+1,0).getDate();
+  for(let day=1;day<=days;day++){
+    const dt=new Date(yr,mo,day); dt.setHours(0,0,0,0);
+    const future=dt>today;
+    let cls='fog-cday cday';
+    if(future) cls+=' cdisabled';
+    if(dt.toDateString()===today.toDateString()) cls+=' ctoday';
+    if(_fogRStart&&dt.toDateString()===_fogRStart.toDateString()) cls+=' csel';
+    if(_fogREnd&&dt.toDateString()===_fogREnd.toDateString()) cls+=' csel';
+    if(_fogRStart&&_fogREnd&&dt>_fogRStart&&dt<_fogREnd) cls+=' cin-range';
+    h+=`<div class="${cls}" data-ts="${dt.getTime()}">${day}</div>`;
+  }
+  return h+'</div></div>';
+}
+
+function _fogPickDay(el){
+  const dt=new Date(+el.dataset.ts);
+  if(!_fogRStart||_fogREnd){ _fogRStart=dt; _fogREnd=null; }
+  else if(dt<_fogRStart){ _fogREnd=_fogRStart; _fogRStart=dt; }
+  else if(dt.toDateString()===_fogRStart.toDateString()){ _fogRStart=null; }
+  else{ _fogREnd=dt; document.getElementById('fog-evo-cal').hidden=true; renderFogEvo(); }
+  renderFogCal();
+}
+
+function _fogHoverDay(el){
+  if(!_fogRStart||_fogREnd) return;
+  const hTs=+el.dataset.ts;
+  document.querySelectorAll('.fog-cday').forEach(d=>{
+    const t=+d.dataset.ts;
+    if(t>_fogRStart.getTime()&&t<hTs) d.classList.add('cin-range');
+    else if(!d.classList.contains('csel')) d.classList.remove('cin-range');
+  });
+}
+
+function _fogUpdateCalNote(){
+  const note=document.getElementById('fog-cal-range-note');
+  if(!note) return;
+  const fmt=d=>`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+  if(!_fogRStart){ note.textContent='Clique no dia de início e depois no dia de fim.'; return; }
+  if(!_fogREnd){ note.textContent=`Início: ${fmt(_fogRStart)} — clique no dia de fim.`; return; }
+  const dias=Math.round((_fogREnd-_fogRStart)/864e5);
+  note.textContent=`Período: ${fmt(_fogRStart)} a ${fmt(_fogREnd)} (${dias} dia${dias!==1?'s':''})`;
+}
 </script>
 </body>
 </html>

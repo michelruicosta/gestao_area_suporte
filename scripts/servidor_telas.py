@@ -694,7 +694,7 @@ def _buscar_fog() -> list[dict]:
             'token': token,
             'cmd': 'search',
             'q': 'opened:"2025/01/01..today"',
-            'cols': 'ixBug,sTitle,fOpen,sPersonAssignedTo,dtOpened,dtLastUpdated,sProject,sArea',
+            'cols': 'ixBug,sTitle,fOpen,sPersonAssignedTo,dtOpened,dtLastUpdated,dtClosed,sProject,sArea',
         }, timeout=30)
         resp.raise_for_status()
         root = _ET.fromstring(resp.text)
@@ -709,6 +709,7 @@ def _buscar_fog() -> list[dict]:
                 dias = (hoje - dt_upd).days
             except Exception:
                 dias = 0
+            dt_closed = _t('dtClosed')
             resultado.append({
                 'id':               _t('ixBug'),
                 'assunto':          _t('sTitle'),
@@ -718,12 +719,19 @@ def _buscar_fog() -> list[dict]:
                 'status':           status,
                 'dias_responsavel': dias,
                 'data':             _t('dtOpened')[:10],
+                'data_fechamento':  dt_closed[:10] if dt_closed else None,
             })
         resultado.sort(key=lambda x: x['dias_responsavel'], reverse=True)
         return resultado
     except Exception as e:
         print(f'⚠️  Erro ao buscar FOG: {e}')
         return []
+
+
+@app.route('/api/fog-evolucao')
+@_requer_login
+def api_fog_evolucao():
+    return jsonify(_buscar_fog())
 
 
 @app.route('/fog/operacional')
