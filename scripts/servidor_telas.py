@@ -24,9 +24,11 @@ from datetime import datetime, timezone
 from functools import wraps
 
 from flask import Flask, abort, jsonify, redirect, render_template, request, session, url_for
+from apscheduler.schedulers.background import BackgroundScheduler
 
 _SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 _ROOT_DIR    = os.path.dirname(_SCRIPTS_DIR)
+_CONFIG_PATH = os.path.join(_ROOT_DIR, 'data', 'config.json')
 
 sys.path.insert(0, _SCRIPTS_DIR)
 import banco_threads as bt
@@ -40,6 +42,49 @@ app.secret_key = os.environ.get('SECRET_KEY', 'oraculo360-gestao-secret')
 
 _coleta_em_andamento = False
 _ultimo_erro_coleta: str | None = None
+
+# ── Configurações persistentes ─────────────────────────────────────────────────
+
+def _ler_config() -> dict:
+    try:
+        with open(_CONFIG_PATH, encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return {'intervalo_coleta_min': 60, 'intervalo_fog_min': 15}
+
+def _salvar_config(cfg: dict) -> None:
+    with open(_CONFIG_PATH, 'w', encoding='utf-8') as f:
+        json.dump(cfg, f, ensure_ascii=False, indent=2)
+
+# ── Agendador de coleta automática ────────────────────────────────────────────
+
+_scheduler = BackgroundScheduler(daemon=True)
+
+def _job_coleta_automatica():
+    global _coleta_em_andamento, _ultimo_erro_coleta
+    if _coleta_em_andamento:
+        return
+    _coleta_em_andamento = True
+    try:
+        sys.path.insert(0, _SCRIPTS_DIR)
+        import coletor_gmail
+        coletor_gmail.executar_coleta_incremental()
+    except Exception as e:
+        _ultimo_erro_coleta = str(e)
+    finally:
+        _coleta_em_andamento = False
+
+def _reagendar_coleta(intervalo_min: int) -> None:
+    if _scheduler.get_job('coleta_automatica'):
+        _scheduler.remove_job('coleta_automatica')
+    if intervalo_min > 0:
+        _scheduler.add_job(
+            _job_coleta_automatica,
+            'interval',
+            minutes=intervalo_min,
+            id='coleta_automatica',
+            replace_existing=True,
+        )
 
 
 class _Usuario:
@@ -492,6 +537,26 @@ def api_admin_log_coletas():
     return jsonify({'logs': logs})
 
 
+@app.route('/api/admin/config', methods=['GET'])
+@_requer_login
+def api_admin_config_get():
+    return jsonify(_ler_config())
+
+
+@app.route('/api/admin/config', methods=['POST'])
+@_requer_login
+def api_admin_config_post():
+    dados = request.get_json(silent=True) or {}
+    cfg = _ler_config()
+    if 'intervalo_coleta_min' in dados:
+        cfg['intervalo_coleta_min'] = max(0, int(dados['intervalo_coleta_min']))
+    if 'intervalo_fog_min' in dados:
+        cfg['intervalo_fog_min'] = max(1, int(dados['intervalo_fog_min']))
+    _salvar_config(cfg)
+    _reagendar_coleta(cfg['intervalo_coleta_min'])
+    return jsonify({'ok': True, 'config': cfg})
+
+
 @app.route('/api/admin/log-detalhe/<int:log_id>')
 @_requer_login
 def api_admin_log_detalhe(log_id):
@@ -685,6 +750,9 @@ def fog_gerencial():
 
 if __name__ == '__main__':
     bt.criar_banco()
+    cfg_inicial = _ler_config()
+    _reagendar_coleta(cfg_inicial.get('intervalo_coleta_min', 60))
+    _scheduler.start()
     porta = int(os.environ.get('PORT', 5001))
     print(f'Gestão de E-mail — http://localhost:{porta}')
-    app.run(host='0.0.0.0', port=porta, debug=True)
+    app.run(host='0.0.0.0', port=porta, debug=True, use_reloader=False)

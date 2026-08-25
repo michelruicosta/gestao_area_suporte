@@ -1087,6 +1087,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
       <div class="email-tabbar" id="adm-tab-bar" style="margin-bottom:1rem">
         <button class="email-tab ativa" onclick="_admMudarAba('coletor',this)">Coletor</button>
         <button class="email-tab" onclick="_admMudarAba('historico',this)">Histórico de execuções</button>
+        <button class="email-tab" onclick="_admMudarAba('agendamentos',this)">Agendamentos</button>
       </div>
 
       <div id="adm-aba-coletor">
@@ -1122,6 +1123,49 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
                 <tr><td colspan="7" class="vazio">Carregando…</td></tr>
               </tbody>
             </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="adm-aba-agendamentos" style="display:none">
+        <div class="admin-card">
+          <h2 style="margin:0 0 1.25rem">Agendamentos automáticos</h2>
+
+          <div style="display:flex;flex-direction:column;gap:1.5rem;max-width:480px">
+
+            <div>
+              <label style="display:block;font-weight:600;margin-bottom:0.4rem">
+                Coleta + Classificação de e-mails
+              </label>
+              <p style="font-size:0.82rem;color:var(--muted);margin:0 0 0.6rem">
+                De quanto em quanto tempo o robô coleta e classifica os e-mails automaticamente.
+                Use 0 para desativar o automático.
+              </p>
+              <div style="display:flex;align-items:center;gap:0.75rem">
+                <input type="number" id="cfg-intervalo-coleta" min="0" max="1440" step="5"
+                  style="width:90px;padding:0.4rem 0.6rem;border:1px solid var(--borda,#ddd);border-radius:6px;font-size:1rem">
+                <span style="color:var(--muted);font-size:0.9rem">minutos</span>
+              </div>
+            </div>
+
+            <div>
+              <label style="display:block;font-weight:600;margin-bottom:0.4rem">
+                Atualização dos dados do FOGBUGZ
+              </label>
+              <p style="font-size:0.82rem;color:var(--muted);margin:0 0 0.6rem">
+                De quanto em quanto tempo a tela do FOGBUGZ recarrega os dados.
+              </p>
+              <div style="display:flex;align-items:center;gap:0.75rem">
+                <input type="number" id="cfg-intervalo-fog" min="1" max="1440" step="5"
+                  style="width:90px;padding:0.4rem 0.6rem;border:1px solid var(--borda,#ddd);border-radius:6px;font-size:1rem">
+                <span style="color:var(--muted);font-size:0.9rem">minutos</span>
+              </div>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:1rem">
+              <button class="btn-primary" onclick="_admSalvarConfig()">Salvar agendamentos</button>
+              <span id="cfg-feedback" style="font-size:0.85rem;color:var(--muted)"></span>
+            </div>
           </div>
         </div>
       </div>
@@ -2071,13 +2115,46 @@ async function carregarBloqueados() {
   }
 }
 
-// ── Abas do Coletor ───────────────────────────────────────────────────
+// ── Abas da Administração ─────────────────────────────────────────────
 function _admMudarAba(aba, btn) {
   document.querySelectorAll('#adm-tab-bar .email-tab').forEach(b => b.classList.remove('ativa'));
   btn.classList.add('ativa');
-  document.getElementById('adm-aba-coletor').style.display   = aba === 'coletor'   ? '' : 'none';
-  document.getElementById('adm-aba-historico').style.display = aba === 'historico' ? '' : 'none';
-  if (aba === 'historico') carregarLogColetas();
+  document.getElementById('adm-aba-coletor').style.display       = aba === 'coletor'       ? '' : 'none';
+  document.getElementById('adm-aba-historico').style.display     = aba === 'historico'     ? '' : 'none';
+  document.getElementById('adm-aba-agendamentos').style.display  = aba === 'agendamentos'  ? '' : 'none';
+  if (aba === 'historico')    carregarLogColetas();
+  if (aba === 'agendamentos') _admCarregarConfig();
+}
+
+async function _admCarregarConfig() {
+  try {
+    const cfg = await _get('/api/admin/config');
+    document.getElementById('cfg-intervalo-coleta').value = cfg.intervalo_coleta_min ?? 60;
+    document.getElementById('cfg-intervalo-fog').value    = cfg.intervalo_fog_min    ?? 15;
+  } catch (e) {
+    document.getElementById('cfg-feedback').textContent = 'Erro ao carregar configurações.';
+  }
+}
+
+async function _admSalvarConfig() {
+  const coletaMin = parseInt(document.getElementById('cfg-intervalo-coleta').value, 10);
+  const fogMin    = parseInt(document.getElementById('cfg-intervalo-fog').value, 10);
+  const fb = document.getElementById('cfg-feedback');
+  fb.textContent = 'Salvando…';
+  try {
+    const r = await fetch('/api/admin/config', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({intervalo_coleta_min: coletaMin, intervalo_fog_min: fogMin}),
+    });
+    if (!r.ok) throw new Error();
+    _fogIntervalSecs = fogMin * 60;
+    _fogSecs = _fogIntervalSecs;
+    fb.textContent = '✓ Salvo com sucesso.';
+    setTimeout(() => { fb.textContent = ''; }, 3000);
+  } catch (e) {
+    fb.textContent = 'Erro ao salvar.';
+  }
 }
 
 
@@ -2816,18 +2893,18 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ── FOG: Countdown ────────────────────────────────────────────────────
-let _fogSecs = 900, _fogTimer = null;
+let _fogIntervalSecs = 900, _fogSecs = 900, _fogTimer = null;
 
 function _fogStartCountdown() {
   if (_fogTimer) return;
-  _fogSecs = 900;
+  _fogSecs = _fogIntervalSecs;
   _fogTimer = setInterval(() => {
     _fogSecs--;
     const m = String(Math.floor(_fogSecs / 60)).padStart(2, '0');
     const s = String(_fogSecs % 60).padStart(2, '0');
     const el = document.getElementById('fog-countdown');
     if (el) el.textContent = m + ':' + s;
-    if (_fogSecs <= 0) _fogSecs = 900;
+    if (_fogSecs <= 0) _fogSecs = _fogIntervalSecs;
   }, 1000);
 }
 
@@ -2931,7 +3008,7 @@ function _fogAplicarOrdem() {
 
 function fogReset() {
   _fogUrgenciaFiltro = '';
-  _fogSecs = 900;
+  _fogSecs = _fogIntervalSecs;
   fogFiltrar();
 }
 
@@ -2985,7 +3062,7 @@ let _usrDados = [
 let _permissoes = {
   operador:       ['classificados','historico'],
   gestor:         ['classificados','historico','nao-classificados','bloqueados','fog-casos','fog-kpis'],
-  administrador:  ['classificados','historico','nao-classificados','bloqueados','fog-casos','fog-kpis','admin','usuarios'],
+  administrador:  ['classificados','historico','nao-classificados','bloqueados','fog-casos','fog-kpis','admin','usuarios','agendamentos'],
 };
 let _usrAbaAtiva = 'usuarios';
 let _usrModalId   = null;
@@ -3135,6 +3212,12 @@ function _usrExcluir(id) {
 }
 
 // ── Inicialização ─────────────────────────────────────────────────────
+(async () => {
+  try {
+    const cfg = await _get('/api/admin/config');
+    if (cfg.intervalo_fog_min) _fogIntervalSecs = cfg.intervalo_fog_min * 60;
+  } catch (e) { /* usa o padrão de 900s */ }
+})();
 carregarResumo();
 _timer = setInterval(_tick, 1000);
 </script>
