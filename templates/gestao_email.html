@@ -476,36 +476,52 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
   padding: 2px 8px; cursor: pointer; transition: background .15s, color .15s;
 }
 .btn-log-det:hover { background: var(--accent-bg); color: var(--marca); }
-.btn-voltar {
-  background: none; border: 1px solid var(--borda); border-radius: 8px;
-  color: var(--txt-sec); font-size: 0.88rem; padding: 5px 14px;
-  cursor: pointer; transition: background .15s; white-space: nowrap;
+.det-breadcrumb {
+  display: flex; align-items: center; gap: 0.5rem;
+  margin-bottom: 1.25rem; font-size: 0.88rem;
 }
-.btn-voltar:hover { background: var(--accent-bg); color: var(--marca); }
-.det-erro-card {
-  background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px;
-  padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; max-width: 680px;
+.det-btn-voltar {
+  background: none; border: none; padding: 0; cursor: pointer;
+  color: var(--marca); font: inherit; font-size: 0.88rem;
+  text-decoration: underline; text-underline-offset: 3px;
 }
-.det-erro-label { margin: 0 0 0.4rem; font-weight: 700; color: #dc2626; font-size: 0.95rem; }
-.det-erro-msg { margin: 0 0 1rem; font-size: 0.95rem; color: #1e293b; line-height: 1.5; }
-.det-erro-solucao {
-  background: #fff7ed; border: 1px solid #fed7aa; border-radius: 6px;
-  padding: 0.7rem 1rem; font-size: 0.88rem; color: #431407;
+.det-btn-voltar:hover { opacity: 0.75; }
+.det-bc-sep { color: var(--muted); }
+.det-bc-atual { color: var(--muted); font-weight: 500; }
+.det-erro-bloco {
+  background: var(--neg-bg); border: 1px solid var(--neg);
+  border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem;
 }
-.det-sol-label { font-weight: 600; margin-right: 0.35rem; }
+.det-erro-label { margin: 0 0 0.4rem; font-weight: 700; color: var(--neg); font-size: 0.9rem; }
+.det-erro-msg { margin: 0; font-size: 0.93rem; color: var(--text); line-height: 1.5; }
+.det-sol-bloco {
+  background: var(--accent-bg); border: 1px solid var(--accent);
+  border-radius: 8px; padding: 0.85rem 1.25rem; margin-bottom: 1rem;
+  font-size: 0.88rem; color: var(--text);
+}
+.det-sol-label { font-weight: 700; margin-right: 0.4rem; color: var(--accent); }
+.det-raw-details {
+  font-size: 0.78rem; color: var(--muted); cursor: pointer;
+}
+.det-raw-details summary { cursor: pointer; }
+.det-raw-details code {
+  display: block; margin-top: 0.5rem; word-break: break-all;
+  font-size: 0.75rem; color: var(--muted);
+}
 .det-filtros {
   display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap;
-  margin-bottom: 1rem;
+  margin-bottom: 1rem; padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
 }
 .det-filtro-label {
   display: flex; align-items: center; gap: 0.5rem;
-  font-size: 0.85rem; color: var(--txt-sec); font-weight: 500;
+  font-size: 0.85rem; color: var(--muted); font-weight: 500;
 }
 .det-filtro-label select {
-  border: 1px solid var(--borda); border-radius: 6px; padding: 4px 10px;
-  font-size: 0.85rem; background: var(--card-bg); color: var(--txt);
+  border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px;
+  font-size: 0.85rem; background: var(--bg); color: var(--text);
 }
-.det-contagem { font-size: 0.82rem; color: var(--txt-sec); margin-left: auto; }
+.det-contagem { font-size: 0.82rem; color: var(--muted); margin-left: auto; }
 .status-linha {
   display: flex; align-items: center; gap: 0.55rem;
   font-size: 0.86rem; color: var(--muted); margin-top: 0.85rem;
@@ -950,29 +966,29 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 
     <!-- ── Página 5b: Detalhe de execução do Coletor ────────────────── -->
     <section class="page" id="pag-admin-detalhe">
-      <div class="page-header">
-        <div class="page-header-left">
-          <button class="btn-voltar" onclick="_voltarAdmin()">← Voltar</button>
-          <h1 class="page-titulo" id="det-titulo">Detalhe da execução</h1>
-        </div>
+      <div class="det-breadcrumb">
+        <button class="det-btn-voltar" onclick="_voltarAdmin()">← Coletor</button>
+        <span class="det-bc-sep">/</span>
+        <span class="det-bc-atual" id="det-titulo">Detalhe</span>
       </div>
 
-      <div id="det-erro-box" hidden>
-        <div class="det-erro-card">
+      <div id="det-erro-box" class="admin-card" hidden>
+        <h2 style="margin:0 0 1rem;color:var(--neg,#c55a00);">Execução com erro</h2>
+        <div class="det-erro-bloco">
           <p class="det-erro-label">O que aconteceu:</p>
           <p id="det-erro-msg" class="det-erro-msg"></p>
-          <div class="det-erro-solucao">
-            <span class="det-sol-label">Como resolver:</span>
-            <span id="det-erro-sol"></span>
-          </div>
-          <details style="margin-top:0.75rem;">
-            <summary style="font-size:0.78rem;color:#94a3b8;cursor:pointer;">Ver detalhe técnico</summary>
-            <code id="det-erro-raw" style="font-size:0.75rem;color:#7f1d1d;word-break:break-all;display:block;margin-top:0.4rem;"></code>
-          </details>
         </div>
+        <div class="det-sol-bloco">
+          <span class="det-sol-label">Como resolver:</span>
+          <span id="det-erro-sol"></span>
+        </div>
+        <details class="det-raw-details">
+          <summary>Ver detalhe técnico</summary>
+          <code id="det-erro-raw"></code>
+        </details>
       </div>
 
-      <div id="det-threads-box" hidden>
+      <div id="det-threads-box" class="admin-card" hidden>
         <div class="det-filtros">
           <label class="det-filtro-label">Categoria
             <select id="det-fil-cat" onchange="_detFiltrar()">
@@ -991,7 +1007,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
             <thead>
               <tr>
                 <th>Assunto</th>
-                <th>Categoria</th>
+                <th>Situação</th>
                 <th>Status</th>
                 <th>Motivo</th>
               </tr>
@@ -1896,8 +1912,9 @@ async function abrirDetalheLog(logId, dataHora, status) {
 
     } else {
       _detThreads = d.threads || [];
-      const cats = [...new Set(_detThreads.map(t => t.categoria).filter(Boolean))].sort();
-      const sts  = [...new Set(_detThreads.map(t => t.status).filter(Boolean))].sort();
+      // filtro Categoria: só as classificadas (não bloqueadas)
+      const cats = [...new Set(_detThreads.filter(t => t.categoria).map(t => t.categoria))].sort();
+      const sts  = [...new Set(_detThreads.filter(t => t.status).map(t => t.status))].sort();
       const catSel = document.getElementById('det-fil-cat');
       const stSel  = document.getElementById('det-fil-st');
       catSel.innerHTML = '<option value="">Todas</option>' +
@@ -1910,14 +1927,18 @@ async function abrirDetalheLog(logId, dataHora, status) {
           '<tr><td colspan="4" class="vazio">Nenhuma thread processada nesta execução.</td></tr>';
       } else {
         document.getElementById('det-tbody').innerHTML = _detThreads.map(t => {
-          const catLabel = t.categoria
-            ? `<span class="chip chip-inc" style="font-size:0.75rem;">${escHtml(t.categoria)}</span>`
-            : `<span style="color:#94a3b8;font-style:italic;">Não classificada</span>`;
-          return `<tr data-cat="${escHtml(t.categoria||'')}" data-st="${escHtml(t.status||'')}">
+          const bloqueada = t.destino === 'descartes' && !t.categoria;
+          const situacao = bloqueada
+            ? `<span class="chip" style="background:var(--neg-bg);color:var(--neg);font-size:0.73rem;">Bloqueada por filtro</span>`
+            : t.categoria
+              ? `<span class="chip chip-inc" style="font-size:0.73rem;">${escHtml(t.categoria)}</span>`
+              : `<span style="color:var(--muted);font-style:italic;font-size:0.83rem;">Sem classificação</span>`;
+          const filCat = bloqueada ? '__bloqueada__' : (t.categoria || '');
+          return `<tr data-cat="${escHtml(filCat)}" data-st="${escHtml(t.status||'')}">
             <td style="font-size:0.87rem;">${escHtml(t.assunto || '—')}</td>
-            <td style="white-space:nowrap;">${catLabel}</td>
+            <td style="white-space:nowrap;">${situacao}</td>
             <td style="font-size:0.87rem;white-space:nowrap;">${escHtml(t.status || '—')}</td>
-            <td style="font-size:0.83rem;color:var(--txt-sec);">${escHtml(t.motivo || '—')}</td>
+            <td style="font-size:0.83rem;color:var(--muted);">${escHtml(t.motivo || '—')}</td>
           </tr>`;
         }).join('');
         document.getElementById('det-contagem').textContent =
