@@ -476,18 +476,17 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
   padding: 2px 8px; cursor: pointer; transition: background .15s, color .15s;
 }
 .btn-log-det:hover { background: var(--accent-bg); color: var(--marca); }
-.det-breadcrumb {
-  display: flex; align-items: center; gap: 0.5rem;
-  margin-bottom: 1.25rem; font-size: 0.88rem;
+.det-topo {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1.25rem; gap: 1rem;
 }
 .det-btn-voltar {
-  background: none; border: none; padding: 0; cursor: pointer;
-  color: var(--marca); font: inherit; font-size: 0.88rem;
-  text-decoration: underline; text-underline-offset: 3px;
+  background: none; border: 1px solid var(--border); border-radius: 8px;
+  padding: 5px 16px; cursor: pointer; color: var(--muted);
+  font: inherit; font-size: 0.88rem; white-space: nowrap;
+  transition: background .15s, color .15s;
 }
-.det-btn-voltar:hover { opacity: 0.75; }
-.det-bc-sep { color: var(--muted); }
-.det-bc-atual { color: var(--muted); font-weight: 500; }
+.det-btn-voltar:hover { background: var(--accent-bg); color: var(--marca); border-color: var(--marca); }
 .det-erro-bloco {
   background: var(--neg-bg); border: 1px solid var(--neg);
   border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem;
@@ -966,10 +965,9 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 
     <!-- ── Página 5b: Detalhe de execução do Coletor ────────────────── -->
     <section class="page" id="pag-admin-detalhe">
-      <div class="det-breadcrumb">
-        <button class="det-btn-voltar" onclick="_voltarAdmin()">← Coletor</button>
-        <span class="det-bc-sep">/</span>
-        <span class="det-bc-atual" id="det-titulo">Detalhe</span>
+      <div class="det-topo">
+        <h1 class="page-titulo" id="det-titulo">Detalhe</h1>
+        <button class="det-btn-voltar" onclick="_voltarAdmin()">← Voltar</button>
       </div>
 
       <div id="det-erro-box" class="admin-card" hidden>
@@ -1007,7 +1005,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
             <thead>
               <tr>
                 <th>Assunto</th>
-                <th>Situação</th>
+                <th>Categoria</th>
                 <th>Status</th>
                 <th>Motivo</th>
               </tr>
@@ -1912,13 +1910,14 @@ async function abrirDetalheLog(logId, dataHora, status) {
 
     } else {
       _detThreads = d.threads || [];
-      // filtro Categoria: só as classificadas (não bloqueadas)
       const cats = [...new Set(_detThreads.filter(t => t.categoria).map(t => t.categoria))].sort();
+      const temBloqueadas = _detThreads.some(t => t.destino === 'descartes' && !t.categoria);
       const sts  = [...new Set(_detThreads.filter(t => t.status).map(t => t.status))].sort();
       const catSel = document.getElementById('det-fil-cat');
       const stSel  = document.getElementById('det-fil-st');
       catSel.innerHTML = '<option value="">Todas</option>' +
-        cats.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('');
+        cats.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('') +
+        (temBloqueadas ? '<option value="__bloqueada__">Bloqueada por filtro</option>' : '');
       stSel.innerHTML  = '<option value="">Todos</option>' +
         sts.map(s => `<option value="${escHtml(s)}">${escHtml(s)}</option>`).join('');
 
