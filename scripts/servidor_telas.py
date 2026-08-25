@@ -1,6 +1,6 @@
 """
 servidor_telas.py
-O que faz: servidor Flask que serve as telas de Gestão de E-mail do Oráculo 360
+O que faz: servidor Flask que serve as telas de Gestão de E-mail do Gestão Área Suporte
            e fornece dados ao vivo do banco SQLite via API REST.
 Porta: 5000   Rodar: python scripts/servidor_telas.py
 """

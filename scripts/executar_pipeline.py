@@ -1,6 +1,6 @@
 """
 executar_pipeline.py
-O que faz: roda o pipeline completo do Oráculo 360 em sequência:
+O que faz: roda o pipeline completo do Gestão Área Suporte em sequência:
            1. Coleta e-mails novos do Gmail (coletor_gmail.py)
            2. Classifica threads sem categoria (classificador_regras.py)
 Rodar: python scripts/executar_pipeline.py
@@ -26,7 +26,7 @@ def executar() -> None:
     agora  = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
 
     print(_linha('═'))
-    print(f'PIPELINE ORÁCULO 360  —  {agora}')
+    print(f'PIPELINE GESTÃO ÁREA SUPORTE  —  {agora}')
     print(_linha('═'))
 
     # ── Etapa 1: Coleta ───────────────────────────────────────────────────────

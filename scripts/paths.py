@@ -1,5 +1,5 @@
 """
-Caminhos centrais do projecto ORÁCULO 360.
+Caminhos centrais do projecto GESTÃO ÁREA SUPORTE.
 
 Importar em qualquer script:
     from paths import PIPELINE_DIR, PAINEL_DIR, CONFIG_DIR, BACKUPS_DIR
@@ -507,7 +507,7 @@ def status_pipeline() -> None:
     estado = _carregar_estado()
     sep = "=" * 62
     print("\n" + sep)
-    print("   ESTADO DO PIPELINE -- ORACULO 360")
+    print("   ESTADO DO PIPELINE -- GESTAO AREA SUPORTE")
     print(sep)
 
     ordem = [

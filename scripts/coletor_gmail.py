@@ -1,6 +1,6 @@
 """
 coletor_gmail.py
-O que faz: conecta na caixa de coleta do Oráculo 360 via Gmail API (service account),
+O que faz: conecta na caixa de coleta do Gestão Área Suporte via Gmail API (service account),
            importa TODAS as threads na primeira vez e, nas rodadas seguintes,
            busca apenas o que é novo ou foi atualizado. Salva diretamente no banco SQLite.
 """
@@ -286,7 +286,7 @@ def _sincronizar_incremental(service, start_history_id: str) -> tuple[str | None
 
 def coletar() -> int | None:
     print('=' * 60)
-    print('COLETOR GMAIL — caixa de coleta do Oráculo 360')
+    print('COLETOR GMAIL — caixa de coleta do Gestão Área Suporte')
     print('=' * 60)
 
     _inicio = time.time()

@@ -1,4 +1,4 @@
-# Tarefas Agendadas e Recursos Externos — Oráculo 360 Finaud
+# Tarefas Agendadas e Recursos Externos — Gestão Área Suporte
 
 **Início:** 18/08/2026
 **Propósito:** rastrear todos os recursos externos ao código (tarefas agendadas, regras de roteamento, integrações, webhooks) para que qualquer sessão futura saiba o que existe, como funciona e como recriar do zero.
@@ -17,7 +17,7 @@
 | **Última modificação** | 18/08/2026 — adicionado `suporte@finaud.com.br` ao filtro de remetentes |
 
 **O que faz:**
-Copia automaticamente para `coleta.oraculo@finaud.com.br` todos os e-mails enviados pelos colaboradores da Finaud — tanto pelos endereços pessoais (`sarah.sa@finaud.com.br`, etc.) quanto pelo endereço do grupo (`suporte@finaud.com.br`). Garante que o banco do Oráculo 360 capture os dois lados da conversa: os e-mails dos clientes (que chegam via associação de grupo) e as respostas da Finaud (que chegam via esta regra).
+Copia automaticamente para `coleta.oraculo@finaud.com.br` todos os e-mails enviados pelos colaboradores da Finaud — tanto pelos endereços pessoais (`sarah.sa@finaud.com.br`, etc.) quanto pelo endereço do grupo (`suporte@finaud.com.br`). Garante que o banco do Gestão Área Suporte capture os dois lados da conversa: os e-mails dos clientes (que chegam via associação de grupo) e as respostas da Finaud (que chegam via esta regra).
 
 **Configuração atual:**
 
@@ -42,7 +42,7 @@ Sem esta regra, o coletor (`coletor_gmail.py`) só via os e-mails que chegavam �
 **Erros conhecidos:**
 - E-mails enviados *antes* de 18/08/2026 via `suporte@finaud.com.br` não foram capturados — histórico incompleto para este período; aceito como limitação.
 
-**Última manutenção:** 18/08/2026 — adicionado `suporte@finaud.com.br` ao RegExp de remetentes (por Michel, guiado pela sessão do Oráculo 360).
+**Última manutenção:** 18/08/2026 — adicionado `suporte@finaud.com.br` ao RegExp de remetentes (por Michel, guiado pela sessão do Gestão Área Suporte).
 
 ---
 

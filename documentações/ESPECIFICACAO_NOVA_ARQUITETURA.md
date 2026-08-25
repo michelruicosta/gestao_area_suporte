@@ -1,4 +1,4 @@
-# Especificação — Nova Arquitetura do Oráculo 360
+# Especificação — Nova Arquitetura do Gestão Área Suporte
 **Versão:** 2.0  
 **Data:** 31/07/2026  
 **Status:** Em desenvolvimento ativo — revisão sequencial em andamento — §7 a §11 revisados e aprovados; próxima seção: §12 Decisões tomadas e justificativas
@@ -9,7 +9,7 @@
 
 | § | Seção |
 |---|---|
-| 1 | O que é o Oráculo 360 |
+| 1 | O que é o Gestão Área Suporte |
 | 2 | O que o sistema faz |
 | 3 | As 10 categorias de e-mail e seus fluxos |
 | 4 | Quem usa e para quê |
@@ -28,9 +28,9 @@
 
 ---
 
-## 1. O que é o Oráculo 360
+## 1. O que é o Gestão Área Suporte
 
-O Oráculo 360 monitora os e-mails trocados entre a Finaud e seus clientes. O sistema tem quatro peças:
+O Gestão Área Suporte monitora os e-mails trocados entre a Finaud e seus clientes. O sistema tem quatro peças:
 
 1. **Leitura do Gmail** — acessa a caixa de e-mail diretamente via Gmail API e lê todas as conversas
 2. **IA classificadora** — entende cada e-mail e identifica a qual categoria ele pertence — obrigações regulatórias (como DDR, DRM, DLO) ou suporte — sendo que um mesmo e-mail pode envolver mais de uma categoria ao mesmo tempo
@@ -256,7 +256,7 @@ E-mails que o sistema descarta automaticamente sem processar. No sistema atual e
 |---|---|
 | `riskdriver@finaud.com.br` | Risk Driver — sistema automático da Finaud |
 | `contato@finaud.com.br` | Alertas BACEN — sistema automático |
-| `coleta.oraculo@finaud.com.br` | Conta de coleta do Oráculo 360 |
+| `coleta.oraculo@finaud.com.br` | Conta de coleta do Gestão Área Suporte |
 | `do-not-reply@finaud.fogbugz.com` | FogBugz — sistema de tickets |
 | `comunicacao@comunicacao.bcb.gov.br` | BACEN — comunicado automático |
 
@@ -2742,8 +2742,8 @@ Definições dos termos usados ao longo desta especificação, em linguagem simp
 |---|---|
 | **Mensagem (e-mail)** | Um único e-mail enviado de A para B. Uma caixa com "970 e-mails" tem 970 mensagens individuais. |
 | **Thread (conversa)** | Conjunto de mensagens que o Gmail agrupa como uma mesma conversa (pelo assunto e histórico de respostas). Uma conversa com 10 e-mails de ida e volta = 1 thread, não 10. Uma caixa com 201 threads pode ter quase 1.000 mensagens. |
-| **coleta.oraculo@finaud.com.br** | Caixa monitorada exclusivamente pelo Oráculo 360 para leitura e classificação. Os colaboradores não respondem por ela — ela recebe cópias automáticas de tudo que passa pelo suporte@. |
-| **suporte@finaud.com.br** | Caixa operacional da equipe. É onde os clientes escrevem e onde os colaboradores respondem. O Oráculo 360 não lê esta caixa diretamente — lê a coleta.oraculo@ que recebe as cópias. |
+| **coleta.oraculo@finaud.com.br** | Caixa monitorada exclusivamente pelo Gestão Área Suporte para leitura e classificação. Os colaboradores não respondem por ela — ela recebe cópias automáticas de tudo que passa pelo suporte@. |
+| **suporte@finaud.com.br** | Caixa operacional da equipe. É onde os clientes escrevem e onde os colaboradores respondem. O Gestão Área Suporte não lê esta caixa diretamente — lê a coleta.oraculo@ que recebe as cópias. |
 | **Caminho 2** | Regra configurada no Google Workspace da Finaud que envia automaticamente uma cópia de cada e-mail do suporte@ para a coleta.oraculo@. Acontece em tempo real, sem ação humana. |
 | **Remessa (CADOC)** | O arquivo gerado pela Finaud e entregue ao cliente (ou diretamente ao BACEN). Formato típico: ZIP com o código do CADOC no nome — ex.: `32648370_2011_20260727.zip`. |
 | **Competência** | O período de referência de um relatório — pode ser dia (DDR diário), mês (DRM), semestre (DLO/DLI) ou trimestre (PVCA). Diferente da data de envio: um DDR de competência 27/07 pode ser enviado ao BACEN em 30/07. |

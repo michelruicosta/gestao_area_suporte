@@ -610,7 +610,7 @@ def _montar_fila(registro: dict, regressoes: list, por_id: dict) -> list:
 # ── Main ───────────────────────────────────────────────────────────────────────
 
 def main():
-    print('\nSESSAO DE ENSINO — Oraculo 360 Finaud')
+    print('\nSESSAO DE ENSINO — Gestao Area Suporte')
     print('=' * 58)
     print('Carregando contexto...')
 

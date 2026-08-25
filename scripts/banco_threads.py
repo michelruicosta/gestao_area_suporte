@@ -1,6 +1,6 @@
 """
 banco_threads.py
-O que faz: cria e gerencia o banco de dados SQLite do Oráculo 360 —
+O que faz: cria e gerencia o banco de dados SQLite do Gestão Área Suporte —
            armazena todas as threads coletadas do Gmail, suas classificações
            e o estado de sincronização entre rodadas.
 """

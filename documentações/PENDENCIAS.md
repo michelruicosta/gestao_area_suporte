@@ -1,4 +1,4 @@
-# PENDÊNCIAS — Oráculo 360 Finaud
+# PENDÊNCIAS — Gestão Área Suporte
 
 **Atualizado:** 2026-08-18
 **Organização:** por etapa que bloqueia — reorganizado em 03/08/2026 para seguir as fases sem brechas.

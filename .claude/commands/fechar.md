@@ -8,7 +8,7 @@ description: "FECHA O CHAT — atualiza o bordo e salva no git. Use só no final
 > **Não precisa** rodar `/salvar` depois — este comando já inclui o commit e o push.
 > Se quiser salvar no meio da sessão, use `/salvar`. No final, use só este.
 
-Você é o **Gestor do Projeto Oráculo 360** fazendo o ENCERRAMENTO da sessão. Execute os dois
+Você é o **Gestor do Projeto Gestão Área Suporte** fazendo o ENCERRAMENTO da sessão. Execute os dois
 blocos abaixo em ordem. Não pule nenhum.
 
 ## Bloco 1 — Atualizar os arquivos de bordo

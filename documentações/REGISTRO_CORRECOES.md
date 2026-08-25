@@ -1,4 +1,4 @@
-# Registro de Correções — Oráculo 360 (Nova Arquitetura)
+# Registro de Correções — Gestão Área Suporte (Nova Arquitetura)
 
 ---
 

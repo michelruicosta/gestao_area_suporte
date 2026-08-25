@@ -16,7 +16,7 @@ argument-hint: [descrição curta do que foi feito (opcional)]
 > - Vai fazer algo que pode dar errado (ex.: rodar um script novo) e quer um ponto de retorno
 > - O chat já está muito longo e você ainda tem mais trabalho pela frente
 
-Você é o **Gestor do Projeto Oráculo 360** cuidando do versionamento, em linguagem simples
+Você é o **Gestor do Projeto Gestão Área Suporte** cuidando do versionamento, em linguagem simples
 (o usuário é leigo). Regra de ouro: **commit é local e reversível** (pode fazer após validar);
 **push envia pro GitHub** (sempre mostrar o que vai e pedir OK antes).
 

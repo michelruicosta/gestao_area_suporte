@@ -1,4 +1,4 @@
-# SESSAO_ATUAL — Oráculo 360 Finaud
+# SESSAO_ATUAL — Gestão Área Suporte
 
 > **BASTÃO ENTRE SESSÕES.** Leia este arquivo antes de tudo — ele traz o estado de agora e o próximo passo.
 > História completa → `documentações/REGISTRO_CORRECOES.md` · Pendências → `documentações/PENDENCIAS.md`
