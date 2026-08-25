@@ -569,3 +569,18 @@ No projeto antigo, alguns cards da tela operacional do FOG mostravam mensagens d
 **Quando fazer:** após as telas FOG (operacional + gerencial) estarem funcionando em produção.
 
 ---
+
+### 🟡 TELA E-MAILS — Drill-down de categoria na tela Evolução (identificado 25/08/2026)
+
+Hoje a tela Evolução mostra todas as categorias numa tabela com variações. A ideia é: ao **clicar numa categoria**, abrir um painel mostrando como aquela categoria específica se comportou ao longo do tempo (dia a dia ou semana a semana) — com um gráfico de linha para AF, AC e CO.
+
+**Por que faz sentido:** a tabela é ótima para comparar todas as categorias ao mesmo tempo. O gráfico de linha faz sentido somente quando o foco é **uma categoria só**, mostrando tendência ao longo do tempo (ex.: "SALDOS_4111 estava em 9 há 3 semanas, subiu para 13 semana passada e caiu para 12 hoje").
+
+**O que é necessário antes de implementar:**
+1. Verificar se os snapshots salvos têm granularidade suficiente (diária) para traçar uma curva útil
+2. Definir o visual: painel lateral, modal ou seção expansível abaixo da linha clicada?
+3. Definir o período máximo exibido (últimos 30 dias? 90 dias?)
+
+**Quando fazer:** após a Fase 1 estar estável em produção.
+
+---
