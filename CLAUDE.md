@@ -473,6 +473,24 @@ para manter o mesmo link.
 
 ---
 
+## Padrão obrigatório de tipografia — telas do sistema
+
+Toda tela nova ou modificada deve usar **`rem`** (nunca `px` fixo) para fontes de conteúdo:
+
+| Elemento | Tamanho |
+|---|---|
+| Corpo de tabela / texto principal | `0.875rem` |
+| Cabeçalho de tabela (th) / labels maiores | `0.75rem` |
+| Labels menores, legendas, datas auxiliares | `0.72rem` |
+| Valores grandes de KPI | `1.5rem` a `1.875rem` |
+| Textos de apoio (subtítulos, notas) | `0.78rem` |
+
+**Nunca usar `px` para fontes de conteúdo.** `px` é aceito apenas em elementos decorativos de tamanho fixo (ícones, avatares, badges de cor). Misturar `px` e `rem` em fontes de texto cria a sensação de "cada tela tem um tamanho diferente".
+
+> Padrão aprovado por Michel em 25/08/2026 após auditoria que identificou inconsistência nas 3 telas FOG.
+
+---
+
 ## Contexto do projeto
 Nova arquitetura: Gmail API + IA Classificadora (substitui pipeline de 16 scripts).
 Tela web em Flask (localhost:5000). Especificação completa: `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md`.
