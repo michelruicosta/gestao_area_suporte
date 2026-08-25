@@ -831,20 +831,20 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
       <div class="nav-section-items">
         <button class="nav-item ativo" data-pagina="classificados" onclick="navegar(this)">
           <span class="nav-ico">📊</span>
-          <span class="nav-txt">Situação Atual</span>
+          <span class="nav-txt">Classificação e Status</span>
         </button>
         <button class="nav-item" data-pagina="historico" onclick="navegar(this)">
           <span class="nav-ico">📈</span>
-          <span class="nav-txt">Histórico</span>
+          <span class="nav-txt">Evolução</span>
         </button>
         <button class="nav-item" data-pagina="nao-classificados" onclick="navegar(this)">
           <span class="nav-ico">📥</span>
-          <span class="nav-txt">Não Classificados</span>
+          <span class="nav-txt">Não Classificadas</span>
           <span class="nav-badge" id="badge-nao-class">—</span>
         </button>
         <button class="nav-item" data-pagina="bloqueados" onclick="navegar(this)">
           <span class="nav-ico">🚫</span>
-          <span class="nav-txt">Bloqueados por Filtro</span>
+          <span class="nav-txt">Bloqueadas por Regras</span>
           <span class="nav-badge" id="badge-bloqueados">—</span>
         </button>
       </div>
@@ -856,13 +856,13 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
         <span class="nav-section-arrow">›</span>
       </div>
       <div class="nav-section-items">
-        <button class="nav-item" data-pagina="fog-casos" onclick="navegar(this)">
-          <span class="nav-ico">📋</span>
-          <span class="nav-txt">Casos</span>
-        </button>
         <button class="nav-item" data-pagina="fog-kpis" onclick="navegar(this)">
           <span class="nav-ico">📈</span>
-          <span class="nav-txt">Gerencial</span>
+          <span class="nav-txt">Visão Consolidada</span>
+        </button>
+        <button class="nav-item" data-pagina="fog-casos" onclick="navegar(this)">
+          <span class="nav-ico">📋</span>
+          <span class="nav-txt">Lista de Casos</span>
         </button>
       </div>
     </div>
@@ -894,7 +894,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 
   <!-- Topbar -->
   <header class="topbar">
-    <span class="topbar-titulo" id="topbar-titulo">Situação Atual</span>
+    <span class="topbar-titulo" id="topbar-titulo">Classificação e Status</span>
     <div class="topbar-direita">
       <span class="refresh-spinner" id="spinner"></span>
       <div class="user-wrap">
@@ -936,16 +936,16 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
     <!-- ── Página 1: Situação Atual ────────────────────────────────── -->
     <section class="page ativa" id="pag-classificados">
       <div class="email-tabbar">
-        <button class="email-tab ativa" data-pagina="classificados" onclick="navegar(this)">Situação Atual</button>
-        <button class="email-tab" data-pagina="historico" onclick="navegar(this)">Histórico</button>
-        <button class="email-tab" data-pagina="nao-classificados" onclick="navegar(this)">Não Classificados</button>
-        <button class="email-tab" data-pagina="bloqueados" onclick="navegar(this)">Bloqueados por Filtro</button>
+        <button class="email-tab ativa" data-pagina="classificados" onclick="navegar(this)">Classificação e Status</button>
+        <button class="email-tab" data-pagina="historico" onclick="navegar(this)">Evolução</button>
+        <button class="email-tab" data-pagina="nao-classificados" onclick="navegar(this)">Não Classificadas</button>
+        <button class="email-tab" data-pagina="bloqueados" onclick="navegar(this)">Bloqueadas por Regras</button>
       </div>
       <div class="tabela-wrap">
         <div class="card-hd" onclick="toggleTblResumo()" title="Clique para minimizar / expandir">
           <div>
-            <div class="card-title">Situação Atual</div>
-            <div class="card-sub">Agrupadas por categoria · atualizadas a cada 5 minutos</div>
+            <div class="card-title">Classificação e Status</div>
+            <div class="card-sub">Conversas de e-mail agrupadas por categoria e status · atualizado a cada 5 minutos</div>
           </div>
           <div class="card-hd-right">
             <span class="refresh-destaque" id="refresh-info"></span>
@@ -979,10 +979,16 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
     <!-- ── Página 2: Histórico ─────────────────────────────────────── -->
     <section class="page" id="pag-historico">
       <div class="email-tabbar">
-        <button class="email-tab" data-pagina="classificados" onclick="navegar(this)">Situação Atual</button>
-        <button class="email-tab ativa" data-pagina="historico" onclick="navegar(this)">Histórico</button>
-        <button class="email-tab" data-pagina="nao-classificados" onclick="navegar(this)">Não Classificados</button>
-        <button class="email-tab" data-pagina="bloqueados" onclick="navegar(this)">Bloqueados por Filtro</button>
+        <button class="email-tab" data-pagina="classificados" onclick="navegar(this)">Classificação e Status</button>
+        <button class="email-tab ativa" data-pagina="historico" onclick="navegar(this)">Evolução</button>
+        <button class="email-tab" data-pagina="nao-classificados" onclick="navegar(this)">Não Classificadas</button>
+        <button class="email-tab" data-pagina="bloqueados" onclick="navegar(this)">Bloqueadas por Regras</button>
+      </div>
+      <div class="page-header" style="margin-bottom:0.75rem">
+        <div class="page-header-left">
+          <h1 class="page-titulo">Evolução</h1>
+          <p class="page-sub">Variação das conversas por período — quantas entraram, saíram e foram concluídas em cada categoria</p>
+        </div>
       </div>
       <div class="evo open" id="evo">
         <div class="evo-body">
@@ -1037,15 +1043,15 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
     <!-- ── Página 3: Não Classificados ────────────────────────────── -->
     <section class="page" id="pag-nao-classificados">
       <div class="email-tabbar">
-        <button class="email-tab" data-pagina="classificados" onclick="navegar(this)">Situação Atual</button>
-        <button class="email-tab" data-pagina="historico" onclick="navegar(this)">Histórico</button>
-        <button class="email-tab ativa" data-pagina="nao-classificados" onclick="navegar(this)">Não Classificados</button>
-        <button class="email-tab" data-pagina="bloqueados" onclick="navegar(this)">Bloqueados por Filtro</button>
+        <button class="email-tab" data-pagina="classificados" onclick="navegar(this)">Classificação e Status</button>
+        <button class="email-tab" data-pagina="historico" onclick="navegar(this)">Evolução</button>
+        <button class="email-tab ativa" data-pagina="nao-classificados" onclick="navegar(this)">Não Classificadas</button>
+        <button class="email-tab" data-pagina="bloqueados" onclick="navegar(this)">Bloqueadas por Regras</button>
       </div>
       <div class="page-header">
         <div>
-          <h1 class="page-titulo">Não Classificados</h1>
-          <p class="page-sub">Threads aguardando classificação manual</p>
+          <h1 class="page-titulo">Não Classificadas</h1>
+          <p class="page-sub">Conversas de e-mail que o sistema não conseguiu classificar automaticamente com as regras atuais. Necessário criar novas regras — acione o Administrador do sistema.</p>
         </div>
       </div>
 
@@ -1262,15 +1268,15 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
     <!-- ── Página 5: Bloqueados ────────────────────────────────────── -->
     <section class="page" id="pag-bloqueados">
       <div class="email-tabbar">
-        <button class="email-tab" data-pagina="classificados" onclick="navegar(this)">Situação Atual</button>
-        <button class="email-tab" data-pagina="historico" onclick="navegar(this)">Histórico</button>
-        <button class="email-tab" data-pagina="nao-classificados" onclick="navegar(this)">Não Classificados</button>
-        <button class="email-tab ativa" data-pagina="bloqueados" onclick="navegar(this)">Bloqueados por Filtro</button>
+        <button class="email-tab" data-pagina="classificados" onclick="navegar(this)">Classificação e Status</button>
+        <button class="email-tab" data-pagina="historico" onclick="navegar(this)">Evolução</button>
+        <button class="email-tab" data-pagina="nao-classificados" onclick="navegar(this)">Não Classificadas</button>
+        <button class="email-tab ativa" data-pagina="bloqueados" onclick="navegar(this)">Bloqueadas por Regras</button>
       </div>
       <div class="page-header">
         <div>
-          <h1 class="page-titulo">Bloqueados por Filtro</h1>
-          <p class="page-sub">Threads descartadas pelo filtro §4 — não chegam à classificação</p>
+          <h1 class="page-titulo">Bloqueadas por Regras</h1>
+          <p class="page-sub">Conversas descartadas pelos filtros automáticos — não entram na classificação.</p>
         </div>
       </div>
 
@@ -1296,8 +1302,15 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
     <section class="page" id="pag-fog-casos">
 
       <div class="email-tabbar">
-        <button class="email-tab ativa" data-pagina="fog-casos" onclick="navegar(this)">Casos</button>
-        <button class="email-tab" data-pagina="fog-kpis" onclick="navegar(this)">Gerencial</button>
+        <button class="email-tab" data-pagina="fog-kpis" onclick="navegar(this)">Visão Consolidada</button>
+        <button class="email-tab ativa" data-pagina="fog-casos" onclick="navegar(this)">Lista de Casos</button>
+      </div>
+
+      <div class="page-header" style="margin-bottom:0.75rem">
+        <div class="page-header-left">
+          <h1 class="page-titulo">Lista de Casos</h1>
+          <p class="page-sub">Listagem de casos por projeto, responsável e status.</p>
+        </div>
       </div>
 
       {% if fog_simulado %}
@@ -1424,8 +1437,15 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
     <section class="page" id="pag-fog-kpis">
 
       <div class="email-tabbar">
-        <button class="email-tab" data-pagina="fog-casos" onclick="navegar(this)">Casos</button>
-        <button class="email-tab ativa" data-pagina="fog-kpis" onclick="navegar(this)">Gerencial</button>
+        <button class="email-tab ativa" data-pagina="fog-kpis" onclick="navegar(this)">Visão Consolidada</button>
+        <button class="email-tab" data-pagina="fog-casos" onclick="navegar(this)">Lista de Casos</button>
+      </div>
+
+      <div class="page-header" style="margin-bottom:0.75rem">
+        <div class="page-header-left">
+          <h1 class="page-titulo">Visão Consolidada</h1>
+          <p class="page-sub">Visão consolidada por status, responsável, casos mais antigos e parados há quantos dias.</p>
+        </div>
       </div>
 
       {% if fog_simulado %}
@@ -1738,15 +1758,15 @@ function navegar(btn) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('ativa'));
   document.getElementById('pag-' + pag).classList.add('ativa');
   const titulos = {
-    'classificados':     'Situação Atual',
-    'historico':         'Histórico',
-    'nao-classificados': 'Não Classificados',
-    'bloqueados':        'Bloqueados por Filtro',
+    'classificados':     'Classificação e Status',
+    'historico':         'Evolução',
+    'nao-classificados': 'Não Classificadas',
+    'bloqueados':        'Bloqueadas por Regras',
     'admin':             'Coletor',
     'admin-detalhe':     'Coletor · Detalhe',
     'usuarios':          'Usuários e Perfis',
-    'fog-casos':         'FOGBUGZ · Casos',
-    'fog-kpis':          'FOGBUGZ · Gerencial',
+    'fog-casos':         'FOGBUGZ · Lista de Casos',
+    'fog-kpis':          'FOGBUGZ · Visão Consolidada',
   };
   document.getElementById('topbar-titulo').textContent = titulos[pag] || '';
   if (pag === 'historico') { if (!evoHistorico.length) carregarHistorico(); else renderEvo(); }
@@ -2913,12 +2933,12 @@ function fogSort(m) {
 // ── Usuários e Perfis ─────────────────────────────────────────────────
 
 const _USR_TELAS = [
-  ['classificados',    'Situação Atual',        'Painel principal de e-mails por categoria e status.'],
-  ['historico',        'Histórico',             'Evolução temporal das categorias.'],
-  ['nao-classificados','Não Classificados',     'Threads aguardando categorização.'],
-  ['bloqueados',       'Bloqueados por Filtro', 'Threads descartadas pelo filtro (FogBugz, Facti, etc.).'],
-  ['fog-casos',        'FOGBUGZ · Casos',       'Listagem de casos do FogBugz.'],
-  ['fog-kpis',         'FOGBUGZ · Gerencial',   'Indicadores do FogBugz.'],
+  ['classificados',    'Classificação e Status', 'Conversas de e-mail agrupadas por categoria e status, atualizado a cada 5 minutos.'],
+  ['historico',        'Evolução',               'Variação das conversas por período — quantas entraram, saíram e foram concluídas em cada categoria.'],
+  ['nao-classificados','Não Classificadas',      'Conversas que o sistema não conseguiu classificar automaticamente com as regras atuais.'],
+  ['bloqueados',       'Bloqueadas por Regras',  'Conversas descartadas pelos filtros automáticos — não entram na classificação.'],
+  ['fog-kpis',         'FOGBUGZ · Visão Consolidada', 'Visão consolidada por status, responsável, casos mais antigos e parados há quantos dias.'],
+  ['fog-casos',        'FOGBUGZ · Lista de Casos',    'Listagem de casos por projeto, responsável e status.'],
   ['admin',            'Coletor',               'Controles do robô de coleta. (Administrador)'],
   ['usuarios',         'Usuários e Perfis',     'Gestão de usuários e permissões. (Administrador)'],
 ];
