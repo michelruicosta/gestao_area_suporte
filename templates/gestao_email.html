@@ -724,7 +724,10 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .fevo-dias.green { background:var(--pos-bg);color:var(--pos); }
 .fevo-nota { font-size:.74rem;color:var(--muted);margin-top:10px; }
 .fevo-periodo-wrap { background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 16px;margin-bottom:16px; }
-.fog-periodo-label { margin-left:auto; font-size:11px; color:var(--muted); white-space:nowrap; }
+.fog-plr-row { display:flex; align-items:center; gap:6px; padding:4px 2px 6px; }
+.fog-plr-ico { font-size:0.8125rem; }
+.fog-plr-data { font-size:0.8125rem; font-weight:600; color:var(--accent); }
+.fog-plr-desc { font-size:0.75rem; color:var(--muted); }
 .fevo-loading { display:flex;align-items:center;justify-content:center;padding:40px;color:var(--muted);font-size:.85rem;gap:8px; }
 
 /* ─── FOG ─────────────────────────────────────────────────────────── */
@@ -1697,7 +1700,11 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
           <button class="p-btn" onclick="fogSelPeriod('3m',this)">3 meses</button>
           <button class="p-btn" onclick="fogSelPeriod('6m',this)">6 meses</button>
           <button class="p-btn" onclick="fogSelPeriod('custom',this)">Personalizado</button>
-          <span id="fog-periodo-label" class="fog-periodo-label"></span>
+        </div>
+        <div class="fog-plr-row" id="fog-plr-row">
+          <span class="fog-plr-ico">📅</span>
+          <span id="fog-periodo-label" class="fog-plr-data"></span>
+          <span id="fog-periodo-label-desc" class="fog-plr-desc"></span>
         </div>
         <div class="evo-cal" id="fog-evo-cal" hidden>
           <div class="cal-months" id="fog-cal-months"></div>
@@ -3442,17 +3449,24 @@ function carregarFogEvo() {
 }
 
 function _fogAtualizarLabel() {
-  const el = document.getElementById('fog-periodo-label');
-  if (!el) return;
+  const elData = document.getElementById('fog-periodo-label');
+  const elDesc = document.getElementById('fog-periodo-label-desc');
+  if (!elData) return;
+  const fmt = d => `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}`;
+  const descMap = { semana: '· últimos 7 dias', mes: '· último mês', '3m': '· últimos 3 meses', '6m': '· últimos 6 meses' };
   if (_fogEvoPeriod === 'custom') {
-    el.textContent = (_fogRStart && _fogREnd)
-      ? `${_fogRStart.getDate().toString().padStart(2,'0')}/${(_fogRStart.getMonth()+1).toString().padStart(2,'0')} – ${_fogREnd.getDate().toString().padStart(2,'0')}/${(_fogREnd.getMonth()+1).toString().padStart(2,'0')}`
-      : '';
+    if (_fogRStart && _fogREnd) {
+      elData.textContent = `${fmt(_fogRStart)} – ${fmt(_fogREnd)}`;
+      if (elDesc) elDesc.textContent = '· período personalizado';
+    } else {
+      elData.textContent = '';
+      if (elDesc) elDesc.textContent = '';
+    }
     return;
   }
   const [s, e] = _fogPeriodDates();
-  const fmt = d => `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}`;
-  el.textContent = `${fmt(s)} – ${fmt(e)}`;
+  elData.textContent = `${fmt(s)} – ${fmt(e)}`;
+  if (elDesc) elDesc.textContent = descMap[_fogEvoPeriod] || '';
 }
 
 function fogSelPeriod(p, btn) {
