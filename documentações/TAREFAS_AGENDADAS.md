@@ -50,7 +50,7 @@ Sem esta regra, o coletor (`coletor_gmail.py`) só via os e-mails que chegavam �
 
 | Campo | Valor |
 |---|---|
-| **Arquivo de credenciais** | `oraculo-ia-coleta.json` (na raiz do projeto, fora do git) |
+| **Arquivo de credenciais** | `config/credenciais_gmail.json` (fora do git — bloqueado pelo `.gitignore`) |
 | **Conta impersonada** | `coleta.oraculo@finaud.com.br` |
 | **Escopo** | `gmail.readonly` |
 | **Usado por** | `scripts/coletor_gmail.py` |
@@ -59,7 +59,7 @@ Sem esta regra, o coletor (`coletor_gmail.py`) só via os e-mails que chegavam �
 
 **Como recriar do zero:**
 1. Google Cloud Console → IAM → Service Accounts → criar nova conta de serviço
-2. Baixar JSON de credenciais → salvar como `oraculo-ia-coleta.json` na raiz do projeto
+2. Baixar JSON de credenciais → salvar como `config/credenciais_gmail.json` na raiz do projeto
 3. Google Admin Console → Segurança → Acesso e controle de dados → Controles de API → Delegação em todo o domínio
 4. Adicionar o client_id da service account com o escopo `https://www.googleapis.com/auth/gmail.readonly`
 

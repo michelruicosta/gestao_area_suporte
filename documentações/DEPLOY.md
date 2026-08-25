@@ -52,20 +52,25 @@ PORT=5001
 ```
 gestao_area_suporte/
 ├── scripts/
-│   ├── servidor_telas.py        ← servidor Flask (ponto de entrada)
-│   ├── banco_threads.py         ← acesso ao banco de dados de threads
-│   ├── classificador_regras.py  ← classificador de e-mails
-│   ├── coletor_gmail.py         ← coleta de e-mails via Gmail API
-│   ├── executar_pipeline.py     ← orquestrador do pipeline
-│   └── paths.py                 ← configuração de caminhos
+│   ├── servidor_telas.py           ← servidor Flask (ponto de entrada)
+│   ├── banco_threads.py            ← acesso ao banco de dados de threads
+│   ├── classificador_regras.py     ← classificador de e-mails
+│   ├── validador_classificacao.py  ← filtros de e-mails automáticos (usado pelo classificador)
+│   ├── coletor_gmail.py            ← coleta de e-mails via Gmail API
+│   ├── executar_pipeline.py        ← orquestrador do pipeline
+│   ├── recalcular_status_af.py     ← recalcula status de threads aguardando/finalizadas
+│   └── paths.py                    ← configuração de caminhos
+├── ferramentas_dev/                ← ferramentas de desenvolvimento — NÃO sobem ao servidor
 ├── templates/
-│   ├── gestao_email.html        ← tela principal
-│   └── gestao_login.html        ← tela de login
-├── static/                      ← arquivos estáticos (CSS, JS, imagens)
-├── config/                      ← configurações do projeto
-├── documentações/               ← documentação (spec, pendências, registro)
-├── requirements.txt             ← dependências Python
-└── .env.example                 ← modelo de variáveis de ambiente
+│   ├── gestao_email.html           ← tela principal
+│   └── gestao_login.html           ← tela de login
+├── static/                         ← arquivos estáticos (CSS, JS, imagens)
+├── config/
+│   ├── categorias.py               ← configuração de categorias
+│   └── regras_classificador_threads.json  ← regras de classificação de e-mails
+├── documentações/                  ← documentação (spec, pendências, registro)
+├── requirements.txt                ← dependências Python de produção
+└── requirements-dev.txt            ← dependências só para testes locais
 ```
 
 ---
@@ -81,8 +86,7 @@ Estes arquivos **não sobem pelo git** (estão no `.gitignore`) mas precisam est
 | `data/json/consumo_api.json` | ~6 KB | Registro de uso da API |
 
 **Não migrar:**
-- `data/oraculo360.db` — banco do Oráculo (outro projeto)
-- `data/banco.db`, `data/oraculo.db`, `data/threads.db` — arquivos vazios (0 KB)
+- `data/gestao.db` — o banco SQLite é gerado automaticamente pelo sistema na primeira execução
 - `data/backups/` — backups locais de desenvolvimento
 - `data/validacao_classificacao/` — artefatos de validação do classificador (dev only)
 - `data/email_anexos/`, `data/chat_anexos/`, `data/fog_anexos/` — anexos (avaliar necessidade)
@@ -97,10 +101,7 @@ Estes arquivos **não sobem pelo git** (estão no `.gitignore`) mas precisam est
 pip install -r requirements.txt
 ```
 
-⚠️ **Atenção:** o `requirements.txt` atual inclui pacotes pesados do período Oráculo (`torch`, `easyocr`, `selenium`, `scipy`). Após a limpeza, criar um `requirements-prod.txt` com apenas o que o sistema atual usa — isso reduz drasticamente o tempo de instalação e o espaço em disco.
-
-**Pacotes que o sistema realmente usa hoje:**
-`flask`, `flask-login`, `python-dotenv`, `requests`, `google-api-python-client`, `google-auth`, `apscheduler` (verificar scheduler), `Werkzeug`
+O `requirements.txt` contém apenas os pacotes que o sistema usa em produção — limpo e enxuto desde 25/08/2026. O `requirements-dev.txt` é exclusivo para testes locais e não deve ser instalado no servidor.
 
 ---
 
@@ -158,15 +159,15 @@ Executar em ordem — testar a aplicação após cada etapa antes de avançar.
 
 | Etapa | O que fazer | Status |
 |---|---|---|
-| 0 | Criar este documento | ✅ Concluído |
-| 1 | Mover `chave_app_coleta.oraculo@finaud.com.br.txt` para `_archive/arquivos_raiz/` | ⏳ |
-| 2 | Mover arquivos do Oráculo (`oraculo-ia-coleta.json`, bancos vazios) para `_archive/` | ⏳ |
-| 3 | Organizar raiz — remover bilhetes e scripts avulsos soltos | ⏳ |
-| 4 | Resolver duplicação `log/` vs `logs/` — unificar em `logs/` | ⏳ |
-| 5 | Atualizar `.env.example` — remover variáveis do Oráculo, manter só as 5 necessárias | ⏳ |
-| 6 | Implementar logging em arquivo + criar `requirements.txt` de produção enxuto | ⏳ |
-| 7 | Teste geral local — aplicação funcionando 100%? | ⏳ |
-| 8 | Deploy no servidor com instruções do Michel | ⏳ |
+| 0 | Criar este documento | ✅ Concluído (25/08/2026) |
+| 1 | Mover credencial Gmail para `config/credenciais_gmail.json` | ✅ Concluído (25/08/2026) |
+| 2 | Mover arquivos do Oráculo (bancos vazios) para `_archive/` | ✅ Concluído (25/08/2026) |
+| 3 | Organizar raiz — requirements limpo, scripts avulsos arquivados | ✅ Concluído (25/08/2026) |
+| 4 | Resolver duplicação `log/` vs `logs/` — unificar em `logs/` | ✅ Concluído (25/08/2026) |
+| 5 | Arquivar `.env.example` — variáveis documentadas no DEPLOY.md | ✅ Concluído (25/08/2026) |
+| 6 | Implementar logging em arquivo (padrão DD-MM-AAAA) | ⏳ Pendente |
+| 7 | Teste geral local — aplicação funcionando 100%? | ⏳ Pendente |
+| 8 | Deploy no servidor com instruções do Michel | ⏳ Pendente |
 
 ---
 
@@ -175,3 +176,4 @@ Executar em ordem — testar a aplicação após cada etapa antes de avançar.
 | Data | O que foi feito |
 |---|---|
 | 25/08/2026 | Documento criado — diagnóstico da estrutura atual |
+| 25/08/2026 | Etapas 1–5 concluídas — estrutura limpa, credencial movida, requirements enxuto, `.env.example` arquivado |

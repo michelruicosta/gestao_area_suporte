@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Gestão Área Suporte
 
-**Atualizado:** 2026-08-18
+**Atualizado:** 2026-08-25
 **Organização:** por etapa que bloqueia — reorganizado em 03/08/2026 para seguir as fases sem brechas.
 **Regra:** este arquivo lista **só o que ainda falta** (aberto / aguardando decisão / backlog).
 Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada no
@@ -229,7 +229,7 @@ Durante os testes do gabarito (v1.0 a v1.3), ficou claro que a IA não tem regra
 
 ### 🟡 CLASSIFICADOR — Gabarito v2.0: validar e expandir (atualizado 12/08/2026)
 
-**Estado atual (12/08/2026):** `documentações/gabarito.json` v2.0 criado — 18 regras + 24 gabaritos. Integrado ao `classificador_regras.py` e ao `chat_ensino.py`. Amostra de controle: REPROVADA (15/20 — ver item 🔴 acima).
+**Estado atual (12/08/2026):** gabarito v2.0 criado — 18 regras + 24 gabaritos. Integrado ao `classificador_regras.py` e ao `chat_ensino.py`. Amostra de controle: REPROVADA (15/20 — ver item 🔴 acima). *(Nota 25/08/2026: o arquivo `gabarito.json` foi separado de `regras_classificador_threads.json` e arquivado — o gabarito ativo é o `config/regras_classificador_threads.json`.)*
 
 **O que resta:**
 1. Corrigir os 3 casos reprovados na amostra (item 🔴 acima)
