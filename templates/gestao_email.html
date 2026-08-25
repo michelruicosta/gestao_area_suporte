@@ -724,6 +724,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .fevo-dias.green { background:var(--pos-bg);color:var(--pos); }
 .fevo-nota { font-size:.74rem;color:var(--muted);margin-top:10px; }
 .fevo-periodo-wrap { background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 16px;margin-bottom:16px; }
+.fog-periodo-label { margin-left:auto; font-size:11px; color:var(--muted); white-space:nowrap; }
 .fevo-loading { display:flex;align-items:center;justify-content:center;padding:40px;color:var(--muted);font-size:.85rem;gap:8px; }
 
 /* ─── FOG ─────────────────────────────────────────────────────────── */
@@ -919,6 +920,10 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
         <button class="nav-item" data-pagina="fog-casos" onclick="navegar(this)">
           <span class="nav-ico">📋</span>
           <span class="nav-txt">Lista de Casos</span>
+        </button>
+        <button class="nav-item" data-pagina="fog-evolucao" onclick="navegar(this)">
+          <span class="nav-ico">📊</span>
+          <span class="nav-txt">Evolução</span>
         </button>
       </div>
     </div>
@@ -1687,11 +1692,12 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
       <div class="fevo-periodo-wrap">
         <div class="p-bar" id="fog-periodo-bar">
           <span class="p-lbl">Período</span>
+          <button class="p-btn active" onclick="fogSelPeriod('semana',this)">Semana</button>
+          <button class="p-btn" onclick="fogSelPeriod('mes',this)">Mês</button>
           <button class="p-btn" onclick="fogSelPeriod('3m',this)">3 meses</button>
-          <button class="p-btn active" onclick="fogSelPeriod('6m',this)">6 meses</button>
-          <button class="p-btn" onclick="fogSelPeriod('12m',this)">12 meses</button>
-          <button class="p-btn" onclick="fogSelPeriod('todo',this)">Todo</button>
+          <button class="p-btn" onclick="fogSelPeriod('6m',this)">6 meses</button>
           <button class="p-btn" onclick="fogSelPeriod('custom',this)">Personalizado</button>
+          <span id="fog-periodo-label" class="fog-periodo-label"></span>
         </div>
         <div class="evo-cal" id="fog-evo-cal" hidden>
           <div class="cal-months" id="fog-cal-months"></div>
@@ -1707,6 +1713,18 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
     </section>
 
   </main>
+</div>
+
+<!-- ─── Modal: FOG carregando ────────────────────────────────────────── -->
+<div id="fog-loading-modal" style="display:none;position:fixed;inset:0;z-index:9000;
+  background:rgba(0,0,0,0.55);backdrop-filter:blur(3px);
+  display:none;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;
+    padding:2rem 2.5rem;max-width:380px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.3)">
+    <div style="font-size:2rem;margin-bottom:0.75rem" id="fog-load-ico">⏳</div>
+    <div style="font-weight:700;font-size:0.95rem;color:var(--text);margin-bottom:0.5rem" id="fog-load-titulo">Buscando dados…</div>
+    <div style="font-size:0.82rem;color:var(--muted);line-height:1.5" id="fog-load-msg"></div>
+  </div>
 </div>
 
 <!-- ─────────────────────── MODAIS ───────────────────────────────────── -->
@@ -1963,7 +1981,7 @@ function navegar(btn) {
   }
   if (pag === 'usuarios') { _usrRenderTabela(); }
   else { _pararAutoRefreshLog(); }
-  if (pag === 'fog-evolucao') carregarFogEvo();
+  if (pag === 'fog-evolucao') { _fogAtualizarLabel(); carregarFogEvo(); }
   if (pag === 'fog-casos') {
     if (!_keepFogFiltros) {
       _fogUrgenciaFiltro = '';
@@ -3384,21 +3402,57 @@ carregarResumo();
 _timer = setInterval(_tick, 1000);
 
 // ── FOG Evolução ──────────────────────────────────────────────────────
-let _fogEvoData = null;
-let _fogEvoPeriod = '6m';
+const _fogEvoCache = {};          // periodo → dados já buscados
+let _fogEvoPeriod = 'semana';
 let _fogRStart = null, _fogREnd = null, _fogCalBase = null;
 const _fogMnames = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const _fogMnamesFull = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
+const _fogLoadMsg = {
+  semana: { ico: '⚡', titulo: 'Buscando dados da semana…', msg: '' },
+  mes:    { ico: '📅', titulo: 'Buscando dados do mês…',   msg: 'Pode levar alguns segundos.' },
+  '3m':   { ico: '☕', titulo: 'Buscando 3 meses de dados…', msg: 'Isso pode demorar um pouco — aproveite para ir buscar um café!' },
+  '6m':   { ico: '☕', titulo: 'Buscando 6 meses de dados…', msg: 'Isso pode demorar um pouco — quando voltar, os dados já estarão na tela!' },
+  custom: { ico: '🔍', titulo: 'Buscando período personalizado…', msg: 'Pode levar alguns segundos.' },
+};
+
+function _fogMostrarLoading(p) {
+  const cfg = _fogLoadMsg[p] || _fogLoadMsg['mes'];
+  document.getElementById('fog-load-ico').textContent    = cfg.ico;
+  document.getElementById('fog-load-titulo').textContent = cfg.titulo;
+  document.getElementById('fog-load-msg').textContent    = cfg.msg;
+  document.getElementById('fog-loading-modal').style.display = 'flex';
+}
+function _fogOcultarLoading() {
+  document.getElementById('fog-loading-modal').style.display = 'none';
+}
+
 function carregarFogEvo() {
-  if (_fogEvoData !== null) { renderFogEvo(); return; }
-  fetch('/api/fog-evolucao')
+  const p = _fogEvoPeriod;
+  if (_fogEvoCache[p]) { renderFogEvo(_fogEvoCache[p]); return; }
+  _fogMostrarLoading(p);
+  fetch(`/api/fog-evolucao?periodo=${p}`)
     .then(r => r.json())
-    .then(d => { _fogEvoData = d; renderFogEvo(); })
+    .then(d => { _fogEvoCache[p] = d; _fogOcultarLoading(); renderFogEvo(d); })
     .catch(() => {
+      _fogOcultarLoading();
       const el = document.getElementById('fog-evo-corpo');
-      if (el) el.innerHTML = '<div class="fevo-loading">Erro ao carregar dados do FOG.</div>';
+      if (el) el.innerHTML = '<div class="fevo-loading">Erro ao carregar dados do FOG. Tente novamente.</div>';
     });
+}
+
+function _fogAtualizarLabel() {
+  const el = document.getElementById('fog-periodo-label');
+  if (!el) return;
+  if (_fogEvoPeriod === 'custom') {
+    el.textContent = (_fogRStart && _fogREnd)
+      ? `${_fogRStart.getDate().toString().padStart(2,'0')}/${(_fogRStart.getMonth()+1).toString().padStart(2,'0')} – ${_fogREnd.getDate().toString().padStart(2,'0')}/${(_fogREnd.getMonth()+1).toString().padStart(2,'0')}`
+      : '';
+    return;
+  }
+  const [s, e] = _fogPeriodDates();
+  const fmt = d => `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}`;
+  el.textContent = `${fmt(s)} – ${fmt(e)}`;
 }
 
 function fogSelPeriod(p, btn) {
@@ -3407,26 +3461,26 @@ function fogSelPeriod(p, btn) {
   btn.classList.add('active');
   const cal = document.getElementById('fog-evo-cal');
   cal.hidden = (p !== 'custom');
+  _fogAtualizarLabel();
   if (p === 'custom') renderFogCal();
-  else renderFogEvo();
+  else carregarFogEvo();
 }
 
 function _fogPeriodDates() {
   const today = new Date(); today.setHours(0,0,0,0);
   if (_fogEvoPeriod === 'custom' && _fogRStart && _fogREnd) return [_fogRStart, _fogREnd];
   const start = new Date(today);
-  if (_fogEvoPeriod === '3m')  start.setMonth(start.getMonth() - 3);
-  else if (_fogEvoPeriod === '12m') start.setFullYear(start.getFullYear() - 1);
-  else if (_fogEvoPeriod === 'todo') return [new Date(2025, 0, 1), today];
-  else start.setMonth(start.getMonth() - 6); // default 6m
+  if      (_fogEvoPeriod === 'semana') start.setDate(start.getDate() - 7);
+  else if (_fogEvoPeriod === 'mes')    start.setDate(start.getDate() - 30);
+  else if (_fogEvoPeriod === '3m')     start.setMonth(start.getMonth() - 3);
+  else                                 start.setMonth(start.getMonth() - 6);
   return [start, today];
 }
 
-function renderFogEvo() {
-  if (!_fogEvoData) return;
+function renderFogEvo(dados) {
+  const todos = dados || [];
   const [start, end] = _fogPeriodDates();
   const sStr = start.toISOString().slice(0,10), eStr = end.toISOString().slice(0,10);
-  const todos = _fogEvoData;
   const abertos  = todos.filter(c => c.data >= sStr && c.data <= eStr);
   const fechados  = todos.filter(c => c.data_fechamento && c.data_fechamento >= sStr && c.data_fechamento <= eStr);
   const ativos    = todos.filter(c => c.status === 'Ativo');
@@ -3642,7 +3696,7 @@ function _fogPickDay(el){
   if(!_fogRStart||_fogREnd){ _fogRStart=dt; _fogREnd=null; }
   else if(dt<_fogRStart){ _fogREnd=_fogRStart; _fogRStart=dt; }
   else if(dt.toDateString()===_fogRStart.toDateString()){ _fogRStart=null; }
-  else{ _fogREnd=dt; document.getElementById('fog-evo-cal').hidden=true; renderFogEvo(); }
+  else{ _fogREnd=dt; document.getElementById('fog-evo-cal').hidden=true; _fogAtualizarLabel(); renderFogEvo(); }
   renderFogCal();
 }
 

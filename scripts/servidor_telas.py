@@ -20,7 +20,7 @@ if sys.platform == 'win32' and hasattr(sys.stdout, 'buffer'):
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 import requests
 import xml.etree.ElementTree as _ET
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from functools import wraps
 
 from flask import Flask, abort, jsonify, redirect, render_template, request, session, url_for
@@ -681,24 +681,46 @@ def configuracoes():
 
 # ── FOG: Telas de Casos ───────────────────────────────────────────────────────
 
-def _buscar_fog() -> list[dict]:
-    """Busca casos reais do FogBugz via API. Retorna lista vazia em caso de erro."""
+_fog_evo_cache: dict[str, tuple[float, list]] = {}
+_FOG_CACHE_TTL = 600  # 10 minutos
+
+
+def _buscar_fog(periodo: str = '6m') -> list[dict]:
+    """Busca casos do FogBugz limitado ao período. Cache de 10 min por período."""
+    import time
+    cache_entry = _fog_evo_cache.get(periodo)
+    if cache_entry and (time.time() - cache_entry[0]) < _FOG_CACHE_TTL:
+        return cache_entry[1]
+
     token = os.environ.get('FOGBUGZ_TOKEN', '')
     if not token:
         print('⚠️  FOGBUGZ_TOKEN não encontrado no .env — FOG sem dados.')
         return []
+
+    hoje = datetime.now(timezone.utc).date()
+    if periodo == 'semana':
+        desde = hoje - timedelta(days=7)
+    elif periodo == 'mes':
+        desde = hoje - timedelta(days=30)
+    elif periodo == '3m':
+        desde = hoje - timedelta(days=90)
+    elif periodo == '6m':
+        desde = hoje - timedelta(days=180)
+    else:
+        desde = hoje.replace(year=hoje.year - 2)
+    desde_str = desde.strftime('%Y/%m/%d')
+
     url = 'https://finaud.fogbugz.com/api.asp'
     try:
         requests.get(url, params={'token': token, 'cmd': 'setCurrentFilter', 'sFilter': '218'}, timeout=10)
         resp = requests.get(url, params={
             'token': token,
             'cmd': 'search',
-            'q': 'opened:"2025/01/01..today"',
+            'q': f'opened:"{desde_str}..today"',
             'cols': 'ixBug,sTitle,fOpen,sPersonAssignedTo,dtOpened,dtLastUpdated,dtClosed,sProject,sArea',
-        }, timeout=30)
+        }, timeout=60)
         resp.raise_for_status()
         root = _ET.fromstring(resp.text)
-        hoje = datetime.now(timezone.utc).date()
         resultado = []
         for c in root.findall('.//case'):
             def _t(tag): return (c.findtext(tag) or '').strip()
@@ -722,16 +744,18 @@ def _buscar_fog() -> list[dict]:
                 'data_fechamento':  dt_closed[:10] if dt_closed else None,
             })
         resultado.sort(key=lambda x: x['dias_responsavel'], reverse=True)
+        _fog_evo_cache[periodo] = (time.time(), resultado)
         return resultado
     except Exception as e:
-        print(f'⚠️  Erro ao buscar FOG: {e}')
+        print(f'⚠️  Erro ao buscar FOG ({periodo}): {e}')
         return []
 
 
 @app.route('/api/fog-evolucao')
 @_requer_login
 def api_fog_evolucao():
-    return jsonify(_buscar_fog())
+    periodo = request.args.get('periodo', 'semana')
+    return jsonify(_buscar_fog(periodo))
 
 
 @app.route('/fog/operacional')
