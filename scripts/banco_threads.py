@@ -928,6 +928,23 @@ def ler_penultimo_snapshot() -> dict[str, dict]:
     return {r['categoria']: dict(r) for r in rows}
 
 
+def ler_snapshot_de_ontem() -> dict[str, dict]:
+    """Retorna o último snapshot salvo antes de hoje — base para calcular a variação diária na tela principal."""
+    hoje = datetime.now().strftime('%Y-%m-%d')
+    with _conectar() as conn:
+        row = conn.execute(
+            "SELECT DISTINCT data_hora FROM snapshots WHERE date(data_hora) < ? ORDER BY data_hora DESC LIMIT 1",
+            (hoje,)
+        ).fetchone()
+        if not row:
+            return {}
+        rows = conn.execute(
+            'SELECT categoria, af, ac, co, total FROM snapshots WHERE data_hora = ?',
+            (row['data_hora'],)
+        ).fetchall()
+    return {r['categoria']: dict(r) for r in rows}
+
+
 # ── Log de execuções do coletor ───────────────────────────────────────────────
 
 def registrar_coleta(tipo: str, threads_proc: int, erros: int,
