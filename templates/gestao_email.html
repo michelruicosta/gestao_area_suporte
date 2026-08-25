@@ -58,7 +58,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 
 /* ─── Sidebar ──────────────────────────────────────────────────────── */
 .sidebar {
-  width: 240px; flex-shrink: 0;
+  width: 270px; flex-shrink: 0;
   background: var(--sidebar-bg); color: #e2e8f0;
   display: flex; flex-direction: column;
 }
@@ -69,7 +69,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
   height: 3.5rem; flex-shrink: 0;
   white-space: nowrap; overflow: hidden;
 }
-.sidebar-logo-txt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
+.sidebar-logo-txt { white-space: nowrap; flex: 1; min-width: 0; }
 .sidebar-logo-ico { font-size: 1.1rem; }
 .sidebar-nav { padding: 0.75rem 0; flex: 1; }
 .nav-label {
@@ -108,9 +108,12 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 }
 .sidebar-toggle:hover { background: rgba(255,255,255,0.1); color: #fff; }
 /* Sidebar colapsada — só ícones */
-.sidebar { transition: width 0.2s; overflow: hidden; }
-.sidebar.colapsada { width: 52px; }
+.sidebar { transition: width 0.2s; }
+.sidebar.colapsada { width: 52px; overflow: hidden; }
+.sidebar.colapsada .sidebar-logo { padding: 0; justify-content: center; gap: 0; }
+.sidebar.colapsada .sidebar-logo-ico { display: none; }
 .sidebar.colapsada .sidebar-logo-txt { display: none; }
+.sidebar.colapsada .sidebar-toggle { margin: 0; font-size: 1.2rem; }
 .sidebar.colapsada .nav-txt { display: none; }
 .sidebar.colapsada .nav-badge { display: none; }
 .sidebar.colapsada .nav-item { justify-content: center; padding: 0.65rem 0; }
