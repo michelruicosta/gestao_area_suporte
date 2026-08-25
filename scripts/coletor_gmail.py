@@ -15,6 +15,7 @@ from email.header import decode_header as _decode_header
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from banco_threads import (criar_banco, salvar_thread, get_controle_sync,
                            set_controle_sync, salvar_snapshot, registrar_coleta)
+from paths import criar_log
 
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -25,7 +26,9 @@ BASE_DIR    = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CREDENCIAIS = os.path.join(BASE_DIR, 'config', 'credenciais_gmail.json')
 CONTA       = 'coleta.oraculo@finaud.com.br'
 SCOPES      = ['https://www.googleapis.com/auth/gmail.readonly']
-CHECKPOINT  = 50   # imprime progresso a cada N threads
+CHECKPOINT  = 50   # registra progresso a cada N threads
+
+log = criar_log('coletor')
 
 
 # ── Autenticação ───────────────────────────────────────────────────────────────
@@ -147,15 +150,15 @@ def _processar_thread(service, thread_id: str) -> dict | None:
         msgs = [_processar_mensagem(m) for m in mensagens]
 
         return {
-            'thread_id'      : thread_id,
-            'assunto'        : msgs[0]['assunto'],
-            'qtd_mensagens'  : len(mensagens),
+            'thread_id'        : thread_id,
+            'assunto'          : msgs[0]['assunto'],
+            'qtd_mensagens'    : len(mensagens),
             'data_primeira_msg': msgs[0]['data'],
-            'data_ultima_msg': msgs[-1]['data'],
-            'mensagens'      : msgs,
+            'data_ultima_msg'  : msgs[-1]['data'],
+            'mensagens'        : msgs,
         }
     except HttpError as e:
-        print(f'  [ERRO] Thread {thread_id}: {e}')
+        log.error('Thread %s: %s', thread_id, e)
         time.sleep(1)
         return None
 
@@ -167,7 +170,7 @@ def _importar_historico(service) -> tuple[str | None, int, int]:
     Percorre TODAS as threads da caixa de coleta e salva no banco.
     Retorna (ultimo_hist_id, total_threads, total_erros).
     """
-    print('Modo: importação histórica completa...')
+    log.info('Modo: importação histórica completa...')
 
     page_token     = None
     total          = 0
@@ -183,7 +186,7 @@ def _importar_historico(service) -> tuple[str | None, int, int]:
             resultado      = service.users().threads().list(**params).execute()
             threads_pagina = resultado.get('threads', [])
         except HttpError as e:
-            print(f'[ERRO] Falha ao listar threads: {e}')
+            log.error('Falha ao listar threads: %s', e)
             break
 
         if not threads_pagina:
@@ -201,12 +204,12 @@ def _importar_historico(service) -> tuple[str | None, int, int]:
             thread_data = _processar_thread(service, thread_id)
             if thread_data:
                 salvar_thread(thread_data)
-                print(f'  [{total:>4}] {thread_data["assunto"][:65]}')
+                log.info('[%4d] %s', total, thread_data['assunto'][:65])
             else:
                 erros += 1
 
             if total % CHECKPOINT == 0:
-                print(f'  ... {total} threads salvas no banco')
+                log.info('... %d threads salvas no banco', total)
 
         page_token = resultado.get('nextPageToken')
         if not page_token:
@@ -214,7 +217,7 @@ def _importar_historico(service) -> tuple[str | None, int, int]:
 
         time.sleep(0.1)
 
-    print(f'\nImportação concluída: {total} threads | {erros} erros')
+    log.info('Importação concluída: %d threads | %d erros', total, erros)
     return (str(ultimo_hist_id) if ultimo_hist_id else None), total, erros
 
 
@@ -228,7 +231,7 @@ def _sincronizar_incremental(service, start_history_id: str) -> tuple[str | None
     Retorna (novo_hist_id, threads_salvas, erros).
     novo_hist_id=None significa que o historyId expirou → chamador refaz importação histórica.
     """
-    print(f'Modo: sincronização incremental (desde historyId {start_history_id})...')
+    log.info('Modo: sincronização incremental (desde historyId %s)...', start_history_id)
 
     thread_ids_novas: set = set()
     page_token           = None
@@ -247,9 +250,9 @@ def _sincronizar_incremental(service, start_history_id: str) -> tuple[str | None
             resultado = service.users().history().list(**params).execute()
         except HttpError as e:
             if 'invalidHistoryId' in str(e) or e.resp.status == 404:
-                print('[AVISO] historyId expirou. Será feita importação histórica completa.')
+                log.warning('historyId expirou. Será feita importação histórica completa.')
                 return None, 0, 0
-            print(f'[ERRO] Falha na sincronização incremental: {e}')
+            log.error('Falha na sincronização incremental: %s', e)
             return start_history_id, 0, 0  # mantém o historyId anterior
 
         for entrada in resultado.get('history', []):
@@ -264,18 +267,18 @@ def _sincronizar_incremental(service, start_history_id: str) -> tuple[str | None
             break
 
     if not thread_ids_novas:
-        print('Nenhuma thread nova desde a última sincronização.')
+        log.info('Nenhuma thread nova desde a última sincronização.')
         return novo_hist_id, 0, 0
 
     salvadas = 0
     erros_thread = 0
-    print(f'{len(thread_ids_novas)} thread(s) nova(s)/atualizada(s). Salvando...')
+    log.info('%d thread(s) nova(s)/atualizada(s). Salvando...', len(thread_ids_novas))
     for thread_id in thread_ids_novas:
         thread_data = _processar_thread(service, thread_id)
         if thread_data:
             salvar_thread(thread_data)
             salvadas += 1
-            print(f'  Atualizada: {thread_data["assunto"][:65]}')
+            log.info('Atualizada: %s', thread_data['assunto'][:65])
         else:
             erros_thread += 1
 
@@ -285,9 +288,9 @@ def _sincronizar_incremental(service, start_history_id: str) -> tuple[str | None
 # ── Ponto de entrada ──────────────────────────────────────────────────────────
 
 def coletar() -> int | None:
-    print('=' * 60)
-    print('COLETOR GMAIL — caixa de coleta do Gestão Área Suporte')
-    print('=' * 60)
+    log.info('=' * 60)
+    log.info('COLETOR GMAIL — caixa de coleta do Gestão Área Suporte')
+    log.info('=' * 60)
 
     _inicio = time.time()
     tipo = 'incremental'
@@ -316,25 +319,24 @@ def coletar() -> int | None:
 
         if novo_hist_id:
             set_controle_sync('last_history_id', str(novo_hist_id))
-            print(f'Marcador de sincronização atualizado: {novo_hist_id}')
+            log.info('Marcador de sincronização atualizado: %s', novo_hist_id)
 
         duracao = time.time() - _inicio
         log_id = registrar_coleta(tipo, threads_proc, total_erros, duracao, 'concluida')
 
         # Snapshot salvo ao final — captura o estado completo após a carga e o classificador
         salvar_snapshot()
-        print('Snapshot de contadores salvo.')
+        log.info('Snapshot de contadores salvo.')
 
-        print()
-        print('=' * 60)
-        print('Coleta concluída.')
-        print('=' * 60)
+        log.info('=' * 60)
+        log.info('Coleta concluída.')
+        log.info('=' * 60)
         return log_id
 
     except Exception as exc:
         duracao = time.time() - _inicio
         registrar_coleta(tipo, threads_proc, total_erros, duracao, 'erro', str(exc))
-        print(f'\n[ERRO FATAL] {exc}')
+        log.error('ERRO FATAL: %s', exc)
         raise
 
 

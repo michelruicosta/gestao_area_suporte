@@ -549,3 +549,55 @@ def status_pipeline() -> None:
     print("  Para rodar o pipeline completo: python executar_tudo.py")
     print("  Para ignorar avisos (cirurgico): set ORACULO_IGNORAR_DEPS=1")
     print(sep + "\n")
+
+
+# ── Logging ───────────────────────────────────────────────────────────────────
+
+import logging as _logging
+
+LOGS_DIR = os.path.join(BASE_DIR, 'logs')
+
+
+class _LogDiarioBR(_logging.FileHandler):
+    """Grava em logs/nome_DD-MM-AAAA.log, criando arquivo novo a cada virada de dia."""
+
+    def __init__(self, pasta: str, nome: str):
+        self._pasta = pasta
+        self._nome = nome
+        self._data_atual = ''
+        os.makedirs(pasta, exist_ok=True)
+        super().__init__(self._caminho_hoje(), encoding='utf-8', delay=False)
+
+    def _caminho_hoje(self) -> str:
+        from datetime import datetime as _dt
+        hoje = _dt.now().strftime('%d-%m-%Y')
+        self._data_atual = hoje
+        return os.path.join(self._pasta, f'{self._nome}_{hoje}.log')
+
+    def emit(self, record):
+        from datetime import datetime as _dt
+        hoje = _dt.now().strftime('%d-%m-%Y')
+        if hoje != self._data_atual:
+            self.close()
+            self.baseFilename = self._caminho_hoje()
+            self.stream = self._open()
+        super().emit(record)
+
+
+def criar_log(nome: str) -> _logging.Logger:
+    """Retorna logger que grava em logs/nome_DD-MM-AAAA.log e no terminal."""
+    logger = _logging.getLogger(nome)
+    if logger.handlers:
+        return logger
+    logger.setLevel(_logging.INFO)
+    fmt = _logging.Formatter(
+        '%(asctime)s [%(levelname)s] %(message)s',
+        datefmt='%d/%m/%Y %H:%M:%S',
+    )
+    fh = _LogDiarioBR(LOGS_DIR, nome)
+    fh.setFormatter(fmt)
+    logger.addHandler(fh)
+    ch = _logging.StreamHandler()
+    ch.setFormatter(fmt)
+    logger.addHandler(ch)
+    return logger

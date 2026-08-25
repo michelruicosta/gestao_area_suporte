@@ -32,6 +32,9 @@ _CONFIG_PATH = os.path.join(_ROOT_DIR, 'data', 'config.json')
 
 sys.path.insert(0, _SCRIPTS_DIR)
 import banco_threads as bt
+from paths import criar_log
+
+_log = criar_log('servidor')
 
 app = Flask(
     __name__,
@@ -80,10 +83,8 @@ def _job_coleta_automatica():
                 contagens.get('revisao', 0),
             )
     except Exception as e:
-        import traceback
         _ultimo_erro_coleta = str(e)
-        print(f'[ERRO] Coleta automática falhou: {e}')
-        traceback.print_exc()
+        _log.exception('Coleta automática falhou: %s', e)
     finally:
         _coleta_em_andamento = False
 
@@ -539,10 +540,8 @@ def api_admin_coletar():
                     contagens.get('revisao', 0),
                 )
         except Exception as e:
-            import traceback
             _ultimo_erro_coleta = str(e)
-            print(f'[ERRO] Coleta falhou: {e}')
-            traceback.print_exc()
+            _log.exception('Coleta falhou: %s', e)
         finally:
             _coleta_em_andamento = False
 
@@ -694,7 +693,7 @@ def _buscar_fog(periodo: str = '6m') -> list[dict]:
 
     token = os.environ.get('FOGBUGZ_TOKEN', '')
     if not token:
-        print('⚠️  FOGBUGZ_TOKEN não encontrado no .env — FOG sem dados.')
+        _log.warning('FOGBUGZ_TOKEN não encontrado no .env — FOG sem dados.')
         return []
 
     hoje = datetime.now(timezone.utc).date()
@@ -747,7 +746,7 @@ def _buscar_fog(periodo: str = '6m') -> list[dict]:
         _fog_evo_cache[periodo] = (time.time(), resultado)
         return resultado
     except Exception as e:
-        print(f'⚠️  Erro ao buscar FOG ({periodo}): {e}')
+        _log.warning('Erro ao buscar FOG (%s): %s', periodo, e)
         return []
 
 
@@ -813,5 +812,5 @@ if __name__ == '__main__':
     _reagendar_coleta(cfg_inicial.get('intervalo_coleta_min', 60))
     _scheduler.start()
     porta = int(os.environ.get('PORT', 5001))
-    print(f'Gestão de E-mail — http://localhost:{porta}')
+    _log.info('Gestão de E-mail — http://localhost:%d', porta)
     app.run(host='0.0.0.0', port=porta, debug=True, use_reloader=False)
