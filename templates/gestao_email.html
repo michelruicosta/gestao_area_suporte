@@ -2579,6 +2579,7 @@ async function abrirDetalheLog(logId, dataHora, status) {
       if (!_detThreads.length) {
         document.getElementById('det-tbody').innerHTML =
           '<tr><td colspan="4" class="vazio">Nenhuma thread processada nesta execução.</td></tr>';
+        document.getElementById('det-contagem').textContent = '0 thread(s)';
       } else {
         document.getElementById('det-tbody').innerHTML = _detThreads.map(t => {
           const bloqueada = t.destino === 'descartes' && !t.categoria;
