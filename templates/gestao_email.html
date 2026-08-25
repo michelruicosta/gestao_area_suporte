@@ -214,7 +214,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
   box-shadow: 0 8px 32px rgba(0,0,0,.18); position: relative;
 }
 .perfil-topo {
-  display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1.5rem;
+  display: flex; align-items: center; gap: 0.9rem; margin-bottom: 1.5rem;
 }
 .perfil-avatar-lg {
   width: 52px; height: 52px; border-radius: 50%; background: var(--marca);
@@ -225,7 +225,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .perfil-nome { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 0.15rem; }
 .perfil-email-txt { font-size: 0.82rem; color: var(--accent); }
 .perfil-badge-adm {
-  position: absolute; top: 1.5rem; right: 1.5rem;
+  display: inline-block; margin-top: 0.4rem;
   font-size: 0.7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
   border: 1px solid var(--marca); color: var(--marca); border-radius: 999px;
   padding: 0.2rem 0.65rem; white-space: nowrap;
@@ -1506,12 +1506,12 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 <!-- Modal: Meu Perfil -->
 <div class="perfil-backdrop" id="perfil-modal" onclick="fecharPerfil()">
   <div class="perfil-card" onclick="event.stopPropagation()">
-    <span class="perfil-badge-adm" id="perfil-badge">ADMINISTRADOR</span>
     <div class="perfil-topo">
       <div class="perfil-avatar-lg" id="perfil-av">MC</div>
       <div class="perfil-id">
         <div class="perfil-nome" id="perfil-nome">Michel Costa</div>
         <div class="perfil-email-txt" id="perfil-email-txt">michel@finaud.com.br</div>
+        <span class="perfil-badge-adm" id="perfil-badge">ADMINISTRADOR</span>
       </div>
     </div>
     <div class="perfil-campos">
