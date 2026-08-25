@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-08-25 — Etapa 6: logging em arquivo (formato de data brasileiro)
+
+### 17:58 — Sistema de logging implementado nos 3 scripts de produção
+
+**🔎 Em miúdos:** o sistema antes só mostrava mensagens na tela — quando rodasse no servidor, não haveria como ver o que aconteceu. Agora cada script grava um arquivo de log diário na pasta `logs/`, com data e hora no formato brasileiro.
+
+- **Problema:** `coletor_gmail.py`, `executar_pipeline.py` e `servidor_telas.py` usavam `print()` para tudo — sem registro persistente em arquivo.
+- **Causa raiz:** logging em arquivo nunca foi implementado na nova arquitetura.
+- **Correção:**
+  - `scripts/paths.py`: adicionada função `criar_log(nome)` + classe `_LogDiarioBR` (handler de arquivo com rotação diária automática, criando novo arquivo a cada virada de dia)
+  - `scripts/coletor_gmail.py`: todos os `print()` substituídos por `log.info/warning/error`
+  - `scripts/executar_pipeline.py`: todos os `print()` substituídos por `log.info/error`
+  - `scripts/servidor_telas.py`: `print()` substituídos por `_log.exception/warning/info`; `traceback.print_exc()` removido (o `_log.exception()` já inclui o traceback)
+- **Padrão de arquivos:** `logs/nome_DD-MM-AAAA.log` (ex.: `logs/coletor_25-08-2026.log`)
+- **Formato de cada linha:** `DD/MM/AAAA HH:MM:SS [NIVEL] mensagem`
+- **Validação:** ✅ 374 testes passando + arquivo de log criado e lido manualmente em teste de importação
+
+---
+
 ## 2026-08-24 (noite) — Melhorias de UI + Coletor + Fix banco FogBugz
 
 ### 23:00 — Badge CSS fix (FOGBUGZ)

@@ -165,7 +165,7 @@ Executar em ordem — testar a aplicação após cada etapa antes de avançar.
 | 3 | Organizar raiz — requirements limpo, scripts avulsos arquivados | ✅ Concluído (25/08/2026) |
 | 4 | Resolver duplicação `log/` vs `logs/` — unificar em `logs/` | ✅ Concluído (25/08/2026) |
 | 5 | Arquivar `.env.example` — variáveis documentadas no DEPLOY.md | ✅ Concluído (25/08/2026) |
-| 6 | Implementar logging em arquivo (padrão DD-MM-AAAA) | ⏳ Pendente |
+| 6 | Implementar logging em arquivo (padrão DD-MM-AAAA) | ✅ Concluído (25/08/2026) |
 | 7 | Teste geral local — aplicação funcionando 100%? | ⏳ Pendente |
 | 8 | Deploy no servidor com instruções do Michel | ⏳ Pendente |
 
@@ -177,3 +177,4 @@ Executar em ordem — testar a aplicação após cada etapa antes de avançar.
 |---|---|
 | 25/08/2026 | Documento criado — diagnóstico da estrutura atual |
 | 25/08/2026 | Etapas 1–5 concluídas — estrutura limpa, credencial movida, requirements enxuto, `.env.example` arquivado |
+| 25/08/2026 | Etapa 6 concluída — logging em arquivo implementado nos 3 scripts de produção; padrão DD-MM-AAAA |
