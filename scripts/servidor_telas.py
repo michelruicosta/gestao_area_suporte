@@ -65,12 +65,25 @@ def _job_coleta_automatica():
     if _coleta_em_andamento:
         return
     _coleta_em_andamento = True
+    _ultimo_erro_coleta = None
     try:
         sys.path.insert(0, _SCRIPTS_DIR)
-        import coletor_gmail
-        coletor_gmail.executar_coleta_incremental()
+        from coletor_gmail import coletar
+        from classificador_regras import classificar_banco
+        log_id = coletar()
+        contagens = classificar_banco()
+        if log_id:
+            bt.atualizar_classif_coleta(
+                log_id,
+                contagens.get('principal', 0),
+                contagens.get('descartes', 0),
+                contagens.get('revisao', 0),
+            )
     except Exception as e:
+        import traceback
         _ultimo_erro_coleta = str(e)
+        print(f'[ERRO] Coleta automática falhou: {e}')
+        traceback.print_exc()
     finally:
         _coleta_em_andamento = False
 
