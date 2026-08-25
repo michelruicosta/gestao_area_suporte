@@ -873,9 +873,17 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
         <span class="nav-section-arrow">›</span>
       </div>
       <div class="nav-section-items">
-        <button class="nav-item" data-pagina="admin" onclick="navegar(this)">
+        <button class="nav-item" data-pagina="admin" data-aba="coletor" onclick="navegar(this)">
           <span class="nav-ico">⚙️</span>
           <span class="nav-txt">Coletor</span>
+        </button>
+        <button class="nav-item" data-pagina="admin" data-aba="historico" onclick="navegar(this)">
+          <span class="nav-ico">📋</span>
+          <span class="nav-txt">Histórico de execuções</span>
+        </button>
+        <button class="nav-item" data-pagina="admin" data-aba="agendamentos" onclick="navegar(this)">
+          <span class="nav-ico">🕐</span>
+          <span class="nav-txt">Agendamentos</span>
         </button>
         <button class="nav-item" data-pagina="usuarios" onclick="navegar(this)">
           <span class="nav-ico">👥</span>
@@ -1143,7 +1151,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
               </p>
               <div style="display:flex;align-items:center;gap:0.75rem">
                 <input type="number" id="cfg-intervalo-coleta" min="0" max="1440" step="5"
-                  style="width:90px;padding:0.4rem 0.6rem;border:1px solid var(--borda,#ddd);border-radius:6px;font-size:1rem">
+                  style="width:90px;padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:6px;font-size:1rem;background:var(--surface);color:var(--text);font-family:inherit">
                 <span style="color:var(--muted);font-size:0.9rem">minutos</span>
               </div>
             </div>
@@ -1157,13 +1165,13 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
               </p>
               <div style="display:flex;align-items:center;gap:0.75rem">
                 <input type="number" id="cfg-intervalo-fog" min="1" max="1440" step="5"
-                  style="width:90px;padding:0.4rem 0.6rem;border:1px solid var(--borda,#ddd);border-radius:6px;font-size:1rem">
+                  style="width:90px;padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:6px;font-size:1rem;background:var(--surface);color:var(--text);font-family:inherit">
                 <span style="color:var(--muted);font-size:0.9rem">minutos</span>
               </div>
             </div>
 
             <div style="display:flex;align-items:center;gap:1rem">
-              <button class="btn-primary" onclick="_admSalvarConfig()">Salvar agendamentos</button>
+              <button class="btn-coletar" onclick="_admSalvarConfig()">Salvar agendamentos</button>
               <span id="cfg-feedback" style="font-size:0.85rem;color:var(--muted)"></span>
             </div>
           </div>
@@ -1804,9 +1812,12 @@ function _expandirSecaoDo(pag) {
 // ── Navegação ─────────────────────────────────────────────────────────
 function navegar(btn) {
   const pag = btn.dataset.pagina;
+  const aba = btn.dataset.aba || null;
   // sidebar
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('ativo'));
-  const sidebarItem = document.querySelector(`.nav-item[data-pagina="${pag}"]`);
+  const sidebarItem = aba
+    ? document.querySelector(`.nav-item[data-pagina="${pag}"][data-aba="${aba}"]`)
+    : document.querySelector(`.nav-item[data-pagina="${pag}"]:not([data-aba])`);
   if (sidebarItem) { sidebarItem.classList.add('ativo'); _expandirSecaoDo(pag); }
   // abas horizontais de e-mail (só as que têm data-pagina — evita afetar abas internas)
   document.querySelectorAll('.email-tab[data-pagina]').forEach(t => t.classList.remove('ativa'));
@@ -1819,17 +1830,28 @@ function navegar(btn) {
     'historico':         'E-MAILS · Evolução',
     'nao-classificados': 'E-MAILS · Não Classificadas',
     'bloqueados':        'E-MAILS · Bloqueadas por Regras',
-    'admin':             'Administração · Coletor',
     'admin-detalhe':     'Administração · Coletor · Detalhe',
     'usuarios':          'Administração · Usuários e Perfis',
     'fog-casos':         'FOGBUGZ · Lista de Casos',
     'fog-kpis':          'FOGBUGZ · Visão Consolidada',
   };
-  document.getElementById('topbar-titulo').textContent = titulos[pag] || '';
+  const titulosAdmin = {
+    'coletor':      'Administração · Coletor',
+    'historico':    'Administração · Histórico de execuções',
+    'agendamentos': 'Administração · Agendamentos',
+  };
+  document.getElementById('topbar-titulo').textContent =
+    pag === 'admin' ? (titulosAdmin[aba] || 'Administração · Coletor') : (titulos[pag] || '');
   if (pag === 'historico') { if (!evoHistorico.length) carregarHistorico(); else renderEvo(); }
   if (pag === 'nao-classificados') carregarNaoClassificados();
   if (pag === 'bloqueados') carregarBloqueados();
-  if (pag === 'admin') { _atualizarStatusColeta(); carregarLogColetas(); _iniciarAutoRefreshLog(); }
+  if (pag === 'admin') {
+    _atualizarStatusColeta();
+    _iniciarAutoRefreshLog();
+    const tabBtn = document.querySelector(`#adm-tab-bar .email-tab[onclick*="'${aba || 'coletor'}'"]`);
+    if (tabBtn) _admMudarAba(aba || 'coletor', tabBtn);
+    else if (!aba) carregarLogColetas();
+  }
   if (pag === 'usuarios') { _usrRenderTabela(); }
   else { _pararAutoRefreshLog(); }
   if (pag === 'fog-casos') {
@@ -2338,7 +2360,7 @@ function _traduzirErro(raw) {
 }
 
 function _voltarAdmin() {
-  navegar(document.querySelector('[data-pagina="admin"]'));
+  navegar(document.querySelector('[data-pagina="admin"][data-aba="coletor"]'));
 }
 
 function _detFiltrar() {
