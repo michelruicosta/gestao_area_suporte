@@ -609,14 +609,18 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 }
 .fog-tgl-btn.on { background: var(--accent); color: #fff; border-color: var(--accent) }
 .fog-rk-table  { background: var(--surface); border: 1px solid var(--border); border-radius: 0 0 10px 10px; border-top: none; overflow: hidden }
-.fog-rk-cols   { grid-template-columns: 36px 1fr 70px 80px 120px }
+.fog-rk-cols   { grid-template-columns: 36px 1fr 70px 2fr 90px }
 .fog-rk-thead  {
   display: grid; padding: 0 16px; height: 32px;
   background: var(--bg); border-bottom: 1px solid var(--border); align-items: center;
 }
 .fog-rk-th    { font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .07em }
+.fog-rk-th[data-sort] { cursor: pointer; user-select: none; transition: color .12s }
+.fog-rk-th[data-sort]:hover { color: var(--text) }
+.fog-rk-th.rk-ativo { color: var(--accent) !important }
+.fog-rk-si { font-size: 8px; margin-left: 3px; }
 .fog-rk-row   {
-  display: grid; padding: 12px 16px; border-bottom: 1px solid var(--border);
+  display: grid; padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer;
   align-items: center; transition: background .12s;
 }
 .fog-rk-row:last-child { border-bottom: none }
@@ -626,9 +630,9 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
   display: flex; align-items: center; justify-content: center;
   font-size: 9px; font-weight: 800; color: var(--muted);
 }
-.fog-rk-nome  { font-size: 12px; font-weight: 600; color: var(--text); padding: 0 12px }
+.fog-rk-nome  { font-size: 12px; font-weight: 600; color: var(--text); padding: 0 12px; min-width: 0 }
 .fog-rk-num   { font-size: 12px; font-weight: 700; color: var(--text); text-align: center }
-.fog-rk-antigo { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.fog-rk-antigo { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0 }
 .fog-rk-dias  { font-size: 13px; font-weight: 800; text-align: right }
 </style>
 </head>
@@ -1126,20 +1130,25 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
       <div class="fog-rk-table">
         <div class="fog-rk-thead fog-rk-cols">
           <div></div>
-          <div class="fog-rk-th" style="padding-left:12px">Responsável</div>
-          <div class="fog-rk-th" style="text-align:center">Casos</div>
-          <div class="fog-rk-th">Caso mais antigo</div>
-          <div class="fog-rk-th" style="text-align:right">Parado há</div>
+          <div class="fog-rk-th rk-ativo" data-sort="nome" onclick="fogSort('nome')" style="padding-left:12px">Responsável <span class="fog-rk-si" id="rksi-nome"></span></div>
+          <div class="fog-rk-th" data-sort="volume" onclick="fogSort('volume')" style="text-align:center">Casos <span class="fog-rk-si" id="rksi-volume"></span></div>
+          <div class="fog-rk-th" data-sort="antigo" onclick="fogSort('antigo')">Caso mais antigo <span class="fog-rk-si" id="rksi-antigo"></span></div>
+          <div class="fog-rk-th" data-sort="parado" onclick="fogSort('antigo')" style="text-align:right">Parado há <span class="fog-rk-si" id="rksi-parado">▼</span></div>
         </div>
         <div id="rkBody">
         {% for p in fog_stats.ranking %}
           {% set iniciais = (p.nome.split()[0][0] + (p.nome.split()[1][0] if p.nome.split()|length > 1 else ''))|upper %}
           {% set cls_dias = 'color:#ef4444' if p.dias_mais_antigo >= 15 else ('color:#f59e0b' if p.dias_mais_antigo >= 8 else 'color:#10b981') %}
-          <div class="fog-rk-row fog-rk-cols" data-dias="{{ p.dias_mais_antigo }}" data-casos="{{ p.casos }}">
+          <div class="fog-rk-row fog-rk-cols"
+               data-dias="{{ p.dias_mais_antigo }}"
+               data-casos="{{ p.casos }}"
+               data-nome="{{ p.nome|lower }}"
+               onclick="fogFiltrarPorResponsavel('{{ p.nome }}')"
+               title="Ver casos de {{ p.nome }}">
             <div class="fog-rk-av">{{ iniciais }}</div>
             <div class="fog-rk-nome">{{ p.nome }}</div>
             <div class="fog-rk-num">{{ p.casos }}</div>
-            <div class="fog-rk-antigo">{{ p.caso_mais_antigo }}</div>
+            <div class="fog-rk-antigo" title="{{ p.caso_mais_antigo }}">{{ p.caso_mais_antigo }}</div>
             <div class="fog-rk-dias" style="{{ cls_dias }}">{{ p.dias_mais_antigo }}d</div>
           </div>
         {% else %}
@@ -1295,7 +1304,16 @@ function navegar(btn) {
   if (pag === 'nao-classificados') carregarNaoClassificados();
   if (pag === 'bloqueados') carregarBloqueados();
   if (pag === 'admin') { _atualizarStatusColeta(); carregarLogColetas(); }
-  if (pag === 'fog-casos') { fogFiltrar(); _fogStartCountdown(); }
+  if (pag === 'fog-casos') {
+    if (!_keepFogFiltros) {
+      _fogUrgenciaFiltro = '';
+      const sel = document.getElementById('fResponsavel');
+      if (sel) sel.value = '';
+    }
+    _keepFogFiltros = false;
+    fogFiltrar();
+    _fogStartCountdown();
+  }
 }
 
 // ── Auto-refresh ──────────────────────────────────────────────────────
@@ -2110,11 +2128,21 @@ function _fogStartCountdown() {
   }, 1000);
 }
 
-// ── FOG: Filtro de urgência (vem do Gerencial) ────────────────────────
+// ── FOG: Filtro de urgência / responsável (vem do Gerencial) ─────────
 let _fogUrgenciaFiltro = ''; // '' | 'verde' | 'ambar' | 'vermelho' | 'concluido'
+let _keepFogFiltros    = false; // impede navegar() de limpar filtros ao abrir fog-casos
 
 function fogFiltrarPorUrgencia(urgencia) {
   _fogUrgenciaFiltro = urgencia;
+  _keepFogFiltros = true;
+  navegar(document.querySelector('[data-pagina="fog-casos"]'));
+}
+
+function fogFiltrarPorResponsavel(nome) {
+  _fogUrgenciaFiltro = '';
+  const sel = document.getElementById('fResponsavel');
+  if (sel) sel.value = nome;
+  _keepFogFiltros = true;
   navegar(document.querySelector('[data-pagina="fog-casos"]'));
 }
 
@@ -2205,20 +2233,37 @@ function fogReset() {
 }
 
 // ── FOG: Ranking sort ─────────────────────────────────────────────────
+let _rkSortAtual = 'antigo', _rkSortDir = 1;
+
 function fogSort(m) {
+  if (_rkSortAtual === m) _rkSortDir = -_rkSortDir;
+  else { _rkSortAtual = m; _rkSortDir = 1; }
   const body = document.getElementById('rkBody');
   if (!body) return;
   const rows = Array.from(body.querySelectorAll('.fog-rk-row'));
-  rows.sort((a, b) => m === 'volume'
-    ? Number(b.dataset.casos) - Number(a.dataset.casos)
-    : Number(b.dataset.dias)  - Number(a.dataset.dias));
+  const dir = _rkSortDir;
+  rows.sort((a, b) => {
+    if (m === 'volume') return dir * (Number(b.dataset.casos) - Number(a.dataset.casos));
+    if (m === 'nome')   return dir * (a.dataset.nome || '').localeCompare(b.dataset.nome || '', 'pt-BR');
+    return dir * (Number(b.dataset.dias) - Number(a.dataset.dias));
+  });
   rows.forEach(r => body.appendChild(r));
+  // atualiza botões topo
   document.getElementById('bA')?.classList.toggle('on', m === 'antigo');
   document.getElementById('bV')?.classList.toggle('on', m === 'volume');
+  // atualiza cabeçalhos
+  const ico = dir === 1 ? '▼' : '▲';
+  document.querySelectorAll('.fog-rk-th[data-sort]').forEach(th => {
+    const key = th.dataset.sort;
+    const ativo = key === m || (key === 'parado' && m === 'antigo') || (key === 'antigo' && m === 'parado');
+    th.classList.toggle('rk-ativo', ativo);
+    const si = th.querySelector('.fog-rk-si');
+    if (si) si.textContent = ativo ? ico : '';
+  });
+  // descrição
+  const descs = { volume: 'ordenado por quem tem mais casos ativos', nome: 'ordenado por nome', antigo: 'ordenado pelo caso mais antigo', parado: 'ordenado pelo caso mais antigo' };
   const desc = document.getElementById('rkDesc');
-  if (desc) desc.textContent = m === 'volume'
-    ? 'ordenado por quem tem mais casos ativos'
-    : 'ordenado pelo caso mais antigo em cada responsável';
+  if (desc) desc.textContent = descs[m] || '';
 }
 
 // ── Inicialização ─────────────────────────────────────────────────────
