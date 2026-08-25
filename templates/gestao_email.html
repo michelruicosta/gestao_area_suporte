@@ -666,9 +666,11 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .cpill-princ  { background: var(--pos-bg); color: var(--pos); }
 .cpill-desc   { background: var(--neg-bg); color: var(--af-c); }
 .cpill-rev    { background: #fce8e8; color: #c0392b; }
+.cpill-sinc   { background: #e8f4fd; color: #1a6fa0; }
 /* dark mode: chip-erro and cpill-rev (red chips) */
 [data-theme="escuro"] .chip-erro  { background: #3b0a0a; color: #f87171; }
 [data-theme="escuro"] .cpill-rev  { background: #3b0a0a; color: #f87171; }
+[data-theme="escuro"] .cpill-sinc { background: #0a2a3b; color: #60b8e8; }
 
 /* ─── FOG ─────────────────────────────────────────────────────────── */
 .fog-green { color: #10b981 }
@@ -1116,6 +1118,12 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 
       <div id="adm-aba-historico" style="display:none">
         <p style="font-size:0.82rem;color:var(--muted);margin-bottom:0.75rem;">Exibindo apenas os últimos 7 dias.</p>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;font-size:0.8rem;color:var(--muted);">
+          <span><span class="cpill cpill-princ" style="pointer-events:none;">✓ Classificadas</span> — e-mail novo identificado e classificado</span>
+          <span><span class="cpill cpill-desc" style="pointer-events:none;">⊘ Spam</span> — bloqueado pelo filtro automático</span>
+          <span><span class="cpill cpill-rev" style="pointer-events:none;">! Revisar</span> — não foi possível classificar automaticamente</span>
+          <span><span class="cpill cpill-sinc" style="pointer-events:none;">↻ Sincronizada</span> — mensagem nova em conversa já classificada</span>
+        </div>
         <div class="admin-card">
           <div class="tabela-wrap">
             <table class="tabela" id="tbl-log">
@@ -2327,13 +2335,17 @@ async function carregarLogColetas() {
         ? `<div style="font-size:0.76rem;color:#c0392b;">${l.erros} erro(s)</div>` : '';
       const coletadas = `<div style="font-weight:600;">${l.threads_proc} novas</div>${errosTxt}`;
       const temClassif = l.classif_principal || l.classif_descartes || l.classif_revisao;
-      let classifHtml = '<span class="n-zero">—</span>';
+      let classifHtml;
       if (temClassif) {
         const pills = [];
-        if (l.classif_principal) pills.push(`<span class="cpill cpill-princ">✓ ${l.classif_principal} principal</span>`);
-        if (l.classif_descartes) pills.push(`<span class="cpill cpill-desc">⊘ ${l.classif_descartes} descarte</span>`);
-        if (l.classif_revisao)   pills.push(`<span class="cpill cpill-rev">! ${l.classif_revisao} revisão</span>`);
+        if (l.classif_principal) pills.push(`<span class="cpill cpill-princ">✓ ${l.classif_principal} Classificadas</span>`);
+        if (l.classif_descartes) pills.push(`<span class="cpill cpill-desc">⊘ ${l.classif_descartes} Spam</span>`);
+        if (l.classif_revisao)   pills.push(`<span class="cpill cpill-rev">! ${l.classif_revisao} Revisar</span>`);
         classifHtml = `<div class="classif-pills">${pills.join('')}</div>`;
+      } else if (l.threads_proc > 0) {
+        classifHtml = `<span class="cpill cpill-sinc">↻ Sincronizada</span>`;
+      } else {
+        classifHtml = '<span class="n-zero">—</span>';
       }
       const btnDetalhe = `<button class="btn-log-det" onclick="abrirDetalheLog(${l.id},'${escHtml(fmtDataHora(l.data_hora))}','${l.status}')" title="Ver detalhe">⋯</button>`;
       return `<tr>
