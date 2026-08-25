@@ -1063,7 +1063,10 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
         </div>
       </div>
 
-      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:0.75rem;">Exibindo apenas os últimos 7 dias.</p>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+        <p style="font-size:0.82rem;color:var(--muted);margin:0;">Exibindo apenas os últimos 7 dias.</p>
+        <button class="btn-coletar" style="padding:0.3rem 0.9rem;font-size:0.8rem;" onclick="marcarTodasVistas('nao_class')">✓ Marcar todas como vistas</button>
+      </div>
 
       <div class="tabela-wrap">
         <table class="tabela" id="tbl-nao-class">
@@ -1343,7 +1346,10 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
         </div>
       </div>
 
-      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:0.75rem;">Exibindo apenas os últimos 7 dias.</p>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+        <p style="font-size:0.82rem;color:var(--muted);margin:0;">Exibindo apenas os últimos 7 dias.</p>
+        <button class="btn-coletar" style="padding:0.3rem 0.9rem;font-size:0.8rem;" onclick="marcarTodasVistas('bloqueados')">✓ Marcar todas como vistas</button>
+      </div>
 
       <div class="tabela-wrap">
         <table class="tabela" id="tbl-bloq">
@@ -2086,6 +2092,21 @@ function _dentroDe7Dias(dataStr) {
   const d = new Date(partes[2], partes[1]-1, partes[0]);
   const limite = new Date(); limite.setDate(limite.getDate() - 7);
   return d >= limite;
+}
+
+async function marcarTodasVistas(grupo) {
+  try {
+    await fetch('/api/marcar-vistas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ grupo }),
+    });
+    await carregarResumo();
+    if (grupo === 'nao_class') carregarNaoClassificados();
+    else carregarBloqueados();
+  } catch (e) {
+    console.error('Erro ao marcar como vistas:', e);
+  }
 }
 
 async function carregarNaoClassificados() {

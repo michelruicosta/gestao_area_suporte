@@ -365,11 +365,12 @@ def api_resumo():
             cat['delta_co']  = None
             cat['delta_tot'] = None
 
+    nv = bt.contar_nao_vistas()
     return jsonify({
         'categorias': categorias,
         'totais':     {'af': total_af, 'ac': total_ac, 'co': total_co, 'total': total},
-        'nao_class':  cd.get('revisao', 0) + cd.get('sem_classificar', 0),
-        'bloqueados': cd.get('descartes', 0),
+        'nao_class':  nv['nao_class'],
+        'bloqueados': nv['bloqueados'],
     })
 
 
@@ -482,6 +483,19 @@ def api_bloqueados():
         for t in threads
     ]
     return jsonify({'threads': resultado, 'total': len(resultado)})
+
+
+# ── API: Marcar como vistas ───────────────────────────────────────────────────
+
+@app.route('/api/marcar-vistas', methods=['POST'])
+@_requer_login
+def api_marcar_vistas():
+    dados = request.get_json(silent=True) or {}
+    grupo = (dados.get('grupo') or '').strip()
+    if grupo not in ('bloqueados', 'nao_class'):
+        return jsonify({'erro': 'grupo inválido'}), 400
+    bt.marcar_vistas(grupo)
+    return jsonify({'ok': True})
 
 
 # ── API: Classificar manualmente ──────────────────────────────────────────────

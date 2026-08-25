@@ -132,6 +132,7 @@ def criar_banco() -> None:
             'remetente_ultima_msg TEXT',
             'destinatario_ultima_msg TEXT',
             'reply_to_ultima_msg TEXT',
+            'visto_em TEXT',
         ]:
             try:
                 conn.execute(f'ALTER TABLE threads ADD COLUMN {col_def}')
@@ -842,6 +843,35 @@ def contar_por_destino() -> dict:
             contagens[chave] = row['total']
     contagens['total'] = sum(v for k, v in contagens.items() if k != 'total')
     return contagens
+
+
+def contar_nao_vistas() -> dict:
+    """Retorna contagens de threads não vistas para os badges da sidebar."""
+    with _conectar() as conn:
+        nao_class = conn.execute(
+            "SELECT COUNT(*) FROM threads WHERE (destino = 'revisao' OR destino IS NULL) AND visto_em IS NULL"
+        ).fetchone()[0]
+        bloqueados = conn.execute(
+            "SELECT COUNT(*) FROM threads WHERE destino = 'descartes' AND visto_em IS NULL"
+        ).fetchone()[0]
+    return {'nao_class': nao_class, 'bloqueados': bloqueados}
+
+
+def marcar_vistas(grupo: str) -> None:
+    """Marca todas as threads de um grupo como vistas.
+    grupo: 'bloqueados' ou 'nao_class'
+    """
+    with _conectar() as conn:
+        if grupo == 'bloqueados':
+            conn.execute(
+                "UPDATE threads SET visto_em = ? WHERE destino = 'descartes' AND visto_em IS NULL",
+                (_agora(),)
+            )
+        elif grupo == 'nao_class':
+            conn.execute(
+                "UPDATE threads SET visto_em = ? WHERE (destino = 'revisao' OR destino IS NULL) AND visto_em IS NULL",
+                (_agora(),)
+            )
 
 
 # ── Snapshots de contadores por categoria ────────────────────────────────────
