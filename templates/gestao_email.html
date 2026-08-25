@@ -1055,10 +1055,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
         </div>
       </div>
 
-      <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;font-size:0.85rem;color:var(--muted)">
-        <input type="checkbox" id="filtro-7d-nc" checked onchange="carregarNaoClassificados()">
-        <label for="filtro-7d-nc" style="cursor:pointer">Exibir apenas últimos 7 dias</label>
-      </div>
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:0.75rem;">Exibindo apenas os últimos 7 dias.</p>
 
       <div class="tabela-wrap">
         <table class="tabela" id="tbl-nao-class">
@@ -1106,9 +1103,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
       </div>
 
       <div id="adm-aba-historico" style="display:none">
-        <div style="display:flex;justify-content:flex-end;margin-bottom:0.75rem">
-          <button class="btn-secondary" onclick="_admLimparHistorico()" style="color:var(--neg,#c55a00);border-color:var(--neg,#c55a00)">🗑 Limpar registros com mais de 7 dias</button>
-        </div>
+        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:0.75rem;">Exibindo apenas os últimos 7 dias.</p>
         <div class="admin-card">
           <div class="tabela-wrap">
             <table class="tabela" id="tbl-log">
@@ -1296,10 +1291,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
         </div>
       </div>
 
-      <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;font-size:0.85rem;color:var(--muted)">
-        <input type="checkbox" id="filtro-7d-bloq" checked onchange="carregarBloqueados()">
-        <label for="filtro-7d-bloq" style="cursor:pointer">Exibir apenas últimos 7 dias</label>
-      </div>
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:0.75rem;">Exibindo apenas os últimos 7 dias.</p>
 
       <div class="tabela-wrap">
         <table class="tabela" id="tbl-bloq">
@@ -2028,11 +2020,10 @@ async function carregarNaoClassificados() {
     '<tr><td colspan="5" class="vazio">Carregando…</td></tr>';
   try {
     const d = await _get('/api/nao-classificados');
-    const filtrar = document.getElementById('filtro-7d-nc')?.checked;
-    const lista = filtrar ? d.threads.filter(t => _dentroDe7Dias(t.data)) : d.threads;
+    const lista = d.threads.filter(t => _dentroDe7Dias(t.data));
     if (!lista.length) {
       document.getElementById('tbody-nao-class').innerHTML =
-        `<tr><td colspan="5" class="vazio">${filtrar ? 'Nenhuma conversa nos últimos 7 dias. ✓' : 'Nenhuma thread pendente. ✓'}</td></tr>`;
+        '<tr><td colspan="5" class="vazio">Nenhuma conversa nos últimos 7 dias. ✓</td></tr>';
       return;
     }
     document.getElementById('tbody-nao-class').innerHTML = lista.map(t =>
@@ -2056,11 +2047,10 @@ async function carregarBloqueados() {
     '<tr><td colspan="5" class="vazio">Carregando…</td></tr>';
   try {
     const d = await _get('/api/bloqueados');
-    const filtrar = document.getElementById('filtro-7d-bloq')?.checked;
-    const lista = filtrar ? d.threads.filter(t => _dentroDe7Dias(t.data)) : d.threads;
+    const lista = d.threads.filter(t => _dentroDe7Dias(t.data));
     if (!lista.length) {
       document.getElementById('tbody-bloq').innerHTML =
-        `<tr><td colspan="5" class="vazio">${filtrar ? 'Nenhuma conversa nos últimos 7 dias.' : 'Nenhuma thread bloqueada.'}</td></tr>`;
+        '<tr><td colspan="5" class="vazio">Nenhuma conversa nos últimos 7 dias.</td></tr>';
       return;
     }
     document.getElementById('tbody-bloq').innerHTML = lista.map(t => {
@@ -2090,16 +2080,6 @@ function _admMudarAba(aba, btn) {
   if (aba === 'historico') carregarLogColetas();
 }
 
-async function _admLimparHistorico() {
-  if (!confirm('Remover todos os registros do histórico com mais de 7 dias?')) return;
-  try {
-    const r = await fetch('/api/admin/limpar-historico', {method: 'DELETE'});
-    if (!r.ok) throw new Error();
-    carregarLogColetas();
-  } catch (e) {
-    alert('Erro ao limpar histórico.');
-  }
-}
 
 // ── Classificação manual ──────────────────────────────────────────────
 function abrirClassificar(threadId, assunto) {
@@ -2196,12 +2176,14 @@ async function carregarLogColetas() {
     '<tr><td colspan="7" class="vazio">Carregando…</td></tr>';
   try {
     const d = await _get('/api/admin/log-coletas');
-    if (!d.logs.length) {
+    const limite7d = new Date(); limite7d.setDate(limite7d.getDate() - 7);
+    const logs = d.logs.filter(l => l.data_hora && new Date(l.data_hora.replace(' ', 'T')) >= limite7d);
+    if (!logs.length) {
       document.getElementById('tbody-log').innerHTML =
-        '<tr><td colspan="7" class="vazio">Nenhuma execução registrada ainda.</td></tr>';
+        '<tr><td colspan="7" class="vazio">Nenhuma execução nos últimos 7 dias.</td></tr>';
       return;
     }
-    document.getElementById('tbody-log').innerHTML = d.logs.map(l => {
+    document.getElementById('tbody-log').innerHTML = logs.map(l => {
       const chipTipo = l.tipo === 'historica'
         ? `<span class="chip chip-hist">Histórica</span>`
         : `<span class="chip chip-inc">Incremental</span>`;

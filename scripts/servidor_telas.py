@@ -492,17 +492,6 @@ def api_admin_log_coletas():
     return jsonify({'logs': logs})
 
 
-@app.route('/api/admin/limpar-historico', methods=['DELETE'])
-@_requer_login
-def api_admin_limpar_historico():
-    from datetime import datetime, timedelta
-    limite = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S')
-    with bt._conectar() as conn:
-        conn.execute('DELETE FROM log_coletas WHERE data_hora < ?', (limite,))
-        conn.commit()
-    return jsonify({'ok': True})
-
-
 @app.route('/api/admin/log-detalhe/<int:log_id>')
 @_requer_login
 def api_admin_log_detalhe(log_id):
