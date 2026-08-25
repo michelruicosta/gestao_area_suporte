@@ -238,6 +238,21 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .perfil-campo-valor { font-size: 0.88rem; color: var(--text); }
 .perfil-acoes { display: flex; justify-content: flex-end; gap: 0.75rem; }
 
+/* painel trocar senha */
+.senha-sub { font-size: 0.82rem; color: var(--accent); margin-bottom: 1.25rem; }
+.senha-field { display: grid; gap: 0.3rem; margin-bottom: 0.9rem; }
+.senha-label { font-size: 0.78rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.senha-wrap { position: relative; display: flex; align-items: center; }
+.senha-wrap .field-input { padding-right: 2.5rem; background: var(--bg); color: var(--text); border-color: var(--border); }
+.senha-wrap .field-input:focus { border-color: var(--accent); }
+.senha-olho { position: absolute; right: 0.6rem; background: none; border: none; cursor: pointer; color: var(--muted); font-size: 0.95rem; padding: 0.2rem; }
+.senha-olho:hover { color: var(--text); }
+.senha-forca { border: 1px solid var(--border); border-radius: 6px; padding: 0.65rem 0.85rem; margin: 0.2rem 0 0.9rem; display: grid; gap: 0.3rem; }
+.forca-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: var(--muted); }
+.forca-item.ok { color: var(--accent); }
+.forca-circulo { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid currentColor; flex-shrink: 0; transition: background .15s; }
+.forca-item.ok .forca-circulo { background: var(--accent); }
+
 /* ─── Sortable headers ──────────────────────────────────────────────── */
 .th-sort { cursor: pointer; user-select: none; transition: color .12s; }
 .th-sort:hover { color: var(--text) !important; }
@@ -1514,19 +1529,59 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
         <span class="perfil-badge-adm" id="perfil-badge">ADMINISTRADOR</span>
       </div>
     </div>
-    <div class="perfil-campos">
-      <div>
-        <div class="perfil-campo-label">Organização</div>
-        <div class="perfil-campo-valor">FINAUD TEC</div>
+    <!-- Painel 1: dados do perfil -->
+    <div id="painel-perfil">
+      <div class="perfil-campos">
+        <div>
+          <div class="perfil-campo-label">Organização</div>
+          <div class="perfil-campo-valor">FINAUD TEC</div>
+        </div>
+        <div>
+          <div class="perfil-campo-label">Perfil no sistema</div>
+          <div class="perfil-campo-valor" id="perfil-papel">Administrador</div>
+        </div>
       </div>
-      <div>
-        <div class="perfil-campo-label">Perfil no sistema</div>
-        <div class="perfil-campo-valor" id="perfil-papel">Administrador</div>
+      <div class="perfil-acoes">
+        <button class="btn-secondary" onclick="fecharPerfil()">Voltar</button>
+        <button class="btn-classificar" onclick="_irParaSenha()">Alterar senha</button>
       </div>
     </div>
-    <div class="perfil-acoes">
-      <button class="btn-secondary" onclick="fecharPerfil()">Voltar</button>
-      <button class="btn-classificar" onclick="fecharPerfil()">Alterar senha</button>
+
+    <!-- Painel 2: alterar senha -->
+    <div id="painel-senha" style="display:none">
+      <p class="senha-sub">Crie uma senha forte para proteger sua conta.</p>
+      <div class="senha-field">
+        <label class="senha-label">Senha atual</label>
+        <div class="senha-wrap">
+          <input class="field-input" type="password" id="senha-atual" autocomplete="current-password">
+          <button type="button" class="senha-olho" onclick="_toggleSenha('senha-atual',this)">👁</button>
+        </div>
+      </div>
+      <div class="senha-field">
+        <label class="senha-label">Nova senha</label>
+        <div class="senha-wrap">
+          <input class="field-input" type="password" id="senha-nova" autocomplete="new-password" oninput="_verificarForca()">
+          <button type="button" class="senha-olho" onclick="_toggleSenha('senha-nova',this)">👁</button>
+        </div>
+        <div class="senha-forca">
+          <div class="forca-item" id="fc-len"><span class="forca-circulo"></span>Mínimo de 8 caracteres</div>
+          <div class="forca-item" id="fc-mai"><span class="forca-circulo"></span>Uma letra maiúscula</div>
+          <div class="forca-item" id="fc-min"><span class="forca-circulo"></span>Uma letra minúscula</div>
+          <div class="forca-item" id="fc-num"><span class="forca-circulo"></span>Um número</div>
+          <div class="forca-item" id="fc-esp"><span class="forca-circulo"></span>Um caractere especial (!@#$%...)</div>
+        </div>
+      </div>
+      <div class="senha-field">
+        <label class="senha-label">Confirmar nova senha</label>
+        <div class="senha-wrap">
+          <input class="field-input" type="password" id="senha-conf" autocomplete="new-password">
+          <button type="button" class="senha-olho" onclick="_toggleSenha('senha-conf',this)">👁</button>
+        </div>
+      </div>
+      <div class="perfil-acoes">
+        <button class="btn-secondary" onclick="_voltarPerfil()">Voltar ao perfil</button>
+        <button class="btn-classificar" onclick="_salvarSenha()">Atualizar senha</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2295,6 +2350,49 @@ function abrirPerfil() {
 
 function fecharPerfil() {
   document.getElementById('perfil-modal').classList.remove('aberto');
+  _voltarPerfil();
+}
+function _irParaSenha() {
+  document.getElementById('painel-perfil').style.display = 'none';
+  document.getElementById('painel-senha').style.display  = '';
+  document.getElementById('senha-atual').value = '';
+  document.getElementById('senha-nova').value  = '';
+  document.getElementById('senha-conf').value  = '';
+  _verificarForca();
+}
+function _voltarPerfil() {
+  document.getElementById('painel-senha').style.display  = 'none';
+  document.getElementById('painel-perfil').style.display = '';
+}
+function _toggleSenha(id, btn) {
+  const inp = document.getElementById(id);
+  const ver = inp.type === 'password';
+  inp.type = ver ? 'text' : 'password';
+  btn.textContent = ver ? '🙈' : '👁';
+}
+function _verificarForca() {
+  const v = document.getElementById('senha-nova').value;
+  const regras = [
+    ['fc-len', v.length >= 8],
+    ['fc-mai', /[A-Z]/.test(v)],
+    ['fc-min', /[a-z]/.test(v)],
+    ['fc-num', /[0-9]/.test(v)],
+    ['fc-esp', /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(v)],
+  ];
+  regras.forEach(([id, ok]) => {
+    document.getElementById(id).classList.toggle('ok', ok);
+  });
+}
+function _salvarSenha() {
+  const nova  = document.getElementById('senha-nova').value;
+  const conf  = document.getElementById('senha-conf').value;
+  const atual = document.getElementById('senha-atual').value;
+  if (!atual) { alert('Informe a senha atual.'); return; }
+  if (nova !== conf) { alert('Nova senha e confirmação não coincidem.'); return; }
+  const regras = [nova.length >= 8, /[A-Z]/.test(nova), /[a-z]/.test(nova), /[0-9]/.test(nova), /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(nova)];
+  if (!regras.every(Boolean)) { alert('A nova senha não atende todos os requisitos.'); return; }
+  alert('Senha atualizada com sucesso!');
+  fecharPerfil();
 }
 document.addEventListener('click', e => {
   if (!e.target.closest('.user-wrap')) {

@@ -82,6 +82,21 @@ body {
 }
 .field-input:focus { border-color: var(--marca); }
 
+.field-input-wrap { position: relative; display: flex; align-items: center; }
+.field-input-wrap .field-input { padding-right: 2.6rem; }
+.olho-btn {
+  position: absolute; right: 0.65rem;
+  background: none; border: none; cursor: pointer; padding: 0.25rem;
+  color: #94a3b8; font-size: 1rem; line-height: 1; display: flex;
+}
+.olho-btn:hover { color: var(--marca); }
+
+.esqueceu {
+  display: block; text-align: right; font-size: 0.8rem;
+  color: var(--marca); text-decoration: none; margin-top: 0.25rem;
+}
+.esqueceu:hover { text-decoration: underline; }
+
 .erro-msg {
   font-size: 0.88rem;
   color: #b4233a;
@@ -142,8 +157,12 @@ body {
 
       <div class="field">
         <label class="field-label" for="senha">Senha</label>
-        <input class="field-input" type="password" id="senha" name="senha"
-               autocomplete="current-password" placeholder="••••••••" required>
+        <div class="field-input-wrap">
+          <input class="field-input" type="password" id="senha" name="senha"
+                 autocomplete="current-password" placeholder="••••••••" required>
+          <button type="button" class="olho-btn" onclick="toggleOlho('senha',this)" title="Mostrar/ocultar senha">👁</button>
+        </div>
+        <a href="#" class="esqueceu" onclick="return false;">Esqueceu a senha?</a>
       </div>
 
       <button type="submit" class="btn-entrar">Entrar</button>
@@ -151,5 +170,13 @@ body {
 
     <p class="rodape-login">© 2026 Finaud Tec · Ambiente seguro</p>
   </div>
+<script>
+function toggleOlho(id, btn) {
+  const inp = document.getElementById(id);
+  const ver = inp.type === 'password';
+  inp.type = ver ? 'text' : 'password';
+  btn.textContent = ver ? '🙈' : '👁';
+}
+</script>
 </body>
 </html>
