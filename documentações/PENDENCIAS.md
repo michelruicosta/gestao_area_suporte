@@ -570,6 +570,20 @@ No projeto antigo, alguns cards da tela operacional do FOG mostravam mensagens d
 
 ---
 
+### 🔴 DEPLOY — Implementar logging em arquivo antes de subir para produção (25/08/2026)
+
+O sistema atual só imprime no terminal — em produção não há como diagnosticar erros remotamente.
+
+**Padrão aprovado por Michel:**
+- Um arquivo por módulo por dia: `servidor_DD-MM-AAAA.log`, `coletor_DD-MM-AAAA.log`, `pipeline_DD-MM-AAAA.log`
+- Data no formato brasileiro (DD-MM-AAAA)
+- Rotação automática diária (`TimedRotatingFileHandler` do Python)
+- Implementar em: `servidor_telas.py`, `coletor_gmail.py`, `executar_pipeline.py`
+
+**Quando fazer:** Etapa 6 do plano de deploy — antes de subir para o servidor VPS.
+
+---
+
 ### 🟡 TELA E-MAILS — Drill-down de categoria na tela Evolução (identificado 25/08/2026)
 
 Hoje a tela Evolução mostra todas as categorias numa tabela com variações. A ideia é: ao **clicar numa categoria**, abrir um painel mostrando como aquela categoria específica se comportou ao longo do tempo (dia a dia ou semana a semana) — com um gráfico de linha para AF, AC e CO.

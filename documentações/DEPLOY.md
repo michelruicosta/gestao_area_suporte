@@ -92,6 +92,24 @@ pip install -r requirements.txt
 
 ---
 
+## Logging (obrigatório antes do deploy)
+
+O sistema atual não grava logs em arquivo — tudo vai para o terminal. Em produção isso impede diagnóstico remoto.
+
+**Padrão definido por Michel:**
+```
+logs/
+├── servidor_DD-MM-AAAA.log    ← acessos e erros do servidor Flask
+├── coletor_DD-MM-AAAA.log     ← cada execução do robô de coleta
+└── pipeline_DD-MM-AAAA.log    ← execuções do classificador
+```
+- Um arquivo por módulo por dia
+- Data no formato brasileiro (DD-MM-AAAA)
+- Rotação automática diária (Python `logging.handlers.TimedRotatingFileHandler`)
+- Implementar em `servidor_telas.py`, `coletor_gmail.py` e `executar_pipeline.py`
+
+---
+
 ## Como iniciar o servidor
 
 ```bash
@@ -134,7 +152,7 @@ Executar em ordem — testar a aplicação após cada etapa antes de avançar.
 | 3 | Organizar raiz — remover bilhetes e scripts avulsos soltos | ⏳ |
 | 4 | Resolver duplicação `log/` vs `logs/` — unificar em `logs/` | ⏳ |
 | 5 | Atualizar `.env.example` — remover variáveis do Oráculo, manter só as 5 necessárias | ⏳ |
-| 6 | Criar `requirements-prod.txt` com apenas os pacotes realmente usados | ⏳ |
+| 6 | Implementar logging em arquivo + criar `requirements.txt` de produção enxuto | ⏳ |
 | 7 | Teste geral local — aplicação funcionando 100%? | ⏳ |
 | 8 | Deploy no servidor com instruções do Michel | ⏳ |
 
