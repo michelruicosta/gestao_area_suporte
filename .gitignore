@@ -8,6 +8,7 @@ token.json
 client_secret.json
 oraculo-ia-coleta.json
 chave_app_coleta.oraculo@finaud.com.br.txt
+config/credenciais_gmail.json
 
 # --- Pastas de Dados Confidenciais (BLINDAGEM TOTAL) ---
 # Bloqueia a pasta data/ inteira — contém dados operacionais sensíveis

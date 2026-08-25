@@ -22,7 +22,7 @@ from googleapiclient.errors import HttpError
 
 # ── Configuração ───────────────────────────────────────────────────────────────
 BASE_DIR    = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CREDENCIAIS = os.path.join(BASE_DIR, 'oraculo-ia-coleta.json')
+CREDENCIAIS = os.path.join(BASE_DIR, 'config', 'credenciais_gmail.json')
 CONTA       = 'coleta.oraculo@finaud.com.br'
 SCOPES      = ['https://www.googleapis.com/auth/gmail.readonly']
 CHECKPOINT  = 50   # imprime progresso a cada N threads
