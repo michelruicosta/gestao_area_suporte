@@ -475,19 +475,20 @@ para manter o mesmo link.
 
 ## Padrão obrigatório de tipografia — telas do sistema
 
-Toda tela nova ou modificada deve usar **`rem`** (nunca `px` fixo) para fontes de conteúdo:
+Toda tela nova ou modificada deve usar **`rem`** (nunca `px` fixo) para fontes de conteúdo.
 
-| Elemento | Tamanho |
-|---|---|
-| Corpo de tabela / texto principal | `0.875rem` |
-| Cabeçalho de tabela (th) / labels maiores | `0.75rem` |
-| Labels menores, legendas, datas auxiliares | `0.72rem` |
-| Valores grandes de KPI | `1.5rem` a `1.875rem` |
-| Textos de apoio (subtítulos, notas) | `0.78rem` |
+**Dois padrões de grade:**
 
-**Nunca usar `px` para fontes de conteúdo.** `px` é aceito apenas em elementos decorativos de tamanho fixo (ícones, avatares, badges de cor). Misturar `px` e `rem` em fontes de texto cria a sensação de "cada tela tem um tamanho diferente".
+| Tipo de tela | Corpo tabela | Cabeçalho th | Labels/aux |
+|---|---|---|---|
+| **Relatório / resumo** (E-mails, Admin) | `0.875rem` | `0.75rem` | `0.72rem` |
+| **Grade densa** (FOG — colunas estreitas, muitos dados) | `0.75rem` | `0.625rem` | `0.5625rem` |
 
-> Padrão aprovado por Michel em 25/08/2026 após auditoria que identificou inconsistência nas 3 telas FOG.
+Ao criar uma grade densa, **não aumentar fontes sem também alargar as colunas** — texto maior em coluna estreita espreme o layout.
+
+**Nunca usar `px` para fontes de conteúdo.** Converter sempre: `12px → 0.75rem`, `11px → 0.6875rem`, `10px → 0.625rem`, `9px → 0.5625rem`.
+
+> Padrão aprovado por Michel em 25/08/2026. Erro de aumentar as fontes do FOG sem ajustar colunas foi identificado e corrigido na mesma sessão.
 
 ---
 
