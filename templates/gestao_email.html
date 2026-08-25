@@ -1119,9 +1119,9 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
         <button id="usr-btn-acao" class="btn-classificar" onclick="_usrBtnAcao()">+ Novo usuário</button>
       </div>
 
-      <div class="tab-bar" role="tablist" id="usr-tab-bar">
-        <button class="tab-btn ativa" onclick="_usrMudarAba('usuarios',this)">Usuários</button>
-        <button class="tab-btn" onclick="_usrMudarAba('perfis',this)">Perfis e permissões</button>
+      <div class="email-tabbar" role="tablist" id="usr-tab-bar">
+        <button class="email-tab ativa" onclick="_usrMudarAba('usuarios',this)">Usuários</button>
+        <button class="email-tab" onclick="_usrMudarAba('perfis',this)">Perfis e permissões</button>
       </div>
 
       <div id="usr-msg-box" class="usr-msg" hidden></div>
@@ -1608,8 +1608,8 @@ function navegar(btn) {
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('ativo'));
   const sidebarItem = document.querySelector(`.nav-item[data-pagina="${pag}"]`);
   if (sidebarItem) { sidebarItem.classList.add('ativo'); _expandirSecaoDo(pag); }
-  // abas horizontais de e-mail
-  document.querySelectorAll('.email-tab').forEach(t => t.classList.remove('ativa'));
+  // abas horizontais de e-mail (só as que têm data-pagina — evita afetar abas internas)
+  document.querySelectorAll('.email-tab[data-pagina]').forEach(t => t.classList.remove('ativa'));
   document.querySelectorAll(`.email-tab[data-pagina="${pag}"]`).forEach(t => t.classList.add('ativa'));
   // página
   document.querySelectorAll('.page').forEach(p => p.classList.remove('ativa'));
@@ -2763,7 +2763,7 @@ function _usrMostrarMsg(el, texto, tipo) {
 
 function _usrMudarAba(aba, btn) {
   _usrAbaAtiva = aba;
-  document.querySelectorAll('#usr-tab-bar .tab-btn').forEach(b => b.classList.remove('ativa'));
+  document.querySelectorAll('#usr-tab-bar .email-tab').forEach(b => b.classList.remove('ativa'));
   btn.classList.add('ativa');
   document.getElementById('usr-aba-usuarios').style.display = aba === 'usuarios' ? '' : 'none';
   document.getElementById('usr-aba-perfis').style.display   = aba === 'perfis'   ? '' : 'none';
