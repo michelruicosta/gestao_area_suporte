@@ -521,6 +521,37 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 1.25rem; gap: 1rem;
 }
+/* ─── Usuários e Perfis ─────────────────────────────────────────────── */
+.usr-cabecalho { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:1.25rem; }
+.usr-cabecalho-info { display:flex; flex-direction:column; gap:0.2rem; }
+.badge-perfil { display:inline-block; padding:0.18rem 0.6rem; border-radius:999px; font-size:0.74rem; font-weight:700; letter-spacing:0.02em; }
+.badge-perfil-administrador { background:rgba(59,130,246,0.15); color:#60a5fa; }
+.badge-perfil-gestor { background:rgba(234,179,8,0.15); color:#fbbf24; }
+.badge-perfil-operador { background:rgba(34,197,94,0.15); color:#4ade80; }
+.permissao-toggle { padding:0.18rem 0.65rem; border-radius:5px; border:1px solid var(--border); cursor:pointer; font-size:0.8rem; background:var(--surface); color:var(--muted); transition:background 0.1s,color 0.1s; }
+.permissao-toggle.sim { background:rgba(34,197,94,0.12); color:#4ade80; border-color:rgba(34,197,94,0.3); }
+.permissao-toggle:disabled { opacity:0.6; cursor:default; }
+.acoes-linha { display:flex; gap:0.4rem; flex-wrap:wrap; }
+.btn-secondary { padding:0.3rem 0.75rem; border:1px solid var(--border); border-radius:6px; background:var(--surface); color:var(--text); cursor:pointer; font-size:0.82rem; transition:background 0.1s; }
+.btn-secondary:hover { background:var(--accent-bg); color:var(--marca); }
+.btn-perigo { padding:0.3rem 0.75rem; border:1px solid rgba(220,38,38,0.3); border-radius:6px; background:rgba(220,38,38,0.08); color:#f87171; cursor:pointer; font-size:0.82rem; }
+.btn-perigo:hover { background:rgba(220,38,38,0.16); }
+.usr-status-ok { color:#4ade80; font-weight:600; font-size:0.85rem; }
+.usr-status-no { color:#f87171; font-weight:600; font-size:0.85rem; }
+.field { display:flex; flex-direction:column; gap:0.3rem; }
+.field-label { font-size:0.8rem; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:0.03em; }
+.field-input { border:1px solid var(--border); border-radius:7px; padding:0.5rem 0.7rem; background:var(--bg); color:var(--text); font:inherit; font-size:0.9rem; width:100%; box-sizing:border-box; }
+.field-input:focus { outline:2px solid var(--marca); outline-offset:1px; border-color:transparent; }
+.field-check { display:flex; align-items:center; gap:0.5rem; font-size:0.88rem; cursor:pointer; color:var(--text); }
+.form-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+.form-stack { display:flex; flex-direction:column; gap:1rem; }
+.modal-form-acoes { display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem; padding-top:1rem; border-top:1px solid var(--border); }
+.usr-modal-inner { background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:0 24px 80px rgba(15,23,42,0.3); width:min(520px,96vw); max-height:calc(100vh - 4rem); overflow-y:auto; padding:1.5rem; }
+.usr-modal-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem; }
+.usr-modal-head h2 { margin:0; font-size:1.05rem; }
+.usr-msg { padding:0.55rem 0.9rem; border-radius:7px; margin-bottom:0.75rem; font-size:0.85rem; }
+.usr-msg.ok { background:rgba(34,197,94,0.1); color:#4ade80; }
+.usr-msg.erro { background:rgba(220,38,38,0.1); color:#f87171; }
 .det-btn-voltar {
   background: none; border: 1px solid var(--border); border-radius: 8px;
   padding: 5px 16px; cursor: pointer; color: var(--muted);
@@ -794,6 +825,10 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
         <button class="nav-item" data-pagina="admin" onclick="navegar(this)">
           <span class="nav-ico">⚙️</span>
           <span class="nav-txt">Coletor</span>
+        </button>
+        <button class="nav-item" data-pagina="usuarios" onclick="navegar(this)">
+          <span class="nav-ico">👥</span>
+          <span class="nav-txt">Usuários e Perfis</span>
         </button>
       </div>
     </div>
@@ -1073,6 +1108,102 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
         </div>
       </div>
     </section>
+
+    <!-- ── Página: Usuários e Perfis ─────────────────────────────── -->
+    <section class="page" id="pag-usuarios">
+      <div class="usr-cabecalho">
+        <div class="usr-cabecalho-info">
+          <h1 class="page-titulo">Usuários e Perfis</h1>
+          <p class="page-sub">Quem acessa o sistema e o que cada perfil pode ver.</p>
+        </div>
+        <button id="usr-btn-acao" class="btn-classificar" onclick="_usrBtnAcao()">+ Novo usuário</button>
+      </div>
+
+      <div class="tab-bar" role="tablist" id="usr-tab-bar">
+        <button class="tab-btn ativa" onclick="_usrMudarAba('usuarios',this)">Usuários</button>
+        <button class="tab-btn" onclick="_usrMudarAba('perfis',this)">Perfis e permissões</button>
+      </div>
+
+      <div id="usr-msg-box" class="usr-msg" hidden></div>
+
+      <!-- Aba Usuários -->
+      <div id="usr-aba-usuarios" class="admin-card" style="margin-top:1rem;">
+        <div class="tabela-wrap">
+          <table class="tabela">
+            <thead><tr>
+              <th>Usuário</th><th>Perfil</th><th>Status</th><th>E-mail alerta</th><th>Ações</th>
+            </tr></thead>
+            <tbody id="usr-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Aba Perfis -->
+      <div id="usr-aba-perfis" class="admin-card" style="margin-top:1rem;display:none;">
+        <div class="tabela-wrap">
+          <table class="tabela">
+            <thead><tr>
+              <th>Tela</th>
+              <th>Operador</th>
+              <th>Gestor</th>
+              <th>Administrador</th>
+            </tr></thead>
+            <tbody id="perm-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Modal: criar/editar usuário -->
+    <div class="modal-backdrop" id="usr-modal-backdrop" onclick="_usrFecharModal()">
+      <div class="usr-modal-inner" onclick="event.stopPropagation()">
+        <div class="usr-modal-head">
+          <h2 id="usr-modal-titulo">Novo usuário</h2>
+          <button class="modal-fechar" onclick="_usrFecharModal()">×</button>
+        </div>
+        <div id="usr-modal-msg" class="usr-msg" hidden></div>
+        <div class="form-stack">
+          <label class="field">
+            <span class="field-label">Nome</span>
+            <input class="field-input" id="usr-f-nome" autocomplete="name" />
+          </label>
+          <label class="field">
+            <span class="field-label">E-mail</span>
+            <input class="field-input" id="usr-f-email" type="email" autocomplete="email" />
+          </label>
+          <div class="form-grid-2">
+            <label class="field">
+              <span class="field-label">Perfil</span>
+              <select class="field-input" id="usr-f-perfil">
+                <option value="operador">Operador</option>
+                <option value="gestor">Gestor</option>
+                <option value="administrador">Administrador</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="field-label">Cargo</span>
+              <input class="field-input" id="usr-f-cargo" />
+            </label>
+          </div>
+          <label class="field">
+            <span class="field-label">Departamento</span>
+            <input class="field-input" id="usr-f-dept" />
+          </label>
+          <label class="field-check">
+            <input type="checkbox" id="usr-f-alerta" checked />
+            Receber e-mail de alertas
+          </label>
+          <label class="field-check">
+            <input type="checkbox" id="usr-f-ativo" checked />
+            Usuário ativo
+          </label>
+        </div>
+        <div class="modal-form-acoes">
+          <button class="btn-secondary" onclick="_usrFecharModal()">Cancelar</button>
+          <button class="btn-classificar" onclick="_usrSalvar()">Salvar usuário</button>
+        </div>
+      </div>
+    </div>
 
     <!-- ── Página 5: Bloqueados ────────────────────────────────────── -->
     <section class="page" id="pag-bloqueados">
@@ -1490,6 +1621,7 @@ function navegar(btn) {
     'bloqueados':        'Bloqueados por Filtro',
     'admin':             'Coletor',
     'admin-detalhe':     'Coletor · Detalhe',
+    'usuarios':          'Usuários e Perfis',
     'fog-casos':         'FOGBUGZ · Casos',
     'fog-kpis':          'FOGBUGZ · Gerencial',
   };
@@ -1498,6 +1630,7 @@ function navegar(btn) {
   if (pag === 'nao-classificados') carregarNaoClassificados();
   if (pag === 'bloqueados') carregarBloqueados();
   if (pag === 'admin') { _atualizarStatusColeta(); carregarLogColetas(); _iniciarAutoRefreshLog(); }
+  if (pag === 'usuarios') { _usrRenderTabela(); }
   else { _pararAutoRefreshLog(); }
   if (pag === 'fog-casos') {
     if (!_keepFogFiltros) {
@@ -2592,6 +2725,174 @@ function fogSort(m) {
   const descs = { volume: 'ordenado por quem tem mais casos ativos', nome: 'ordenado por nome', antigo: 'ordenado pelo caso mais antigo', parado: 'ordenado pelo caso mais antigo' };
   const desc = document.getElementById('rkDesc');
   if (desc) desc.textContent = descs[m] || '';
+}
+
+// ── Usuários e Perfis ─────────────────────────────────────────────────
+
+const _USR_TELAS = [
+  ['classificados',    'Situação Atual',        'Painel principal de e-mails por categoria e status.'],
+  ['historico',        'Histórico',             'Evolução temporal das categorias.'],
+  ['nao-classificados','Não Classificados',     'Threads aguardando categorização.'],
+  ['bloqueados',       'Bloqueados por Filtro', 'Threads descartadas pelo filtro (FogBugz, Facti, etc.).'],
+  ['fog-casos',        'FOGBUGZ · Casos',       'Listagem de casos do FogBugz.'],
+  ['fog-kpis',         'FOGBUGZ · Gerencial',   'Indicadores do FogBugz.'],
+  ['admin',            'Coletor',               'Controles do robô de coleta. (Administrador)'],
+  ['usuarios',         'Usuários e Perfis',     'Gestão de usuários e permissões. (Administrador)'],
+];
+
+let _usrDados = [
+  {id:1, nome:'Michel Costa', email:'michelruicosta@gmail.com', perfil:'administrador', cargo:'Diretor', dept:'Gestão', ativo:true, alerta:true},
+];
+let _permissoes = {
+  operador:       ['classificados','historico'],
+  gestor:         ['classificados','historico','nao-classificados','bloqueados','fog-casos','fog-kpis'],
+  administrador:  ['classificados','historico','nao-classificados','bloqueados','fog-casos','fog-kpis','admin','usuarios'],
+};
+let _usrAbaAtiva = 'usuarios';
+let _usrModalId   = null;
+let _usrProxId    = 2;
+
+function _usrRotuloPerfil(p) {
+  return p === 'administrador' ? 'Administrador' : p === 'gestor' ? 'Gestor' : 'Operador';
+}
+
+function _usrMostrarMsg(el, texto, tipo) {
+  el.textContent = texto; el.className = 'usr-msg ' + tipo; el.hidden = false;
+  setTimeout(() => { el.hidden = true; }, 4000);
+}
+
+function _usrMudarAba(aba, btn) {
+  _usrAbaAtiva = aba;
+  document.querySelectorAll('#usr-tab-bar .tab-btn').forEach(b => b.classList.remove('ativa'));
+  btn.classList.add('ativa');
+  document.getElementById('usr-aba-usuarios').style.display = aba === 'usuarios' ? '' : 'none';
+  document.getElementById('usr-aba-perfis').style.display   = aba === 'perfis'   ? '' : 'none';
+  document.getElementById('usr-btn-acao').textContent = aba === 'usuarios' ? '+ Novo usuário' : 'Salvar permissões';
+  if (aba === 'perfis') _usrRenderPermissoes();
+  else _usrRenderTabela();
+}
+
+function _usrBtnAcao() {
+  if (_usrAbaAtiva === 'usuarios') _usrAbrirModal(null);
+  else _permSalvar();
+}
+
+function _usrRenderTabela() {
+  const tb = document.getElementById('usr-tbody');
+  if (_usrDados.length === 0) {
+    tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:1.5rem;">Nenhum usuário cadastrado.</td></tr>';
+    return;
+  }
+  tb.innerHTML = _usrDados.map(u => `
+    <tr>
+      <td><strong>${escHtml(u.nome)}</strong><div style="font-size:0.8rem;color:var(--muted);">${escHtml(u.email)}</div></td>
+      <td><span class="badge-perfil badge-perfil-${u.perfil}">${_usrRotuloPerfil(u.perfil)}</span></td>
+      <td><span class="${u.ativo ? 'usr-status-ok' : 'usr-status-no'}">${u.ativo ? 'Ativo' : 'Inativo'}</span></td>
+      <td style="font-size:0.85rem;">${u.alerta && u.ativo ? 'Sim' : 'Não'}</td>
+      <td><div class="acoes-linha">
+        <button class="btn-secondary" onclick="_usrAbrirModal(${u.id})">Editar</button>
+        <button class="btn-secondary" onclick="_usrToggleAtivo(${u.id})">${u.ativo ? 'Inativar' : 'Ativar'}</button>
+        <button class="btn-perigo" onclick="_usrExcluir(${u.id})">Excluir</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function _usrRenderPermissoes() {
+  const tb = document.getElementById('perm-tbody');
+  const perfis = ['operador','gestor','administrador'];
+  tb.innerHTML = _USR_TELAS.map(([id, label, desc]) => {
+    const cels = perfis.map(p => {
+      const tem = p === 'administrador' || (_permissoes[p]||[]).includes(id);
+      const dis = p === 'administrador' ? ' disabled' : '';
+      return `<td><button class="permissao-toggle${tem?' sim':''}"${dis} onclick="_permToggle('${p}','${id}',this)">${tem?'Sim':'Não'}</button></td>`;
+    }).join('');
+    return `<tr><td><strong>${escHtml(label)}</strong><div style="font-size:0.78rem;color:var(--muted);">${escHtml(desc)}</div></td>${cels}</tr>`;
+  }).join('');
+}
+
+function _permToggle(perfil, tela, btn) {
+  const set = new Set(_permissoes[perfil]||[]);
+  if (set.has(tela)) { set.delete(tela); btn.textContent='Não'; btn.classList.remove('sim'); }
+  else               { set.add(tela);    btn.textContent='Sim'; btn.classList.add('sim'); }
+  _permissoes[perfil] = [...set];
+}
+
+function _permSalvar() {
+  _usrMostrarMsg(document.getElementById('usr-msg-box'), 'Permissões salvas.', 'ok');
+}
+
+function _usrAbrirModal(id) {
+  _usrModalId = id;
+  const titulo = document.getElementById('usr-modal-titulo');
+  const msg    = document.getElementById('usr-modal-msg');
+  msg.hidden = true;
+  if (id === null) {
+    titulo.textContent = 'Novo usuário';
+    document.getElementById('usr-f-nome').value   = '';
+    document.getElementById('usr-f-email').value  = '';
+    document.getElementById('usr-f-perfil').value = 'operador';
+    document.getElementById('usr-f-cargo').value  = '';
+    document.getElementById('usr-f-dept').value   = '';
+    document.getElementById('usr-f-alerta').checked = true;
+    document.getElementById('usr-f-ativo').checked  = true;
+  } else {
+    const u = _usrDados.find(x => x.id === id);
+    titulo.textContent = 'Editar usuário';
+    document.getElementById('usr-f-nome').value   = u.nome;
+    document.getElementById('usr-f-email').value  = u.email;
+    document.getElementById('usr-f-perfil').value = u.perfil;
+    document.getElementById('usr-f-cargo').value  = u.cargo||'';
+    document.getElementById('usr-f-dept').value   = u.dept||'';
+    document.getElementById('usr-f-alerta').checked = u.alerta;
+    document.getElementById('usr-f-ativo').checked  = u.ativo;
+  }
+  document.getElementById('usr-modal-backdrop').classList.add('aberto');
+}
+
+function _usrFecharModal() {
+  document.getElementById('usr-modal-backdrop').classList.remove('aberto');
+}
+
+function _usrSalvar() {
+  const nome  = document.getElementById('usr-f-nome').value.trim();
+  const email = document.getElementById('usr-f-email').value.trim();
+  const msg   = document.getElementById('usr-modal-msg');
+  if (nome.length < 2) { _usrMostrarMsg(msg,'Informe o nome do usuário.','erro'); return; }
+  if (!email.includes('@')) { _usrMostrarMsg(msg,'Informe um e-mail válido.','erro'); return; }
+  const dados = {
+    nome, email,
+    perfil: document.getElementById('usr-f-perfil').value,
+    cargo:  document.getElementById('usr-f-cargo').value.trim(),
+    dept:   document.getElementById('usr-f-dept').value.trim(),
+    alerta: document.getElementById('usr-f-alerta').checked,
+    ativo:  document.getElementById('usr-f-ativo').checked,
+  };
+  if (_usrModalId === null) {
+    dados.id = _usrProxId++;
+    _usrDados.push(dados);
+  } else {
+    const idx = _usrDados.findIndex(x => x.id === _usrModalId);
+    if (idx >= 0) _usrDados[idx] = {..._usrDados[idx], ...dados};
+  }
+  _usrFecharModal();
+  _usrRenderTabela();
+  _usrMostrarMsg(document.getElementById('usr-msg-box'), _usrModalId === null ? 'Usuário criado.' : 'Usuário atualizado.', 'ok');
+}
+
+function _usrToggleAtivo(id) {
+  const u = _usrDados.find(x => x.id === id);
+  if (!u) return;
+  u.ativo = !u.ativo;
+  _usrRenderTabela();
+  _usrMostrarMsg(document.getElementById('usr-msg-box'), u.ativo ? 'Usuário ativado.' : 'Usuário inativado.', 'ok');
+}
+
+function _usrExcluir(id) {
+  const u = _usrDados.find(x => x.id === id);
+  if (!u || !confirm(`Excluir "${u.nome}" (${u.email})?`)) return;
+  _usrDados = _usrDados.filter(x => x.id !== id);
+  _usrRenderTabela();
+  _usrMostrarMsg(document.getElementById('usr-msg-box'), 'Usuário excluído.', 'ok');
 }
 
 // ── Inicialização ─────────────────────────────────────────────────────
