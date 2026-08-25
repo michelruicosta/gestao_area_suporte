@@ -111,6 +111,14 @@ _MARC_CITACAO = re.compile(
     re.MULTILINE | re.IGNORECASE,
 )
 
+# Padrões FACTI - Canal de Denúncias (verificados no assunto)
+_FACTI_TERMOS_ASSUNTO = [
+    'FACTI',
+    'CANAL DE DEN',   # cobre "Canal de Denúncias" e variações sem acento
+    'DENÚNCIAS',
+    'DENUNCIAS',
+]
+
 # Padrões INTERNO (regex aplicado sobre assunto em maiúsculo)
 _INTERNO_PADROES_ASSUNTO = [
     r'BOAS.VINDAS',
@@ -234,6 +242,12 @@ def _detectar_cadoc(texto_u: str) -> list[str]:
         cats.add('PVCA_6209')
 
     return sorted(cats)
+
+
+def _eh_facti(assunto: str) -> bool:
+    """Retorna True se o assunto indica thread do sistema Facti - Canal de Denúncias."""
+    au = assunto.upper()
+    return any(t in au for t in _FACTI_TERMOS_ASSUNTO)
 
 
 def _eh_interno(assunto: str) -> bool:
@@ -555,6 +569,10 @@ def _classificar_deterministico(
     # Camada 4 — padrões de e-mail interno
     if _eh_interno(assunto):
         return _ok(['INTERNO'], 'padrão de e-mail interno no assunto', 'INTERNO - Regra 01')
+
+    # Camada 4b — Facti - Canal de Denúncias
+    if _eh_facti(assunto):
+        return _ok(['FACTI'], 'termo Facti/Canal de Denúncias no assunto', 'FACTI - Regra 01')
 
     # Camada 5 — SUPORTE (catch-all)
     return _ok(['SUPORTE'], 'sem sinal de CADOC → SUPORTE', None)
