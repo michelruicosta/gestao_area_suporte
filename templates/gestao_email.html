@@ -894,7 +894,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 
   <!-- Topbar -->
   <header class="topbar">
-    <span class="topbar-titulo" id="topbar-titulo">Classificação e Status</span>
+    <span class="topbar-titulo" id="topbar-titulo">E-MAILS · Classificação e Status</span>
     <div class="topbar-direita">
       <span class="refresh-spinner" id="spinner"></span>
       <div class="user-wrap">
@@ -1055,6 +1055,11 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
         </div>
       </div>
 
+      <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;font-size:0.85rem;color:var(--muted)">
+        <input type="checkbox" id="filtro-7d-nc" checked onchange="carregarNaoClassificados()">
+        <label for="filtro-7d-nc" style="cursor:pointer">Exibir apenas últimos 7 dias</label>
+      </div>
+
       <div class="tabela-wrap">
         <table class="tabela" id="tbl-nao-class">
           <thead>
@@ -1082,36 +1087,47 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
         </div>
       </div>
 
-      <div class="admin-card">
-        <h2>Coletor de e-mails</h2>
-        <button class="btn-coletar" id="btn-coletar" onclick="dispararColeta()">
-          ▶ Rodar coletor agora
-        </button>
-        <div class="status-linha">
-          <span class="status-dot" id="status-dot"></span>
-          <span id="status-coleta-txt">Aguardando verificação…</span>
+      <div class="email-tabbar" id="adm-tab-bar" style="margin-bottom:1rem">
+        <button class="email-tab ativa" onclick="_admMudarAba('coletor',this)">Coletor</button>
+        <button class="email-tab" onclick="_admMudarAba('historico',this)">Histórico de execuções</button>
+      </div>
+
+      <div id="adm-aba-coletor">
+        <div class="admin-card">
+          <h2>Coletor de e-mails</h2>
+          <button class="btn-coletar" id="btn-coletar" onclick="dispararColeta()">
+            ▶ Rodar coletor agora
+          </button>
+          <div class="status-linha">
+            <span class="status-dot" id="status-dot"></span>
+            <span id="status-coleta-txt">Aguardando verificação…</span>
+          </div>
         </div>
       </div>
 
-      <div class="admin-card">
-        <h2>Histórico de execuções</h2>
-        <div class="tabela-wrap">
-          <table class="tabela" id="tbl-log">
-            <thead>
-              <tr>
-                <th>Data / Hora</th>
-                <th>Tipo</th>
-                <th>Coletadas</th>
-                <th>Classificadas</th>
-                <th class="num">Duração</th>
-                <th>Status</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="tbody-log">
-              <tr><td colspan="7" class="vazio">Carregando…</td></tr>
-            </tbody>
-          </table>
+      <div id="adm-aba-historico" style="display:none">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:0.75rem">
+          <button class="btn-secondary" onclick="_admLimparHistorico()" style="color:var(--neg,#c55a00);border-color:var(--neg,#c55a00)">🗑 Limpar registros com mais de 7 dias</button>
+        </div>
+        <div class="admin-card">
+          <div class="tabela-wrap">
+            <table class="tabela" id="tbl-log">
+              <thead>
+                <tr>
+                  <th>Data / Hora</th>
+                  <th>Tipo</th>
+                  <th>Coletadas</th>
+                  <th>Classificadas</th>
+                  <th class="num">Duração</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="tbody-log">
+                <tr><td colspan="7" class="vazio">Carregando…</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </section>
@@ -1278,6 +1294,11 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
           <h1 class="page-titulo">Bloqueadas por Regras</h1>
           <p class="page-sub">Conversas descartadas pelos filtros automáticos — não entram na classificação.</p>
         </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;font-size:0.85rem;color:var(--muted)">
+        <input type="checkbox" id="filtro-7d-bloq" checked onchange="carregarBloqueados()">
+        <label for="filtro-7d-bloq" style="cursor:pointer">Exibir apenas últimos 7 dias</label>
       </div>
 
       <div class="tabela-wrap">
@@ -1758,13 +1779,13 @@ function navegar(btn) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('ativa'));
   document.getElementById('pag-' + pag).classList.add('ativa');
   const titulos = {
-    'classificados':     'Classificação e Status',
-    'historico':         'Evolução',
-    'nao-classificados': 'Não Classificadas',
-    'bloqueados':        'Bloqueadas por Regras',
-    'admin':             'Coletor',
-    'admin-detalhe':     'Coletor · Detalhe',
-    'usuarios':          'Usuários e Perfis',
+    'classificados':     'E-MAILS · Classificação e Status',
+    'historico':         'E-MAILS · Evolução',
+    'nao-classificados': 'E-MAILS · Não Classificadas',
+    'bloqueados':        'E-MAILS · Bloqueadas por Regras',
+    'admin':             'Administração · Coletor',
+    'admin-detalhe':     'Administração · Coletor · Detalhe',
+    'usuarios':          'Administração · Usuários e Perfis',
     'fog-casos':         'FOGBUGZ · Lista de Casos',
     'fog-kpis':          'FOGBUGZ · Visão Consolidada',
   };
@@ -1993,17 +2014,28 @@ async function abrirThread(threadId) {
 }
 
 // ── Página 2: Não classificados ────────────────────────────────────────
+function _dentroDe7Dias(dataStr) {
+  if (!dataStr) return false;
+  const partes = dataStr.split('/');
+  if (partes.length < 3) return true;
+  const d = new Date(partes[2], partes[1]-1, partes[0]);
+  const limite = new Date(); limite.setDate(limite.getDate() - 7);
+  return d >= limite;
+}
+
 async function carregarNaoClassificados() {
   document.getElementById('tbody-nao-class').innerHTML =
     '<tr><td colspan="5" class="vazio">Carregando…</td></tr>';
   try {
     const d = await _get('/api/nao-classificados');
-    if (!d.threads.length) {
+    const filtrar = document.getElementById('filtro-7d-nc')?.checked;
+    const lista = filtrar ? d.threads.filter(t => _dentroDe7Dias(t.data)) : d.threads;
+    if (!lista.length) {
       document.getElementById('tbody-nao-class').innerHTML =
-        '<tr><td colspan="5" class="vazio">Nenhuma thread pendente. ✓</td></tr>';
+        `<tr><td colspan="5" class="vazio">${filtrar ? 'Nenhuma conversa nos últimos 7 dias. ✓' : 'Nenhuma thread pendente. ✓'}</td></tr>`;
       return;
     }
-    document.getElementById('tbody-nao-class').innerHTML = d.threads.map(t =>
+    document.getElementById('tbody-nao-class').innerHTML = lista.map(t =>
       `<tr>
         <td>${escHtml(t.assunto)}</td>
         <td>${escHtml(t.remetente)}</td>
@@ -2024,12 +2056,14 @@ async function carregarBloqueados() {
     '<tr><td colspan="5" class="vazio">Carregando…</td></tr>';
   try {
     const d = await _get('/api/bloqueados');
-    if (!d.threads.length) {
+    const filtrar = document.getElementById('filtro-7d-bloq')?.checked;
+    const lista = filtrar ? d.threads.filter(t => _dentroDe7Dias(t.data)) : d.threads;
+    if (!lista.length) {
       document.getElementById('tbody-bloq').innerHTML =
-        '<tr><td colspan="5" class="vazio">Nenhuma thread bloqueada.</td></tr>';
+        `<tr><td colspan="5" class="vazio">${filtrar ? 'Nenhuma conversa nos últimos 7 dias.' : 'Nenhuma thread bloqueada.'}</td></tr>`;
       return;
     }
-    document.getElementById('tbody-bloq').innerHTML = d.threads.map(t => {
+    document.getElementById('tbody-bloq').innerHTML = lista.map(t => {
       const motivo = t.motivo_descarte
         ? `<span class="chip" style="background:#f0f0f0;color:#475569;" title="${escHtml(t.motivo_descarte)}">${escHtml(t.motivo_descarte.substring(0,40))}${t.motivo_descarte.length > 40 ? '…' : ''}</span>`
         : '<span class="n-zero">—</span>';
@@ -2044,6 +2078,26 @@ async function carregarBloqueados() {
   } catch (e) {
     document.getElementById('tbody-bloq').innerHTML =
       '<tr><td colspan="5" class="vazio">Erro ao carregar.</td></tr>';
+  }
+}
+
+// ── Abas do Coletor ───────────────────────────────────────────────────
+function _admMudarAba(aba, btn) {
+  document.querySelectorAll('#adm-tab-bar .email-tab').forEach(b => b.classList.remove('ativa'));
+  btn.classList.add('ativa');
+  document.getElementById('adm-aba-coletor').style.display   = aba === 'coletor'   ? '' : 'none';
+  document.getElementById('adm-aba-historico').style.display = aba === 'historico' ? '' : 'none';
+  if (aba === 'historico') carregarLogColetas();
+}
+
+async function _admLimparHistorico() {
+  if (!confirm('Remover todos os registros do histórico com mais de 7 dias?')) return;
+  try {
+    const r = await fetch('/api/admin/limpar-historico', {method: 'DELETE'});
+    if (!r.ok) throw new Error();
+    carregarLogColetas();
+  } catch (e) {
+    alert('Erro ao limpar histórico.');
   }
 }
 
