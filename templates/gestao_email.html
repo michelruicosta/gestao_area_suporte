@@ -1132,10 +1132,6 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
             <div class="fog-rk-desc" id="rkDesc">ordenado pelo caso mais antigo em cada responsável</div>
           </div>
         </div>
-        <div class="fog-tgl">
-          <button class="fog-tgl-btn on" id="bA" onclick="fogSort('antigo')">⏰ Mais antigo</button>
-          <button class="fog-tgl-btn" id="bV" onclick="fogSort('volume')">⊞ Mais casos</button>
-        </div>
       </div>
 
       <div class="fog-rk-table">
@@ -2259,9 +2255,6 @@ function fogSort(m) {
     return dir * (Number(b.dataset.dias) - Number(a.dataset.dias));
   });
   rows.forEach(r => body.appendChild(r));
-  // atualiza botões topo
-  document.getElementById('bA')?.classList.toggle('on', m === 'antigo');
-  document.getElementById('bV')?.classList.toggle('on', m === 'volume');
   // atualiza cabeçalhos
   const ico = dir === 1 ? '▼' : '▲';
   document.querySelectorAll('.fog-rk-th[data-sort]').forEach(th => {
