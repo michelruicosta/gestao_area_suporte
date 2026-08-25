@@ -778,29 +778,31 @@ def atualizar_status(thread_id: str, status_workflow: str) -> None:
 
 # ── Consultas ──────────────────────────────────────────────────────────────────
 
-def buscar_sem_classificar() -> list[dict]:
+def buscar_sem_classificar(apenas_nao_vistas: bool = False) -> list[dict]:
     """Retorna threads que o classificador ainda não processou."""
+    filtro = " AND visto_em IS NULL" if apenas_nao_vistas else ""
     with _conectar() as conn:
         rows = conn.execute(
-            "SELECT * FROM threads WHERE destino IS NULL ORDER BY data_ultima_msg DESC"
+            f"SELECT * FROM threads WHERE destino IS NULL{filtro} ORDER BY data_ultima_msg DESC"
         ).fetchall()
     return [dict(r) for r in rows]
 
 
-def buscar_por_destino(destino: str) -> list[dict]:
+def buscar_por_destino(destino: str, apenas_nao_vistas: bool = False) -> list[dict]:
     """
     Retorna threads de um destino específico para as telas.
     Não inclui mensagens_json (pesado) — use buscar_thread_completa para detalhes.
     """
+    filtro = " AND visto_em IS NULL" if apenas_nao_vistas else ""
     with _conectar() as conn:
-        rows = conn.execute("""
+        rows = conn.execute(f"""
             SELECT thread_id, assunto, qtd_mensagens, data_primeira_msg,
                    data_ultima_msg, remetente_principal, destinatario_principal,
                    remetente_ultima_msg, destinatario_ultima_msg, reply_to_ultima_msg,
                    destino, categoria, status_workflow, motivo_status,
                    motivo_descarte, motivo_classificacao
             FROM   threads
-            WHERE  destino = ?
+            WHERE  destino = ?{filtro}
             ORDER  BY data_ultima_msg DESC
         """, (destino,)).fetchall()
     return [dict(r) for r in rows]

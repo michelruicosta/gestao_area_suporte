@@ -449,7 +449,7 @@ def api_thread(thread_id: str):
 @_requer_login
 def api_nao_classificados():
     threads = sorted(
-        bt.buscar_por_destino('revisao') + bt.buscar_sem_classificar(),
+        bt.buscar_por_destino('revisao', apenas_nao_vistas=True) + bt.buscar_sem_classificar(apenas_nao_vistas=True),
         key=_chave_data, reverse=True,
     )
     resultado = [
@@ -470,7 +470,7 @@ def api_nao_classificados():
 @app.route('/api/bloqueados')
 @_requer_login
 def api_bloqueados():
-    threads = sorted(bt.buscar_por_destino('descartes'), key=_chave_data, reverse=True)
+    threads = sorted(bt.buscar_por_destino('descartes', apenas_nao_vistas=True), key=_chave_data, reverse=True)
     resultado = [
         {
             'thread_id':       t['thread_id'],
