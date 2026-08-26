@@ -136,7 +136,7 @@ O servidor sobe na porta definida em `PORT` (padrão 5001). Para rodar em produ�
 
 ## Ritual de deploy — quem executa: Claude (via SSH)
 
-**Quando Michel disser "publicar" ou "atualizar a VPS"**, Claude executa os passos abaixo.
+**Quando Michel disser "publicar", "publicar em produção" ou "atualizar a VPS"**, Claude executa os passos abaixo.
 Nunca executar sem o OK explícito de Michel. Nunca pedir para Michel colar SSH.
 
 ### Pré-requisito

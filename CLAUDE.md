@@ -85,7 +85,7 @@ Mesmo sem digitar os atalhos, estes rituais valem em toda sessão.
 
 ### Deploy — Claude executa, nunca Michel
 
-**Quando Michel disser "publicar" ou "atualizar a VPS"**, Claude faz o deploy completo via SSH.
+**Quando Michel disser "publicar", "publicar em produção" ou "atualizar a VPS"**, Claude faz o deploy completo via SSH.
 Nunca pedir para Michel colar comandos no terminal. Ritual completo em `documentações/DEPLOY.md`.
 
 Resumo:
