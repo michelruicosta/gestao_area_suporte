@@ -24,7 +24,7 @@ jobs:
       - name: Instalar dependências de teste
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements-test.txt
+          pip install -r requirements-dev.txt
 
       - name: Testes offline (pytest)
         run: python -m pytest tests/ -q -m "not agent and not pdf and not integration"
