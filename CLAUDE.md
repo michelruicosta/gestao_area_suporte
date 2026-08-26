@@ -83,6 +83,22 @@ Os rituais de abertura, intake e encerramento estão detalhados nos comandos —
 
 Mesmo sem digitar os atalhos, estes rituais valem em toda sessão.
 
+### Deploy — Claude executa, nunca Michel
+
+**Quando Michel disser "publicar" ou "atualizar a VPS"**, Claude faz o deploy completo via SSH.
+Nunca pedir para Michel colar comandos no terminal. Ritual completo em `documentações/DEPLOY.md`.
+
+Resumo:
+1. Commit + push na `main` — **só com OK explícito de Michel**
+2. SSH via alias: `ssh -o RequestTTY=no finaud-vps` (alias já configurado na máquina da Bruna)
+3. Pasta no servidor: `/srv/finaud/tec/gestao_area_suporte` — usuário `finaud-tec` — serviço `gestao-suporte`
+4. `git checkout main && git pull origin main` como `finaud-tec` — se pull bloquear: mostrar diff e perguntar
+5. Flask app — **não rodar npm build** — Gunicorn workers = 1 (**não aumentar**, APScheduler interno)
+6. `systemctl restart gestao-suporte` → verificar `is-active` → abrir `https://gestao-suporte.finaudapps.com.br`
+7. Após "Sair": deve redirecionar para `https://finaudapps.com.br` (não `/login` deste app)
+
+---
+
 ### Versionamento (git/GitHub) — regras invioláveis
 
 - **commit = salvar no PC** (reversível); **push = enviar ao GitHub** (sempre com OK do Michel antes)

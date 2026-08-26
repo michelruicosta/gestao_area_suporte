@@ -134,38 +134,35 @@ O servidor sobe na porta definida em `PORT` (padrão 5001). Para rodar em produ�
 
 ---
 
-## Como atualizar o servidor de produção (após cada push)
+## Ritual de deploy — quem executa: Claude (via SSH)
 
-Toda vez que fizer commit + push no GitHub, o servidor precisa buscar as novidades e reiniciar.
+**Quando Michel disser "publicar" ou "atualizar a VPS"**, Claude executa os passos abaixo.
+Nunca executar sem o OK explícito de Michel. Nunca pedir para Michel colar SSH.
 
-**Passos — rodar no servidor (terminal do VPS, logado como root):**
+### Pré-requisito
+Commit + push na `main` já feito e confirmado por Michel.
 
-```bash
-cd /srv/finaud/tec/gestao_area_suporte && git pull
-```
-
-Em seguida, reiniciar o serviço para o código novo entrar em vigor:
+### Comando típico (um bloco só)
 
 ```bash
-systemctl restart gestao-suporte
+ssh -o RequestTTY=no finaud-vps "export TERM=dumb
+  sudo -u finaud-tec bash -lc 'cd /srv/finaud/tec/gestao_area_suporte && git checkout main && git pull origin main'
+  systemctl restart gestao-suporte
+  systemctl is-active gestao-suporte"
 ```
 
-Confirmar que voltou a rodar:
+### Passo a passo detalhado
 
-```bash
-systemctl status gestao-suporte
-```
+| Passo | O que fazer | Atenção |
+|---|---|---|
+| 1 | SSH via alias `finaud-vps` com `-o RequestTTY=no` | Nunca pedir para Michel colar o comando |
+| 2 | `git checkout main && git pull origin main` como `finaud-tec` | Se o pull bloquear por arquivo local: mostrar o diff e **perguntar** — nunca apagar produção no escuro |
+| 3 | Se `requirements.txt` mudou: `pip install -r requirements.txt` no venv do app | Este app é Flask — **não rodar npm build** |
+| 4 | `systemctl restart gestao-suporte` | Gunicorn: workers = 1 (APScheduler interno — **não aumentar**) |
+| 5 | Verificar: `systemctl is-active gestao-suporte` deve retornar `active` | Se não: `journalctl -u gestao-suporte -n 50` para diagnóstico |
+| 6 | Abrir `https://gestao-suporte.finaudapps.com.br` e confirmar funcionando | Após "Sair": deve redirecionar para `https://finaudapps.com.br` — **não** para `/login` deste app |
 
-Deve aparecer `active (running)`. Se não aparecer, verificar o log:
-
-```bash
-journalctl -u gestao-suporte -n 50
-```
-
-> **Resumo rápido (copiar e colar no servidor):**
-> ```bash
-> cd /srv/finaud/tec/gestao_area_suporte && git pull && systemctl restart gestao-suporte && systemctl status gestao-suporte
-> ```
+> Michel faz Ctrl+F5 se a tela antiga persistir (cache do browser).
 
 ---
 
