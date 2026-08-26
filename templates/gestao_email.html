@@ -4,9 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gestão Área Suporte</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --marca: #3333a8;
+  --marca: #4338CA;
   --bg: #f0f2f5;
   --sidebar-bg: #1e2a3b;
   --sidebar-active-bg: #2d3f5c;
@@ -17,15 +20,18 @@
   --muted: #64748b;
   /* tokens para novos componentes (evo panel, menu usuário) */
   --surface: #fff;
-  --accent: #3333a8;
-  --accent-bg: #eef0ff;
+  --accent: #4338CA;
+  --accent-bg: #ede9fe;
   --sel-text: #fff;
-  --pos: #168a43; --pos-bg: #dff3e6;
-  --neg: #c55a00; --neg-bg: #fff3cd;
-  --af-c: #8a5b00; --ac-c: #1864ab; --co-c: #168a43;
+  --pos: #168a43; --pos-bg: #e6f6ef;
+  --neg: #a04800; --neg-bg: #f5eeff;
+  --af-c: #7c5200; --ac-c: #3747c0; --co-c: #167a52;
   --cal-sel: #3333a8; --cal-range: #e0e0ff; --cal-hover: #eef0ff;
   --avatar: #3333a8;
-  font-family: "Segoe UI", system-ui, sans-serif;
+  --ui-lima: #b4d84a;
+  --ui-lima-hover: #a3d133;
+  --ui-lima-ink: #0c1408;
+  font-family: Outfit, "Segoe UI", system-ui, sans-serif;
   line-height: 1.5;
   box-sizing: border-box;
 }
@@ -33,9 +39,9 @@
   --bg: #f7f8fa; --surface: #fff; --border: #dde2ec;
   --text: #1c2b4a; --muted: #6b7a9a;
   --accent: #2463eb; --accent-bg: #eef3fe;
-  --pos: #16a34a; --pos-bg: #f0fdf4;
-  --neg: #d97706; --neg-bg: #fffbeb;
-  --af-c: #d97706; --ac-c: #2463eb; --co-c: #16a34a;
+  --pos: #16a34a; --pos-bg: #e8f8f0;
+  --neg: #a04800; --neg-bg: #f3eeff;
+  --af-c: #b45309; --ac-c: #3747c0; --co-c: #167a52;
   --cal-sel: #2463eb; --cal-range: #dce8ff; --cal-hover: #eef3fe;
   --avatar: #2463eb;
 }
@@ -44,7 +50,7 @@
   --sidebar-bg: #0f172a; --sidebar-active-bg: #1e293b; --sidebar-hover-bg: #1a2535;
   --card-bg: #1f2937;
   --text: #f3f4f6; --muted: #9ca3af;
-  --marca: #60a5fa;
+  --marca: #4338CA;
   --accent: #60a5fa; --accent-bg: #1e3a5f; --sel-text: #0a1628;
   --pos: #4ade80; --pos-bg: #052e16;
   --neg: #fbd150; --neg-bg: #3b2000;
@@ -55,6 +61,44 @@
 *, *::before, *::after { box-sizing: inherit; }
 body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-height: 100vh;
        -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+/* ─── Sidebar escura: gradiente Finaud 2026 ─────────────────────────── */
+[data-theme="escuro"] .sidebar {
+  background:
+    radial-gradient(ellipse 90% 40% at 0% 0%, rgba(163, 209, 51, 0.14), transparent 55%),
+    linear-gradient(180deg, #0b142c 0%, #060b18 72%);
+}
+
+/* ─── Área de conteúdo e cards: glow suave ──────────────────────────── */
+[data-theme="escuro"] .content {
+  background:
+    radial-gradient(ellipse 55% 40% at 100% 0%, rgba(67, 56, 202, 0.10), transparent 60%),
+    radial-gradient(ellipse 35% 25% at 0% 100%, rgba(163, 209, 51, 0.04), transparent 50%);
+}
+[data-theme="escuro"] .tabela-wrap,
+[data-theme="escuro"] .admin-card {
+  background:
+    radial-gradient(ellipse 80% 55% at 0% 0%, rgba(67, 56, 202, 0.22), transparent 65%),
+    var(--surface);
+}
+[data-theme="escuro"] .sidebar-logo { border-bottom-color: var(--border); }
+/* Botão Nome▾ no escuro: surface + borda + texto claro */
+[data-theme="escuro"] .user-btn { background: var(--surface); border-color: var(--border); color: var(--text); }
+
+/* ─── Sidebar clara: branca com borda lateral ───────────────────────── */
+[data-theme="claro"] .sidebar { background: linear-gradient(180deg, #eae7ff 0%, #dbd5ff 100%); color: #1c2b4a; border-right: 1px solid #c8c0ee; }
+[data-theme="claro"] .sidebar-logo { color: #1c2b4a; border-bottom-color: #dde2ec; }
+[data-theme="claro"] .nav-item { color: #334155; }
+[data-theme="claro"] .nav-item:hover { background: #f3f5f8; color: #1c2b4a; }
+[data-theme="claro"] .nav-item.ativo { background: rgba(163,209,51,0.12); color: #1c2b4a; border-left-color: #a3d133; }
+[data-theme="claro"] .nav-section-header { color: #6b7a9a; }
+[data-theme="claro"] .nav-section-header:hover { color: #1c2b4a; }
+[data-theme="claro"] .nav-label { color: #6b7a9a; }
+[data-theme="claro"] .sidebar-footer { color: #6b7a9a; border-top-color: #dde2ec; }
+[data-theme="claro"] .sidebar-toggle { color: #6b7a9a; }
+[data-theme="claro"] .sidebar-toggle:hover { background: #f3f5f8; color: #1c2b4a; }
+[data-theme="claro"] .nav-badge { background: #eef3fe; color: #3b4cb8; }
+[data-theme="claro"] .nav-badge.alerta { padding: 0.06rem 0.4rem; font-size: 0.69rem; }
 
 /* ─── Sidebar ──────────────────────────────────────────────────────── */
 .sidebar {
@@ -192,7 +236,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
   cursor: pointer; font-family: inherit; transition: all .15s; text-align: center;
 }
 .t-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
-.t-btn.active { background: var(--accent); border-color: var(--accent); color: var(--sel-text); }
+.t-btn.active { background: var(--ui-lima); border-color: var(--ui-lima); color: var(--ui-lima-ink); }
 .menu-item-btn {
   display: flex; align-items: center; gap: 10px; padding: 10px 16px;
   color: var(--muted); font-size: 13px; cursor: pointer; transition: background .1s;
@@ -261,7 +305,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 #tbl-resumo tbody td:first-child { text-transform: uppercase; color: var(--text); font-weight: 600; }
 
 /* ─── Painel Evolução Histórica ─────────────────────────────────────── */
-.evo { background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+.evo { background: linear-gradient(135deg, #f0eeff 0%, #f5f3ff 100%); border: 1px solid #d4cfee; border-radius: 10px;
   box-shadow: 0 1px 3px rgba(0,0,0,.07); overflow: hidden; margin-bottom: 1.25rem; }
 .evo-trig { display: flex; align-items: center; justify-content: space-between;
   padding: 13px 18px; cursor: pointer; border: none; background: none; width: 100%;
@@ -333,9 +377,19 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
   background: none; color: var(--muted); font-size: 12px; cursor: pointer; font-family: inherit; }
 .btn-cal-clear:hover { border-color: var(--accent); color: var(--accent); }
 .btn-cal-apply { padding: 5px 12px; border-radius: 5px; border: none;
-  background: var(--accent); color: var(--sel-text); font-size: 12px;
+  background: var(--marca); color: #fff; font-size: 12px;
   font-weight: 600; cursor: pointer; font-family: inherit; }
 .btn-cal-apply:disabled { opacity: .4; cursor: not-allowed; }
+/* date range inputs */
+.dt-range-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:4px 0}
+.dt-range-label{display:flex;align-items:center;gap:5px;font-size:0.75rem;color:var(--muted)}
+.dt-inp{font-size:0.8125rem;border:1px solid var(--border);border-radius:6px;padding:4px 8px;background:var(--surface);color:var(--text);cursor:pointer}
+.dt-inp:focus{outline:2px solid var(--accent);outline-offset:1px}
+.dt-btn-filtrar{padding:4px 14px;border-radius:6px;font-size:0.8125rem;border:none;cursor:pointer;background:var(--accent);color:#fff;font-weight:600}
+.dt-btn-filtrar:hover{opacity:.85}
+.dt-btn-salvar{padding:4px 12px;border-radius:6px;font-size:0.8125rem;border:1px solid var(--border);cursor:pointer;background:var(--surface);color:var(--text)}
+.dt-btn-salvar:hover{background:var(--bg)}
+.dt-salvo-ok{font-size:0.75rem;color:var(--pos);font-weight:600}
 /* tabela evo */
 .evo-tw { overflow-x: auto; }
 .evo-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
@@ -362,6 +416,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .evo-bpos { background: var(--pos-bg); color: var(--pos); }
 .evo-bneg { background: var(--neg-bg); color: var(--neg); }
 .evo-bneu { background: var(--border); color: var(--muted); }
+.filtros-note { font-size: 11px; color: var(--muted); margin-left: auto; white-space: nowrap; }
 .evo-p-note { font-size: 12px; color: var(--muted); padding: 7px 18px 0; }
 .evo-ft { padding: 10px 18px; border-top: 1px solid var(--border); font-size: 11px;
   color: var(--muted); display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
@@ -388,16 +443,52 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .card-title { font-size: 15px; font-weight: 600; color: var(--text); }
 .card-sub   { font-size: 12px; color: var(--muted); margin-top: 2px; }
 .card-hd-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.refresh-destaque {
-  font-size: 0.78rem; font-weight: 600; color: var(--marca);
-  background: var(--bg); border: 1px solid var(--border);
-  border-radius: 20px; padding: 2px 11px; white-space: nowrap;
+.relogio-barra {
+  display: flex; justify-content: flex-end; align-items: center;
+  gap: 6px; margin-bottom: 0.5rem; font-size: 0.82rem; color: var(--muted);
 }
+.refresh-destaque {
+  font-size: 0.85rem; font-weight: 700; color: var(--marca);
+  background: var(--accent-bg); border: 2px solid var(--marca);
+  border-radius: 20px; padding: 5px 16px; white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+[data-theme="escuro"] .refresh-destaque {
+  color: #fbd150; border-color: rgba(251,209,80,0.7);
+  background: rgba(251,209,80,0.12);
+}
+[data-theme="escuro"] .relogio-barra { color: #9ca3af; }
+/* ─── Filtros recolhíveis ───────────────────────────────────────────── */
+.filtros-wrap { }
+.filtros-toggle {
+  width: 100%; display: flex; align-items: center; gap: 10px;
+  padding: 7px 18px; background: rgba(0,0,0,0.03); border: none;
+  border-bottom: 1px solid var(--border); cursor: pointer;
+  font: inherit; text-align: left; color: var(--text);
+  transition: background .15s;
+}
+.filtros-toggle:hover { background: rgba(0,0,0,0.06); }
+.filtros-lbl {
+  font-size: 0.78rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--text); white-space: nowrap;
+  background: var(--accent-bg); color: var(--accent);
+  padding: 2px 8px; border-radius: 4px;
+}
+.filtros-resumo { font-size: 12px; color: var(--accent); flex: 1; }
+.filtros-chev { font-size: 10px; color: var(--muted); transition: transform .2s; }
+.filtros-wrap.collapsed .filtros-chev { transform: rotate(-90deg); }
+.filtros-wrap.collapsed .filtros-body { display: none; }
 .chev-tbl { font-size: 0.75rem; color: var(--muted); transition: transform 0.2s; }
 .tabela-wrap.collapsed .chev-tbl { transform: rotate(-90deg); }
 .tabela-wrap.collapsed .card-hd { border-bottom: none; border-radius: 10px; }
 .tabela-wrap.collapsed table { display: none; }
 .tabela-wrap.collapsed tfoot { display: none; }
+.tabela-wrap.collapsed .card-legenda { display: none; }
+.card-legenda {
+  padding: 5px 18px; border-bottom: 1px solid var(--border);
+  font-size: 0.72rem; color: var(--muted);
+  display: flex; align-items: center; flex-wrap: wrap; gap: 0 4px;
+}
 .th-var { font-size: 0.68rem; color: var(--muted); font-weight: 500; }
 .td-var { font-size: 0.82rem; }
 .tfoot-legenda td { font-size: 0.72rem; color: var(--muted); border-bottom: none !important; padding-top: 4px !important; padding-bottom: 6px !important; }
@@ -409,11 +500,13 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .page-header-left { min-width: 0; }
 
 /* ─── Tabela ────────────────────────────────────────────────────────── */
-.tabela-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow-x: auto; }
+.tabela-wrap { background: linear-gradient(135deg, #f0eeff 0%, #f5f3ff 100%); border: 1px solid #d4cfee; border-radius: 10px; overflow-x: auto; }
 .tabela { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.875rem; }
 .tabela th, .tabela td { padding: 0.65rem 0.85rem; border-bottom: 1px solid var(--border); text-align: left; vertical-align: middle; color: var(--text); }
 .tabela th { background: var(--bg); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted); font-weight: 600; position: sticky; top: 0; z-index: 1; border-top: 1px solid var(--border); }
 .tabela tr:last-child td { border-bottom: 0; }
+[data-theme="escuro"] .tabela tbody td { color: #adb9cc; }
+[data-theme="escuro"] .tabela tbody td:first-child { color: #c8d4e0; }
 .tabela tbody tr { cursor: pointer; }
 .tabela tbody tr:hover td { background: var(--accent-bg); }
 .tabela .num { text-align: right; font-variant-numeric: tabular-nums; }
@@ -427,6 +520,10 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .chip-af { background: var(--neg-bg); color: var(--af-c); }
 .chip-ac { background: var(--accent-bg); color: var(--ac-c); }
 .chip-co { background: var(--pos-bg); color: var(--co-c); }
+.chip-motivo {
+  background: rgba(128,128,128,0.1); color: var(--muted);
+  font-weight: 400; font-size: 0.75rem; border: 1px solid var(--border);
+}
 
 /* Contadores coloridos na tabela */
 .n-af { color: var(--af-c); font-weight: 700; }
@@ -445,10 +542,10 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 
 /* Botão classificar */
 .btn-classificar {
-  padding: 0.35rem 0.75rem; background: var(--marca); color: #fff;
-  border: none; border-radius: 6px; font: inherit; font-size: 0.8rem; cursor: pointer;
+  padding: 0.5rem 1.1rem; background: var(--marca); color: #fff;
+  border: none; border-radius: 6px; font: inherit; font-size: 0.875rem; font-weight: 600; cursor: pointer;
 }
-.btn-classificar:hover { background: #2828a0; }
+.btn-classificar:hover { background: #3730A3; }
 
 /* ─── Modais ────────────────────────────────────────────────────────── */
 .modal-backdrop {
@@ -529,7 +626,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .modal-class-acoes { display: flex; justify-content: flex-end; gap: 0.75rem; }
 .btn-sec { padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); font: inherit; cursor: pointer; }
 .btn-prim { padding: 0.5rem 1rem; border: none; border-radius: 6px; background: var(--marca); color: #fff; font: inherit; cursor: pointer; }
-.btn-prim:hover { background: #2828a0; }
+.btn-prim:hover { background: #3730A3; }
 
 /* ─── Vazio ─────────────────────────────────────────────────────────── */
 .vazio { text-align: center; color: var(--muted); padding: 3rem 1rem; font-size: 0.92rem; }
@@ -550,7 +647,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 
 /* ─── Admin ─────────────────────────────────────────────────── */
 .admin-card {
-  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  background: linear-gradient(135deg, #f0eeff 0%, #f5f3ff 100%); border: 1px solid #d4cfee; border-radius: 10px;
   padding: 1.25rem 1.5rem; margin-bottom: 1.25rem;
 }
 .admin-card h2 { margin: 0 0 1rem; font-size: 0.95rem; font-weight: 700; color: var(--text); }
@@ -560,7 +657,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
   cursor: pointer; display: inline-flex; align-items: center; gap: 0.55rem;
   transition: background 0.12s;
 }
-.btn-coletar:hover:not(:disabled) { background: #2828a0; }
+.btn-coletar:hover:not(:disabled) { background: #3730A3; }
 .btn-coletar:disabled { opacity: 0.55; cursor: not-allowed; }
 .btn-log-det {
   background: none; border: 1px solid var(--borda); border-radius: 6px;
@@ -674,14 +771,14 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 
 /* ─── FOG Evolução ────────────────────────────────────────────────── */
 .fevo-kpis { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px; }
-.fevo-kpi { background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px; }
+.fevo-kpi { background:linear-gradient(135deg,#f0eeff 0%,#f5f3ff 100%);border:1px solid #d4cfee;border-radius:10px;padding:14px 18px; }
 .fevo-kpi-lbl { font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px; }
 .fevo-kpi-val { font-size:1.6rem;font-weight:800;color:var(--text);line-height:1.1;font-variant-numeric:tabular-nums; }
 .fevo-kpi-sub { font-size:.75rem;color:var(--muted);margin-top:3px; }
 .fevo-kpi-delta { font-size:.74rem;font-weight:700;margin-top:3px; }
 .fevo-kpi-delta.up { color:var(--neg); }
 .fevo-kpi-delta.down { color:var(--pos); }
-.fevo-chart-card { background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:16px; }
+.fevo-chart-card { background:linear-gradient(135deg,#f0eeff 0%,#f5f3ff 100%);border:1px solid #d4cfee;border-radius:10px;padding:18px 20px;margin-bottom:16px; }
 .fevo-chart-hd { display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px; }
 .fevo-chart-titulo { font-size:.875rem;font-weight:700;color:var(--text); }
 .fevo-chart-sub { font-size:.78rem;color:var(--muted);margin-top:2px; }
@@ -697,7 +794,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .fevo-bar.closed { background:var(--pos);opacity:.8; }
 .fevo-bar-lbl { font-size:10px;color:var(--muted);text-align:center;margin-top:4px;position:absolute;bottom:-22px;width:100%; }
 .fevo-grid3 { display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px; }
-.fevo-card { background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px; }
+.fevo-card { background:linear-gradient(135deg,#f0eeff 0%,#f5f3ff 100%);border:1px solid #d4cfee;border-radius:10px;padding:18px 20px; }
 .fevo-card-titulo { font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px; }
 .fevo-rank-bloco { display:grid;grid-template-columns:1fr 1fr;gap:14px; }
 .fevo-rank-gtitle { font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px; }
@@ -723,7 +820,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .fevo-dias.amber { background:var(--neg-bg);color:var(--neg); }
 .fevo-dias.green { background:var(--pos-bg);color:var(--pos); }
 .fevo-nota { font-size:.74rem;color:var(--muted);margin-top:10px; }
-.fevo-periodo-wrap { background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 16px;margin-bottom:16px; }
+.fevo-periodo-wrap { background:linear-gradient(135deg,#f0eeff 0%,#f5f3ff 100%);border:1px solid #d4cfee;border-radius:10px;padding:10px 16px;margin-bottom:16px; }
 .fog-plr-row { display:flex; align-items:center; gap:6px; padding:4px 2px 6px; }
 .fog-plr-ico { font-size:0.8125rem; }
 .fog-plr-data { font-size:0.8125rem; font-weight:600; color:var(--accent); }
@@ -779,7 +876,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .fog-leg span { display: flex; align-items: center; gap: 4px }
 .fog-leg-sq  { display: inline-block; width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0 }
 
-.fog-tbl-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden }
+.fog-tbl-wrap { background: linear-gradient(135deg,#f0eeff 0%,#f5f3ff 100%); border: 1px solid #d4cfee; border-radius: 10px; overflow: hidden }
 .fog-cols { grid-template-columns: 4px 88px 52px 1fr 110px 82px 130px 100px 128px 58px }
 .fog-tbl-head {
   display: grid; align-items: center; padding: 0 16px; height: 36px;
@@ -817,7 +914,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 
 .fog-kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 22px }
 .fog-kpi {
-  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  background: linear-gradient(135deg,#f0eeff 0%,#f5f3ff 100%); border: 1px solid #d4cfee; border-radius: 10px;
   padding: 16px 14px; transition: transform .12s;
 }
 .fog-kpi:hover { transform: translateY(-2px) }
@@ -830,7 +927,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .fog-kpi-sub { font-size: 0.625rem; color: var(--text); margin-top: 5px }
 
 .fog-rk-head {
-  background: var(--surface); border: 1px solid var(--border); border-radius: 10px 10px 0 0;
+  background: linear-gradient(135deg,#f0eeff 0%,#f5f3ff 100%); border: 1px solid #d4cfee; border-radius: 10px 10px 0 0;
   border-bottom: none; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;
 }
 .fog-rk-wrap  { display: flex; align-items: flex-start; gap: 8px }
@@ -1013,6 +1110,9 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
         <button class="email-tab" data-pagina="nao-classificados" onclick="navegar(this)">Não Classificadas</button>
         <button class="email-tab" data-pagina="bloqueados" onclick="navegar(this)">Bloqueadas por Regras</button>
       </div>
+      <div class="relogio-barra">
+        ⏱ <span class="refresh-destaque" id="refresh-info">Carregando…</span>
+      </div>
       <div class="tabela-wrap">
         <div class="card-hd" onclick="toggleTblResumo()" title="Clique para minimizar / expandir">
           <div>
@@ -1020,9 +1120,15 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
             <div class="card-sub">Conversas de e-mail agrupadas por categoria e status · <span id="card-sub-intervalo">atualizado a cada 5 minutos</span></div>
           </div>
           <div class="card-hd-right">
-            <span class="refresh-destaque" id="refresh-info"></span>
             <span class="chev-tbl">▼</span>
           </div>
+        </div>
+        <div class="card-legenda">
+          <span class="delta-ruim">▲</span>&nbsp;AF/AC cresceu &nbsp;·&nbsp;
+          <span class="delta-bom">▼</span>&nbsp;AF/AC caiu &nbsp;·&nbsp;
+          <span class="delta-bom">▲</span>&nbsp;Concluídas cresceu &nbsp;·&nbsp;
+          <span class="n-zero">—</span>&nbsp;sem variação &nbsp;·&nbsp;
+          Variação desde ontem
         </div>
         <table class="tabela" id="tbl-resumo">
           <thead>
@@ -1064,28 +1170,36 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
       </div>
       <div class="evo open" id="evo">
         <div class="evo-body">
-          <div class="p-bar">
-            <span class="p-lbl">Período</span>
-            <button class="p-btn" onclick="selPeriod('hoje',this)">Hoje</button>
-            <button class="p-btn active" onclick="selPeriod('semana',this)">Semana</button>
-            <button class="p-btn" onclick="selPeriod('quinzena',this)">Quinzena</button>
-            <button class="p-btn" onclick="selPeriod('mes',this)">Mês</button>
-            <button class="p-btn" onclick="selPeriod('semestre',this)">Semestre</button>
-            <button class="p-btn" onclick="selPeriod('custom',this)">Personalizado</button>
-          </div>
-          <div class="cat-bar" id="cat-bar"></div>
-          <div class="evo-cal" id="evo-cal" hidden>
-            <div class="cal-months" id="cal-months"></div>
-            <div class="cal-range-note" id="cal-range-note"></div>
-            <div class="cal-acts">
-              <span class="cal-hint" id="cal-hint">Selecione a data de início</span>
-              <div class="cal-btns">
-                <button class="btn-cal-clear" onclick="clearRange()">Limpar</button>
-                <button class="btn-cal-apply" id="btn-apply" onclick="applyRange()" disabled>Aplicar período</button>
+          <div class="filtros-wrap collapsed" id="evo-filtros-wrap">
+            <button class="filtros-toggle" onclick="toggleFiltros('evo')">
+              <span class="filtros-lbl">Filtros</span>
+              <span class="filtros-resumo" id="evo-filtros-resumo">Semana · Todas as categorias</span>
+              <span class="filtros-note" id="evo-p-note"></span>
+              <span class="filtros-chev">▼</span>
+            </button>
+            <div class="filtros-body">
+              <div class="p-bar">
+                <span class="p-lbl">Período</span>
+                <button class="p-btn" onclick="selPeriod('hoje',this)">Hoje</button>
+                <button class="p-btn active" onclick="selPeriod('semana',this)">Semana</button>
+                <button class="p-btn" onclick="selPeriod('quinzena',this)">Quinzena</button>
+                <button class="p-btn" onclick="selPeriod('mes',this)">Mês</button>
+                <button class="p-btn" onclick="selPeriod('semestre',this)">Semestre</button>
+                <button class="p-btn" onclick="selPeriod('custom',this)">Personalizado</button>
               </div>
+              <div class="cat-bar" id="cat-bar"></div>
             </div>
           </div>
-          <div class="evo-p-note" id="evo-p-note"></div>
+          <div class="evo-cal" id="evo-cal" hidden>
+            <div class="dt-range-bar">
+              <span class="p-lbl">Personalizado</span>
+              <label class="dt-range-label">De <input type="date" id="evo-dt-inicio" class="dt-inp"></label>
+              <label class="dt-range-label">Até <input type="date" id="evo-dt-fim" class="dt-inp"></label>
+              <button class="dt-btn-filtrar" onclick="evoFiltrarDatas()">Aplicar</button>
+              <button class="dt-btn-salvar" onclick="evoSalvarDatas()">Salvar</button>
+              <span class="dt-salvo-ok" id="evo-dt-salvo" hidden>✓ Salvo</span>
+            </div>
+          </div>
           <div class="evo-tw"><table class="evo-table">
             <thead><tr>
               <th class="sortable" data-s="n" onclick="evoSort('n')">CATEGORIA<span class="si" id="esi-n"></span></th>
@@ -1448,10 +1562,13 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
         <button class="email-tab" data-pagina="fog-evolucao" onclick="navegar(this)">Evolução</button>
       </div>
 
-      <div class="page-header" style="margin-bottom:0.75rem">
+      <div class="page-header" style="margin-bottom:0.75rem;align-items:center">
         <div class="page-header-left">
           <h1 class="page-titulo">Lista de Casos</h1>
           <p class="page-sub">Listagem de casos por projeto, responsável e status.</p>
+        </div>
+        <div style="flex-shrink:0;display:flex;align-items:center;gap:6px;font-size:0.82rem;color:var(--muted)">
+          ⏱ <span class="refresh-destaque" id="fog-relogio-topo">Carregando…</span>
         </div>
       </div>
 
@@ -1459,6 +1576,13 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
       <div class="fog-simulado-banner">⚗ DADOS SIMULADOS — protótipo para validação visual.</div>
       {% endif %}
 
+      <div class="filtros-wrap collapsed" id="fog-lista-filtros-wrap">
+        <button class="filtros-toggle" onclick="toggleFiltros('fog-lista')">
+          <span class="filtros-lbl">Filtros</span>
+          <span class="filtros-resumo" id="fog-lista-filtros-resumo">Todos os projetos · Ativo</span>
+          <span class="filtros-chev">▼</span>
+        </button>
+        <div class="filtros-body">
       <div class="fog-fbar">
         <div class="fog-bw">
           <input class="fog-fi" id="fBusca" oninput="fogFiltrar()" placeholder="🔍  Buscar caso ou título…">
@@ -1486,6 +1610,8 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
           <option value="dias_asc">Mais recentes</option>
         </select>
       </div>
+        </div><!-- /filtros-body -->
+      </div><!-- /filtros-wrap -->
 
       <div class="fog-cd">
         <div class="fog-cd-left">
@@ -1693,22 +1819,22 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 
       <!-- Filtro de período -->
       <div class="fevo-periodo-wrap">
-        <div class="p-bar" id="fog-periodo-bar">
-          <span class="p-lbl">Período</span>
-          <button class="p-btn active" onclick="fogSelPeriod('semana',this)">Semana</button>
-          <button class="p-btn" onclick="fogSelPeriod('mes',this)">Mês</button>
-          <button class="p-btn" onclick="fogSelPeriod('3m',this)">3 meses</button>
-          <button class="p-btn" onclick="fogSelPeriod('6m',this)">6 meses</button>
-          <button class="p-btn" onclick="fogSelPeriod('custom',this)">Personalizado</button>
-        </div>
-        <div class="fog-plr-row" id="fog-plr-row">
-          <span class="fog-plr-ico">📅</span>
-          <span id="fog-periodo-label" class="fog-plr-data"></span>
-          <span id="fog-periodo-label-desc" class="fog-plr-desc"></span>
-        </div>
-        <div class="evo-cal" id="fog-evo-cal" hidden>
-          <div class="cal-months" id="fog-cal-months"></div>
-          <div class="cal-range-note" id="fog-cal-range-note">Clique no dia de início e depois no dia de fim.</div>
+        <div class="filtros-wrap collapsed" id="fog-evo-filtros-wrap">
+          <button class="filtros-toggle" onclick="toggleFiltros('fog-evo')">
+            <span class="filtros-lbl">Filtros</span>
+            <span class="filtros-resumo" id="fog-evo-filtros-resumo"></span>
+            <span class="filtros-chev">▼</span>
+          </button>
+          <div class="filtros-body">
+            <div class="dt-range-bar">
+              <span class="p-lbl">Período</span>
+              <label class="dt-range-label">De <input type="date" id="fog-dt-inicio" class="dt-inp" value="2025-01-01"></label>
+              <label class="dt-range-label">Até <input type="date" id="fog-dt-fim" class="dt-inp"></label>
+              <button class="dt-btn-filtrar" onclick="fogEvoFiltrar()">Filtrar</button>
+              <button class="dt-btn-salvar" onclick="fogEvoSalvar()">Salvar</button>
+              <span class="dt-salvo-ok" id="fog-dt-salvo" hidden>✓ Salvo</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1988,7 +2114,7 @@ function navegar(btn) {
   }
   if (pag === 'usuarios') { _usrRenderTabela(); }
   else { _pararAutoRefreshLog(); }
-  if (pag === 'fog-evolucao') { _fogAtualizarLabel(); carregarFogEvo(); }
+  if (pag === 'fog-evolucao') { carregarFogEvo(); }
   if (pag === 'fog-casos') {
     if (!_keepFogFiltros) {
       _fogUrgenciaFiltro = '';
@@ -2076,15 +2202,6 @@ async function carregarResumo() {
         <td class="num td-var">${_chipVar(dcoT, true)}</td>
         <td class="num">${t.total}</td>
         <td class="num td-var">${_chipVar(dtotT, false)}</td>
-      </tr>
-      <tr class="tfoot-legenda">
-        <td colspan="10">
-          <span class="delta-ruim">▲</span> AF/AC cresceu &nbsp;·&nbsp;
-          <span class="delta-bom">▼</span> AF/AC caiu &nbsp;·&nbsp;
-          <span class="delta-bom">▲</span> Concluídas cresceu &nbsp;·&nbsp;
-          <span class="n-zero">—</span> sem variação &nbsp;·&nbsp;
-          Variação desde ontem · atualizado a cada ${intMin} min
-        </td>
       </tr>`;
 
     document.getElementById('refresh-info').textContent =
@@ -2279,7 +2396,7 @@ async function carregarBloqueados() {
     }
     document.getElementById('tbody-bloq').innerHTML = lista.map(t => {
       const motivo = t.motivo_descarte
-        ? `<span class="chip" style="background:#f0f0f0;color:#475569;" title="${escHtml(t.motivo_descarte)}">${escHtml(t.motivo_descarte.substring(0,40))}${t.motivo_descarte.length > 40 ? '…' : ''}</span>`
+        ? `<span class="chip chip-motivo" title="${escHtml(t.motivo_descarte)}">${escHtml(t.motivo_descarte.substring(0,40))}${t.motivo_descarte.length > 40 ? '…' : ''}</span>`
         : '<span class="n-zero">—</span>';
       return `<tr>
         <td>${escHtml(t.assunto)}</td>
@@ -2801,7 +2918,7 @@ let evoHistorico = [], evoCats = [], evoSelectedCats = new Set();
 let evoSortKey = null, evoSortDir = -1;
 let activePeriod = 'semana', customDelta = null, customLabel = '';
 let EVO_DATA_MIN = null, EVO_DATA_MAX = null;
-let calY, calM, rStart = null, rEnd = null;
+let rStart = null, rEnd = null;
 
 async function carregarHistorico() {
   try {
@@ -2809,7 +2926,6 @@ async function carregarHistorico() {
     evoHistorico = dh.historico || [];
     if (dl.min) EVO_DATA_MIN = new Date(dl.min.replace(' ', 'T'));
     if (dl.max) EVO_DATA_MAX = new Date(dl.max.replace(' ', 'T'));
-    if (EVO_DATA_MAX) { calY = EVO_DATA_MAX.getFullYear(); calM = EVO_DATA_MAX.getMonth(); }
     if (evoHistorico.length) {
       const latest = evoHistorico[evoHistorico.length - 1];
       evoCats = _CATS
@@ -2920,13 +3036,49 @@ function toggleTblResumo() {
 }
 
 
+function toggleFiltros(id) {
+  const wrap = document.getElementById(id + '-filtros-wrap');
+  if (!wrap) return;
+  const collapsed = wrap.classList.toggle('collapsed');
+  try { localStorage.setItem('filtros-' + id + '-collapsed', collapsed); } catch(e) {}
+}
+
+function _atualizarResumoEvo() {
+  const el = document.getElementById('evo-filtros-resumo');
+  if (!el) return;
+  const periodoBtn = document.querySelector('#evo-filtros-wrap .p-btn.active');
+  const periodo = periodoBtn ? periodoBtn.textContent : 'Semana';
+  const totalCats = evoCats ? evoCats.length : 0;
+  const selCats = evoSelectedCats ? evoSelectedCats.size : totalCats;
+  const cats = totalCats === 0 || selCats === totalCats ? 'Todas as categorias' : `${selCats} categoria${selCats > 1 ? 's' : ''}`;
+  el.textContent = periodo + ' · ' + cats;
+}
+
 function selPeriod(p, btn) {
   activePeriod = p;
   document.querySelectorAll('.p-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('evo-cal').hidden = (p !== 'custom');
-  if (p === 'custom') renderCal();
   renderEvo();
+  _atualizarResumoEvo();
+}
+
+function evoFiltrarDatas() {
+  const iniVal = document.getElementById('evo-dt-inicio').value;
+  const fimVal = document.getElementById('evo-dt-fim').value;
+  if (!iniVal || !fimVal || !evoHistorico.length) return;
+  rStart = new Date(iniVal + 'T00:00:00');
+  rEnd   = new Date(fimVal + 'T23:59:59');
+  applyRange();
+}
+
+function evoSalvarDatas() {
+  const iniVal = document.getElementById('evo-dt-inicio')?.value;
+  const fimVal = document.getElementById('evo-dt-fim')?.value;
+  if (iniVal) localStorage.setItem('evo_dt_inicio', iniVal);
+  if (fimVal) localStorage.setItem('evo_dt_fim', fimVal);
+  const el = document.getElementById('evo-dt-salvo');
+  if (el) { el.hidden = false; setTimeout(() => el.hidden = true, 2000); }
 }
 
 function buildCatBar() {
@@ -2944,7 +3096,7 @@ function toggleCat(id) {
 function toggleAllCats() {
   if (evoSelectedCats.size === evoCats.length) evoSelectedCats = new Set();
   else evoSelectedCats = new Set(evoCats.map(c => c.id));
-  updateCatUI(); renderEvo();
+  updateCatUI(); renderEvo(); _atualizarResumoEvo();
 }
 
 function updateCatUI() {
@@ -2954,16 +3106,7 @@ function updateCatUI() {
 }
 
 // Calendário
-function calHint(t) { document.getElementById('cal-hint').textContent = t; }
 function calFmt(d) { return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`; }
-
-function clearRange() {
-  rStart=null; rEnd=null; customDelta=null; customLabel='';
-  document.getElementById('btn-apply').disabled = true;
-  calHint('Selecione a data de início');
-  document.querySelectorAll('.cday').forEach(el => el.classList.remove('cstart','cend','cin-range'));
-  renderEvo();
-}
 
 function applyRange() {
   if (!rStart||!rEnd||!evoHistorico.length) return;
@@ -2985,98 +3128,7 @@ function applyRange() {
   renderEvo();
 }
 
-function updateCalClasses() {
-  const s=rStart?.getTime(), e=rEnd?.getTime();
-  document.querySelectorAll('.cday[data-ts]').forEach(el => {
-    const ts=+el.dataset.ts;
-    el.classList.toggle('cstart',!!(s&&ts===s));
-    el.classList.toggle('cend',  !!(e&&ts===e));
-    el.classList.toggle('cin-range',!!(s&&e&&ts>Math.min(s,e)&&ts<Math.max(s,e)));
-  });
-}
 
-function dayHover(el) {
-  if (!rStart||rEnd) return;
-  const hts=+el.dataset.ts, s=rStart.getTime();
-  document.querySelectorAll('.cday[data-ts]').forEach(d => {
-    const ts=+d.dataset.ts;
-    d.classList.toggle('cin-range', ts>Math.min(s,hts)&&ts<Math.max(s,hts));
-  });
-}
-
-function calNav(dir) {
-  let nm=calM+dir, ny=calY;
-  if (nm>11){nm=0;ny++;}if(nm<0){nm=11;ny--;}
-  if (!EVO_DATA_MIN||!EVO_DATA_MAX) return;
-  if (ny<EVO_DATA_MIN.getFullYear()||(ny===EVO_DATA_MIN.getFullYear()&&nm<EVO_DATA_MIN.getMonth())) return;
-  let rm=nm+1,ry=ny; if(rm>11){rm=0;ry++;}
-  if (ry>EVO_DATA_MAX.getFullYear()||(ry===EVO_DATA_MAX.getFullYear()&&rm>EVO_DATA_MAX.getMonth())) return;
-  calM=nm; calY=ny; renderCal();
-}
-
-function renderCal() {
-  if (!EVO_DATA_MIN||!EVO_DATA_MAX) return;
-  document.getElementById('cal-months').innerHTML=[0,1].map(o=>renderMonth(calY,calM+o,o===0)).join('');
-  const fmtD=d=>`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
-  document.getElementById('cal-range-note').textContent=
-    `📅 Dados disponíveis: ${fmtD(EVO_DATA_MIN)} a ${fmtD(EVO_DATA_MAX)} — datas fora deste intervalo estão desabilitadas`;
-}
-
-function renderMonth(y,m,isFirst) {
-  let yr=y,mo=m;
-  while(mo>11){mo-=12;yr++;}while(mo<0){mo+=12;yr--;}
-  const mnames=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-  const firstDay=new Date(yr,mo,1).getDay(), dim=new Date(yr,mo+1,0).getDate();
-  const prevM=calM===0?11:calM-1, prevY=calM===0?calY-1:calY;
-  const canBack=EVO_DATA_MIN&&!(prevY<EVO_DATA_MIN.getFullYear()||(prevY===EVO_DATA_MIN.getFullYear()&&prevM<EVO_DATA_MIN.getMonth()));
-  let rm2=calM+2,ry2=calY; if(rm2>11){rm2=rm2-12;ry2++;}
-  const canFwd=EVO_DATA_MAX&&!(ry2>EVO_DATA_MAX.getFullYear()||(ry2===EVO_DATA_MAX.getFullYear()&&rm2>EVO_DATA_MAX.getMonth()));
-  let h=`<div class="cal-m"><div class="cal-mhd">
-    ${isFirst?`<button class="cal-nav" onclick="calNav(-1)" ${!canBack?'disabled':''}>‹</button>`:'<span style="width:26px"></span>'}
-    <span class="cal-mname">${mnames[mo]} ${yr}</span>
-    ${!isFirst?`<button class="cal-nav" onclick="calNav(1)" ${!canFwd?'disabled':''}>›</button>`:'<span style="width:26px"></span>'}
-  </div><div class="cal-grid">
-  <div class="cdow">D</div><div class="cdow">S</div><div class="cdow">T</div><div class="cdow">Q</div>
-  <div class="cdow">Q</div><div class="cdow">S</div><div class="cdow">S</div>`;
-  for(let i=0;i<firstDay;i++) h+=`<div class="cday cempty"></div>`;
-  const minTs=EVO_DATA_MIN.getTime(), maxTs=EVO_DATA_MAX.getTime();
-  const todayTs=new Date(EVO_DATA_MAX.getFullYear(),EVO_DATA_MAX.getMonth(),EVO_DATA_MAX.getDate()).getTime();
-  for(let day=1;day<=dim;day++){
-    const ts=new Date(yr,mo,day).getTime();
-    const disabled=ts<minTs||ts>maxTs;
-    const isToday=ts===todayTs;
-    const isS=!disabled&&rStart&&ts===rStart.getTime();
-    const isE=!disabled&&rEnd&&ts===rEnd.getTime();
-    const s=rStart?.getTime(),e=rEnd?.getTime();
-    const inR=!disabled&&s&&e&&ts>Math.min(s,e)&&ts<Math.max(s,e);
-    const cls=['cday',disabled?'cdisabled':'',isS?'cstart':'',isE?'cend':'',
-               inR?'cin-range':'',isToday&&!isS&&!isE&&!disabled?'ctoday':''].filter(Boolean).join(' ');
-    const evts=disabled?'':`data-ts="${ts}" onclick="dayClick(${yr},${mo},${day})" onmouseenter="dayHover(this)"`;
-    h+=`<div class="${cls}" ${evts}>${day}</div>`;
-  }
-  return h+'</div></div>';
-}
-
-function dayClick(y,m,day) {
-  const dt=new Date(y,m,day);
-  if (EVO_DATA_MIN&&dt<EVO_DATA_MIN) return;
-  if (EVO_DATA_MAX&&dt>EVO_DATA_MAX) return;
-  if (!rStart||rEnd) {rStart=dt;rEnd=null;calHint('Selecione a data de fim');}
-  else if (dt>=rStart) {
-    rEnd=dt;
-    document.getElementById('btn-apply').disabled=false;
-    const days=Math.round((rEnd-rStart)/864e5);
-    calHint(`${calFmt(rStart)} → ${calFmt(rEnd)} (${days} dia${days!==1?'s':''}) — clique em Aplicar`);
-  } else {rStart=dt;rEnd=null;calHint('Selecione a data de fim');}
-  updateCalClasses();
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  const cal=document.getElementById('evo-cal');
-  if (cal) cal.addEventListener('mouseleave', () => {
-    if (rStart&&!rEnd) document.querySelectorAll('.cday').forEach(d=>d.classList.remove('cin-range'));
-  });
-});
 
 // ── FOG: Countdown ────────────────────────────────────────────────────
 let _fogIntervalSecs = 900, _fogSecs = 900, _fogTimer = null;
@@ -3090,6 +3142,8 @@ function _fogStartCountdown() {
     const s = String(_fogSecs % 60).padStart(2, '0');
     const el = document.getElementById('fog-countdown');
     if (el) el.textContent = m + ':' + s;
+    const topo = document.getElementById('fog-relogio-topo');
+    if (topo) topo.textContent = 'Próxima atualização em ' + m + ':' + s;
     if (_fogSecs <= 0) _fogSecs = _fogIntervalSecs;
   }, 1000);
 }
@@ -3152,6 +3206,15 @@ function fogFiltrar() {
   if (tv) tv.textContent = vis;
   _atualizarBadgeUrgencia();
   fogOrdenar();
+  const elR = document.getElementById('fog-lista-filtros-resumo');
+  if (elR) {
+    const proj2  = document.getElementById('fProjeto')?.value || '';
+    const stat2  = document.getElementById('fStatus')?.value || '';
+    const partes = [];
+    partes.push(proj2 || 'Todos os projetos');
+    partes.push(stat2 ? (stat2 === 'ativo' ? 'Ativo' : 'Fechado') : 'Todos os status');
+    elR.textContent = partes.join(' · ');
+  }
 }
 
 let _fogSortColAtual = 'dias', _fogSortDir = -1;
@@ -3410,38 +3473,35 @@ carregarResumo();
 _timer = setInterval(_tick, 1000);
 
 // ── FOG Evolução ──────────────────────────────────────────────────────
-const _fogEvoCache = {};          // periodo → dados já buscados
-let _fogEvoPeriod = 'semana';
-let _fogRStart = null, _fogREnd = null, _fogCalBase = null;
+const _fogEvoCache = {};          // "inicio|fim" → dados já buscados
 const _fogMnames = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-const _fogMnamesFull = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
-const _fogLoadMsg = {
-  semana: { ico: '⚡', titulo: 'Buscando dados da semana…', msg: '' },
-  mes:    { ico: '📅', titulo: 'Buscando dados do mês…',   msg: 'Pode levar alguns segundos.' },
-  '3m':   { ico: '☕', titulo: 'Buscando 3 meses de dados…', msg: 'Isso pode demorar um pouco — aproveite para ir buscar um café!' },
-  '6m':   { ico: '☕', titulo: 'Buscando 6 meses de dados…', msg: 'Isso pode demorar um pouco — quando voltar, os dados já estarão na tela!' },
-  custom: { ico: '🔍', titulo: 'Buscando período personalizado…', msg: 'Pode levar alguns segundos.' },
-};
-
-function _fogMostrarLoading(p) {
-  const cfg = _fogLoadMsg[p] || _fogLoadMsg['mes'];
-  document.getElementById('fog-load-ico').textContent    = cfg.ico;
-  document.getElementById('fog-load-titulo').textContent = cfg.titulo;
-  document.getElementById('fog-load-msg').textContent    = cfg.msg;
+function _fogMostrarLoading(ini, fim) {
+  const dias = Math.round((new Date(fim) - new Date(ini)) / 864e5);
+  const ico = dias > 60 ? '☕' : '📅';
+  const msg = dias > 60 ? 'Isso pode demorar um pouco — aproveite para ir buscar um café!' : 'Pode levar alguns segundos.';
+  document.getElementById('fog-load-ico').textContent    = ico;
+  document.getElementById('fog-load-titulo').textContent = 'Buscando dados do período…';
+  document.getElementById('fog-load-msg').textContent    = msg;
   document.getElementById('fog-loading-modal').style.display = 'flex';
 }
 function _fogOcultarLoading() {
   document.getElementById('fog-loading-modal').style.display = 'none';
 }
 
-function carregarFogEvo() {
-  const p = _fogEvoPeriod;
-  if (_fogEvoCache[p]) { renderFogEvo(_fogEvoCache[p]); return; }
-  _fogMostrarLoading(p);
-  fetch(`/api/fog-evolucao?periodo=${p}`)
+function fogEvoFiltrar() {
+  const iniEl = document.getElementById('fog-dt-inicio');
+  const fimEl = document.getElementById('fog-dt-fim');
+  if (!iniEl || !fimEl || !iniEl.value || !fimEl.value) return;
+  const ini = iniEl.value, fim = fimEl.value;
+  const chave = `${ini}|${fim}`;
+  const re = document.getElementById('fog-evo-filtros-resumo');
+  if (re) re.textContent = `${ini.slice(8,10)}/${ini.slice(5,7)} – ${fim.slice(8,10)}/${fim.slice(5,7)}`;
+  if (_fogEvoCache[chave]) { renderFogEvo(_fogEvoCache[chave]); return; }
+  _fogMostrarLoading(ini, fim);
+  fetch(`/api/fog-evolucao?inicio=${ini}&fim=${fim}`)
     .then(r => r.json())
-    .then(d => { _fogEvoCache[p] = d; _fogOcultarLoading(); renderFogEvo(d); })
+    .then(d => { _fogEvoCache[chave] = d; _fogOcultarLoading(); renderFogEvo(d); })
     .catch(() => {
       _fogOcultarLoading();
       const el = document.getElementById('fog-evo-corpo');
@@ -3449,47 +3509,23 @@ function carregarFogEvo() {
     });
 }
 
-function _fogAtualizarLabel() {
-  const elData = document.getElementById('fog-periodo-label');
-  const elDesc = document.getElementById('fog-periodo-label-desc');
-  if (!elData) return;
-  const fmt = d => `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}`;
-  const descMap = { semana: '· últimos 7 dias', mes: '· último mês', '3m': '· últimos 3 meses', '6m': '· últimos 6 meses' };
-  if (_fogEvoPeriod === 'custom') {
-    if (_fogRStart && _fogREnd) {
-      elData.textContent = `${fmt(_fogRStart)} – ${fmt(_fogREnd)}`;
-      if (elDesc) elDesc.textContent = '· período personalizado';
-    } else {
-      elData.textContent = '';
-      if (elDesc) elDesc.textContent = '';
-    }
-    return;
-  }
-  const [s, e] = _fogPeriodDates();
-  elData.textContent = `${fmt(s)} – ${fmt(e)}`;
-  if (elDesc) elDesc.textContent = descMap[_fogEvoPeriod] || '';
+function fogEvoSalvar() {
+  const ini = document.getElementById('fog-dt-inicio')?.value;
+  const fim = document.getElementById('fog-dt-fim')?.value;
+  if (ini) localStorage.setItem('fog_dt_inicio', ini);
+  if (fim) localStorage.setItem('fog_dt_fim', fim);
+  const el = document.getElementById('fog-dt-salvo');
+  if (el) { el.hidden = false; setTimeout(() => el.hidden = true, 2000); }
 }
 
-function fogSelPeriod(p, btn) {
-  _fogEvoPeriod = p;
-  document.querySelectorAll('#fog-periodo-bar .p-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  const cal = document.getElementById('fog-evo-cal');
-  cal.hidden = (p !== 'custom');
-  _fogAtualizarLabel();
-  if (p === 'custom') renderFogCal();
-  else carregarFogEvo();
-}
+function carregarFogEvo() { fogEvoFiltrar(); }
 
 function _fogPeriodDates() {
+  const iniVal = document.getElementById('fog-dt-inicio')?.value;
+  const fimVal = document.getElementById('fog-dt-fim')?.value;
   const today = new Date(); today.setHours(0,0,0,0);
-  if (_fogEvoPeriod === 'custom' && _fogRStart && _fogREnd) return [_fogRStart, _fogREnd];
-  const start = new Date(today);
-  if      (_fogEvoPeriod === 'semana') start.setDate(start.getDate() - 7);
-  else if (_fogEvoPeriod === 'mes')    start.setDate(start.getDate() - 30);
-  else if (_fogEvoPeriod === '3m')     start.setMonth(start.getMonth() - 3);
-  else                                 start.setMonth(start.getMonth() - 6);
-  return [start, today];
+  if (iniVal && fimVal) return [new Date(iniVal + 'T00:00:00'), new Date(fimVal + 'T23:59:59')];
+  return [new Date('2025-01-01T00:00:00'), today];
 }
 
 function renderFogEvo(dados) {
@@ -3657,83 +3693,31 @@ function _renderFogParados(ativos) {
   }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted)">—</td></tr>';
 }
 
-// Calendário do FOG Evolução (variáveis separadas para não conflitar com o de e-mails)
-function renderFogCal() {
-  if (!_fogCalBase) {
-    const now = new Date();
-    _fogCalBase = new Date(now.getFullYear(), now.getMonth()-1, 1);
-  }
-  const container = document.getElementById('fog-cal-months');
-  if (!container) return;
-  container.innerHTML = '';
-  for (let i = 0; i < 2; i++) {
-    const d = new Date(_fogCalBase.getFullYear(), _fogCalBase.getMonth()+i, 1);
-    container.innerHTML += _buildFogMonth(d, i===0, i===1);
-  }
-  container.querySelector('.fog-cal-nav-back')?.addEventListener('click', () => { _fogCalBase = new Date(_fogCalBase.getFullYear(), _fogCalBase.getMonth()-1, 1); renderFogCal(); });
-  container.querySelector('.fog-cal-nav-fwd')?.addEventListener('click', () => { _fogCalBase = new Date(_fogCalBase.getFullYear(), _fogCalBase.getMonth()+1, 1); renderFogCal(); });
-  container.querySelectorAll('.fog-cday:not(.cdisabled)').forEach(el => {
-    el.addEventListener('click', () => _fogPickDay(el));
-    el.addEventListener('mouseenter', () => _fogHoverDay(el));
-  });
-  _fogUpdateCalNote();
-}
+// Init FogBugz date inputs com valores salvos ou padrão
+(function() {
+  const today = new Date().toISOString().slice(0,10);
+  const iniEl = document.getElementById('fog-dt-inicio');
+  const fimEl = document.getElementById('fog-dt-fim');
+  if (!iniEl || !fimEl) return;
+  iniEl.value = localStorage.getItem('fog_dt_inicio') || '2025-01-01';
+  fimEl.value = localStorage.getItem('fog_dt_fim') || today;
+  fimEl.max = today;
+  const re = document.getElementById('fog-evo-filtros-resumo');
+  const ini = iniEl.value, fim = fimEl.value;
+  if (re && ini && fim) re.textContent = `${ini.slice(8,10)}/${ini.slice(5,7)} – ${fim.slice(8,10)}/${fim.slice(5,7)}`;
+})();
 
-function _buildFogMonth(d, isFirst, isLast) {
-  const yr=d.getFullYear(), mo=d.getMonth();
-  const today=new Date(); today.setHours(0,0,0,0);
-  let h=`<div class="cal-m"><div class="cal-mhd">
-    ${isFirst?'<button class="cal-nav fog-cal-nav-back">‹</button>':'<span style="width:26px"></span>'}
-    <span class="cal-mname">${_fogMnamesFull[mo]} ${yr}</span>
-    ${isLast?'<button class="cal-nav fog-cal-nav-fwd">›</button>':'<span style="width:26px"></span>'}
-  </div><div class="cal-grid">
-  <div class="cdow">D</div><div class="cdow">S</div><div class="cdow">T</div><div class="cdow">Q</div>
-  <div class="cdow">Q</div><div class="cdow">S</div><div class="cdow">S</div>`;
-  const first=new Date(yr,mo,1).getDay();
-  for(let i=0;i<first;i++) h+='<div></div>';
-  const days=new Date(yr,mo+1,0).getDate();
-  for(let day=1;day<=days;day++){
-    const dt=new Date(yr,mo,day); dt.setHours(0,0,0,0);
-    const future=dt>today;
-    let cls='fog-cday cday';
-    if(future) cls+=' cdisabled';
-    if(dt.toDateString()===today.toDateString()) cls+=' ctoday';
-    if(_fogRStart&&dt.toDateString()===_fogRStart.toDateString()) cls+=' csel';
-    if(_fogREnd&&dt.toDateString()===_fogREnd.toDateString()) cls+=' csel';
-    if(_fogRStart&&_fogREnd&&dt>_fogRStart&&dt<_fogREnd) cls+=' cin-range';
-    h+=`<div class="${cls}" data-ts="${dt.getTime()}">${day}</div>`;
-  }
-  return h+'</div></div>';
-}
-
-function _fogPickDay(el){
-  const dt=new Date(+el.dataset.ts);
-  if(!_fogRStart||_fogREnd){ _fogRStart=dt; _fogREnd=null; }
-  else if(dt<_fogRStart){ _fogREnd=_fogRStart; _fogRStart=dt; }
-  else if(dt.toDateString()===_fogRStart.toDateString()){ _fogRStart=null; }
-  else{ _fogREnd=dt; document.getElementById('fog-evo-cal').hidden=true; _fogAtualizarLabel(); renderFogEvo(); }
-  renderFogCal();
-}
-
-function _fogHoverDay(el){
-  if(!_fogRStart||_fogREnd) return;
-  const hTs=+el.dataset.ts;
-  document.querySelectorAll('.fog-cday').forEach(d=>{
-    const t=+d.dataset.ts;
-    if(t>_fogRStart.getTime()&&t<hTs) d.classList.add('cin-range');
-    else if(!d.classList.contains('csel')) d.classList.remove('cin-range');
-  });
-}
-
-function _fogUpdateCalNote(){
-  const note=document.getElementById('fog-cal-range-note');
-  if(!note) return;
-  const fmt=d=>`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
-  if(!_fogRStart){ note.textContent='Clique no dia de início e depois no dia de fim.'; return; }
-  if(!_fogREnd){ note.textContent=`Início: ${fmt(_fogRStart)} — clique no dia de fim.`; return; }
-  const dias=Math.round((_fogREnd-_fogRStart)/864e5);
-  note.textContent=`Período: ${fmt(_fogRStart)} a ${fmt(_fogREnd)} (${dias} dia${dias!==1?'s':''})`;
-}
+// Init E-mails custom date inputs com valores salvos
+(function() {
+  const today = new Date().toISOString().slice(0,10);
+  const iniEl = document.getElementById('evo-dt-inicio');
+  const fimEl = document.getElementById('evo-dt-fim');
+  if (!iniEl || !fimEl) return;
+  iniEl.value = localStorage.getItem('evo_dt_inicio') || '';
+  fimEl.value = localStorage.getItem('evo_dt_fim') || today;
+  fimEl.max = today;
+  iniEl.max = today;
+})();
 </script>
 </body>
 </html>

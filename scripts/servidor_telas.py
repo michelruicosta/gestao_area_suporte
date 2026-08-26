@@ -684,10 +684,11 @@ _fog_evo_cache: dict[str, tuple[float, list]] = {}
 _FOG_CACHE_TTL = 600  # 10 minutos
 
 
-def _buscar_fog(periodo: str = '6m') -> list[dict]:
+def _buscar_fog(periodo: str = 'desde2025', inicio: str = None, fim: str = None) -> list[dict]:
     """Busca casos do FogBugz limitado ao período. Cache de 10 min por período."""
     import time
-    cache_entry = _fog_evo_cache.get(periodo)
+    cache_key = f'{inicio}|{fim}' if (inicio and fim) else periodo
+    cache_entry = _fog_evo_cache.get(cache_key)
     if cache_entry and (time.time() - cache_entry[0]) < _FOG_CACHE_TTL:
         return cache_entry[1]
 
@@ -696,18 +697,25 @@ def _buscar_fog(periodo: str = '6m') -> list[dict]:
         _log.warning('FOGBUGZ_TOKEN não encontrado no .env — FOG sem dados.')
         return []
 
-    hoje = datetime.now(timezone.utc).date()
-    if periodo == 'semana':
-        desde = hoje - timedelta(days=7)
-    elif periodo == 'mes':
-        desde = hoje - timedelta(days=30)
-    elif periodo == '3m':
-        desde = hoje - timedelta(days=90)
-    elif periodo == '6m':
-        desde = hoje - timedelta(days=180)
+    if inicio and fim:
+        desde_str = inicio.replace('-', '/')
+        ate_str = fim.replace('-', '/')
+        q_str = f'opened:"{desde_str}..{ate_str}"'
     else:
-        desde = hoje.replace(year=hoje.year - 2)
-    desde_str = desde.strftime('%Y/%m/%d')
+        hoje = datetime.now(timezone.utc).date()
+        if periodo == 'semana':
+            desde = hoje - timedelta(days=7)
+        elif periodo == 'mes':
+            desde = hoje - timedelta(days=30)
+        elif periodo == '3m':
+            desde = hoje - timedelta(days=90)
+        elif periodo == '6m':
+            desde = hoje - timedelta(days=180)
+        elif periodo == 'desde2025':
+            desde = hoje.replace(year=2025, month=1, day=1)
+        else:
+            desde = hoje.replace(year=hoje.year - 2)
+        q_str = f'opened:"{desde.strftime("%Y/%m/%d")}..today"'
 
     url = 'https://finaud.fogbugz.com/api.asp'
     try:
@@ -715,7 +723,7 @@ def _buscar_fog(periodo: str = '6m') -> list[dict]:
         resp = requests.get(url, params={
             'token': token,
             'cmd': 'search',
-            'q': f'opened:"{desde_str}..today"',
+            'q': q_str,
             'cols': 'ixBug,sTitle,fOpen,sPersonAssignedTo,dtOpened,dtLastUpdated,dtClosed,sProject,sArea',
         }, timeout=60)
         resp.raise_for_status()
@@ -743,17 +751,21 @@ def _buscar_fog(periodo: str = '6m') -> list[dict]:
                 'data_fechamento':  dt_closed[:10] if dt_closed else None,
             })
         resultado.sort(key=lambda x: x['dias_responsavel'], reverse=True)
-        _fog_evo_cache[periodo] = (time.time(), resultado)
+        _fog_evo_cache[cache_key] = (time.time(), resultado)
         return resultado
     except Exception as e:
-        _log.warning('Erro ao buscar FOG (%s): %s', periodo, e)
+        _log.warning('Erro ao buscar FOG (%s): %s', cache_key, e)
         return []
 
 
 @app.route('/api/fog-evolucao')
 @_requer_login
 def api_fog_evolucao():
-    periodo = request.args.get('periodo', 'semana')
+    inicio = request.args.get('inicio', '')
+    fim = request.args.get('fim', '')
+    if inicio and fim:
+        return jsonify(_buscar_fog(inicio=inicio, fim=fim))
+    periodo = request.args.get('periodo', 'desde2025')
     return jsonify(_buscar_fog(periodo))
 
 
