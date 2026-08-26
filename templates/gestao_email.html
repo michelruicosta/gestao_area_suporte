@@ -1162,17 +1162,21 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
         <button class="email-tab" data-pagina="nao-classificados" onclick="navegar(this)">Não Classificadas</button>
         <button class="email-tab" data-pagina="bloqueados" onclick="navegar(this)">Bloqueadas por Regras</button>
       </div>
-      <div class="page-header" style="margin-bottom:0.75rem;align-items:center">
+      <div class="page-header" style="margin-bottom:0.75rem">
         <div class="page-header-left">
           <h1 class="page-titulo">Classificação e Status</h1>
-          <p class="page-sub">Conversas de e-mail agrupadas por categoria e status · <span id="card-sub-intervalo">atualizado a cada 5 minutos</span></p>
+          <p class="page-sub">Conversas de e-mail agrupadas por categoria e status</p>
         </div>
-        <div style="flex-shrink:0;display:flex;align-items:center;gap:8px;font-size:0.82rem;color:var(--muted)">
-          ⏱ <span class="refresh-destaque" id="refresh-info">Carregando…</span>
-          <button class="btn-fullscreen" onclick="toggleFullscreen()" title="Tela cheia">⛶</button>
-        </div>
+        <button class="btn-fullscreen" onclick="toggleFullscreen()" title="Tela cheia">⛶</button>
       </div>
       <div class="tabela-wrap">
+        <div class="fog-cd">
+          <div class="fog-cd-left">
+            🕐 Próxima atualização em <span class="fog-cd-v" id="refresh-info">--:--</span>
+            <span class="fog-cd-dot">·</span>
+            <span id="card-sub-intervalo">atualizado a cada 5 minutos</span>
+          </div>
+        </div>
         <div class="card-legenda">
           <span class="delta-ruim">▲</span>&nbsp;AF/AC cresceu &nbsp;·&nbsp;
           <span class="delta-bom">▼</span>&nbsp;AF/AC caiu &nbsp;·&nbsp;
@@ -1624,15 +1628,12 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
         <button class="email-tab" data-pagina="fog-evolucao" onclick="navegar(this)">Evolução</button>
       </div>
 
-      <div class="page-header" style="margin-bottom:0.75rem;align-items:center">
+      <div class="page-header" style="margin-bottom:0.75rem">
         <div class="page-header-left">
           <h1 class="page-titulo">Lista de Casos</h1>
           <p class="page-sub">Listagem de casos por projeto, responsável e status.</p>
         </div>
-        <div style="flex-shrink:0;display:flex;align-items:center;gap:8px;font-size:0.82rem;color:var(--muted)">
-          ⏱ <span class="refresh-destaque" id="fog-relogio-topo">Carregando…</span>
-          <button class="btn-fullscreen" onclick="toggleFullscreen()" title="Tela cheia">⛶</button>
-        </div>
+        <button class="btn-fullscreen" onclick="toggleFullscreen()" title="Tela cheia">⛶</button>
       </div>
 
       {% if fog_simulado %}
