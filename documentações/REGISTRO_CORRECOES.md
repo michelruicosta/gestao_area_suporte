@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-08-26 — UI: padronização de cabeçalhos e relógio de atualização
+
+### 19:00 — Cabeçalho "Classificação e Status" fora do padrão das outras abas
+
+**🔎 Em miúdos:** o título e a descrição da aba "Classificação e Status" ficavam dentro de um cartão escuro com seta de encolher. Nas outras abas (Evolução, Não Classificadas, etc.) o título fica como texto solto acima do conteúdo. Padronizado.
+
+- **Problema:** `card-hd` com `onclick="toggleTblResumo()"` e `<span class="chev-tbl">▼</span>` desnecessários.
+- **Correção:** substituído por bloco `page-header` (padrão das outras abas); relógio de atualização e botão ⛶ movidos para o lado direito do cabeçalho. Função morta `toggleTblResumo()` removida.
+- **Arquivos:** `templates/gestao_email.html`
+- **Validação:** ✅ VALIDADO — estrutura confirmada via `read_page` do browser. Sem teste automático (mudança visual pura).
+
+### 19:10 — Dois relógios de atualização apareciam na mesma tela
+
+**🔎 Em miúdos:** na aba "Classificação e Status" e na "Lista de Casos" apareciam dois contadores de "próxima atualização" — um grande em destaque (pílula colorida) no cabeçalho e um pequeno no corpo. Michel pediu manter só o pequeno.
+
+- **Problema:** pílula grande (`refresh-destaque`) no cabeçalho duplicava a informação do relógio pequeno (`fog-cd`) já existente dentro do conteúdo.
+- **Correção:** pílula removida de todos os cabeçalhos; relógio pequeno (estilo `fog-cd`) adicionado dentro do `tabela-wrap` da aba Classificação e Status (visível no fullscreen). FOG Lista de Casos já tinha o relógio pequeno no lugar certo. Sem relógio nas abas que não atualizam automaticamente (Evolução, Visão Consolidada, Não Classificadas, Bloqueadas).
+- **Arquivos:** `templates/gestao_email.html`
+- **Validação:** ✅ VALIDADO — `read_page` confirma apenas um relógio por tela. Sem teste automático (mudança visual pura).
+
+---
+
 ## 2026-08-26 — Agendador automático nunca rodava em produção
 
 ### 19:30 — Robô de coleta nunca ligava automaticamente no servidor
@@ -11,7 +33,7 @@
 - **Problema:** o código que liga o agendador (`_scheduler.start()`) estava dentro do bloco `if __name__ == '__main__':`. Esse bloco só executa quando o servidor é iniciado manualmente no terminal. Em produção, o Gunicorn importa o módulo de outro jeito e esse bloco nunca roda — o agendador nunca ligava.
 - **Correção:** movidas as linhas de inicialização do agendador para fora do bloco `if __name__ == '__main__':`, para nível de módulo. Agora o agendador liga em qualquer situação (Gunicorn em produção ou terminal em desenvolvimento). Adicionado log de confirmação de início e de cada disparo automático.
 - **Arquivos:** `scripts/servidor_telas.py`
-- **Validação:** ⚠️ VALIDAÇÃO PENDENTE — verificar no journal do servidor após o próximo restart: `journalctl -u gestao-suporte | grep Agendador`. Critério: deve aparecer a linha "Agendador iniciado — coleta automática a cada X minuto(s).". Validação completa: confirmar que o coletor roda automaticamente no próximo intervalo sem disparar manualmente.
+- **Validação:** ✅ PARCIALMENTE VALIDADO — log "Agendador iniciado — coleta automática a cada 60 minuto(s)." apareceu no journal imediatamente após o restart (19:23:27). Confirmação final: aguardar 20:23 para ver se o coletor roda automaticamente sem disparar manualmente.
 
 ---
 

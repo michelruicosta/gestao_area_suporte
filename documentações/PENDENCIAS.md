@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Gestão Área Suporte
 
-**Atualizado:** 2026-08-25
+**Atualizado:** 2026-08-26
 **Organização:** por etapa que bloqueia — reorganizado em 03/08/2026 para seguir as fases sem brechas.
 **Regra:** este arquivo lista **só o que ainda falta** (aberto / aguardando decisão / backlog).
 Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada no
@@ -162,11 +162,12 @@ Michel revisou as 5 threads e confirmou que todas são entregas simples de CADOC
 
 ---
 
-## ⏭ ETAPA ATUAL — Construir a Fase 1 (produção)
+## ⏭ ETAPA ATUAL — App no ar; o que falta não é “subir a Fase 1”
 
+> **✅ Produção no ar desde 25/08/2026:** `https://gestao-suporte.finaudapps.com.br` (Sair → portal aprovado em 26/08).
 > **✅ Classificador determinístico concluído: 764/768 (99,5%) em 17/08/2026.**
 > **Escopo redefinido em 17/08/2026:** sem IA por enquanto. O classificador determinístico é o único classificador.
-> Próximo passo: escrever o código de produção — `coletor_gmail.py` + pipeline + 3 telas (§14 da spec).
+> Próximo na fila: 🔴 SPEC §10 (3 distinções da IA) — não bloqueia o uso do app. Depois: limpeza das rotas FOG mortas.
 > A IA (GPT-4o-mini, OCR, IA Assistente) fica para fase futura — ver seção ao final deste arquivo.
 
 ### ✅ AMOSTRA — Resolvido em 17/08/2026
@@ -611,20 +612,6 @@ No projeto antigo, alguns cards da tela operacional do FOG mostravam mensagens d
 3. A exibição seria dentro do card (colapsável) ou em tela separada ao clicar?
 
 **Quando fazer:** após as telas FOG (operacional + gerencial) estarem funcionando em produção.
-
----
-
-### 🔴 DEPLOY — Implementar logging em arquivo antes de subir para produção (25/08/2026)
-
-O sistema atual só imprime no terminal — em produção não há como diagnosticar erros remotamente.
-
-**Padrão aprovado por Michel:**
-- Um arquivo por módulo por dia: `servidor_DD-MM-AAAA.log`, `coletor_DD-MM-AAAA.log`, `pipeline_DD-MM-AAAA.log`
-- Data no formato brasileiro (DD-MM-AAAA)
-- Rotação automática diária (`TimedRotatingFileHandler` do Python)
-- Implementar em: `servidor_telas.py`, `coletor_gmail.py`, `executar_pipeline.py`
-
-**Quando fazer:** Etapa 6 do plano de deploy — antes de subir para o servidor VPS.
 
 ---
 

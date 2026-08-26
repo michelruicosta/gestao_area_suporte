@@ -8,6 +8,79 @@
 
 ---
 
+## 📓 Diário da sessão (2026-08-26 — noite) — UI + fix agendador
+
+### O que foi feito
+
+**Frente 1: padronização de cabeçalhos na tela de e-mails**
+
+- Cabeçalho "Classificação e Status" movido para fora do card escuro — agora usa `page-header` igual às outras abas (título solto + descrição). Seta de colapso `▼` e função `toggleTblResumo()` removidos.
+- Dois relógios de atualização na mesma tela corrigidos: pílula grande removida dos cabeçalhos; relógio pequeno (estilo `fog-cd`) adicionado dentro do `tabela-wrap` (visível no fullscreen). FOG Visão Consolidada e Evolução sem relógio (não atualizam automaticamente).
+- Commits `6504d16` e `913e61c` · deploy confirmado.
+
+**Frente 2: bug crítico — agendador nunca rodava em produção**
+
+- Causa raiz: `_scheduler.start()` estava dentro de `if __name__ == '__main__':`, que o Gunicorn nunca executa. O robô NUNCA rodou automaticamente — toda coleta era manual (via tela de Admin).
+- Correção: inicialização do agendador movida para nível de módulo. Log de confirmação adicionado.
+- Verificado no journal do servidor às 19:23:27: "Agendador iniciado — coleta automática a cada 60 minuto(s)." ✅
+- Commit `dcf7644` · deploy confirmado.
+
+**Pytest:** sem alteração (mudanças visuais e infraestrutura de runtime).
+
+---
+
+### Estado atual
+
+**Produção:** no ar em `https://gestao-suporte.finaudapps.com.br`.
+**Agendador:** ativo no servidor desde 19:23 — próxima coleta automática às ~20:23.
+**GitHub:** `main` em `dcf7644`.
+
+---
+
+### Próximo passo
+
+1. **✅ Confirmar agendador** — verificar journal amanhã cedo: `journalctl -u gestao-suporte | grep "Coleta automática disparada"`. Critério: linha aparecendo a cada 60 minutos.
+2. **🟡** Remover rotas mortas `/fog/gerencial` e `/fog/operacional` (código morto em `servidor_telas.py`).
+3. **🔴 SPEC §10** — 3 distinções que a IA não sabe fazer (não bloqueia o app em produção).
+
+Último /fechar: 2026-08-26 19:45 — memórias revisadas ✅
+
+---
+
+## 📓 Diário da sessão (2026-08-26) — Sair volta ao portal
+
+### O que foi feito hoje
+
+**Frente única:** o botão **Sair** do Gestão Área Suporte encerrava a sessão e caía no login deste app (`gestao-suporte.finaudapps.com.br/login`). Padrão Finaud: voltar sempre para `https://finaudapps.com.br`.
+
+- Rotas `/sair` e `/logout` em `scripts/servidor_telas.py`: depois de limpar a sessão, redirecionam para o portal (ou `PORTAL_URL`)
+- Teste `tests/test_servidor_telas.py` trava esse destino
+- Ajuste UTF-8 do Windows não roda dentro do pytest (senão a suíte quebra)
+- Commit `869bedf` · push na `main` · deploy na VPS · serviço `gestao-suporte` ativo
+- Michel testou no site e **aprovou** (18:41)
+
+**Pytest:** 375 passaram.
+
+---
+
+### Estado atual
+
+**Produção:** no ar em `https://gestao-suporte.finaudapps.com.br`.
+**Sair:** 302 para `https://finaudapps.com.br` — aprovado por Michel.
+**GitHub:** `main` em `869bedf` (código do Sair já no servidor). Este `/fechar` só atualiza o bordo.
+
+---
+
+### Próximo passo
+
+1. **🔴 SPEC §10** — definir 3 distinções que a IA ainda não sabe fazer (item urgente no `PENDENCIAS.md`; não é bloqueio do app no ar).
+2. **🟡** Remover rotas mortas `/fog/gerencial` e `/fog/operacional` (sem template; a tela não usa).
+3. Painel unificado e Python 3.9 na VPS — **não urgente**.
+
+Último /fechar: 2026-08-26 18:56 — memórias revisadas ✅
+
+---
+
 ## 📓 Diário da sessão (2026-08-24 — noite) — Melhorias de UI + Coletor
 
 ### O que foi feito hoje (sessão da noite — UI)
