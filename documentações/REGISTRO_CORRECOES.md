@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-08-26 — C62: "COMUNICAÇÃO DE NÃO PREENCHIMENTO" era classificada como DLO_2061
+
+### 20:08 — Sinal de RETORNO_BACEN ausente + Filtro FogBugz frágil
+
+**🔎 Em miúdos (C62):** e-mails do Banco Central avisando que um CADOC não foi preenchido estavam sendo enviados para a fila de DLO — que é para entregas do cliente. Esses e-mails são na verdade retornos do BACEN, e devem ficar na fila RETORNO_BACEN.
+
+- **Problema:** o assunto dessas threads tem "DLO 2061" junto com "COMUNICAÇÃO DE NÃO PREENCHIMENTO". O classificador detectava "DLO 2061" primeiro (sinal de CADOC) e nunca chegava a testar se era um retorno do BACEN — porque "COMUNICAÇÃO DE NÃO PREENCHIMENTO" não estava na lista de sinais de retorno.
+- **Causa raiz:** `_RETORNO_SINAIS_FORTES` em `classificador_regras.py` não incluía esse tipo de comunicado.
+- **Correção:** adicionadas as variantes com e sem acento à lista `_RETORNO_SINAIS_FORTES` (C62). 5 threads corrigidas no banco (`DLO_2061 → RETORNO_BACEN`). Backup em `data/backups/20260826_2008_fix_retorno_bacen_nao_preenchimento/`.
+- **Validação:** ✅ VALIDADO — 384 testes passando, incluindo 5 casos parametrizados + 1 falso-positivo para C62. Banco verificado: 5 threads com `RETORNO_BACEN`.
+
+**🔎 Em miúdos (FogBugz):** o filtro que descarta e-mails do sistema FogBugz (tickets internos de suporte de TI) dependia do nome do remetente ter "FINAUDTEC". Se a notificação vinha de um remetente com nome diferente, o filtro falhava.
+
+- **Correção:** filtro simplificado para usar `assunto.startswith('FogBugz')` — qualquer e-mail cujo assunto começa com "FogBugz" é descartado, independente de quem enviou.
+- **Arquivos:** `scripts/classificador_regras.py`, `scripts/validador_classificacao.py`, `tests/test_classificador_regras.py`, `tests/test_validador_filtro.py`
+- **Commit:** `d64c829`
+
+---
+
 ## 2026-08-26 — UI: padronização de cabeçalhos e relógio de atualização
 
 ### 19:00 — Cabeçalho "Classificação e Status" fora do padrão das outras abas
