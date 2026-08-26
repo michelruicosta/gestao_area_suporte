@@ -28,6 +28,16 @@ O servidor Hostinger (`31.97.82.203`) roda **Python 3.9**, que já não recebe m
 
 ---
 
+## TELAS — Painel Unificado configurável (identificado em 26/08/2026)
+
+**Ideia:** substituir a navegação por seções separadas por um único painel onde o usuário seleciona quais widgets quer ver (Classificação e Status, Evolução, FOG Visão Consolidada, Lista de Casos, FOG Evolução). Cada widget auto-atualiza no mesmo intervalo já configurado. O botão de tela cheia por widget (já implementado em 26/08) seria a base para fullscreen por widget dentro do painel.
+
+**Por que:** o sistema fica em atualização contínua — um painel facilita monitoramento sem precisar navegar entre telas. Ideia levantada por Michel em 26/08/2026.
+
+**Quando fazer:** futuro — não é urgente. Implementar quando a base atual estiver estável em produção.
+
+---
+
 ## PRÉ-DEPLOY — Limpeza de código (identificado em 25/08/2026)
 
 ### 🟡 SERVIDOR — Rotas /fog/gerencial e /fog/operacional sem template (identificado 25/08/2026)

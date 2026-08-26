@@ -3,16 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Acesso | Gestão de E-mail</title>
+<title>Acesso | Gestão Área Suporte</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root {
-  --marca: #3333a8;
-  --marca-hover: #2828a0;
-  font-family: "Segoe UI", system-ui, sans-serif;
-  line-height: 1.5;
-  box-sizing: border-box;
-}
-*, *::before, *::after { box-sizing: inherit; }
+*, *::before, *::after { box-sizing: border-box; }
 
 body {
   margin: 0;
@@ -20,128 +16,230 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--marca);
   padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: #060b18;
+  font-family: Outfit, "Segoe UI", system-ui, sans-serif;
+  color: #f4f6fb;
+  line-height: 1.5;
+}
+
+body::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 70% 58% at 90% -4%, rgba(163, 209, 51, 0.58), transparent 56%),
+    radial-gradient(ellipse 62% 68% at -4% 104%, rgba(0, 28, 91, 0.95), transparent 52%),
+    radial-gradient(ellipse 50% 46% at 52% 42%, rgba(77, 122, 212, 0.28), transparent 62%);
+  pointer-events: none;
 }
 
 .login-card {
   width: 100%;
-  max-width: 400px;
-  background: #fff;
-  border: 1px solid #e2e5ea;
-  border-radius: 12px;
-  padding: 2.25rem 2rem;
-  box-shadow: 0 20px 48px rgba(0,0,0,0.28);
+  max-width: 420px;
+  border-radius: 24px;
+  border: 1px solid rgba(163, 209, 51, 0.16);
+  background:
+    radial-gradient(ellipse 90% 70% at 8% 108%, rgba(163, 209, 51, 0.16), transparent 52%),
+    radial-gradient(ellipse 85% 65% at 108% -8%, rgba(0, 28, 91, 0.55), transparent 50%),
+    linear-gradient(165deg, #0b142c 0%, #02050c 72%);
+  color: #f4f6fb;
+  padding: 2.25rem 2rem 1.75rem;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 32px 90px rgba(0, 8, 24, 0.7);
 }
 
-.marca-org {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
+/* Topo */
+.login-topo {
+  text-align: center;
   margin-bottom: 1.75rem;
-  padding-bottom: 1.25rem;
-  border-bottom: 1px solid #e2e5ea;
 }
 
-.marca-logo {
-  width: 3.25rem;
-  height: 3.25rem;
-  border-radius: 8px;
-  overflow: hidden;
-  flex-shrink: 0;
-  background: var(--marca);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.login-ico {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 0.85rem;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: rgba(163, 209, 51, 0.18);
+  color: #b4d84a;
 }
 
-.marca-logo img { width: 100%; height: 100%; object-fit: contain; }
+.login-ico svg {
+  width: 26px;
+  height: 26px;
+}
 
-.marca-logo-inicial {
-  color: #fff;
+.login-kicker {
+  margin: 0 0 0.5rem;
+  font-size: 10px;
   font-weight: 700;
-  font-size: 1.35rem;
+  letter-spacing: 0.36em;
+  text-transform: uppercase;
+  color: rgba(244, 246, 251, 0.55);
 }
 
-.marca-textos { display: flex; flex-direction: column; gap: 0.1rem; }
-.marca-nome   { font-size: 1.1rem; font-weight: 700; color: #1e293b; line-height: 1.2; }
-.marca-sub    { font-size: 0.84rem; color: #64748b; }
-
-.field       { display: grid; gap: 0.35rem; margin-bottom: 1rem; }
-.field-label { font-weight: 600; font-size: 0.88rem; color: #334155; }
-.field-input {
-  width: 100%;
-  padding: 0.65rem 0.85rem;
-  border: 1px solid #c5cad3;
-  border-radius: 8px;
-  background: #fff;
-  font: inherit;
-  color: #1e293b;
-  outline: none;
-  transition: border-color 0.15s;
+.login-titulo {
+  margin: 0 0 0.35rem;
+  font-size: 1.45rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #f4f6fb;
 }
-.field-input:focus { border-color: var(--marca); }
 
-.field-input-wrap { position: relative; display: flex; align-items: center; }
-.field-input-wrap .field-input { padding-right: 2.6rem; }
-.olho-btn {
-  position: absolute; right: 0.65rem;
-  background: none; border: none; cursor: pointer; padding: 0.25rem;
-  color: #94a3b8; font-size: 1rem; line-height: 1; display: flex;
+.login-sub {
+  margin: 0;
+  color: rgba(244, 246, 251, 0.58);
+  font-size: 0.95rem;
 }
-.olho-btn:hover { color: var(--marca); }
 
-.esqueceu {
-  display: block; text-align: right; font-size: 0.8rem;
-  color: var(--marca); text-decoration: none; margin-top: 0.25rem;
-}
-.esqueceu:hover { text-decoration: underline; }
-
-.erro-msg {
-  font-size: 0.88rem;
-  color: #b4233a;
-  background: #fef2f2;
-  border: 1px solid #fecdca;
-  border-radius: 6px;
-  padding: 0.65rem 0.85rem;
+/* Campos */
+.field {
+  display: grid;
+  gap: 0.35rem;
   margin-bottom: 1rem;
 }
 
+.field-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(244, 246, 251, 0.58);
+}
+
+.field-input {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #f4f6fb;
+  font: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.field-input:focus {
+  border-color: rgba(163, 209, 51, 0.55);
+}
+
+.field-input::placeholder {
+  color: rgba(244, 246, 251, 0.28);
+}
+
+/* Campo senha com botão olho */
+.campo-senha-wrap {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.campo-senha-wrap .field-input { flex: 1; }
+
+.olho-btn {
+  width: 44px;
+  min-width: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(244, 246, 251, 0.58);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.olho-btn:hover {
+  color: #f4f6fb;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.olho-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+/* Link esqueceu */
+.esqueceu {
+  display: block;
+  text-align: right;
+  font-size: 0.8rem;
+  color: rgba(244, 246, 251, 0.58);
+  text-decoration: underline;
+  margin-top: 0.35rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+}
+
+.esqueceu:hover { color: #f4f6fb; }
+
+/* Erro */
+.erro-msg {
+  color: #ffb4ab;
+  font-size: 0.9rem;
+  margin: 0 0 1rem;
+}
+
+/* Botão Entrar */
 .btn-entrar {
   width: 100%;
   padding: 0.75rem;
-  background: var(--marca);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
+  background: #b4d84a;
+  color: #0c1408;
+  border: 0;
+  border-radius: 12px;
   font: inherit;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.95rem;
   cursor: pointer;
+  margin-top: 0.5rem;
   transition: background 0.15s;
-  margin-top: 0.35rem;
 }
-.btn-entrar:hover { background: var(--marca-hover); }
 
-.rodape-login {
-  margin-top: 1.5rem;
+.btn-entrar:hover { background: #a3d133; }
+.btn-entrar:disabled { background: #7a9133; color: #0c1408; cursor: default; }
+
+/* Link portal */
+.portal-link {
+  display: block;
+  margin-top: 1rem;
   text-align: center;
-  font-size: 0.78rem;
-  color: #94a3b8;
+  font-size: 13px;
+  color: rgba(244, 246, 251, 0.58);
+  text-decoration: underline;
 }
+
+.portal-link:hover { color: #f4f6fb; }
 </style>
 </head>
 <body>
   <div class="login-card">
-    <div class="marca-org">
-      <div class="marca-logo">
-        <img src="/static/img/logo_finaud.png" alt="Finaud"
-             onerror="this.parentElement.innerHTML='<span class=\'marca-logo-inicial\'>F</span>'">
+    <div class="login-topo">
+      <div class="login-ico" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+          <rect x="2" y="4" width="20" height="16" rx="2"/>
+          <path d="m2 7 10 7 10-7"/>
+        </svg>
       </div>
-      <div class="marca-textos">
-        <span class="marca-nome">Finaud Tec</span>
-        <span class="marca-sub">Gestão Área Suporte</span>
-      </div>
+      <p class="login-kicker">Grupo Finaud</p>
+      <h1 class="login-titulo">Gestão Área Suporte</h1>
+      <p class="login-sub">E-mails · Área de Suporte</p>
     </div>
 
     {% if erro %}
@@ -157,26 +255,42 @@ body {
 
       <div class="field">
         <label class="field-label" for="senha">Senha</label>
-        <div class="field-input-wrap">
+        <div class="campo-senha-wrap">
           <input class="field-input" type="password" id="senha" name="senha"
-                 autocomplete="current-password" placeholder="••••••••" required>
-          <button type="button" class="olho-btn" onclick="toggleOlho('senha',this)" title="Mostrar/ocultar senha">👁</button>
+                 autocomplete="current-password" required>
+          <button type="button" class="olho-btn" id="olho-btn" aria-label="Mostrar ou ocultar senha">
+            <svg id="olho-aberto" viewBox="0 0 24 24">
+              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            <svg id="olho-fechado" viewBox="0 0 24 24" style="display:none">
+              <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+              <line x1="1" y1="1" x2="23" y2="23"/>
+            </svg>
+          </button>
         </div>
-        <a href="#" class="esqueceu" onclick="return false;">Esqueceu a senha?</a>
+        <button type="button" class="esqueceu" onclick="return false;">Esqueceu a senha?</button>
       </div>
 
       <button type="submit" class="btn-entrar">Entrar</button>
     </form>
 
-    <p class="rodape-login">© 2026 Finaud Tec · Ambiente seguro</p>
+    <a class="portal-link" href="https://finaudapps.com.br">Portal de apps</a>
   </div>
+
 <script>
-function toggleOlho(id, btn) {
-  const inp = document.getElementById(id);
-  const ver = inp.type === 'password';
-  inp.type = ver ? 'text' : 'password';
-  btn.textContent = ver ? '🙈' : '👁';
-}
+(function () {
+  var inp = document.getElementById('senha');
+  var btn = document.getElementById('olho-btn');
+  var aberto = document.getElementById('olho-aberto');
+  var fechado = document.getElementById('olho-fechado');
+  btn.addEventListener('click', function () {
+    var ver = inp.type === 'password';
+    inp.type = ver ? 'text' : 'password';
+    aberto.style.display = ver ? 'none' : '';
+    fechado.style.display = ver ? '' : 'none';
+  });
+})();
 </script>
 </body>
 </html>
