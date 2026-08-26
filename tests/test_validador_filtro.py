@@ -2,6 +2,7 @@
 Testes do filtro §4 (eh_automatico) do validador_classificacao.py.
 """
 import sys
+import pytest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
@@ -60,3 +61,17 @@ def test_nao_filtra_suporte_normal():
 def test_nao_filtra_assunto_vazio():
     t = _thread("", remetente='"Cliente" <cliente@empresa.com.br>')
     assert eh_automatico(t) is None
+
+
+# ── FogBugz: filtrado pelo assunto, independente do remetente ─────────────────
+
+@pytest.mark.parametrize("assunto", [
+    "FogBugz (Caso 8568) RISK DRIVER - BC - Instrução Normativa BCB Nº 771",
+    "FogBugz (Caso 8291) DLI - Verificar erro na tela DLI",
+    "FogBugz (Caso 5972) RISK DRIVER - Disponibilizar base atualizada",
+])
+def test_fogbugz_filtrado_pelo_assunto_independente_de_remetente(assunto):
+    """FogBugz deve ser filtrado apenas pelo assunto — remetente pode variar."""
+    t = _thread(assunto, remetente='"Qualquer Nome" <qualquer@outro.com.br>')
+    assert eh_automatico(t) is not None, \
+        f"FogBugz não filtrado para assunto: '{assunto}'"

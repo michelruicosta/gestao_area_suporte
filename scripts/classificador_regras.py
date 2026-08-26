@@ -78,6 +78,8 @@ _RETORNO_SINAIS_FORTES = [
     'REITERAÇÃO',                   # idem com acento
     'REITERACOES',                  # plural sem acento
     'REITERAÇÕES',                  # plural com acento
+    'COMUNICACAO DE NAO PREENCHIMENTO',   # C62: BACEN informando que o CADOC não foi preenchido
+    'COMUNICAÇÃO DE NÃO PREENCHIMENTO',   # idem com acento
 ]
 _RETORNO_SINAIS_VCRD = ['VCRD', 'CRITICA VCRD', 'CRÍTICA VCRD', 'CRITICAS VCRD', 'CRÍTICAS VCRD']
 _RETORNO_SINAIS_INDICIO = ['INDICIO', 'INDÍCIO', 'INDICIOS', 'INDÍCIOS']

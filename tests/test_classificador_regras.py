@@ -1638,3 +1638,28 @@ def test_correcao61_fp_rejeitado_sem_bacen_nao_dispara():
     )
     assert r['categorias'] != ['RETORNO_BACEN'], \
         f"C61 FP: RETORNO_BACEN indevido quando BACEN não é mencionado; obtido {r['categorias']}"
+
+
+# ── C62: "COMUNICAÇÃO DE NÃO PREENCHIMENTO" no assunto → RETORNO_BACEN ───────
+
+@pytest.mark.parametrize("assunto", [
+    "BANCO CENTRAL DLO 2061 - COMUNICAÇÃO DE NÃO PREENCHIMENTO",
+    "FW: BANCO CENTRAL DLO 2061 - COMUNICAÇÃO DE NÃO PREENCHIMENTO",
+    "[URGENTE] BANCO CENTRAL DLO 2061 - COMUNICAÇÃO DE NÃO PREENCHIMENTO",
+    "ENC: BANCO CENTRAL DLO 2061 - COMUNICACAO DE NAO PREENCHIMENTO",
+    "Fwd: BANCO CENTRAL DLO 2061 - COMUNICAÇÃO DE NÃO PREENCHIMENTO",
+])
+def test_correcao62_comunicacao_nao_preenchimento_retorna_retorno_bacen(assunto):
+    """C62 — BACEN informando que o CADOC não foi preenchido → RETORNO_BACEN (não DLO_2061)."""
+    r = _classificar(assunto)
+    assert r['categorias'] == ['RETORNO_BACEN'], \
+        f"C62: esperado RETORNO_BACEN para '{assunto}'; obtido {r['categorias']}"
+
+
+def test_correcao62_fp_preenchimento_drl_nao_vira_retorno():
+    """C62 FP — 'preenchimento da planilha DRL' no assunto é entrega DRL, não RETORNO_BACEN."""
+    r = _classificar('Encaminhar o preenchimento da planilha DRL julho/2026. ATUAL.')
+    assert 'RETORNO_BACEN' not in r['categorias'], \
+        f"C62 FP: RETORNO_BACEN indevido em entrega DRL; obtido {r['categorias']}"
+    assert 'DRL_2160' in r['categorias'], \
+        f"C62 FP: esperado DRL_2160 para planilha DRL; obtido {r['categorias']}"

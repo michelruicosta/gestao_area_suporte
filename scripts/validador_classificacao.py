@@ -89,8 +89,8 @@ def eh_automatico(thread: dict) -> str | None:
         return f'rede social: {nome}'
     if '3CX Communications System' in nome:
         return '3CX chamada perdida'
-    if 'FINAUDTEC' in nome and 'FogBugz' in assunto:
-        return 'ticket FogBugz interno'
+    if assunto.startswith('FogBugz'):
+        return 'ticket FogBugz'
     if 'Finaud Equipe' in nome and 'Confirma' in assunto:
         return 'confirmação de conta Finaud'
     if 'IT Service Desk' in assunto:
