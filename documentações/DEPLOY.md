@@ -145,11 +145,23 @@ git pull origin main
 
 ## Configuração no servidor (Hostinger VPS)
 
-> ⚠️ **Esta seção será preenchida por Michel com o passo a passo específico da Hostinger.**
+**Subdomínio aprovado:** `gestao-suporte.finaudapps.com.br`  
+**Porta interna:** `8004` (sequência das outras apps Finaud: 8000–8003)  
+**Roteiro completo:** `D:\03_Modelos_e_ferramentas\template_projeto_ai\roteiro_deploy_flask_vps_finaud.md`
 
-```
-[ espaço reservado para instruções do portal / Hostinger ]
-```
+### Parâmetros fixos do app
+
+| Parâmetro | Valor |
+|---|---|
+| Subdomínio | `gestao-suporte.finaudapps.com.br` |
+| Pasta no servidor | `/srv/finaud/tec/gestao_area_suporte` |
+| Usuário Linux | `finaud-tec` (compartilhado com normativos e leiautes_bacen) |
+| Serviço systemd | `gestao-suporte` |
+| Callable Gunicorn | `servidor_telas:app` |
+| WorkingDirectory systemd | `/srv/finaud/tec/gestao_area_suporte/scripts` |
+| PYTHONPATH systemd | `/srv/finaud/tec/gestao_area_suporte/scripts` |
+| Workers Gunicorn | `1` (APScheduler interno — não aumentar) |
+| Autenticação Gmail | Service Account — não expira |
 
 ---
 
@@ -167,7 +179,7 @@ Executar em ordem — testar a aplicação após cada etapa antes de avançar.
 | 5 | Arquivar `.env.example` — variáveis documentadas no DEPLOY.md | ✅ Concluído (25/08/2026) |
 | 6 | Implementar logging em arquivo (padrão DD-MM-AAAA) | ✅ Concluído (25/08/2026) |
 | 7 | Teste geral local — aplicação funcionando 100%? | ✅ Concluído (25/08/2026) |
-| 8 | Deploy no servidor com instruções do Michel | ⏳ Pendente |
+| 8 | Deploy no servidor Hostinger | ✅ Concluído (25/08/2026) |
 
 ---
 
@@ -179,3 +191,4 @@ Executar em ordem — testar a aplicação após cada etapa antes de avançar.
 | 25/08/2026 | Etapas 1–5 concluídas — estrutura limpa, credencial movida, requirements enxuto, `.env.example` arquivado |
 | 25/08/2026 | Etapa 6 concluída — logging em arquivo implementado nos 3 scripts de produção; padrão DD-MM-AAAA |
 | 25/08/2026 | Etapa 7 concluída — todas as telas testadas e funcionando; 1 problema não-bloqueante identificado (rotas /fog/gerencial e /fog/operacional sem template — código morto, SPA não usa) |
+| 25/08/2026 | Etapa 8 concluída — primeiro deploy no servidor Hostinger VPS; sistema acessível em https://gestao-suporte.finaudapps.com.br com SSL ativo |

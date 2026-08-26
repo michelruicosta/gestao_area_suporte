@@ -8,6 +8,26 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ---
 
+## SERVIDOR VPS — Manutenção de infraestrutura
+
+### 🟡 VPS — Python 3.9 desatualizado — risco de segurança futuro (identificado 25/08/2026)
+
+O servidor Hostinger (`31.97.82.203`) roda **Python 3.9**, que já não recebe mais atualizações de segurança do Google (bibliotecas `google-api-core`, `google-auth` etc.) e ficará sem suporte de segurança em geral. Todos os apps da Finaud no VPS são afetados:
+
+- `/srv/finaud/auditoria` (Auditoria IA)
+- `/srv/finaud/tec/normativos` (Normativos)
+- `/srv/finaud/tec/leiautes_bacen` (Leiautes)
+- `/srv/finaud/tec/gestao_area_suporte` (Gestão Área Suporte)
+- `/srv/finaud/portal-auth` (Portal Auth)
+
+**O que fazer:** atualizar o Python do servidor para 3.10 ou superior (preferencialmente 3.11 ou 3.12) e retestar todos os apps. Verificar compatibilidade dos `requirements.txt` de cada app antes de atualizar.
+
+**Quando fazer:** não é urgente agora — o sistema funciona. Planejar para uma janela de manutenção com o responsável do servidor.
+
+**Impacto se não fizer:** com o tempo, pacotes de segurança deixarão de ser compatíveis com Python 3.9 e o servidor ficará vulnerável.
+
+---
+
 ## PRÉ-DEPLOY — Limpeza de código (identificado em 25/08/2026)
 
 ### 🟡 SERVIDOR — Rotas /fog/gerencial e /fog/operacional sem template (identificado 25/08/2026)
