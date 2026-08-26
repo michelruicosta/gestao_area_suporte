@@ -86,7 +86,21 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 [data-theme="escuro"] .user-btn { background: var(--surface); border-color: var(--border); color: var(--text); }
 
 /* ─── Sidebar clara: branca com borda lateral ───────────────────────── */
+/* ─── Claro: lavanda nos cards e sidebar ────────────────────────────── */
 [data-theme="claro"] .sidebar { background: linear-gradient(180deg, #eae7ff 0%, #dbd5ff 100%); color: #1c2b4a; border-right: 1px solid #c8c0ee; }
+[data-theme="claro"] .evo,
+[data-theme="claro"] .tabela-wrap,
+[data-theme="claro"] .admin-card,
+[data-theme="claro"] .fevo-kpi,
+[data-theme="claro"] .fevo-chart-card,
+[data-theme="claro"] .fevo-card,
+[data-theme="claro"] .fevo-periodo-wrap,
+[data-theme="claro"] .fog-tbl-wrap,
+[data-theme="claro"] .fog-kpi,
+[data-theme="claro"] .fog-rk-head {
+  background: linear-gradient(135deg, #f0eeff 0%, #f5f3ff 100%);
+  border-color: #d4cfee;
+}
 [data-theme="claro"] .sidebar-logo { color: #1c2b4a; border-bottom-color: #dde2ec; }
 [data-theme="claro"] .nav-item { color: #334155; }
 [data-theme="claro"] .nav-item:hover { background: #f3f5f8; color: #1c2b4a; }
@@ -305,7 +319,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 #tbl-resumo tbody td:first-child { text-transform: uppercase; color: var(--text); font-weight: 600; }
 
 /* ─── Painel Evolução Histórica ─────────────────────────────────────── */
-.evo { background: linear-gradient(135deg, #f0eeff 0%, #f5f3ff 100%); border: 1px solid #d4cfee; border-radius: 10px;
+.evo { background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
   box-shadow: 0 1px 3px rgba(0,0,0,.07); overflow: hidden; margin-bottom: 1.25rem; }
 .evo-trig { display: flex; align-items: center; justify-content: space-between;
   padding: 13px 18px; cursor: pointer; border: none; background: none; width: 100%;
@@ -381,13 +395,14 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
   font-weight: 600; cursor: pointer; font-family: inherit; }
 .btn-cal-apply:disabled { opacity: .4; cursor: not-allowed; }
 /* date range inputs */
-.dt-range-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:4px 0}
-.dt-range-label{display:flex;align-items:center;gap:5px;font-size:0.75rem;color:var(--muted)}
-.dt-inp{font-size:0.8125rem;border:1px solid var(--border);border-radius:6px;padding:4px 8px;background:var(--surface);color:var(--text);cursor:pointer}
-.dt-inp:focus{outline:2px solid var(--accent);outline-offset:1px}
-.dt-btn-filtrar{padding:4px 14px;border-radius:6px;font-size:0.8125rem;border:none;cursor:pointer;background:var(--accent);color:#fff;font-weight:600}
+.dt-range-wrap{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:10px;padding:10px 16px;background:var(--bg);border:1px solid var(--border);border-radius:8px}
+.dt-range-label{display:flex;align-items:center;gap:6px;font-size:0.8125rem;font-weight:600;color:var(--text)}
+.dt-inp{font-size:0.875rem;border:1px solid var(--border);border-radius:6px;padding:5px 10px;background:var(--surface);color:var(--text);cursor:pointer;font-family:inherit;min-width:130px}
+.dt-inp:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+.dt-sep{font-size:0.75rem;color:var(--muted);font-weight:400;white-space:nowrap}
+.dt-btn-filtrar{padding:5px 16px;border-radius:6px;font-size:0.8125rem;border:none;cursor:pointer;background:var(--accent);color:#fff;font-weight:700;letter-spacing:.02em}
 .dt-btn-filtrar:hover{opacity:.85}
-.dt-btn-salvar{padding:4px 12px;border-radius:6px;font-size:0.8125rem;border:1px solid var(--border);cursor:pointer;background:var(--surface);color:var(--text)}
+.dt-btn-salvar{padding:5px 12px;border-radius:6px;font-size:0.8125rem;border:1px solid var(--border);cursor:pointer;background:var(--surface);color:var(--text)}
 .dt-btn-salvar:hover{background:var(--bg)}
 .dt-salvo-ok{font-size:0.75rem;color:var(--pos);font-weight:600}
 /* tabela evo */
@@ -500,7 +515,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .page-header-left { min-width: 0; }
 
 /* ─── Tabela ────────────────────────────────────────────────────────── */
-.tabela-wrap { background: linear-gradient(135deg, #f0eeff 0%, #f5f3ff 100%); border: 1px solid #d4cfee; border-radius: 10px; overflow-x: auto; }
+.tabela-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow-x: auto; }
 .tabela { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.875rem; }
 .tabela th, .tabela td { padding: 0.65rem 0.85rem; border-bottom: 1px solid var(--border); text-align: left; vertical-align: middle; color: var(--text); }
 .tabela th { background: var(--bg); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted); font-weight: 600; position: sticky; top: 0; z-index: 1; border-top: 1px solid var(--border); }
@@ -647,7 +662,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 
 /* ─── Admin ─────────────────────────────────────────────────── */
 .admin-card {
-  background: linear-gradient(135deg, #f0eeff 0%, #f5f3ff 100%); border: 1px solid #d4cfee; border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
   padding: 1.25rem 1.5rem; margin-bottom: 1.25rem;
 }
 .admin-card h2 { margin: 0 0 1rem; font-size: 0.95rem; font-weight: 700; color: var(--text); }
@@ -771,14 +786,14 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 
 /* ─── FOG Evolução ────────────────────────────────────────────────── */
 .fevo-kpis { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px; }
-.fevo-kpi { background:linear-gradient(135deg,#f0eeff 0%,#f5f3ff 100%);border:1px solid #d4cfee;border-radius:10px;padding:14px 18px; }
+.fevo-kpi { background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px; }
 .fevo-kpi-lbl { font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px; }
 .fevo-kpi-val { font-size:1.6rem;font-weight:800;color:var(--text);line-height:1.1;font-variant-numeric:tabular-nums; }
 .fevo-kpi-sub { font-size:.75rem;color:var(--muted);margin-top:3px; }
 .fevo-kpi-delta { font-size:.74rem;font-weight:700;margin-top:3px; }
 .fevo-kpi-delta.up { color:var(--neg); }
 .fevo-kpi-delta.down { color:var(--pos); }
-.fevo-chart-card { background:linear-gradient(135deg,#f0eeff 0%,#f5f3ff 100%);border:1px solid #d4cfee;border-radius:10px;padding:18px 20px;margin-bottom:16px; }
+.fevo-chart-card { background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:16px; }
 .fevo-chart-hd { display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px; }
 .fevo-chart-titulo { font-size:.875rem;font-weight:700;color:var(--text); }
 .fevo-chart-sub { font-size:.78rem;color:var(--muted);margin-top:2px; }
@@ -794,7 +809,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .fevo-bar.closed { background:var(--pos);opacity:.8; }
 .fevo-bar-lbl { font-size:10px;color:var(--muted);text-align:center;margin-top:4px;position:absolute;bottom:-22px;width:100%; }
 .fevo-grid3 { display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px; }
-.fevo-card { background:linear-gradient(135deg,#f0eeff 0%,#f5f3ff 100%);border:1px solid #d4cfee;border-radius:10px;padding:18px 20px; }
+.fevo-card { background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px; }
 .fevo-card-titulo { font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px; }
 .fevo-rank-bloco { display:grid;grid-template-columns:1fr 1fr;gap:14px; }
 .fevo-rank-gtitle { font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px; }
@@ -820,7 +835,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .fevo-dias.amber { background:var(--neg-bg);color:var(--neg); }
 .fevo-dias.green { background:var(--pos-bg);color:var(--pos); }
 .fevo-nota { font-size:.74rem;color:var(--muted);margin-top:10px; }
-.fevo-periodo-wrap { background:linear-gradient(135deg,#f0eeff 0%,#f5f3ff 100%);border:1px solid #d4cfee;border-radius:10px;padding:10px 16px;margin-bottom:16px; }
+.fevo-periodo-wrap { background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 16px;margin-bottom:16px; }
 .fog-plr-row { display:flex; align-items:center; gap:6px; padding:4px 2px 6px; }
 .fog-plr-ico { font-size:0.8125rem; }
 .fog-plr-data { font-size:0.8125rem; font-weight:600; color:var(--accent); }
@@ -876,7 +891,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .fog-leg span { display: flex; align-items: center; gap: 4px }
 .fog-leg-sq  { display: inline-block; width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0 }
 
-.fog-tbl-wrap { background: linear-gradient(135deg,#f0eeff 0%,#f5f3ff 100%); border: 1px solid #d4cfee; border-radius: 10px; overflow: hidden }
+.fog-tbl-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden }
 .fog-cols { grid-template-columns: 4px 88px 52px 1fr 110px 82px 130px 100px 128px 58px }
 .fog-tbl-head {
   display: grid; align-items: center; padding: 0 16px; height: 36px;
@@ -914,7 +929,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 
 .fog-kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 22px }
 .fog-kpi {
-  background: linear-gradient(135deg,#f0eeff 0%,#f5f3ff 100%); border: 1px solid #d4cfee; border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
   padding: 16px 14px; transition: transform .12s;
 }
 .fog-kpi:hover { transform: translateY(-2px) }
@@ -927,7 +942,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .fog-kpi-sub { font-size: 0.625rem; color: var(--text); margin-top: 5px }
 
 .fog-rk-head {
-  background: linear-gradient(135deg,#f0eeff 0%,#f5f3ff 100%); border: 1px solid #d4cfee; border-radius: 10px 10px 0 0;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px 10px 0 0;
   border-bottom: none; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;
 }
 .fog-rk-wrap  { display: flex; align-items: flex-start; gap: 8px }
@@ -1191,9 +1206,9 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
             </div>
           </div>
           <div class="evo-cal" id="evo-cal" hidden>
-            <div class="dt-range-bar">
-              <span class="p-lbl">Personalizado</span>
-              <label class="dt-range-label">De <input type="date" id="evo-dt-inicio" class="dt-inp"></label>
+            <div class="dt-range-wrap">
+              <label class="dt-range-label">📅 De <input type="date" id="evo-dt-inicio" class="dt-inp"></label>
+              <span class="dt-sep">→</span>
               <label class="dt-range-label">Até <input type="date" id="evo-dt-fim" class="dt-inp"></label>
               <button class="dt-btn-filtrar" onclick="evoFiltrarDatas()">Aplicar</button>
               <button class="dt-btn-salvar" onclick="evoSalvarDatas()">Salvar</button>
@@ -1826,9 +1841,17 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
             <span class="filtros-chev">▼</span>
           </button>
           <div class="filtros-body">
-            <div class="dt-range-bar">
+            <div class="p-bar" id="fog-periodo-bar">
               <span class="p-lbl">Período</span>
-              <label class="dt-range-label">De <input type="date" id="fog-dt-inicio" class="dt-inp" value="2025-01-01"></label>
+              <button class="p-btn active" onclick="fogSelPeriod('semana',this)">Semana</button>
+              <button class="p-btn" onclick="fogSelPeriod('mes',this)">Mês</button>
+              <button class="p-btn" onclick="fogSelPeriod('3m',this)">3 meses</button>
+              <button class="p-btn" onclick="fogSelPeriod('6m',this)">6 meses</button>
+              <button class="p-btn" onclick="fogSelPeriod('custom',this)">Personalizado</button>
+            </div>
+            <div class="dt-range-wrap" id="fog-dt-wrap" hidden>
+              <label class="dt-range-label">📅 De <input type="date" id="fog-dt-inicio" class="dt-inp" value="2025-01-01"></label>
+              <span class="dt-sep">→</span>
               <label class="dt-range-label">Até <input type="date" id="fog-dt-fim" class="dt-inp"></label>
               <button class="dt-btn-filtrar" onclick="fogEvoFiltrar()">Filtrar</button>
               <button class="dt-btn-salvar" onclick="fogEvoSalvar()">Salvar</button>
@@ -3473,20 +3496,45 @@ carregarResumo();
 _timer = setInterval(_tick, 1000);
 
 // ── FOG Evolução ──────────────────────────────────────────────────────
-const _fogEvoCache = {};          // "inicio|fim" → dados já buscados
+const _fogEvoCache = {};          // "periodo" ou "inicio|fim" → dados já buscados
+let _fogEvoPeriod = 'semana';
 const _fogMnames = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const _fogLoadMsg = {
+  semana: { ico: '⚡', titulo: 'Buscando dados da semana…', msg: '' },
+  mes:    { ico: '📅', titulo: 'Buscando dados do mês…',   msg: 'Pode levar alguns segundos.' },
+  '3m':   { ico: '☕', titulo: 'Buscando 3 meses de dados…', msg: 'Isso pode demorar um pouco — aproveite para ir buscar um café!' },
+  '6m':   { ico: '☕', titulo: 'Buscando 6 meses de dados…', msg: 'Isso pode demorar um pouco — quando voltar, os dados já estarão na tela!' },
+};
 
-function _fogMostrarLoading(ini, fim) {
-  const dias = Math.round((new Date(fim) - new Date(ini)) / 864e5);
-  const ico = dias > 60 ? '☕' : '📅';
-  const msg = dias > 60 ? 'Isso pode demorar um pouco — aproveite para ir buscar um café!' : 'Pode levar alguns segundos.';
+function _fogMostrarLoading(pOrIni, fim) {
+  let ico, titulo, msg;
+  if (fim) {
+    const dias = Math.round((new Date(fim) - new Date(pOrIni)) / 864e5);
+    ico = dias > 60 ? '☕' : '📅';
+    msg = dias > 60 ? 'Isso pode demorar um pouco — aproveite para ir buscar um café!' : 'Pode levar alguns segundos.';
+    titulo = 'Buscando dados do período…';
+  } else {
+    const cfg = _fogLoadMsg[pOrIni] || _fogLoadMsg['mes'];
+    ico = cfg.ico; titulo = cfg.titulo; msg = cfg.msg;
+  }
   document.getElementById('fog-load-ico').textContent    = ico;
-  document.getElementById('fog-load-titulo').textContent = 'Buscando dados do período…';
+  document.getElementById('fog-load-titulo').textContent = titulo;
   document.getElementById('fog-load-msg').textContent    = msg;
   document.getElementById('fog-loading-modal').style.display = 'flex';
 }
 function _fogOcultarLoading() {
   document.getElementById('fog-loading-modal').style.display = 'none';
+}
+
+function fogSelPeriod(p, btn) {
+  _fogEvoPeriod = p;
+  document.querySelectorAll('#fog-periodo-bar .p-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const wrap = document.getElementById('fog-dt-wrap');
+  if (wrap) wrap.hidden = (p !== 'custom');
+  const re = document.getElementById('fog-evo-filtros-resumo');
+  if (re) re.textContent = p === 'custom' ? 'Personalizado' : btn.textContent;
+  if (p !== 'custom') carregarFogEvo();
 }
 
 function fogEvoFiltrar() {
@@ -3518,14 +3566,35 @@ function fogEvoSalvar() {
   if (el) { el.hidden = false; setTimeout(() => el.hidden = true, 2000); }
 }
 
-function carregarFogEvo() { fogEvoFiltrar(); }
+function carregarFogEvo() {
+  if (_fogEvoPeriod === 'custom') { fogEvoFiltrar(); return; }
+  const chave = _fogEvoPeriod;
+  if (_fogEvoCache[chave]) { renderFogEvo(_fogEvoCache[chave]); return; }
+  _fogMostrarLoading(_fogEvoPeriod);
+  fetch(`/api/fog-evolucao?periodo=${_fogEvoPeriod}`)
+    .then(r => r.json())
+    .then(d => { _fogEvoCache[chave] = d; _fogOcultarLoading(); renderFogEvo(d); })
+    .catch(() => {
+      _fogOcultarLoading();
+      const el = document.getElementById('fog-evo-corpo');
+      if (el) el.innerHTML = '<div class="fevo-loading">Erro ao carregar dados do FOG. Tente novamente.</div>';
+    });
+}
 
 function _fogPeriodDates() {
-  const iniVal = document.getElementById('fog-dt-inicio')?.value;
-  const fimVal = document.getElementById('fog-dt-fim')?.value;
+  if (_fogEvoPeriod === 'custom') {
+    const iniVal = document.getElementById('fog-dt-inicio')?.value;
+    const fimVal = document.getElementById('fog-dt-fim')?.value;
+    if (iniVal && fimVal) return [new Date(iniVal + 'T00:00:00'), new Date(fimVal + 'T23:59:59')];
+  }
   const today = new Date(); today.setHours(0,0,0,0);
-  if (iniVal && fimVal) return [new Date(iniVal + 'T00:00:00'), new Date(fimVal + 'T23:59:59')];
-  return [new Date('2025-01-01T00:00:00'), today];
+  const start = new Date(today);
+  if      (_fogEvoPeriod === 'semana') start.setDate(start.getDate() - 7);
+  else if (_fogEvoPeriod === 'mes')    start.setDate(start.getDate() - 30);
+  else if (_fogEvoPeriod === '3m')     start.setMonth(start.getMonth() - 3);
+  else if (_fogEvoPeriod === '6m')     start.setMonth(start.getMonth() - 6);
+  else                                 start.setFullYear(2025, 0, 1);
+  return [start, today];
 }
 
 function renderFogEvo(dados) {
@@ -3702,9 +3771,6 @@ function _renderFogParados(ativos) {
   iniEl.value = localStorage.getItem('fog_dt_inicio') || '2025-01-01';
   fimEl.value = localStorage.getItem('fog_dt_fim') || today;
   fimEl.max = today;
-  const re = document.getElementById('fog-evo-filtros-resumo');
-  const ini = iniEl.value, fim = fimEl.value;
-  if (re && ini && fim) re.textContent = `${ini.slice(8,10)}/${ini.slice(5,7)} – ${fim.slice(8,10)}/${fim.slice(5,7)}`;
 })();
 
 // Init E-mails custom date inputs com valores salvos
