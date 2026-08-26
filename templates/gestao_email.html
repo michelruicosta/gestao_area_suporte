@@ -401,8 +401,25 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .dt-field{display:inline-flex;align-items:center;gap:5px;padding:3px 9px 3px 7px;border-radius:20px;border:1px solid var(--border);background:var(--surface);cursor:pointer;transition:border-color .15s}
 .dt-field:focus-within{border-color:var(--accent)}
 .dt-ico{font-size:0.85rem;line-height:1;opacity:.75}
-.dt-inp{border:none;background:transparent;font-family:inherit;font-size:0.75rem;color:var(--text);outline:none;cursor:pointer;padding:0;min-width:90px;color-scheme:dark}
-.dt-inp::-webkit-calendar-picker-indicator{opacity:.5;cursor:pointer;font-size:0.8rem;margin-left:2px}
+.dt-inp{position:absolute;opacity:0;pointer-events:none;width:0;height:0}
+.dt-disp{font-size:0.75rem;color:var(--text);min-width:82px;user-select:none}
+.dt-disp.vazio{color:var(--muted)}
+.dt-cal-popup{position:fixed;z-index:9500;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.28);padding:14px;width:236px;animation:calIn .12s ease}
+@keyframes calIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+.dt-cal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.dt-cal-nav{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;padding:3px 8px;border-radius:6px;line-height:1;transition:background .1s;font-family:inherit}
+.dt-cal-nav:hover{background:var(--accent-bg);color:var(--accent)}
+.dt-cal-mes{font-size:0.78rem;font-weight:600;color:var(--text)}
+.dt-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;text-align:center;margin-bottom:4px}
+.dt-cal-dow{font-size:0.58rem;color:var(--muted);padding:0 0 5px;font-weight:700;letter-spacing:.04em}
+.dt-cal-day{font-size:0.7rem;width:30px;height:30px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;margin:1px auto;transition:background .1s,color .1s;color:var(--text)}
+.dt-cal-day:hover{background:var(--accent-bg);color:var(--accent)}
+.dt-cal-day.hoje{border:1.5px solid var(--accent);color:var(--accent);font-weight:700}
+.dt-cal-day.sel{background:var(--accent);color:var(--sel-text)!important;font-weight:700;border:none}
+.dt-cal-day.outro{color:var(--muted);opacity:.35;cursor:default;pointer-events:none}
+.dt-cal-ft{display:flex;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.dt-cal-ft button{flex:1;font-size:0.68rem;padding:5px 8px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .1s}
+.dt-cal-ft button:hover{background:var(--accent-bg);color:var(--accent);border-color:var(--accent)}
 .btn-aplicar-dt{padding:3px 12px;border-radius:20px;background:var(--accent);border:none;color:#fff;font-family:inherit;font-size:0.72rem;font-weight:700;cursor:pointer;transition:opacity .15s}
 .btn-aplicar-dt:hover{opacity:.85}
 /* ─── Rodapé de ações dos filtros ───────────────────────────────────── */
@@ -1226,14 +1243,16 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
               </div>
               <div class="dt-mini-wrap" id="evo-dt-mini">
                 <span class="p-lbl">De</span>
-                <label class="dt-field">
+                <label class="dt-field" onclick="_abrirCal('evo-dt-inicio',event)">
                   <span class="dt-ico">📅</span>
+                  <span class="dt-disp vazio" id="evo-dt-inicio-disp">dd/mm/aaaa</span>
                   <input type="date" id="evo-dt-inicio" class="dt-inp">
                 </label>
                 <span class="dt-sep">→</span>
                 <span class="p-lbl">Até</span>
-                <label class="dt-field">
+                <label class="dt-field" onclick="_abrirCal('evo-dt-fim',event)">
                   <span class="dt-ico">📅</span>
+                  <span class="dt-disp vazio" id="evo-dt-fim-disp">dd/mm/aaaa</span>
                   <input type="date" id="evo-dt-fim" class="dt-inp">
                 </label>
                 <button class="btn-aplicar-dt" onclick="aplicarFiltroEvo()">Aplicar</button>
@@ -1641,14 +1660,16 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
           </div>
           <div class="dt-mini-wrap" id="foglist-dt-mini">
             <span class="p-lbl">De</span>
-            <label class="dt-field">
+            <label class="dt-field" onclick="_abrirCal('foglist-dt-inicio',event)">
               <span class="dt-ico">📅</span>
+              <span class="dt-disp vazio" id="foglist-dt-inicio-disp">dd/mm/aaaa</span>
               <input type="date" id="foglist-dt-inicio" class="dt-inp">
             </label>
             <span class="dt-sep">→</span>
             <span class="p-lbl">Até</span>
-            <label class="dt-field">
+            <label class="dt-field" onclick="_abrirCal('foglist-dt-fim',event)">
               <span class="dt-ico">📅</span>
+              <span class="dt-disp vazio" id="foglist-dt-fim-disp">dd/mm/aaaa</span>
               <input type="date" id="foglist-dt-fim" class="dt-inp">
             </label>
             <button class="btn-aplicar-dt" onclick="aplicarFiltroFogLista()">Aplicar</button>
@@ -1913,14 +1934,16 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
           </div>
           <div class="dt-mini-wrap" id="fog-dt-mini">
             <span class="p-lbl">De</span>
-            <label class="dt-field">
+            <label class="dt-field" onclick="_abrirCal('fog-dt-inicio',event)">
               <span class="dt-ico">📅</span>
+              <span class="dt-disp vazio" id="fog-dt-inicio-disp">dd/mm/aaaa</span>
               <input type="date" id="fog-dt-inicio" class="dt-inp">
             </label>
             <span class="dt-sep">→</span>
             <span class="p-lbl">Até</span>
-            <label class="dt-field">
+            <label class="dt-field" onclick="_abrirCal('fog-dt-fim',event)">
               <span class="dt-ico">📅</span>
+              <span class="dt-disp vazio" id="fog-dt-fim-disp">dd/mm/aaaa</span>
               <input type="date" id="fog-dt-fim" class="dt-inp">
             </label>
             <button class="btn-aplicar-dt" onclick="aplicarFiltroFogEvo()">Aplicar</button>
@@ -3252,6 +3275,8 @@ function limparFiltrosFogLista() {
   if (mini) mini.classList.remove('vis');
   document.getElementById('foglist-dt-inicio').value = '';
   document.getElementById('foglist-dt-fim').value = '';
+  _sincDispCal('foglist-dt-inicio');
+  _sincDispCal('foglist-dt-fim');
   document.querySelector('#fog-lista-filtros-wrap .filtros-toggle')?.classList.remove('filtros-ativo');
   document.getElementById('fBusca').value = '';
   document.getElementById('fProjeto').value = '';
@@ -3948,6 +3973,137 @@ function _renderFogParados(ativos) {
   }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted)">—</td></tr>';
 }
 
+// ─── Calendário Customizado ──────────────────────────────────────────────────
+(function(){
+  const MESES = ['janeiro','fevereiro','março','abril','maio','junho',
+                 'julho','agosto','setembro','outubro','novembro','dezembro'];
+  const DIAS  = ['D','S','T','Q','Q','S','S'];
+  let popup = null, campoAtivo = null, dispAtivo = null, anoV, mesV;
+
+  function abrirCal(inpId, evt) {
+    evt.preventDefault(); evt.stopPropagation();
+    const inp  = document.getElementById(inpId);
+    const disp = document.getElementById(inpId + '-disp');
+    if (popup && campoAtivo === inp) { fecharCal(); return; }
+    fecharCal();
+    campoAtivo = inp; dispAtivo = disp;
+    const hoje = new Date();
+    if (inp.value) {
+      const [a,m] = inp.value.split('-').map(Number);
+      anoV = a; mesV = m - 1;
+    } else {
+      anoV = hoje.getFullYear(); mesV = hoje.getMonth();
+    }
+    popup = document.createElement('div');
+    popup.className = 'dt-cal-popup';
+    document.body.appendChild(popup);
+    renderCal(inp);
+    posPopup(evt.currentTarget || inp.closest('.dt-field'));
+    setTimeout(() => {
+      document.addEventListener('click', _fora, true);
+      document.addEventListener('keydown', _escCal2);
+    }, 0);
+  }
+
+  function renderCal(inp) {
+    const hoje = new Date();
+    const hA = hoje.getFullYear(), hM = hoje.getMonth(), hD = hoje.getDate();
+    const selVal = inp.value;
+    const [selA, selM, selD] = selVal ? selVal.split('-').map(Number) : [null,null,null];
+    const priDia  = new Date(anoV, mesV, 1).getDay();
+    const ultDia  = new Date(anoV, mesV + 1, 0).getDate();
+    const ultAnt  = new Date(anoV, mesV, 0).getDate();
+
+    let h = `<div class="dt-cal-hd">
+      <button class="dt-cal-nav" id="_cn-prev">&#8249;</button>
+      <span class="dt-cal-mes">${MESES[mesV]} de ${anoV}</span>
+      <button class="dt-cal-nav" id="_cn-next">&#8250;</button>
+    </div><div class="dt-cal-grid">`;
+    DIAS.forEach(d => h += `<div class="dt-cal-dow">${d}</div>`);
+    for (let i = priDia - 1; i >= 0; i--)
+      h += `<div class="dt-cal-day outro">${ultAnt - i}</div>`;
+    for (let d = 1; d <= ultDia; d++) {
+      let cls = 'dt-cal-day';
+      if (d===hD && mesV===hM && anoV===hA) cls += ' hoje';
+      if (selA && d===selD && mesV===(selM-1) && anoV===selA) cls += ' sel';
+      h += `<div class="${cls}" data-d="${d}">${d}</div>`;
+    }
+    const total = priDia + ultDia;
+    const resto = total % 7 === 0 ? 0 : 7 - (total % 7);
+    for (let d = 1; d <= resto; d++)
+      h += `<div class="dt-cal-day outro">${d}</div>`;
+    h += `</div><div class="dt-cal-ft">
+      <button id="_cn-limpar">Limpar</button>
+      <button id="_cn-hoje">Hoje</button>
+    </div>`;
+    popup.innerHTML = h;
+
+    popup.querySelector('#_cn-prev').addEventListener('click', e => {
+      e.stopPropagation(); mesV--; if (mesV<0){mesV=11;anoV--;} renderCal(inp);
+    });
+    popup.querySelector('#_cn-next').addEventListener('click', e => {
+      e.stopPropagation(); mesV++; if (mesV>11){mesV=0;anoV++;} renderCal(inp);
+    });
+    popup.querySelectorAll('.dt-cal-day:not(.outro)').forEach(el => {
+      el.addEventListener('click', e => {
+        e.stopPropagation();
+        const d = parseInt(el.dataset.d);
+        inp.value = `${anoV}-${String(mesV+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        inp.dispatchEvent(new Event('change'));
+        _sincDispCal(inp.id);
+        fecharCal();
+      });
+    });
+    popup.querySelector('#_cn-limpar').addEventListener('click', e => {
+      e.stopPropagation(); inp.value = ''; _sincDispCal(inp.id); fecharCal();
+    });
+    popup.querySelector('#_cn-hoje').addEventListener('click', e => {
+      e.stopPropagation();
+      const hj = new Date();
+      inp.value = `${hj.getFullYear()}-${String(hj.getMonth()+1).padStart(2,'0')}-${String(hj.getDate()).padStart(2,'0')}`;
+      inp.dispatchEvent(new Event('change'));
+      _sincDispCal(inp.id); fecharCal();
+    });
+  }
+
+  function posPopup(anc) {
+    const r  = anc.getBoundingClientRect();
+    const pw = 236, ph = 290;
+    let top  = r.bottom + 6;
+    let left = r.left;
+    if (left + pw > window.innerWidth  - 8) left = window.innerWidth  - pw - 8;
+    if (top  + ph > window.innerHeight - 8) top  = r.top - ph - 6;
+    popup.style.top  = top  + 'px';
+    popup.style.left = left + 'px';
+  }
+
+  function fecharCal() {
+    if (popup) { popup.remove(); popup = null; }
+    campoAtivo = null; dispAtivo = null;
+    document.removeEventListener('click', _fora, true);
+    document.removeEventListener('keydown', _escCal2);
+  }
+
+  function _fora(e) { if (popup && !popup.contains(e.target)) fecharCal(); }
+  function _escCal2(e) { if (e.key==='Escape') fecharCal(); }
+
+  window._abrirCal    = abrirCal;
+  window._fecharCal   = fecharCal;
+  window._sincDispCal = function(inpId) {
+    const inp  = document.getElementById(inpId);
+    const disp = document.getElementById(inpId + '-disp');
+    if (!inp || !disp) return;
+    if (inp.value) {
+      const [a,m,d] = inp.value.split('-');
+      disp.textContent = `${d}/${m}/${a}`;
+      disp.classList.remove('vazio');
+    } else {
+      disp.textContent = 'dd/mm/aaaa';
+      disp.classList.add('vazio');
+    }
+  };
+})();
+
 // Init FogBugz date inputs com valores salvos ou padrão
 (function() {
   const today = new Date().toISOString().slice(0,10);
@@ -3957,6 +4113,8 @@ function _renderFogParados(ativos) {
   iniEl.value = localStorage.getItem('fog_dt_inicio') || '2025-01-01';
   fimEl.value = localStorage.getItem('fog_dt_fim') || today;
   fimEl.max = today;
+  _sincDispCal('fog-dt-inicio');
+  _sincDispCal('fog-dt-fim');
 })();
 
 // Init E-mails custom date inputs com valores salvos
@@ -3969,6 +4127,8 @@ function _renderFogParados(ativos) {
   fimEl.value = localStorage.getItem('evo_dt_fim') || today;
   fimEl.max = today;
   iniEl.max = today;
+  _sincDispCal('evo-dt-inicio');
+  _sincDispCal('evo-dt-fim');
 })();
 </script>
 </body>
