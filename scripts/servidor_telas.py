@@ -81,6 +81,7 @@ def _job_coleta_automatica():
         return
     _coleta_em_andamento = True
     _ultimo_erro_coleta = None
+    _log.info('Coleta automática disparada pelo agendador.')
     try:
         sys.path.insert(0, _SCRIPTS_DIR)
         from coletor_gmail import coletar
@@ -830,12 +831,20 @@ def fog_gerencial():
 
 
 # ── Inicialização ─────────────────────────────────────────────────────────────
+# Roda ao carregar o módulo — necessário para que o agendador funcione quando
+# o servidor é iniciado pelo Gunicorn (que importa o módulo sem executar __main__).
+
+bt.criar_banco()
+_cfg_inicial = _ler_config()
+_reagendar_coleta(_cfg_inicial.get('intervalo_coleta_min', 60))
+if not _scheduler.running:
+    _scheduler.start()
+    _log.info(
+        'Agendador iniciado — coleta automática a cada %d minuto(s).',
+        _cfg_inicial.get('intervalo_coleta_min', 60),
+    )
 
 if __name__ == '__main__':
-    bt.criar_banco()
-    cfg_inicial = _ler_config()
-    _reagendar_coleta(cfg_inicial.get('intervalo_coleta_min', 60))
-    _scheduler.start()
     porta = int(os.environ.get('PORT', 5001))
     _log.info('Gestão de E-mail — http://localhost:%d', porta)
     app.run(host='0.0.0.0', port=porta, debug=True, use_reloader=False)

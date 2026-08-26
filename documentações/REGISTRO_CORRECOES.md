@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-08-26 — Agendador automático nunca rodava em produção
+
+### 19:30 — Robô de coleta nunca ligava automaticamente no servidor
+
+**🔎 Em miúdos:** o robô que coleta e classifica e-mails automaticamente nunca rodou por conta própria em produção. Toda execução que aconteceu foi disparada manualmente pela tela de Administração.
+
+- **Problema:** o código que liga o agendador (`_scheduler.start()`) estava dentro do bloco `if __name__ == '__main__':`. Esse bloco só executa quando o servidor é iniciado manualmente no terminal. Em produção, o Gunicorn importa o módulo de outro jeito e esse bloco nunca roda — o agendador nunca ligava.
+- **Correção:** movidas as linhas de inicialização do agendador para fora do bloco `if __name__ == '__main__':`, para nível de módulo. Agora o agendador liga em qualquer situação (Gunicorn em produção ou terminal em desenvolvimento). Adicionado log de confirmação de início e de cada disparo automático.
+- **Arquivos:** `scripts/servidor_telas.py`
+- **Validação:** ⚠️ VALIDAÇÃO PENDENTE — verificar no journal do servidor após o próximo restart: `journalctl -u gestao-suporte | grep Agendador`. Critério: deve aparecer a linha "Agendador iniciado — coleta automática a cada X minuto(s).". Validação completa: confirmar que o coletor roda automaticamente no próximo intervalo sem disparar manualmente.
+
+---
+
 ## 2026-08-26 — Sair volta ao portal Finaud
 
 ### 18:10 — Botão Sair redirecionava para o login deste app
@@ -11,7 +24,7 @@
 - **Problema:** as rotas `/sair` e `/logout` limpavam a sessão e mandavam para `/login` deste app.
 - **Correção:** depois de `session.clear()`, o redirecionamento vai para `https://finaudapps.com.br` (ou para o endereço em `PORTAL_URL`, se estiver definido). Login e o restante das telas não mudaram.
 - **Arquivos:** `scripts/servidor_telas.py`, `tests/test_servidor_telas.py`
-- **Validação:** ✅ `GET /sair` e `GET /logout` respondem 302 para `https://finaudapps.com.br` (não para `/login`). No Windows, o ajuste de UTF-8 do servidor não roda dentro do pytest (senão a suíte quebra).
+- **Validação:** ✅ VALIDADO em produção (26/08 18:41, Michel): Sair → barra do navegador = `finaudapps.com.br`. `GET /sair` e `GET /logout` respondem 302 para o portal. Pytest 375. No Windows, o ajuste de UTF-8 do servidor não roda dentro do pytest (senão a suíte quebra).
 
 ---
 
