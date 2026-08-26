@@ -6,6 +6,7 @@ Entrada:   data/json/pipeline/01_extração_dados_brutos_gmail.json
 Saída:     data/validacao_classificacao/YYYYMMDD_HHMM_resultados.jsonl
            data/validacao_classificacao/YYYYMMDD_HHMM_relatorio.txt
 """
+from __future__ import annotations
 
 import os
 import sys

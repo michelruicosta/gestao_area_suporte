@@ -4,6 +4,7 @@ O que faz: cria e gerencia o banco de dados SQLite do Gestão Área Suporte —
            armazena todas as threads coletadas do Gmail, suas classificações
            e o estado de sincronização entre rodadas.
 """
+from __future__ import annotations
 
 import json
 import os

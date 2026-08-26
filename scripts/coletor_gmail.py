@@ -4,6 +4,7 @@ O que faz: conecta na caixa de coleta do Gestão Área Suporte via Gmail API (se
            importa TODAS as threads na primeira vez e, nas rodadas seguintes,
            busca apenas o que é novo ou foi atualizado. Salva diretamente no banco SQLite.
 """
+from __future__ import annotations
 
 import os
 import sys

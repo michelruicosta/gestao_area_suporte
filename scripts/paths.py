@@ -28,6 +28,8 @@ O status PENDENTE é derivado (fio sem registo em nenhum dos arquivos).
 
 ``deletar_carga.py`` apaga ``pipeline/`` inteiro — inclui **pares confirmados**.
 """
+from __future__ import annotations
+
 import json
 import os
 import shutil
