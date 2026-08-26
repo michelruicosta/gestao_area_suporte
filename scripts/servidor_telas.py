@@ -15,7 +15,12 @@ import sys
 import threading
 
 # Windows usa charmap por padrão — força UTF-8 para suportar emojis nos logs
-if sys.platform == 'win32' and hasattr(sys.stdout, 'buffer'):
+# pytest captura stdout; reembrulhar fecha o arquivo interno da suíte
+if (
+    sys.platform == 'win32'
+    and hasattr(sys.stdout, 'buffer')
+    and 'pytest' not in sys.modules
+):
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 import requests

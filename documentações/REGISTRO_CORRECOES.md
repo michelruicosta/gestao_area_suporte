@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-08-26 — Sair volta ao portal Finaud
+
+### 18:10 — Botão Sair redirecionava para o login deste app
+
+**🔎 Em miúdos:** ao clicar em Sair, a pessoa caía na tela de login deste sistema. O combinado do grupo é encerrar a sessão e voltar sempre para o site dos apps (`https://finaudapps.com.br`).
+
+- **Problema:** as rotas `/sair` e `/logout` limpavam a sessão e mandavam para `/login` deste app.
+- **Correção:** depois de `session.clear()`, o redirecionamento vai para `https://finaudapps.com.br` (ou para o endereço em `PORTAL_URL`, se estiver definido). Login e o restante das telas não mudaram.
+- **Arquivos:** `scripts/servidor_telas.py`, `tests/test_servidor_telas.py`
+- **Validação:** ✅ `GET /sair` e `GET /logout` respondem 302 para `https://finaudapps.com.br` (não para `/login`). No Windows, o ajuste de UTF-8 do servidor não roda dentro do pytest (senão a suíte quebra).
+
+---
+
 ## 2026-08-25 — Etapa 6: logging em arquivo (formato de data brasileiro)
 
 ### 17:58 — Sistema de logging implementado nos 3 scripts de produção
