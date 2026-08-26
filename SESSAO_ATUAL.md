@@ -32,8 +32,9 @@
 ### Estado atual
 
 **Produção:** no ar em `https://gestao-suporte.finaudapps.com.br`.
+**Sair:** volta para `https://finaudapps.com.br` — aprovado por Michel (18:41).
 **Agendador:** ativo no servidor desde 19:23 — próxima coleta automática às ~20:23.
-**GitHub:** `main` em `dcf7644`.
+**GitHub:** `main` local à frente do origin neste `/fechar` (bordo).
 
 ---
 
@@ -43,41 +44,20 @@
 2. **🟡** Remover rotas mortas `/fog/gerencial` e `/fog/operacional` (código morto em `servidor_telas.py`).
 3. **🔴 SPEC §10** — 3 distinções que a IA não sabe fazer (não bloqueia o app em produção).
 
-Último /fechar: 2026-08-26 19:45 — memórias revisadas ✅
+Último /fechar: 2026-08-26 18:56 — memórias revisadas ✅
 
 ---
 
 ## 📓 Diário da sessão (2026-08-26) — Sair volta ao portal
 
-### O que foi feito hoje
+### O que foi feito
 
-**Frente única:** o botão **Sair** do Gestão Área Suporte encerrava a sessão e caía no login deste app (`gestao-suporte.finaudapps.com.br/login`). Padrão Finaud: voltar sempre para `https://finaudapps.com.br`.
+**Frente única:** o botão **Sair** caía no login deste app. Padrão Finaud: voltar sempre para `https://finaudapps.com.br`.
 
-- Rotas `/sair` e `/logout` em `scripts/servidor_telas.py`: depois de limpar a sessão, redirecionam para o portal (ou `PORTAL_URL`)
+- Rotas `/sair` e `/logout`: depois de limpar a sessão, redirecionam para o portal (ou `PORTAL_URL`)
 - Teste `tests/test_servidor_telas.py` trava esse destino
-- Ajuste UTF-8 do Windows não roda dentro do pytest (senão a suíte quebra)
-- Commit `869bedf` · push na `main` · deploy na VPS · serviço `gestao-suporte` ativo
-- Michel testou no site e **aprovou** (18:41)
-
-**Pytest:** 375 passaram.
-
----
-
-### Estado atual
-
-**Produção:** no ar em `https://gestao-suporte.finaudapps.com.br`.
-**Sair:** 302 para `https://finaudapps.com.br` — aprovado por Michel.
-**GitHub:** `main` em `869bedf` (código do Sair já no servidor). Este `/fechar` só atualiza o bordo.
-
----
-
-### Próximo passo
-
-1. **🔴 SPEC §10** — definir 3 distinções que a IA ainda não sabe fazer (item urgente no `PENDENCIAS.md`; não é bloqueio do app no ar).
-2. **🟡** Remover rotas mortas `/fog/gerencial` e `/fog/operacional` (sem template; a tela não usa).
-3. Painel unificado e Python 3.9 na VPS — **não urgente**.
-
-Último /fechar: 2026-08-26 18:56 — memórias revisadas ✅
+- Commit `869bedf` · push · deploy · Michel **aprovou** no site (18:41)
+- Pytest: 375 passaram
 
 ---
 
