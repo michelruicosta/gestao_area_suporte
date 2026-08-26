@@ -134,12 +134,38 @@ O servidor sobe na porta definida em `PORT` (padrão 5001). Para rodar em produ�
 
 ---
 
-## Como atualizar (após deploy inicial)
+## Como atualizar o servidor de produção (após cada push)
+
+Toda vez que fizer commit + push no GitHub, o servidor precisa buscar as novidades e reiniciar.
+
+**Passos — rodar no servidor (terminal do VPS, logado como root):**
 
 ```bash
-git pull origin main
-# reiniciar o serviço (comando depende do servidor — ver seção abaixo)
+cd /srv/finaud/tec/gestao_area_suporte && git pull
 ```
+
+Em seguida, reiniciar o serviço para o código novo entrar em vigor:
+
+```bash
+systemctl restart gestao-suporte
+```
+
+Confirmar que voltou a rodar:
+
+```bash
+systemctl status gestao-suporte
+```
+
+Deve aparecer `active (running)`. Se não aparecer, verificar o log:
+
+```bash
+journalctl -u gestao-suporte -n 50
+```
+
+> **Resumo rápido (copiar e colar no servidor):**
+> ```bash
+> cd /srv/finaud/tec/gestao_area_suporte && git pull && systemctl restart gestao-suporte && systemctl status gestao-suporte
+> ```
 
 ---
 
