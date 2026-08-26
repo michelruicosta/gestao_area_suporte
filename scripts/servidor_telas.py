@@ -43,6 +43,13 @@ app = Flask(
 )
 app.secret_key = os.environ.get('SECRET_KEY', 'oraculo360-gestao-secret')
 
+@app.after_request
+def sem_cache(response):
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
+
 _coleta_em_andamento = False
 _ultimo_erro_coleta: str | None = None
 
@@ -121,6 +128,7 @@ def _injetar_usuario():
 # Credencial de acesso (variáveis de ambiente sobrescrevem o padrão)
 _ADMIN_EMAIL = os.environ.get('GESTAO_EMAIL', 'michel@finaud.com.br')
 _ADMIN_SENHA = os.environ.get('GESTAO_SENHA', 'finaud2026')
+_PORTAL_URL = os.environ.get('PORTAL_URL', 'https://finaudapps.com.br').rstrip('/')
 
 # ── Mapeamento categoria → nome de exibição ────────────────────────────────────
 
@@ -261,7 +269,7 @@ def login():
 @app.route('/sair')
 def sair():
     session.clear()
-    return redirect(url_for('login'))
+    return redirect(_PORTAL_URL)
 
 
 # ── Tela principal ─────────────────────────────────────────────────────────────
@@ -663,7 +671,7 @@ def page_custos():
 @app.route('/logout')
 def logout():
     session.clear()
-    return redirect(url_for('login'))
+    return redirect(_PORTAL_URL)
 
 
 @app.route('/perfil')
