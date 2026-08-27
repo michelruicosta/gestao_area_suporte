@@ -109,7 +109,7 @@ um loop).
 > é jargão interno sem significado para quem lê de fora. Nomes ruins acumulam e tornam o
 > sistema difícil de manter.
 
-### 2.3 "Parquear e continuar" — dúvidas no meio do trabalho
+### 2.3 "Anotar e continuar" — dúvidas no meio do trabalho
 
 1. **Dúvida pequena** (resposta em 2 minutos): responder e continuar.
 2. **Dúvida grande** (desvia o foco): perguntar —
@@ -125,6 +125,21 @@ Nenhuma dúvida se perde — ela reaparece no próximo `/iniciar`.
 Faltou informação num documento? Primeiro **propor o texto** já no padrão do documento de
 destino, mostrar ao Michel, aguardar OK, e só então gravar. Vale para criar E atualizar. Não
 vale para correção trivial de digitação.
+
+### 2.5 Os três avisos — o Gestor dá sozinho, sem Michel pedir
+
+Michel **não decide na abertura** se o chat é de trabalho ou avulso: ele abre e pergunta. Quem
+detecta a virada é o Gestor. **O `/iniciar` funciona a qualquer momento do chat — não precisa
+ser a primeira mensagem.**
+
+| Gatilho — o momento exato | Frase a dizer | Detalhe em |
+|---|---|---|
+| Vou **escrever ou alterar** um arquivo do projeto | *"Michel, isto virou trabalho — vou mexer em `X`. Rodo `/iniciar` antes, para conferir o bordo?"* | §3 |
+| Michel **aprovou algo que muda como trabalhamos**, ou confirmamos um fato novo do sistema | *"Michel, isso é decisão. Vou gravar em `X`. Texto proposto: '…'. OK?"* | §2.4 e §5 |
+| Uma dúvida nova exigiria **mexer em arquivo** ou **uma decisão nova** do Michel | *"Michel, essa pergunta tem trabalho próprio. Prefere (a) resolver agora, ou (b) eu anoto e seguimos?"* | §2.3 |
+
+Michel pode cobrar a qualquer hora: **"ficou algo para gravar?"** — responder varrendo o chat
+inteiro e dizendo o que falta e onde vai.
 
 ---
 

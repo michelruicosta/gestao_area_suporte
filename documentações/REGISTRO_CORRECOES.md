@@ -2,6 +2,73 @@
 
 ---
 
+## 2026-08-27 — SESSAO_ATUAL.md enxugado + índice de todas as sessões
+
+### 14:25 — O bordo passou a guardar 3 sessões, com um índice no topo
+
+**🔎 Em miúdos:** o arquivo que registra o dia a dia do projeto virou um caderno de 10 páginas,
+e ele é lido inteiro toda vez que abrimos uma sessão. Agora ele guarda as 3 páginas mais
+recentes; as antigas foram para a pasta de arquivo (nada foi apagado). Na "capa" do arquivo
+entrou uma lista com **todas** as sessões já feitas — é ali que se vê, de um olhar, tudo o que
+já foi trabalhado no projeto.
+
+- **Problema:** `SESSAO_ATUAL.md` tinha 450 linhas com 10 diários acumulados (~6.000 tokens),
+  lido integralmente em todo `/iniciar`. **Macro:** não havia nenhum lugar que respondesse "o
+  que já fizemos neste projeto?" sem rolar o arquivo inteiro — e o custo crescia a cada sessão.
+- **Correção:**
+  - `SESSAO_ATUAL.md` — **450 → 183 linhas**. Mantidos os 3 diários mais recentes (27/08 tarde,
+    27/08 manhã, 26/08). Nova seção no topo: **"🗂️ Sessões anteriores"**, com uma linha por
+    sessão (11 no total) e a marca `abaixo` / `arquivo` indicando onde está o detalhe.
+  - `_archive/sessao_atual_historico/SESSAO_ATUAL_historico_2026-08.md` — **novo**, com os 7
+    diários de 24/08 e 26/08 movidos **sem nenhuma alteração de texto**.
+  - `_archive/sessao_atual_historico/CONTEXTO.md` — entrada nova explicando o arquivamento,
+    seguindo o formato já usado em 28/07.
+  - `.claude/commands/fechar.md` — novo passo **1.1**: o `/fechar` acrescenta a linha no índice
+    e move o 4º diário para o arquivo do mês. A manutenção passa a ser automática.
+  - `SESSAO_ATUAL.md` (cabeçalho) — removidas as referências a `MAPA_DO_PROJETO.md` e a
+    `MAPA`/`GUIA`, que não existem neste projeto; agora apontam para a spec.
+- **Validação:** ✅ VALIDADO — 7 diários conferidos no arquivo de destino, 3 no de origem,
+  nenhum perdido; `SESSAO_ATUAL.md` em 183 linhas. Sem teste: documentação e arquivo de
+  instrução, sem código.
+
+---
+
+## 2026-08-27 — `/fechar` apontava para o projeto antigo (oraculo_360_finaud)
+
+### 14:07 — Comando de encerramento corrigido para este projeto
+
+**🔎 Em miúdos:** o comando que fecha a sessão foi copiado do projeto anterior e nunca
+adaptado. Ele mandava entrar numa pasta que não existe mais e rodar dois programas que este
+projeto não tem, além de citar quatro documentos inexistentes. Na prática, dois blocos
+falhavam na tela e eram pulados toda vez. **Nada foi perdido:** o projeto antigo não existe no
+computador, então nada foi gravado no lugar errado — o bordo (SESSAO_ATUAL, REGISTRO,
+PENDENCIAS) e as memórias sempre foram escritos nas pastas certas deste projeto.
+
+- **Problema:** `.claude/commands/fechar.md` continha 9 referências ao projeto
+  `oraculo_360_finaud`: dois `cd D:\oraculo_360_finaud` (blocos 1.5 e 1.55), a pasta de
+  memórias `D--oraculo-360-finaud`, os scripts `auditar_documentacao.py` e
+  `verificar_links_documentacao.py`, e os documentos `MAPA_DO_PROJETO.md`,
+  `PLANO_IMPLEMENTACAO_MOTOR.md` e `AUDITORIA_ULTIMACARGA_VALIDACAO.md`. Além disso, o Bloco
+  1.7 conferia números em `data/json/pipeline/threads_*.json` (arquitetura antiga; hoje os
+  dados estão em `data/gestao.db`) e o Bloco 2 mandava "confirmar branch (nunca `main`)",
+  contradizendo a decisão tomada hoje mais cedo.
+  **Macro:** o ritual que existe para manter a documentação organizada era justamente o que
+  estava desorganizado — e as duas conferências automáticas (auditoria de documentação e
+  links quebrados) nunca rodaram neste projeto. Prova do custo disso: os próprios links
+  quebrados deste arquivo só foram encontrados hoje, à mão.
+- **Correção:** `.claude/commands/fechar.md` — removidos os blocos 1.5 e 1.55 inteiros, o item
+  do `PLANO_IMPLEMENTACAO_MOTOR.md`, a linha do `MAPA_DO_PROJETO.md` e a conferência de
+  números dos JSON; caminho de memórias corrigido para
+  `D--02-Finaud-Projetos-ativos-gestao-area-suporte` com os tipos reais (`projeto-*`,
+  `feedback_*`); regra de branch alinhada ao `CLAUDE.md` §6. **170 → 111 linhas.**
+- **Ficou pendente (registrado no `PENDENCIAS.md`):** recriar os dois scripts de conferência
+  automática e definir a conferência de números pelo banco `gestao.db`.
+- **Validação:** ✅ VALIDADO — varredura automática confirma zero menções a "oraculo" e zero
+  arquivos citados inexistentes (`MEMORY.md` aparece na varredura, mas existe: fica na pasta
+  de memórias, fora do projeto). Sem teste: mudança em arquivo de instrução, sem código.
+
+---
+
 ## 2026-08-27 — Decisão: trabalhamos direto na `main`
 
 ### 12:55 — Regra alinhada à prática do projeto

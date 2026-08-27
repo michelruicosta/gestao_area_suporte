@@ -1,10 +1,26 @@
 # PENDÊNCIAS — Gestão Área Suporte
 
-**Atualizado:** 2026-08-26 23:40
+**Atualizado:** 2026-08-27 14:07
 **Organização:** por etapa que bloqueia — reorganizado em 03/08/2026 para seguir as fases sem brechas.
 **Regra:** este arquivo lista **só o que ainda falta** (aberto / aguardando decisão / backlog).
 Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada no
 `REGISTRO_CORRECOES.md` — nesta ordem: primeiro grava no REGISTRO, depois remove daqui.
+
+---
+
+## PROCESSO — Conferências automáticas do `/fechar` (identificado em 27/08/2026)
+
+Ao corrigir o `/fechar` (ver `REGISTRO_CORRECOES.md`, 27/08 14:07), dois blocos foram
+removidos porque mandavam rodar programas que existiam só no projeto antigo. As conferências
+que eles faziam nunca rodaram neste projeto.
+
+| # | O que falta | Por que importa | Prioridade |
+|---|---|---|---|
+| 1 | Recriar a **auditoria de documentação** e a **verificação de links quebrados** como scripts deste projeto, e devolver os dois passos ao `/fechar` | São o que pega sozinho documento citado que não existe — o erro que só foi descoberto à mão em 27/08 | MÉDIA |
+| 2 | Definir a **conferência de números** do `/fechar` pelo banco `data/gestao.db` | O bloco antigo contava registros em `data/json/pipeline/threads_*.json`, da arquitetura anterior. Hoje o `/fechar` não confere se os números do `SESSAO_ATUAL.md` batem com a realidade | MÉDIA |
+
+**Nomes ainda não aprovados** — seguir o padrão `ação_domínio.py` (`CLAUDE.md` §2.2) e propor
+ao Michel antes de criar.
 
 ---
 

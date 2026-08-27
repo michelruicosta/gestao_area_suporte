@@ -44,7 +44,12 @@ cookies.txt
 
 # Scripts ad-hoc / temporários (prefixo "_") — investigações pontuais
 # que não devem ir para o repo.
-_archive/
+_archive/*
+# Exceção: o histórico dos diários de sessão VAI para o GitHub — é bordo do projeto e
+# só tem markdown. O resto do _archive/ fica de fora: código e dados do sistema antigo.
+!_archive/sessao_atual_historico/
+_archive/sessao_atual_historico/*
+!_archive/sessao_atual_historico/*.md
 _run_pipeline_*.py
 _tmp_*.py
 _analisar_*.py
