@@ -8,6 +8,33 @@
 
 ---
 
+## 📓 Diário da sessão (2026-08-26 — noite) — SSO + Sair encerra o portal
+
+### O que foi feito
+
+**Frente única:** o card do portal abria o Gestão, mas o **Sair** voltava ao login do portal e logo a home de apps reaparecia.
+
+- Causa: `/sair` e `/logout` limpavam só a sessão deste app e redirecionavam para `https://finaudapps.com.br`. O cookie do grupo continuava; o portal perguntava à API e reabria a home.
+- Correção: ao Sair, apagar também `auditoria_sessao` e `finaud_portal_sessao`. SSO pelo cookie do portal (`portal_sso.py`) para abrir o app sem login local.
+- Testes: `tests/test_sso_portal.py` + `test_sair_e_logout_redirecionam_para_o_portal` (cookies no `Set-Cookie`).
+- Deploy: backup `servidor_telas.py.bak-20260826-logout-portal` · arquivo no VPS · `systemctl restart gestao-suporte` · `GET /sair` 302 + cookies expirados.
+- Michel **confirmou** no site: Sair permanece no login.
+
+Rotas mortas `/fog/gerencial` e `/fog/operacional`: já excluídas no outro chat, a pedido do Michel. Não voltam à fila.
+
+### Estado atual
+
+**Produção:** no ar em `https://gestao-suporte.finaudapps.com.br`. SSO + Sair corretos (Michel 26/08).
+**Pendência deste tema:** nenhuma.
+
+### Próximo passo
+
+Nada urgente deste chat. Fila futura permanece em `PENDENCIAS.md` (Python 3.9, lista de bloqueio pela tela, painel unificado).
+
+Último /fechar: 2026-08-26 23:21 — memórias revisadas ✅
+
+---
+
 ## 📓 Diário da sessão (2026-08-26 — madrugada) — Fix filtro §4: automáticos na fila de suporte
 
 ### O que foi feito
@@ -42,15 +69,7 @@ Michel identificou 5 threads que deveriam ter sido descartadas automaticamente m
 **Produção:** no ar em `https://gestao-suporte.finaudapps.com.br` · filtro §4 corrigido · reavaliar_automaticos() ativo.
 **Suíte de testes:** 393 passed.
 **GitHub:** main alinhado (`edfa6c0`).
-**SSO portal:** `portal_sso.py` e `tests/test_sso_portal.py` presentes localmente (untracked) e aplicados no servidor (stash) — ainda não commitados.
-
----
-
-### Próximo passo
-
-1. **🟡** Commitar o trabalho SSO (`portal_sso.py`, `tests/test_sso_portal.py`, alterações em `servidor_telas.py` e `gestao_email.html` não incluídas no commit de hoje) — estão no working directory mas fora do git.
-
-Último /fechar: 2026-08-26 23:00 — memórias revisadas ✅
+**SSO portal:** no ar (commit no /fechar 23:21).
 
 ---
 

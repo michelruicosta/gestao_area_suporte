@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-08-26 — Sair volta ao portal e permanece no login
+
+### 23:20 — Cookie do grupo apagado no Sair
+
+**🔎 Em miúdos:** ao clicar em Sair, o Gestão mandava para o portal, o login piscava e a home de apps voltava. O app esquecia só o login dele; o portal ainda via você logado no grupo. Agora o Sair apaga também essa chave. Michel confirmou no site.
+
+- **Problema:** `/sair` e `/logout` faziam `session.clear()` + redirect para `https://finaudapps.com.br` sem expirar `auditoria_sessao` / `finaud_portal_sessao`.
+- **Correção:** `_redirecionar_ao_portal_saindo()` apaga os dois cookies no domínio do grupo. SSO (`portal_sso.py`) abre o app pelo cookie do portal, sem tela de login local.
+- **Arquivos:** `scripts/portal_sso.py`, `scripts/servidor_telas.py`, `tests/test_sso_portal.py`, `tests/test_servidor_telas.py`
+- **Validação:** ✅ Michel no site (26/08). `GET /sair` em produção: 302 para o portal + cookies expirados.
+
+---
+
 ## 2026-08-26 — Faxina: atalhos mortos do FogBugz
 
 ### 23:15 — Duas URLs antigas que não apareciam na tela
