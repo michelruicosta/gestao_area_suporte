@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-08-26 — Faxina: atalhos mortos do FogBugz
+
+### 23:15 — Duas URLs antigas que não apareciam na tela
+
+**🔎 Em miúdos:** no código existiam dois endereços de página do FogBugz (`/fog/gerencial` e `/fog/operacional`) que **nunca tiveram tela** e **não estavam em nenhum menu**. O FogBugz que você usa já está dentro do app principal. Se alguém digitasse esses endereços, a página quebrava. Apagamos só esses atalhos.
+
+- **Onde estava:** só no servidor (`scripts/servidor_telas.py`). Não era botão nem item de menu.
+- **Correção:** removidas as funções `fog_gerencial()` e `fog_operacional()`.
+- **Arquivos:** `scripts/servidor_telas.py`, `tests/test_servidor_telas.py`
+- **Validação:** ✅ `GET /fog/gerencial` e `GET /fog/operacional` respondem 404
+
+---
+
 ## 2026-08-26 — Pendências fechadas (senha, agendador, IA)
 
 ### 22:55 — Agendador confirmado; spec da IA sai da fila

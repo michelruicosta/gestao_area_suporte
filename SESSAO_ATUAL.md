@@ -49,7 +49,6 @@ Michel identificou 5 threads que deveriam ter sido descartadas automaticamente m
 ### Próximo passo
 
 1. **🟡** Commitar o trabalho SSO (`portal_sso.py`, `tests/test_sso_portal.py`, alterações em `servidor_telas.py` e `gestao_email.html` não incluídas no commit de hoje) — estão no working directory mas fora do git.
-2. **🟡** Remover rotas mortas `/fog/gerencial` e `/fog/operacional` (`servidor_telas.py`).
 
 Último /fechar: 2026-08-26 23:00 — memórias revisadas ✅
 
@@ -88,7 +87,7 @@ Michel identificou 5 threads que deveriam ter sido descartadas automaticamente m
 
 ### Próximo passo
 
-1. **🟡** Remover rotas mortas `/fog/gerencial` e `/fog/operacional` (código morto em `servidor_telas.py`).
+*(rotas mortas do FOG removidas em 26/08/2026 — ver REGISTRO_CORRECOES.md)*
 
 Último /fechar: 2026-08-26 18:56 — memórias revisadas ✅
 

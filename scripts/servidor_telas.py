@@ -919,53 +919,6 @@ def api_fog_evolucao():
     return jsonify(_buscar_fog(periodo))
 
 
-@app.route('/fog/operacional')
-@_requer_login
-def fog_operacional():
-    _fog = _buscar_fog()
-    projetos     = sorted({t['projeto']    for t in _fog})
-    areas        = sorted({t['area']       for t in _fog})
-    responsaveis = sorted({t['responsavel'] for t in _fog if t['status'] == 'Ativo'})
-    return render_template('fog_operacional.html',
-                           tarefas=_fog, projetos=projetos,
-                           areas=areas, responsaveis=responsaveis,
-                           simulado=False)
-
-
-@app.route('/fog/gerencial')
-@_requer_login
-def fog_gerencial():
-    from collections import defaultdict
-    _fog = _buscar_fog()
-    ativos   = [t for t in _fog if t['status'] == 'Ativo']
-    fechados = [t for t in _fog if t['status'] == 'Fechado']
-    n = len(ativos) or 1
-    em_and  = sum(1 for t in ativos if t['dias_responsavel'] < 8)
-    atencao = sum(1 for t in ativos if 8 <= t['dias_responsavel'] < 15)
-    critico = sum(1 for t in ativos if t['dias_responsavel'] >= 15)
-    by_resp: dict = defaultdict(list)
-    for t in ativos:
-        by_resp[t['responsavel']].append(t)
-    ranking = sorted([
-        {
-            'nome':             nome,
-            'casos':            len(casos),
-            'caso_mais_antigo': max(casos, key=lambda x: x['dias_responsavel'])['assunto'],
-            'dias_mais_antigo': max(casos, key=lambda x: x['dias_responsavel'])['dias_responsavel'],
-        }
-        for nome, casos in by_resp.items()
-    ], key=lambda x: x['dias_mais_antigo'], reverse=True)
-    stats = {
-        'total_ativos':     len(ativos),
-        'em_andamento':     {'qtd': em_and,  'perc': round(em_and  / n * 100)},
-        'atencao':          {'qtd': atencao, 'perc': round(atencao / n * 100)},
-        'critico':          {'qtd': critico, 'perc': round(critico / n * 100)},
-        'total_concluidos': len(fechados),
-        'ranking':          ranking,
-    }
-    return render_template('fog_gerencial.html', stats=stats, simulado=False)
-
-
 # ── Inicialização ─────────────────────────────────────────────────────────────
 # Roda ao carregar o módulo — necessário para que o agendador funcione quando
 # o servidor é iniciado pelo Gunicorn (que importa o módulo sem executar __main__).

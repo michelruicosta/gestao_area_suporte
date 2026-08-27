@@ -81,3 +81,10 @@ def test_recuperar_senha_grava_hash_quando_email_sai(tmp_path, monkeypatch):
     )
     assert ok.status_code == 302
     assert ok.headers.get('Location', '').endswith('/')
+
+
+def test_rotas_fog_antigas_nao_existem():
+    client = app.test_client()
+    for rota in ('/fog/gerencial', '/fog/operacional'):
+        resp = client.get(rota, follow_redirects=False)
+        assert resp.status_code == 404, rota

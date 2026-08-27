@@ -213,5 +213,5 @@ Executar em ordem — testar a aplicação após cada etapa antes de avançar.
 | 25/08/2026 | Documento criado — diagnóstico da estrutura atual |
 | 25/08/2026 | Etapas 1–5 concluídas — estrutura limpa, credencial movida, requirements enxuto, `.env.example` arquivado |
 | 25/08/2026 | Etapa 6 concluída — logging em arquivo implementado nos 3 scripts de produção; padrão DD-MM-AAAA |
-| 25/08/2026 | Etapa 7 concluída — todas as telas testadas e funcionando; 1 problema não-bloqueante identificado (rotas /fog/gerencial e /fog/operacional sem template — código morto, SPA não usa) |
+| 25/08/2026 | Etapa 7 concluída — todas as telas testadas e funcionando; rotas mortas /fog/gerencial e /fog/operacional identificadas (código morto; removidas em 26/08/2026) |
 | 25/08/2026 | Etapa 8 concluída — primeiro deploy no servidor Hostinger VPS; sistema acessível em https://gestao-suporte.finaudapps.com.br com SSL ativo |
