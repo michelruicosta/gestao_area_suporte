@@ -7,12 +7,18 @@ Porta: 5000   Rodar: python scripts/servidor_telas.py
 
 from __future__ import annotations
 
+import html as html_lib
 import io
 import json
 import os
 import re
+import secrets
+import smtplib
+import string
 import sys
 import threading
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 # Windows usa charmap por padrão — força UTF-8 para suportar emojis nos logs
 # pytest captura stdout; reembrulhar fecha o arquivo interno da suíte
@@ -29,6 +35,7 @@ from datetime import datetime, timezone, timedelta
 from functools import wraps
 
 from flask import Flask, abort, jsonify, redirect, render_template, request, session, url_for
+from werkzeug.security import check_password_hash, generate_password_hash
 from apscheduler.schedulers.background import BackgroundScheduler
 
 _SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -135,6 +142,82 @@ def _injetar_usuario():
 _ADMIN_EMAIL = os.environ.get('GESTAO_EMAIL', 'michel@finaud.com.br')
 _ADMIN_SENHA = os.environ.get('GESTAO_SENHA', 'finaud2026')
 _PORTAL_URL = os.environ.get('PORTAL_URL', 'https://finaudapps.com.br').rstrip('/')
+_MENSAGEM_RECUPERAR = (
+    'Se este e-mail estiver cadastrado e ativo, enviaremos uma senha temporária em instantes.\n\n'
+    'Não recebeu? Verifique o spam ou contate o administrador do sistema.'
+)
+_ALFABETO_SENHA_TEMP = string.ascii_letters + string.digits
+
+
+def _senha_confere(senha: str) -> bool:
+    """Confere a senha digitada com o hash gravado, ou com GESTAO_SENHA se ainda não houve recuperação."""
+    h = _ler_config().get('senha_hash')
+    if h:
+        return check_password_hash(h, senha)
+    return senha == _ADMIN_SENHA
+
+
+def _gravar_senha_hash(senha: str) -> None:
+    cfg = _ler_config()
+    cfg['senha_hash'] = generate_password_hash(senha)
+    _salvar_config(cfg)
+
+
+def _gerar_senha_temporaria(tamanho: int = 12) -> str:
+    return ''.join(secrets.choice(_ALFABETO_SENHA_TEMP) for _ in range(tamanho))
+
+
+def _smtp_credenciais() -> tuple[str, str]:
+    remetente = (
+        os.environ.get('EMAIL_USER')
+        or os.environ.get('GMAIL_USER')
+        or 'coleta.oraculo@finaud.com.br'
+    )
+    senha_smtp = os.environ.get('EMAIL_PASS') or os.environ.get('GMAIL_APP_PASS') or ''
+    return remetente, senha_smtp
+
+
+def _enviar_senha_temporaria(destino: str, senha_temporaria: str, url_login: str) -> bool:
+    """Envia senha temporária por SMTP. Só retorna True se o e-mail saiu."""
+    remetente, senha_smtp = _smtp_credenciais()
+    if not senha_smtp:
+        _log.warning('Recuperação de senha: SMTP não configurado (EMAIL_PASS ou GMAIL_APP_PASS).')
+        return False
+    destino_seg = html_lib.escape(destino.strip())
+    senha_seg = html_lib.escape(senha_temporaria)
+    login_seg = html_lib.escape(url_login)
+    corpo_html = f"""<!DOCTYPE html>
+<html lang="pt-BR"><body style="margin:0;padding:24px;background:#f1f5f9;font-family:Segoe UI,Arial,sans-serif;color:#1e1e72;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;border:1px solid #c8c8e8;">
+    <tr><td style="padding:24px 28px;background:#001c5b;color:#fff;border-radius:12px 12px 0 0;">
+      <div style="font-size:12px;letter-spacing:.12em;color:#b4d84a;font-weight:700;">GESTÃO ÁREA SUPORTE</div>
+      <div style="font-size:22px;font-weight:700;margin-top:8px;">Recuperação de acesso</div>
+    </td></tr>
+    <tr><td style="padding:24px 28px;font-size:14px;line-height:1.6;">
+      <p style="margin:0 0 14px;">Recebemos um pedido de recuperação de acesso. Use os dados abaixo para entrar:</p>
+      <p style="margin:0 0 8px;"><b>E-mail:</b> {destino_seg}</p>
+      <p style="margin:0 0 16px;"><b>Senha temporária:</b> {senha_seg}</p>
+      <p style="margin:0 0 16px;"><a href="{login_seg}" style="color:#001c5b;">Abrir o login</a></p>
+      <p style="margin:0;font-size:13px;color:#5b6478;">Troque esta senha assim que entrar. Se você não pediu esta recuperação, ignore o e-mail.</p>
+    </td></tr>
+  </table>
+</body></html>"""
+    msg = MIMEMultipart()
+    msg['From'] = remetente
+    msg['To'] = destino.strip()
+    msg['Subject'] = 'Gestão Área Suporte — senha temporária'
+    msg.attach(MIMEText(corpo_html, 'html'))
+    try:
+        with smtplib.SMTP('smtp.gmail.com', 587, timeout=30) as server:
+            server.starttls()
+            server.login(remetente, senha_smtp)
+            server.send_message(msg)
+        _log.info('Senha temporária enviada para %s', destino.strip())
+        return True
+    except Exception:
+        _log.exception('Falha ao enviar senha temporária')
+        return False
+
 
 # ── Mapeamento categoria → nome de exibição ────────────────────────────────────
 
@@ -264,12 +347,25 @@ def login():
     if request.method == 'POST':
         email = (request.form.get('email') or '').strip()
         senha = (request.form.get('senha') or '').strip()
-        if email == _ADMIN_EMAIL and senha == _ADMIN_SENHA:
+        if email.lower() == _ADMIN_EMAIL.lower() and _senha_confere(senha):
             session['logado'] = True
-            session['email']  = email
+            session['email']  = _ADMIN_EMAIL
             return redirect(url_for('index'))
         erro = 'E-mail ou senha incorretos.'
     return render_template('gestao_login.html', erro=erro)
+
+
+@app.route('/auth/recuperar-senha', methods=['POST'])
+def recuperar_senha():
+    """Mesmo fluxo do portal Finaud: e-mail → senha temporária. Sempre a mesma mensagem (não revela se o e-mail existe)."""
+    dados = request.get_json(silent=True) or {}
+    email = (dados.get('email') or request.form.get('email') or '').strip()
+    if email.lower() == _ADMIN_EMAIL.lower():
+        temp = _gerar_senha_temporaria()
+        url_login = request.host_url.rstrip('/') + url_for('login')
+        if _enviar_senha_temporaria(_ADMIN_EMAIL, temp, url_login):
+            _gravar_senha_hash(temp)
+    return jsonify({'mensagem': _MENSAGEM_RECUPERAR})
 
 
 @app.route('/sair')
@@ -580,7 +676,9 @@ def api_admin_log_coletas():
 @app.route('/api/admin/config', methods=['GET'])
 @_requer_login
 def api_admin_config_get():
-    return jsonify(_ler_config())
+    cfg = dict(_ler_config())
+    cfg.pop('senha_hash', None)
+    return jsonify(cfg)
 
 
 @app.route('/api/admin/config', methods=['POST'])
@@ -594,7 +692,8 @@ def api_admin_config_post():
         cfg['intervalo_fog_min'] = max(1, int(dados['intervalo_fog_min']))
     _salvar_config(cfg)
     _reagendar_coleta(cfg['intervalo_coleta_min'])
-    return jsonify({'ok': True, 'config': cfg})
+    visivel = {k: v for k, v in cfg.items() if k != 'senha_hash'}
+    return jsonify({'ok': True, 'config': visivel})
 
 
 @app.route('/api/admin/log-detalhe/<int:log_id>')

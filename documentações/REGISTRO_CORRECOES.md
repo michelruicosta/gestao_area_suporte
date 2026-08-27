@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-08-26 — Esqueceu a senha não fazia nada
+
+### 22:10 — Clique em "Esqueceu a senha?" na tela de login
+
+**🔎 Em miúdos:** o link "Esqueceu a senha?" na tela de entrar estava desligado. Agora abre a recuperação no mesmo cartão, no padrão Finaud: informa o e-mail e, se a conta existir, envia uma senha temporária.
+
+- **Problema:** o botão tinha `onclick="return false;"` — o clique não fazia nada.
+- **Correção:** o mesmo cartão passa a mostrar "Recuperar acesso". O servidor recebe o e-mail em `/auth/recuperar-senha`, envia senha temporária (se SMTP estiver configurado) e grava o hash da nova senha. A mensagem na tela é sempre a mesma, para não revelar se o e-mail existe.
+- **Arquivos:** `scripts/servidor_telas.py`, `templates/gestao_login.html`, `tests/test_servidor_telas.py`
+- **Validação:** ✅ VALIDADO — 4 testes de login/recuperação; conferido no navegador (clique → formulário → mensagem → voltar ao login)
+
+---
+
 ## 2026-08-26 — C62: "COMUNICAÇÃO DE NÃO PREENCHIMENTO" era classificada como DLO_2061
 
 ### 20:08 — Sinal de RETORNO_BACEN ausente + Filtro FogBugz frágil

@@ -189,11 +189,45 @@ body::before {
 
 .esqueceu:hover { color: #f4f6fb; }
 
-/* Erro */
+.login-titulo-recuperar {
+  margin: 0 0 0.5rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+  text-align: center;
+  color: #f4f6fb;
+}
+
+.login-subtitulo {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: rgba(244, 246, 251, 0.58);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.login-rodape {
+  text-align: center;
+  margin-top: 0.75rem;
+}
+
+.login-rodape .esqueceu {
+  display: inline;
+  text-align: center;
+}
+
+/* Erro / sucesso */
 .erro-msg {
   color: #ffb4ab;
   font-size: 0.9rem;
   margin: 0 0 1rem;
+  white-space: pre-line;
+}
+
+.sucesso-msg {
+  color: #b4d84a;
+  font-size: 0.9rem;
+  margin: 1rem 0 0;
+  white-space: pre-line;
 }
 
 /* Botão Entrar */
@@ -242,37 +276,58 @@ body::before {
       <p class="login-sub">E-mails · Área de Suporte</p>
     </div>
 
-    {% if erro %}
-    <p class="erro-msg">{{ erro }}</p>
-    {% endif %}
+    <div id="bloco-login">
+      {% if erro %}
+      <p class="erro-msg">{{ erro }}</p>
+      {% endif %}
 
-    <form action="{{ url_for('login') }}" method="POST">
+      <form id="form-login" action="{{ url_for('login') }}" method="POST">
+        <div class="field">
+          <label class="field-label" for="email">E-mail corporativo</label>
+          <input class="field-input" type="email" id="email" name="email"
+                 autocomplete="username" placeholder="nome@finaud.com.br" required>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="senha">Senha</label>
+          <div class="campo-senha-wrap">
+            <input class="field-input" type="password" id="senha" name="senha"
+                   autocomplete="current-password" required>
+            <button type="button" class="olho-btn" id="olho-btn" aria-label="Mostrar ou ocultar senha">
+              <svg id="olho-aberto" viewBox="0 0 24 24">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <svg id="olho-fechado" viewBox="0 0 24 24" style="display:none">
+                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
+          </div>
+          <button type="button" class="esqueceu" id="btn-esqueci-senha">Esqueceu a senha?</button>
+        </div>
+
+        <button type="submit" class="btn-entrar">Entrar</button>
+      </form>
+    </div>
+
+    <form id="form-recuperar" hidden>
+      <h2 class="login-titulo-recuperar">Recuperar acesso</h2>
+      <p class="login-subtitulo">
+        Informe seu e-mail corporativo. Se a conta estiver ativa, enviamos
+        uma senha temporária.
+      </p>
       <div class="field">
-        <label class="field-label" for="email">E-mail corporativo</label>
-        <input class="field-input" type="email" id="email" name="email"
+        <label class="field-label" for="recuperar-email">E-mail corporativo</label>
+        <input class="field-input" type="email" id="recuperar-email" name="email"
                autocomplete="username" placeholder="nome@finaud.com.br" required>
       </div>
-
-      <div class="field">
-        <label class="field-label" for="senha">Senha</label>
-        <div class="campo-senha-wrap">
-          <input class="field-input" type="password" id="senha" name="senha"
-                 autocomplete="current-password" required>
-          <button type="button" class="olho-btn" id="olho-btn" aria-label="Mostrar ou ocultar senha">
-            <svg id="olho-aberto" viewBox="0 0 24 24">
-              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/>
-              <circle cx="12" cy="12" r="3"/>
-            </svg>
-            <svg id="olho-fechado" viewBox="0 0 24 24" style="display:none">
-              <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
-              <line x1="1" y1="1" x2="23" y2="23"/>
-            </svg>
-          </button>
-        </div>
-        <button type="button" class="esqueceu" onclick="return false;">Esqueceu a senha?</button>
-      </div>
-
-      <button type="submit" class="btn-entrar">Entrar</button>
+      <button type="submit" class="btn-entrar" id="btn-recuperar">Enviar senha temporária</button>
+      <p id="recuperar-erro" class="erro-msg" hidden></p>
+      <p id="recuperar-sucesso" class="sucesso-msg" hidden></p>
+      <p class="login-rodape">
+        <button type="button" class="esqueceu" id="btn-voltar-login">← Voltar ao login</button>
+      </p>
     </form>
 
     <a class="portal-link" href="https://finaudapps.com.br">Portal de apps</a>
@@ -284,11 +339,71 @@ body::before {
   var btn = document.getElementById('olho-btn');
   var aberto = document.getElementById('olho-aberto');
   var fechado = document.getElementById('olho-fechado');
+  var blocoLogin = document.getElementById('bloco-login');
+  var formRecuperar = document.getElementById('form-recuperar');
+  var btnEsqueci = document.getElementById('btn-esqueci-senha');
+  var btnVoltar = document.getElementById('btn-voltar-login');
+  var btnRecuperar = document.getElementById('btn-recuperar');
+  var erroRecuperar = document.getElementById('recuperar-erro');
+  var sucessoRecuperar = document.getElementById('recuperar-sucesso');
+
   btn.addEventListener('click', function () {
     var ver = inp.type === 'password';
     inp.type = ver ? 'text' : 'password';
     aberto.style.display = ver ? 'none' : '';
     fechado.style.display = ver ? '' : 'none';
+  });
+
+  function mostrarFormRecuperar() {
+    blocoLogin.hidden = true;
+    formRecuperar.hidden = false;
+    erroRecuperar.hidden = true;
+    sucessoRecuperar.hidden = true;
+    btnRecuperar.disabled = false;
+    btnRecuperar.textContent = 'Enviar senha temporária';
+    var emailLogin = document.getElementById('email').value.trim();
+    if (emailLogin) {
+      document.getElementById('recuperar-email').value = emailLogin;
+    }
+    document.getElementById('recuperar-email').focus();
+  }
+
+  function mostrarFormLogin() {
+    formRecuperar.hidden = true;
+    blocoLogin.hidden = false;
+    document.getElementById('email').focus();
+  }
+
+  btnEsqueci.addEventListener('click', mostrarFormRecuperar);
+  btnVoltar.addEventListener('click', mostrarFormLogin);
+
+  formRecuperar.addEventListener('submit', function (e) {
+    e.preventDefault();
+    erroRecuperar.hidden = true;
+    sucessoRecuperar.hidden = true;
+    var email = document.getElementById('recuperar-email').value.trim();
+    btnRecuperar.disabled = true;
+    btnRecuperar.textContent = 'Enviando...';
+    fetch('{{ url_for("recuperar_senha") }}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email })
+    })
+      .then(function (res) {
+        if (!res.ok) throw new Error('Não foi possível enviar o pedido. Tente novamente.');
+        return res.json();
+      })
+      .then(function (body) {
+        sucessoRecuperar.textContent = body.mensagem;
+        sucessoRecuperar.hidden = false;
+        btnRecuperar.textContent = 'E-mail solicitado';
+      })
+      .catch(function (err) {
+        erroRecuperar.textContent = err.message || 'Não foi possível enviar o pedido.';
+        erroRecuperar.hidden = false;
+        btnRecuperar.disabled = false;
+        btnRecuperar.textContent = 'Enviar senha temporária';
+      });
   });
 })();
 </script>
