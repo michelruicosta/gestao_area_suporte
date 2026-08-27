@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-08-26 — Pendências fechadas (senha, agendador, IA)
+
+### 22:55 — Agendador confirmado; spec da IA sai da fila
+
+**🔎 Em miúdos:** Michel testou a senha temporária e entrou. O robô de coleta já rodou sozinho. A classificação continua só pelas regras do sistema — sem IA. Por isso as pendências de “confirmar o robô” e das 3 regras da IA saíram da lista.
+
+- **Senha:** o e-mail de “Esqueceu a senha?” grava a senha temporária. Entrar com ela é o fluxo certo. Aprovação de Michel no site (22:47).
+- **Agendador:** coleta automática já ocorreu; item “confirmar amanhã” removido do próximo passo.
+- **IA na classificação:** decisão de Michel — não vamos usar IA para classificar. Item 🔴 SPEC §10 (3 distinções) removido de `PENDENCIAS.md`. O classificador que está no ar continua sendo o de regras (determinístico).
+- **Arquivos:** `documentações/PENDENCIAS.md`, `SESSAO_ATUAL.md`
+- **Validação:** ✅ decisão do operador; sem teste de código (só documentação)
+- **sem teste:** só atualização de bordo / pendências
+
+---
+
 ## 2026-08-26 — Automáticos escaparam para a fila de Aguardando Finaud
 
 ### 22:45 — Filtro §4 falhou silenciosamente na coleta das 19:29

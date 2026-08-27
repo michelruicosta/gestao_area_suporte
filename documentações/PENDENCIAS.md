@@ -177,8 +177,8 @@ Michel revisou as 5 threads e confirmou que todas são entregas simples de CADOC
 > **✅ Produção no ar desde 25/08/2026:** `https://gestao-suporte.finaudapps.com.br` (Sair → portal aprovado em 26/08).
 > **✅ Classificador determinístico concluído: 764/768 (99,5%) em 17/08/2026.**
 > **Escopo redefinido em 17/08/2026:** sem IA por enquanto. O classificador determinístico é o único classificador.
-> Próximo na fila: 🔴 SPEC §10 (3 distinções da IA) — não bloqueia o uso do app. Depois: limpeza das rotas FOG mortas.
-> A IA (GPT-4o-mini, OCR, IA Assistente) fica para fase futura — ver seção ao final deste arquivo.
+> Próximo na fila: limpeza das rotas FOG mortas (`/fog/gerencial` e `/fog/operacional`).
+> **26/08/2026 — Michel:** não vamos usar IA na classificação. O item SPEC §10 saiu desta lista. A IA (GPT-4o-mini, OCR, IA Assistente) permanece só como fase futura — ver seção ao final deste arquivo.
 
 ### ✅ AMOSTRA — Resolvido em 17/08/2026
 
@@ -252,46 +252,6 @@ Thread classificada como SALDOS_CONTABEIS_DIARIOS_4111 + DLO_2061 com alta confi
 
 **Dúvida:** o cliente tratava das duas entregas ao mesmo tempo ou só do DLO?
 **Quando revisar:** fase 3 — após corrigir erros confirmados e resolver os INCERTO.
-
----
-
-### 🔴 SPEC §10 — Definir 3 distinções que a IA não sabe fazer (identificado 10/08/2026)
-
-Durante os testes do gabarito (v1.0 a v1.3), ficou claro que a IA não tem regra conceitual para distinguir 3 situações. Sem essa distinção no §10, o gabarito não consegue corrigir esses casos — exemplos patcham sintomas, mas a raiz está na falta de regra.
-
-**As 3 distinções que precisam ser definidas na spec:**
-
-1. **Entrega de CADOC × SUPORTE**
-   Quando um e-mail entregando um arquivo regulatório é classificado como CADOC (SCD, DDR, DLO…) e quando é SUPORTE? A IA está adicionando SUPORTE a entregas válidas de CADOC quando o corpo do e-mail é curto ("Segue até o dia XX").
-
-2. **SUPORTE × RETORNO_BACEN**
-   Quando o BACEN aparece no e-mail, é RETORNO_BACEN ou SUPORTE? A regra atual não separa claramente: RETORNO_BACEN = BACEN comunicando inconsistência sobre entrega nossa; SUPORTE = pedido de ajuda operacional sem BACEN envolvido.
-
-3. **Arquivo 4016: quando é DLO, quando é DLI, quando os dois?**
-   O COS4010 pode ser DLO ou DLI. O arquivo 4016 também. Sem regra clara, a IA erra ou omite uma das categorias. A definição precisa estar na spec antes de qualquer exemplo no gabarito.
-
-**O que fazer:**
-1. Rascunhar as 3 regras com Michel (quem sabe o negócio decide os critérios)
-2. Escrever o texto no padrão do §10 e apresentar para aprovação
-3. Gravar na spec após OK
-4. Só então criar exemplos de gabarito para esses casos
-
-**Bloqueador para:** COS4010+4016 (multi-categoria), qualquer caso onde SUPORTE é adicionado junto com CADOC.
-
-**Arquivo de destino:** `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` — §10.
-
----
-
-### 🟡 CLASSIFICADOR — Gabarito v2.0: validar e expandir (atualizado 12/08/2026)
-
-**Estado atual (12/08/2026):** gabarito v2.0 criado — 18 regras + 24 gabaritos. Integrado ao `classificador_regras.py` e ao `chat_ensino.py`. Amostra de controle: REPROVADA (15/20 — ver item 🔴 acima). *(Nota 25/08/2026: o arquivo `gabarito.json` foi separado de `regras_classificador_threads.json` e arquivado — o gabarito ativo é o `config/regras_classificador_threads.json`.)*
-
-**O que resta:**
-1. Corrigir os 3 casos reprovados na amostra (item 🔴 acima)
-2. Após aprovação: usar `chat_ensino.py` para resolver os 134 incertos restantes — cada confirmação entra no registro e o gabarito pode crescer com novos exemplos
-3. Commitar com tag `gabarito-v2-estavel` após amostra aprovada
-
-**Resultado esperado:** menos incertos, mais consistência, gabarito crescendo a cada sessão de ensino.
 
 ---
 
@@ -535,7 +495,7 @@ Ideias levantadas por Michel para evoluir o painel:
 | OCR de imagens | Leitura de prints de erro do BACEN em RETORNO_BACEN | Depende da IA estar conectada; sem IA o OCR não traz benefício de classificação |
 | IA Assistente de aprendizado | IA que aprende como cada caso foi resolvido e ajuda a responder | Depende de histórico classificado e validado |
 | Preservação do histórico para aprendizado | Como guardar o corpo completo (com histórico citado) antes de limpar | Depende da IA Assistente estar definida |
-| §10 — 3 distinções não resolvidas | Entrega vs SUPORTE, SUPORTE vs RETORNO_BACEN, 4016 DLO vs DLI | O determinístico cobre esses casos com as regras atuais; refinar só quando a IA precisar |
+| §10 — 3 distinções da IA | Encerrado em 26/08/2026: Michel decidiu não usar IA na classificação | Não retorna à fila ativa |
 
 ---
 

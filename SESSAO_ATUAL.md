@@ -8,6 +8,53 @@
 
 ---
 
+## 📓 Diário da sessão (2026-08-26 — madrugada) — Fix filtro §4: automáticos na fila de suporte
+
+### O que foi feito
+
+**Frente única: automáticos escaparam para a fila "Aguardando Finaud"**
+
+Michel identificou 5 threads que deveriam ter sido descartadas automaticamente mas apareceram na fila de suporte — relatórios internos do RiskDriver, avisos do sistema Finaud e spam de "cesta solidariedade". Investigação + correção completa.
+
+**Investigação:**
+- `log_coletas` confirmou 0 descartes em 42 threads processadas na coleta das 19:29 — filtro §4 falhou silenciosamente
+- `print()` usado no filtro era suprimido pelo Gunicorn — problema ficou invisível
+- `contato@cestaincentivo.com.br` não estava na lista de bloqueio
+
+**Correções aplicadas:**
+- `validador_classificacao.py`: `contato@cestaincentivo.com.br` adicionado a `_ENDERECOS_EXATOS`
+- `classificador_regras.py`: todos os `print()` em `classificar_banco()` substituídos por `_log.info/warning/error()` — visíveis no `journalctl`. `except ImportError` → `except Exception` com log de alerta explícito
+- `classificador_regras.py`: nova função `reavaliar_automaticos(janela_horas=48)` — após cada coleta, verifica threads recentes em `principal` contra o filtro §4 e move para `descartes` as que escaparam
+- `servidor_telas.py`: chama `reavaliar_automaticos()` logo após `classificar_banco()` em todo job de coleta agendado
+
+**Banco de produção:** 5 threads movidas manualmente via SSH para `destino='descartes'` com motivo de correção datado
+
+**Testes:** 3 novos — `test_filtro_cestaincentivo_bloqueado`, `test_reavaliar_automaticos_move_automatico_para_descartes`, `test_reavaliar_automaticos_nao_move_thread_normal`. Suíte completa: **393 passed**.
+
+**Deploy:** commit `edfa6c0` · push · pull no servidor (stash automático do trabalho SSO em andamento, merge limpo) · `systemctl restart gestao-suporte` · `active` ✅ · agendador confirmado no journal.
+
+**Documentação:** `REGISTRO_CORRECOES.md` atualizado (entrada 22:45). `PENDENCIAS.md`: novo item "Gerenciar lista de bloqueio pela tela".
+
+---
+
+### Estado atual
+
+**Produção:** no ar em `https://gestao-suporte.finaudapps.com.br` · filtro §4 corrigido · reavaliar_automaticos() ativo.
+**Suíte de testes:** 393 passed.
+**GitHub:** main alinhado (`edfa6c0`).
+**SSO portal:** `portal_sso.py` e `tests/test_sso_portal.py` presentes localmente (untracked) e aplicados no servidor (stash) — ainda não commitados.
+
+---
+
+### Próximo passo
+
+1. **🟡** Commitar o trabalho SSO (`portal_sso.py`, `tests/test_sso_portal.py`, alterações em `servidor_telas.py` e `gestao_email.html` não incluídas no commit de hoje) — estão no working directory mas fora do git.
+2. **🟡** Remover rotas mortas `/fog/gerencial` e `/fog/operacional` (`servidor_telas.py`).
+
+Último /fechar: 2026-08-26 23:00 — memórias revisadas ✅
+
+---
+
 ## 📓 Diário da sessão (2026-08-26 — noite) — UI + fix agendador
 
 ### O que foi feito
@@ -33,16 +80,15 @@
 
 **Produção:** no ar em `https://gestao-suporte.finaudapps.com.br`.
 **Sair:** volta para `https://finaudapps.com.br` — aprovado por Michel (18:41).
-**Agendador:** ativo no servidor desde 19:23 — próxima coleta automática às ~20:23.
-**GitHub:** `main` local à frente do origin neste `/fechar` (bordo).
+**Esqueceu a senha:** no ar; Michel testou temporária, entrou e aprovou (22:47).
+**Agendador:** confirmado por Michel (26/08 noite) — coleta automática já rodou.
+**GitHub:** `main` alinhado ao origin após o publish da senha (`8020e8c`).
 
 ---
 
 ### Próximo passo
 
-1. **✅ Confirmar agendador** — verificar journal amanhã cedo: `journalctl -u gestao-suporte | grep "Coleta automática disparada"`. Critério: linha aparecendo a cada 60 minutos.
-2. **🟡** Remover rotas mortas `/fog/gerencial` e `/fog/operacional` (código morto em `servidor_telas.py`).
-3. **🔴 SPEC §10** — 3 distinções que a IA não sabe fazer (não bloqueia o app em produção).
+1. **🟡** Remover rotas mortas `/fog/gerencial` e `/fog/operacional` (código morto em `servidor_telas.py`).
 
 Último /fechar: 2026-08-26 18:56 — memórias revisadas ✅
 
