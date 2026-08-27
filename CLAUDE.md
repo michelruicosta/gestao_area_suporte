@@ -437,7 +437,7 @@ Ao detectar que falta informação num documento — seja criar seção nova ou 
 
 - **Contexto comprimido:** se mensagens anteriores foram resumidas automaticamente, avisar imediatamente: *"Michel, este chat ficou longo. Quando terminar esta tarefa, use `/fechar` e abra um chat novo."*
 - **Tópicos misturados:** se o chat acumulou mais de 2 temas distintos ativos, avisar: *"Michel, esse chat está misturando muitos assuntos. Quer bifurcar?"*
-- **Modelo:** `/iniciar` sempre informa o modelo em uso. Sonnet = padrão para tudo. Opus (`/fast`) = lógica muito complexa. Haiku = nunca para implementação ou debugging. Claude não troca de modelo sozinho — ao terminar tarefa Opus, avisar: *"pode voltar para o Sonnet com `/fast`."*
+- **Modelo e esforço:** Sonnet = padrão (esforço **Médio**). Antes de implementar código complexo ou debugging, avisar: *"Michel, mude para esforço **Alto**."* Ao terminar, avisar para voltar para **Médio**. Opus = só se Sonnet + Alto travar em círculos ou propuser soluções erradas repetidamente — avisar: *"esse problema está além do Sonnet — mude para Opus com `/fast`."* Ao terminar tarefa Opus, avisar: *"pode voltar para Sonnet com `/fast`."* Haiku = nunca. Claude não troca de modelo sozinho — avisa Michel e ele decide.
 - **Fechar por tema, não só por carga:** quando um assunto for concluído — mesmo que haja outros temas — avisar: *"Michel, esse tema foi concluído. Sugiro fechar aqui e abrir um chat novo com `/iniciar` — chat curto = menor custo."* Chat longo acumula contexto e encarece cada resposta. Não esperar Michel lembrar — o Gestor avisa.
 
 ## Regra: análises retornam resumo — dados brutos só se pedido
