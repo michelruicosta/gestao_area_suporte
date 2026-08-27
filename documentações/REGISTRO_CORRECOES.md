@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-08-27 — Decisão: textos aprovados para o campo MOTIVO
+
+### — Novos textos de MOTIVO aprovados por Michel
+
+**🔎 Em miúdos:** o campo "Motivo" que aparece em cada card de e-mail ganhará textos mais descritivos — em vez de "Cliente enviou conteúdo", aparecerá algo como "Cliente enviou informações e extratos — aguarda processamento". Michel e Claude revisaram o banco de dados e aprovaram os textos caso a caso.
+
+- **Problema:** motivos muito genéricos (dizem quem escreveu, mas não o que foi escrito nem por que o status é aquele).
+- **Decisão:** usar vocabulário fixo (informações, extratos, processar, executar, responder) e responder sempre "por que esse status?".
+- **Textos aprovados:**
+  - "Cliente enviou informações e extratos — aguarda processamento" (unifica 383 + 64 threads)
+  - "Finaud concluiu a solicitação" (substitui "Finaud encerrou a conversa" — 68 threads)
+  - 4 submotivos para "Finaud escreveu — aguarda retorno do cliente" (49 threads):
+    1. Finaud solicitou extrato ou planilha — aguarda envio
+    2. Finaud deu orientação técnica — aguarda execução
+    3. Finaud propôs reunião ou ligação — aguarda confirmação
+    4. Finaud fez pergunta — aguarda resposta
+- **Arquivos afetados quando implementar:** `scripts/banco_threads.py` — função `_determinar_status()`
+- **Validação:** ⚠️ VALIDAÇÃO PENDENTE — implementação no código ainda não feita. Critério: rodar pytest + verificar textos na tela de e-mails após implementação.
+
+---
+
 ## 2026-08-26 — Badges nas abas + CI corrigido
 
 ### 23:32 — Badges migrados do menu lateral para as abas horizontais

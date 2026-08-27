@@ -8,6 +8,99 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ---
 
+## TELAS — Melhorar textos do campo MOTIVO (identificado em 27/08/2026)
+
+O campo **MOTIVO** exibido na tela de e-mails é hoje muito genérico em vários casos. Análise completa feita em 27/08 — motivos revisados com Michel caso a caso.
+
+**Planilha de referência:** `documentações/varredura_motivos.xlsx` (76 motivos distintos, até 50 exemplos reais cada)
+
+---
+
+### ✅ Motivos já aprovados por Michel (27/08/2026) — aguardam implementação no código
+
+| Motivo atual no banco | Novo texto aprovado | Status |
+|---|---|---|
+| "Cliente enviou conteúdo — aguarda processamento da Finaud" (383x) | **Cliente enviou informações e extratos — aguarda processamento** | Aguardando Finaud |
+| "Cliente encaminhou — aguarda processamento da Finaud" (64x) | **consolidado no item acima** | Aguardando Finaud |
+| "Finaud encerrou a conversa" (68x) | **Finaud concluiu a solicitação** | Concluída |
+| "Finaud escreveu — aguarda retorno do cliente" (49x) | **4 submotivos abaixo** | Aguardando Cliente |
+
+**4 submotivos (Aguardando Cliente):**
+1. Finaud solicitou extrato ou planilha — aguarda envio
+2. Finaud deu orientação técnica — aguarda execução
+3. Finaud propôs reunião ou ligação — aguarda confirmação
+4. Finaud fez pergunta — aguarda resposta
+
+---
+
+### ❌ Motivos ainda pendentes de decisão (próxima sessão)
+
+| Motivo atual | Qtd | Problema |
+|---|---|---|
+| "Cliente escreveu — aguarda resposta da Finaud" | 354x | **Caixa preta** — mais frequente e mais genérico |
+| "Fix H: cliente agradeceu sem pergunta ou documento" | 41x | Nome interno "Fix H" aparece na tela do usuário |
+| "Fix R: cliente prometeu retornar..." | ~10x | Nome interno "Fix R" aparece na tela do usuário |
+| "Cliente enviou saudação — possível entrega de arquivo" | 15x | "possível" é ruim — sistema não pode ser incerto |
+| "Finaud enviou arquivo sem linguagem de entrega" | 5x | Jargão interno |
+
+---
+
+### Implementação — quando todos os motivos estiverem aprovados
+
+1. Alterar `_determinar_status()` em `scripts/banco_threads.py` com os novos textos
+2. Rodar `pytest tests/ -q` — zero regressões
+3. Testar na tela de e-mails
+4. Commitar
+
+**Quando fazer:** próxima sessão — definir grupo ❌ primeiro, depois implementar tudo junto.
+
+---
+
+## TELAS — Alerta de motivos não identificados (identificado em 27/08/2026)
+
+Quando um e-mail cair no motivo genérico ("fundo de gaveta"), o sistema precisa alertar Michel para que a regra possa ser corrigida. **O que não pode é acontecer sem que saibamos.**
+
+**Decisões de Michel (27/08/2026):**
+
+- **Badge visual na tela de e-mails** — descartado: Michel pode não acessar a tela num dia e perder o alerta
+- **Contador no painel principal** — descartado como está: poluiria a tela do usuário. Aprovado apenas numa **tela gerencial separada** (formato planilha), onde todas as threads com motivo genérico ficam listadas para revisão
+- **Relatório periódico por e-mail** — aprovado: uma vez por semana, o sistema envia um e-mail listando as threads que caíram no motivo genérico naquela semana
+
+**O que fazer:**
+1. Definir qual é o motivo genérico oficial (o "fundo de gaveta") — saída desta sessão
+2. Implementar envio de e-mail semanal com threads nesse motivo
+3. Criar tela gerencial (formato planilha) com listagem de threads por motivo — ver item abaixo
+
+**Quando fazer:** após a definição dos motivos estar concluída nesta sessão.
+
+---
+
+## TELAS — Tela de gerenciamento de motivos + caixa preta (identificado em 27/08/2026)
+
+**Prioridade: ALTA — Michel quer atacar junto com os e-mails da caixa preta.**
+
+Tela de configuração/gerenciamento onde Michel (e a IA) possam:
+1. Ver todos os motivos cadastrados com seus exemplos reais (como a análise feita em sessão de 27/08)
+2. Consultar o que cada motivo significa sem precisar abrir o código
+3. Ver os e-mails que caíram na "caixa preta" (motivo genérico) para revisar e criar novas regras
+4. Adicionar ou ajustar regras sem precisar de sessão com a IA para isso
+
+**Decisão de Michel (27/08/2026):** avaliar se caixa preta e gerenciamento de motivos ficam numa única tela ou em telas separadas — definir quando chegar na implementação.
+
+**Por que é prioritária:** evita horas de sessão com a IA para ver regras e exemplos; Michel gerencia sozinho e só aciona a IA para dúvidas e ajustes.
+
+**Quando fazer:** próxima fase após definição completa dos motivos nesta sessão.
+
+---
+
+## TELAS — Tela de notificações no app (identificado em 27/08/2026)
+
+Michel pediu uma tela de notificações bem organizada dentro do app — centraliza avisos do sistema (motivos não identificados, alertas de prazo, atualizações importantes) em vez de depender só de e-mail ou badges espalhados.
+
+**Quando fazer:** fase futura — após as telas principais estarem estáveis em produção.
+
+---
+
 ## SERVIDOR VPS — Manutenção de infraestrutura
 
 ### 🟡 VPS — Python 3.9 desatualizado — risco de segurança futuro (identificado 25/08/2026)
