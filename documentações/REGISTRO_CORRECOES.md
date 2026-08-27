@@ -2,6 +2,30 @@
 
 ---
 
+## 2026-08-26 — Badges nas abas + CI corrigido
+
+### 23:32 — Badges migrados do menu lateral para as abas horizontais
+
+**🔎 Em miúdos:** as bolinhas com contagem de "Não Classificadas" e "Bloqueadas" que ficavam no menu saíram de lá e passaram para as abas no topo da tela. Agora só aparecem quando tem e-mail para ver (zero = sem bolinha). O menu ficou mais limpo e o conteúdo avançou um pouco para a esquerda.
+
+- **Problema:** bolinhas no menu lateral ocupavam espaço e apareciam mesmo quando o valor era zero.
+- **Correção:** removidos os `<span class="nav-badge">` dos itens do menu. Adicionados `<span class="tab-badge">` dentro de cada aba nas 4 páginas que mostram o tabbar de e-mails. Badge oculto via `hidden` quando valor = 0.
+- **Detalhe técnico:** CSS `display: inline-flex` no `.tab-badge` sobrescrevia o atributo `hidden` do browser. Corrigido com `.tab-badge[hidden] { display: none !important; }`.
+- **Arquivos:** `templates/gestao_email.html`
+- **Validação:** ✅ VALIDADO — 393 testes passando. Badge "14" exibido em "Bloqueadas por Regras"; "Não Classificadas" sem badge (zero). Verificado via inspeção do DOM no browser.
+
+### 23:32 — CI do GitHub corrigido: dois módulos ausentes
+
+**🔎 Em miúdos:** o CI do GitHub travava ao tentar rodar os testes porque dois arquivos não estavam no repositório — um deles era uma lista de dependências incompleta; o outro era um módulo de código criado em sessão anterior que nunca foi salvo no git.
+
+- **Falha 1 — APScheduler ausente:** `servidor_telas.py` importa `APScheduler` a nível de módulo. O `requirements-dev.txt` (usado pelo CI) não tinha esse pacote. O CI falhava na coleta de testes com `ModuleNotFoundError: No module named 'apscheduler'`. Corrigido adicionando `APScheduler==3.10.4` ao `requirements-dev.txt`.
+- **Falha 2 — portal_sso.py não commitado:** `portal_sso.py` e `tests/test_sso_portal.py` existiam localmente mas nunca foram adicionados ao git. O CI não os encontrava. Corrigido com commit dos dois arquivos.
+- **Arquivos:** `requirements-dev.txt`, `scripts/portal_sso.py`, `tests/test_sso_portal.py`
+- **Validação:** ✅ VALIDADO — CI passou com 394 testes após os dois commits de correção.
+- **sem teste:** correções de infraestrutura/repositório; testes existentes cobrem o comportamento.
+
+---
+
 ## 2026-08-26 — Sair volta ao portal e permanece no login
 
 ### 23:20 — Cookie do grupo apagado no Sair

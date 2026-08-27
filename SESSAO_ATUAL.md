@@ -8,6 +8,42 @@
 
 ---
 
+## 📓 Diário da sessão (2026-08-26 — madrugada) — Badges nas abas + CI corrigido
+
+### O que foi feito
+
+**Frente 1: badges de notificação migrados do menu para as abas**
+
+- Bolinhas que ficavam ao lado de "Não Classificadas" e "Bloqueadas por Regras" no menu lateral foram removidas — menu ficou mais limpo.
+- Badges vermelhos adicionados diretamente nas abas horizontais (tabs). Regra: só aparecem se o número for maior que zero.
+- Corrigida armadilha CSS: `display: inline-flex` no `.tab-badge` sobrescrevia o atributo `hidden` do browser — adicionada regra `.tab-badge[hidden] { display: none !important; }`.
+- Abas receberam `white-space: nowrap` + `inline-flex` para o texto e a bolinha ficarem na mesma linha.
+- Sidebar reduzida de 270px para 230px aproveitando o espaço liberado pelas bolinhas.
+- Deploy confirmado em `https://gestao-suporte.finaudapps.com.br`.
+
+**Frente 2: CI do GitHub corrigido (dois commits consecutivos)**
+
+- **Falha 1:** `apscheduler` ausente no `requirements-dev.txt`. `servidor_telas.py` importa `APScheduler` a nível de módulo; o CI não encontrava o pacote. Corrigido adicionando `APScheduler==3.10.4` ao arquivo.
+- **Falha 2:** `portal_sso.py` e `tests/test_sso_portal.py` criados na sessão anterior mas nunca commitados. O CI baixa só o que está no repositório — sem esses arquivos, a importação falhava na coleta de testes. Commitados os dois arquivos.
+- CI passou com 394 testes.
+
+### Estado atual
+
+**Produção:** no ar em `https://gestao-suporte.finaudapps.com.br` · badges nas abas funcionando.
+**CI:** passando (394 testes).
+**GitHub:** main alinhado ao origin.
+
+### Próximo passo
+
+Nada urgente. Fila futura em `PENDENCIAS.md`:
+- Python 3.9 no servidor (🟡 risco de segurança futuro)
+- UI para gerenciar lista de bloqueio pela tela
+- Painel unificado configurável
+
+Último /fechar: 2026-08-26 23:32 — memórias revisadas ✅
+
+---
+
 ## 📓 Diário da sessão (2026-08-26 — noite) — SSO + Sair encerra o portal
 
 ### O que foi feito
