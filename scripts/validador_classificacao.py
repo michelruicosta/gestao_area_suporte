@@ -18,13 +18,8 @@ from datetime import datetime
 from pathlib import Path
 from collections import Counter
 
-from dotenv import load_dotenv
-from openai import OpenAI
-
 sys.path.insert(0, str(Path(__file__).parent))
 from classificador_regras import classificar_thread
-
-load_dotenv()
 
 # ── Caminhos ──────────────────────────────────────────────────────────────────
 
@@ -221,6 +216,9 @@ def _executar(ts, arq_resultados, arq_relatorio, arq_concluido, ja_feitos, resul
     pendentes = [t for t in validos if t.get('thread_id', '') not in ja_feitos]
     print(f'Já processadas: {len(ja_feitos)} | Pendentes: {len(pendentes)}\n')
 
+    from dotenv import load_dotenv
+    from openai import OpenAI
+    load_dotenv()
     cliente    = OpenAI()
     resultados = list(resultados_anteriores)
     erros      = []
