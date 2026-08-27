@@ -8,7 +8,64 @@
 
 ---
 
-## 📓 Diário da sessão (2026-08-27) — Definição dos textos do campo MOTIVO
+## 📓 Diário da sessão (2026-08-27 — tarde) — Reorganização do CLAUDE.md
+
+### O que foi feito
+
+**Frente única: revisão e reorganização do arquivo de instruções (`CLAUDE.md`)**
+
+Michel pediu sugestões de melhoria no `CLAUDE.md`. Levantadas 7, todas aplicadas. Nenhum código
+de produção alterado — só documentação e instruções.
+
+**O problema central:** o `CLAUDE.md` é carregado inteiro em **toda mensagem de todo chat**. Com
+519 linhas, custava entre 6 e 8 mil tokens por resposta — contrariando a própria regra de "chat
+curto = menor custo" que está dentro dele.
+
+**O que mudou:**
+
+| # | Melhoria | Resultado |
+|---|---|---|
+| 1 | Dividir o arquivo | `CLAUDE.md` 519 → 371 linhas · criado `documentações/REGRAS_TRABALHO.md` (190 linhas) |
+| 2 | "Declarar plano" separado por consequência | Escreve ou gasta API → aguarda OK · Só lê → faz e mostra |
+| 3 | Juntar as 4 regras de "verifique antes de afirmar" | Viraram uma seção única com 4 itens |
+| 4 | Corrigir o erro do `/fast` | `/fast` não troca de modelo — liga o modo rápido do Opus |
+| 5 | Cada coisa no arquivo certo | Tabela de status → spec §8.3 · regra do artifact → já era o Passo 0 do `/iniciar` |
+| 6 | Adicionar "Como rodar o projeto" | Não existia · porta corrigida de 5000 para **5001** |
+| 7 | Ordem de prioridade entre regras | Dados > OK do Michel > registro > tokens > velocidade |
+
+**Decisão de processo tomada no caminho:** ao criar um ramo seguindo a regra "nunca commitar
+direto na `main`", apareceu a contradição — o `DEPLOY.md` manda publicar da `main` e os últimos
+5 commits foram direto nela. Michel decidiu: **trabalhamos direto na `main`**. Ramo separado só
+para mudança grande que talvez seja descartada, com aviso antes. Regra reescrita no `CLAUDE.md`
+§6 e registrada no `REGISTRO_CORRECOES.md`.
+
+**Ganho real:** ~30% menos tokens por resposta (não os ~65% estimados no começo — entraram ~50
+linhas novas que não existiam: índice, "Como rodar" e ordem de prioridade).
+
+### Estado atual
+
+**Produção:** sem alteração — nada foi publicado, nenhum código tocado.
+**Suíte de testes:** não rodada — nenhum `.py` foi modificado nesta sessão.
+**GitHub:** `main` alinhada ao origin (`6003021`).
+**Arquivo novo:** `documentações/REGRAS_TRABALHO.md` — rodada paga, tipografia, recursos
+externos, backup e resumo do deploy.
+
+### Próximo passo
+
+🔴 **Definir os motivos do grupo ❌ (caixa preta + Fix H + Fix R)** — segue sendo o item mais
+quente, herdado da sessão da manhã. São os motivos mais frequentes e os que expõem nome interno
+na tela do usuário.
+Depois: implementar todos os textos aprovados em `_determinar_status()`
+(`scripts/banco_threads.py`).
+
+*(Cruzado com o `PENDENCIAS.md`: nenhum item urgente novo entrou hoje; a tela de gerenciamento
+de motivos está marcada como prioridade ALTA e vem logo depois da definição do grupo ❌.)*
+
+Último /fechar: 2026-08-27 13:05 — memórias revisadas ✅
+
+---
+
+## 📓 Diário da sessão (2026-08-27 — manhã) — Definição dos textos do campo MOTIVO
 
 ### O que foi feito
 

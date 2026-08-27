@@ -4,6 +4,8 @@
 
 ## 2026-08-27 — Decisão: trabalhamos direto na `main`
 
+### 12:55 — Regra alinhada à prática do projeto
+
 **🔎 Em miúdos:** a regra dizia "nunca salvar direto na versão oficial do projeto" — um
 costume de time grande, onde várias pessoas mexem nos mesmos arquivos ao mesmo tempo. Aqui só
 Michel e Claude trabalham, e a publicação no servidor sai justamente dessa versão oficial. A
@@ -27,7 +29,7 @@ regra virava um passo a mais sem proteger nada. Agora está escrito como de fato
 
 ## 2026-08-27 — Reorganização do CLAUDE.md + dois erros factuais corrigidos
 
-### — CLAUDE.md dividido em dois: essencial + detalhado
+### 12:40 — CLAUDE.md dividido em dois: essencial + detalhado
 
 **🔎 Em miúdos:** o arquivo de instruções que o Claude lê era carregado inteiro em **toda
 mensagem de todo chat** — 520 linhas, entre 6 e 8 mil tokens pagos a cada resposta, mesmo
@@ -59,7 +61,7 @@ arquivo novo. Nenhuma regra foi perdida — todas continuam válidas, só mudara
   contra a versão anterior (recuperável por `git show HEAD:CLAUDE.md`).
   **Sem teste: mudança só de documentação e instruções, sem código de produção.**
 
-### — Erro factual: `/fast` não troca de modelo
+### 12:40 — Erro factual: `/fast` não troca de modelo
 
 **🔎 Em miúdos:** as instruções mandavam "mude para Opus com `/fast`". O `/fast` não troca de
 modelo — ele liga o modo rápido do Opus. Quem seguisse a instrução achava que tinha trocado
@@ -72,7 +74,7 @@ de modelo sem ter trocado.
 - **Arquivos:** `CLAUDE.md`, `.claude/commands/iniciar.md`
 - **Validação:** ✅ VALIDADO — sem teste: mudança de texto instrucional.
 
-### — Erro factual: porta do servidor era 5000, é 5001
+### 12:40 — Erro factual: porta do servidor era 5000, é 5001
 
 **🔎 Em miúdos:** o rodapé do CLAUDE.md dizia que a tela roda em `localhost:5000`. O servidor
 sobe na porta **5001**.
