@@ -120,6 +120,7 @@ def _reagendar_coleta(intervalo_min: int) -> None:
             minutes=intervalo_min,
             id='coleta_automatica',
             replace_existing=True,
+            next_run_time=datetime.now(),
         )
 
 
