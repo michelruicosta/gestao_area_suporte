@@ -8,6 +8,42 @@
 
 ---
 
+## 📓 Diário da sessão (2026-08-26 — noite) — Esqueceu a senha + faxina FOG
+
+### O que foi feito
+
+**Frente 1: “Esqueceu a senha?” não fazia nada**
+
+- O botão na tela de entrar estava desligado de propósito. Passou a abrir **Recuperar acesso** no mesmo cartão (padrão Finaud): e-mail → senha temporária no correio → essa senha vira a senha de entrar.
+- Michel testou no site, recebeu o e-mail, entrou e **aprovou**.
+- A tela **Alterar senha** (dentro do app, no menu do nome) ainda só mostra “Senha atualizada” e **não grava**. Quem entra depois de “Esqueceu a senha?” está usando a senha do e-mail — isso é o fluxo certo. Mudar senha pelo perfil continua pendente.
+
+**Frente 2: pendências fechadas nesta conversa**
+
+- Robô de coleta: Michel confirmou que já rodou sozinho. Item “confirmar amanhã” saiu da fila.
+- Classificação por IA: Michel decidiu **não usar IA para classificar**. O item 🔴 SPEC §10 saiu do `PENDENCIAS.md`. Continua valendo só o classificador de regras.
+
+**Frente 3: atalhos mortos do FogBugz**
+
+- Apagadas as URLs `/fog/gerencial` e `/fog/operacional` (não estavam em nenhum menu; se alguém digitasse, a página quebrava). FogBugz que você usa não mudou. Publicado no ar.
+
+### Estado atual
+
+**Produção:** `https://gestao-suporte.finaudapps.com.br` — senha, Sair, SSO e faxina FOG no ar.
+**Nada urgente** nesta fila.
+
+### Próximo passo
+
+Fila futura (nenhum 🔴):
+- Python 3.9 no servidor (🟡 risco de segurança futuro)
+- Lista de bloqueio pela tela
+- Painel unificado configurável
+- Alterar senha pelo perfil (hoje não grava)
+
+Último /fechar: 2026-08-26 23:40 — memórias revisadas ✅
+
+---
+
 ## 📓 Diário da sessão (2026-08-26 — madrugada) — Badges nas abas + CI corrigido
 
 ### O que foi feito
