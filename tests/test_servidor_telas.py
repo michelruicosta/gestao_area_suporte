@@ -88,3 +88,11 @@ def test_rotas_fog_antigas_nao_existem():
     for rota in ('/fog/gerencial', '/fog/operacional'):
         resp = client.get(rota, follow_redirects=False)
         assert resp.status_code == 404, rota
+
+
+def test_porta_padrao_no_pc_e_8004():
+    """No PC a tela Flask sobe em 8004 — não 5001 nem porta de outro app."""
+    import inspect
+
+    fonte = inspect.getsource(st)
+    assert "os.environ.get('PORT', 8004)" in fonte

@@ -69,7 +69,7 @@ def executar() -> None:
     log.info('Aguardando    → Revisão   : %d', contagens.get('revisao', 0))
     log.info('Tempo total   : %.1fs', dur_total)
     log.info(_linha('═'))
-    log.info('Abra http://localhost:5001 para ver o resultado nas telas.')
+    log.info('Abra http://localhost:8004 para ver o resultado nas telas.')
 
 
 if __name__ == '__main__':

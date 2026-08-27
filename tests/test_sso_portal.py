@@ -55,3 +55,12 @@ def test_login_get_com_cookie_do_portal_pula_a_tela(monkeypatch):
     destino = resp.headers.get('Location') or ''
     assert destino.endswith('/')
     assert '/login' not in destino
+
+
+def test_portal_auth_padrao_e_8000_nao_8002(monkeypatch):
+    """No PC, 8002 é Normativos. SSO deste app consulta o portal na 8000."""
+    monkeypatch.delenv('PORTAL_AUTH_URL', raising=False)
+    import importlib
+
+    importlib.reload(sso)
+    assert sso.PORTAL_AUTH_URL == 'http://127.0.0.1:8000'

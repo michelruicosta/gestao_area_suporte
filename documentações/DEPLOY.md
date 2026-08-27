@@ -12,7 +12,7 @@
 Aplicação web em Flask (Python) que centraliza a gestão da área de suporte da Finaud:
 - Lê e classifica e-mails da caixa de coleta via Gmail API
 - Integra com FogBugz para acompanhamento de casos de suporte
-- Tela web acessada pelo time da Finaud em `localhost:5001` (local) ou no domínio do portal
+- Tela web no PC: `http://localhost:8004` (não mandar o link se o servidor não estiver no ar). No site: o domínio publicado.
 
 **Tecnologia:** Python 3.x + Flask + SQLite + Gmail API + FogBugz API
 
@@ -32,7 +32,7 @@ SECRET_KEY=coloque-aqui-uma-string-longa-e-aleatoria
 GESTAO_EMAIL=michel@finaud.com.br
 GESTAO_SENHA=sua-senha-aqui
 FOGBUGZ_TOKEN=seu-token-do-fogbugz-aqui
-PORT=5001
+PORT=8004
 ```
 
 | Variável | Descrição | Obrigatória |
@@ -41,7 +41,7 @@ PORT=5001
 | `GESTAO_EMAIL` | E-mail de login na tela web | Sim |
 | `GESTAO_SENHA` | Senha de login na tela web | Sim |
 | `FOGBUGZ_TOKEN` | Token da API do FogBugz — gerar em Configurações > API no FogBugz | Sim |
-| `PORT` | Porta onde o servidor sobe (padrão: 5001) | Não |
+| `PORT` | Porta onde o servidor sobe no PC (padrão: **8004**) | Não |
 
 ⚠️ **Lembrete:** a senha do Gmail (`GMAIL_APP_PASS`) está em `_archive/arquivos_raiz/chave_app_coleta.oraculo@finaud.com.br.txt` — adicionar ao `.env` quando necessário.
 
@@ -130,7 +130,7 @@ cd gestao_area_suporte
 python scripts/servidor_telas.py
 ```
 
-O servidor sobe na porta definida em `PORT` (padrão 5001). Para rodar em produção, usar um processo manager (systemd, supervisor, ou o que o portal já usa).
+O servidor sobe na porta definida em `PORT` (no PC, padrão **8004**). Não mandar localhost se não estiver no ar. Para rodar em produção, usar um processo manager (systemd, supervisor, ou o que o portal já usa).
 
 ---
 

@@ -43,7 +43,7 @@ Ambiente: Python + Flask, `venv/` na raiz. Rodar sempre da raiz do projeto.
 
 | O que | Comando | Observação |
 |---|---|---|
-| Subir a tela web | `python scripts/servidor_telas.py` | http://localhost:**5001** (variável `PORT` muda a porta) |
+| Subir a tela web | `python scripts/servidor_telas.py` | http://localhost:**8004** (variável `PORT` muda a porta). Não mandar o link se o servidor não estiver no ar. |
 | Coletar + classificar | `python scripts/executar_pipeline.py` | coleta do Gmail, depois classifica o que está sem categoria |
 | Rodar os testes | `pytest tests/ -q` | obrigatório antes de qualquer commit |
 

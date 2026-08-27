@@ -32,14 +32,17 @@ O campo **MOTIVO** exibido na tela de e-mails é hoje muito genérico em vários
 
 ---
 
-### ✅ Motivos já aprovados por Michel (27/08/2026) — aguardam implementação no código
+### ✅ Motivos já aprovados por Michel — aguardam implementação no código
 
-| Motivo atual no banco | Novo texto aprovado | Status |
-|---|---|---|
-| "Cliente enviou conteúdo — aguarda processamento da Finaud" (383x) | **Cliente enviou informações e extratos — aguarda processamento** | Aguardando Finaud |
-| "Cliente encaminhou — aguarda processamento da Finaud" (64x) | **consolidado no item acima** | Aguardando Finaud |
-| "Finaud encerrou a conversa" (68x) | **Finaud concluiu a solicitação** | Concluída |
-| "Finaud escreveu — aguarda retorno do cliente" (49x) | **4 submotivos abaixo** | Aguardando Cliente |
+| Motivo atual no banco | Novo texto aprovado | Status | Aprovado em |
+|---|---|---|---|
+| "Cliente enviou conteúdo — aguarda processamento da Finaud" (383x) | **Cliente enviou informações e extratos — aguarda processamento** | Aguardando Finaud | 27/08 manhã |
+| "Cliente encaminhou — aguarda processamento da Finaud" (64x) | **consolidado no item acima** | Aguardando Finaud | 27/08 manhã |
+| [caixa preta — entrega detectável] (~150x) | **consolidado no item acima** | Aguardando Finaud | 27/08 tarde |
+| [caixa preta — pergunta do cliente] (~70x) | **Cliente fez pergunta — aguarda resposta da Finaud** | Aguardando Finaud | 27/08 tarde |
+| "Fix H: cliente agradeceu sem pergunta ou documento" (41x) + "Cliente confirmou — sem pendência" (39x) | **Cliente agradeceu — problema resolvido** | Concluída | 27/08 tarde |
+| "Finaud encerrou a conversa" (68x) | **Finaud concluiu a solicitação** | Concluída | 27/08 manhã |
+| "Finaud escreveu — aguarda retorno do cliente" (49x) | **4 submotivos abaixo** | Aguardando Cliente | 27/08 manhã |
 
 **4 submotivos (Aguardando Cliente):**
 1. Finaud solicitou extrato ou planilha — aguarda envio
@@ -49,26 +52,38 @@ O campo **MOTIVO** exibido na tela de e-mails é hoje muito genérico em vários
 
 ---
 
-### ❌ Motivos ainda pendentes de decisão (próxima sessão)
+### ❌ Motivos ainda pendentes de decisão
 
 | Motivo atual | Qtd | Problema |
 |---|---|---|
-| "Cliente escreveu — aguarda resposta da Finaud" | 354x | **Caixa preta** — mais frequente e mais genérico |
-| "Fix H: cliente agradeceu sem pergunta ou documento" | 41x | Nome interno "Fix H" aparece na tela do usuário |
-| "Fix R: cliente prometeu retornar..." | ~10x | Nome interno "Fix R" aparece na tela do usuário |
+| "Cliente escreveu — aguarda resposta da Finaud" — restante | ~130x | **Investigar antes de nomear** — o sistema não identificou o padrão; entender o que são antes de definir o texto (próximo chat) |
+| "Fix R: cliente prometeu retornar..." | ~0x banco | Nome interno "Fix R" aparece no código; sem registros no banco hoje mas texto precisa mudar |
 | "Cliente enviou saudação — possível entrega de arquivo" | 15x | "possível" é ruim — sistema não pode ser incerto |
 | "Finaud enviou arquivo sem linguagem de entrega" | 5x | Jargão interno |
+
+---
+
+### Investigação pendente — antes de nomear o grupo restante
+
+Os ~130 e-mails que sobram da caixa preta (nenhum padrão de entrega nem pergunta detectado) precisam ser investigados:
+1. O que está nesses e-mails que o sistema não consegue identificar?
+2. É possível melhorar a detecção e reduzir esse grupo?
+3. Só depois de investigar: nomear o que sobrar de forma honesta.
+
+**Quando fazer:** próximo chat dedicado — não implementar nada enquanto esta análise não estiver concluída.
 
 ---
 
 ### Implementação — quando todos os motivos estiverem aprovados
 
 1. Alterar `_determinar_status()` em `scripts/banco_threads.py` com os novos textos
-2. Rodar `pytest tests/ -q` — zero regressões
-3. Testar na tela de e-mails
-4. Commitar
+2. Expandir detecção de entrega: incluir "Seguem" em qualquer posição + "Anexo" como palavra solta
+3. Rodar `pytest tests/ -q` — zero regressões
+4. Recalcular todos os registros com `recalcular_status_todos()`
+5. Testar na tela de e-mails
+6. Commitar
 
-**Quando fazer:** próxima sessão — definir grupo ❌ primeiro, depois implementar tudo junto.
+**Quando fazer:** após todos os motivos estarem aprovados — incluindo o grupo restante da caixa preta.
 
 ---
 

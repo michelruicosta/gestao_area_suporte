@@ -12,9 +12,10 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
+| 27/08 | Textos campo MOTIVO — grupo ❌ (noite) | abaixo |
 | 27/08 | Organização dos chats + conserto do `/fechar` | abaixo |
 | 27/08 | Reorganização do CLAUDE.md | abaixo |
-| 27/08 | Textos do campo MOTIVO | abaixo |
+| 27/08 | Textos campo MOTIVO (manhã) | arquivo |
 | 26/08 | Esqueceu a senha + faxina FOG | arquivo |
 | 26/08 | Badges nas abas + CI corrigido | arquivo |
 | 26/08 | SSO + Sair encerra o portal | arquivo |
@@ -29,6 +30,49 @@
 >
 > **Regra:** este arquivo guarda as **3 sessões mais recentes**. O `/fechar` acrescenta a
 > linha nova aqui e move a 4ª sessão para o arquivo.
+
+---
+
+## 📓 Diário da sessão (2026-08-27 — noite) — Textos campo MOTIVO — grupo ❌
+
+### O que foi feito
+
+**Frente única: definir submotivos para a "caixa preta" e aprovar textos restantes do grupo ❌**
+
+Metodologia continuada da manhã: analisar dados reais primeiro, nomear depois.
+
+**Análise das 354 threads da "caixa preta"** (motivo atual: "Cliente escreveu — aguarda resposta da Finaud"):
+
+| Grupo | Critério de detecção | Threads |
+|---|---|---|
+| Entrega | "segue", "em anexo", "encaminho"... | ~105 (29%) |
+| Pergunta | "?" real (não saudação/URL) | ~69 (19%) |
+| Misto | Entrega + Pergunta | ~3 (0%) |
+| Outro | Nenhum padrão detectado | ~177 (50%) |
+
+**Textos aprovados nesta sessão:**
+
+| Texto aprovado | Status | Qtd |
+|---|---|---|
+| **Cliente fez pergunta — aguarda resposta da Finaud** | Aguardando Finaud | ~69x |
+| **Cliente agradeceu — problema resolvido** (unifica "Fix H" 41x + "Cliente confirmou" 39x) | Concluída | ~80x |
+
+**Grupo "outro" (~177):** texto "Cliente enviou mensagem" rejeitado por Michel (redundante — todo registro é uma mensagem). Decisão: chat novo para investigar por que o sistema não detectou padrão em ~130 dessas threads.
+
+**Artefato publicado:** rastreador visual de todos os motivos em aprovação:
+https://claude.ai/code/artifact/30448858-e3b1-4a40-a64d-4b989b0b7029
+
+### Estado atual
+
+**Produção:** sem alteração — nenhum código de classificação modificado nesta sessão.
+**Commit desta sessão (`/fechar`):** 9 arquivos — corrigida a porta do servidor local (5001→8004), SSO portal (8002→8000), testes de ambos, CLAUDE.md, DEPLOY.md, PENDENCIAS.md, arquivo histórico.
+
+### Próximo passo
+
+🔴 **Novo chat: investigar ~130 threads sem padrão ("outro")** — por que o sistema não identificou? O que são? Só após a investigação: nomear o motivo final.
+Depois: aprovar textos pendentes (saudação 15x, arquivo sem entrega 5x, Fix R) e implementar tudo em `_determinar_status()` (`scripts/banco_threads.py`).
+
+Último /fechar: 2026-08-27 — memórias revisadas ✅
 
 ---
 
@@ -141,59 +185,5 @@ Depois: implementar todos os textos aprovados em `_determinar_status()`
 de motivos está marcada como prioridade ALTA e vem logo depois da definição do grupo ❌.)*
 
 Último /fechar: 2026-08-27 13:05 — memórias revisadas ✅
-
----
-
-## 📓 Diário da sessão (2026-08-27 — manhã) — Definição dos textos do campo MOTIVO
-
-### O que foi feito
-
-**Frente única: definir os textos descritivos do campo MOTIVO para cada situação de e-mail**
-
-Sessão de revisão colaborativa: Michel e Claude analisaram os dados reais do banco para aprovar novos textos. Metodologia: dados primeiro, nome depois. Nenhum código alterado — só decisões de design aprovadas.
-
-**Princípio aprovado (e vigente daqui em diante):**
-> O MOTIVO deve responder "por que o status é esse?" — não apenas "quem escreveu".
-
-**Vocabulário fixo aprovado:**
-- O que o cliente/Finaud envia → **informações** (dados no corpo) ou **extratos** (arquivos)
-- O que a Finaud faz ao receber → **processar**
-- O que o cliente faz ao receber → **responder**, **enviar** ou **executar**
-
-**Motivos aprovados nesta sessão:**
-
-| Motivo atual (no banco) | Novo texto aprovado | Status |
-|---|---|---|
-| "Cliente enviou conteúdo — aguarda processamento da Finaud" (383x) | **Cliente enviou informações e extratos — aguarda processamento** | Aguardando Finaud |
-| "Cliente encaminhou — aguarda processamento da Finaud" (64x) | **consolidado no item acima** | Aguardando Finaud |
-| "Finaud escreveu — aguarda retorno do cliente" (49x) | **4 submotivos — ver abaixo** | Aguardando Cliente |
-| "Finaud encerrou a conversa" (68x) | **Finaud concluiu a solicitação** | Concluída |
-
-**4 submotivos aprovados para "Finaud escreveu — aguarda retorno do cliente":**
-1. Finaud solicitou extrato ou planilha — aguarda envio (~15 casos)
-2. Finaud deu orientação técnica — aguarda execução (~20 casos)
-3. Finaud propôs reunião ou ligação — aguarda confirmação (~5 casos)
-4. Finaud fez pergunta — aguarda resposta (~9 casos)
-
-**O que ficou para a próxima sessão (❌ grupo — motivos críticos):**
-- "Cliente escreveu — aguarda resposta da Finaud" (354x) — a "caixa preta", mais frequente
-- "Fix H: cliente agradeceu sem pergunta ou documento" (41x) — nome interno aparece na tela
-- "Cliente enviou saudação — possível entrega de arquivo" (15x) — "possível" é ruim
-- "Finaud enviou arquivo sem linguagem de entrega" (5x) — jargão interno
-- Fix R (texto com "Fix R:" na frente) — nome interno aparece na tela
-- Implementação de todos os textos aprovados no código (`scripts/banco_threads.py`)
-
-### Estado atual
-
-**Produção:** sem alteração — nenhum código modificado nesta sessão.
-**Decisões:** 4 motivos aprovados + 4 submotivos aprovados por Michel em 27/08.
-**Planilhas:** `documentações/matriz_motivos_status.xlsx` e `documentações/varredura_motivos.xlsx` — criadas nesta sessão para apoiar a análise.
-
-### Próximo passo
-
-🔴 **Definir os motivos do grupo ❌ (caixa preta + Fix H + Fix R)** — os mais frequentes e críticos.
-Depois: implementar todos os textos aprovados no código (`_determinar_status()` em `scripts/banco_threads.py`).
-
-Último /fechar: 2026-08-27 — memórias revisadas ✅
 
 ---

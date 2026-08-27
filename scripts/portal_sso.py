@@ -10,7 +10,8 @@ from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
-PORTAL_AUTH_URL = os.environ.get("PORTAL_AUTH_URL", "http://127.0.0.1:8002").rstrip("/")
+# No PC e na VPS hoje o portal está na 8000. 8002 no PC é Normativos — não usar.
+PORTAL_AUTH_URL = os.environ.get("PORTAL_AUTH_URL", "http://127.0.0.1:8000").rstrip("/")
 PORTAL_AUTH_LEGACY_URL = os.environ.get("PORTAL_AUTH_LEGACY_URL", "").rstrip("/")
 COOKIE_AUDITORIA = os.environ.get("AUDITORIA_PORTAL_COOKIE_NAME", "auditoria_sessao")
 COOKIE_PORTAL = os.environ.get("PORTAL_COOKIE_NAME", "finaud_portal_sessao")

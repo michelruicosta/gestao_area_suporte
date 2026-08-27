@@ -2,6 +2,54 @@
 
 ---
 
+## 2026-08-27 — Textos do campo MOTIVO: aprovações das sessões manhã e noite
+
+### ~22:00 — Decisões de design do campo MOTIVO (grupo ❌ e unificações)
+
+**🔎 Em miúdos:** o campo "Motivo" que aparece na tela do sistema usava textos com jargão interno
+("Fix H:", "Fix R:") ou muito vagos ("Cliente escreveu"). Nas sessões de 27/08 foram aprovados
+textos novos que qualquer pessoa entende sem precisar de contexto técnico.
+
+- **Problema:** 6 motivos do grupo ❌ (caixa preta, Fix H, Fix R, saudação, arquivo sem entrega)
+  expunham nomes internos ou texto ambíguo na tela de produção.
+- **Sessão manhã — motivos aprovados:**
+  - "Cliente enviou conteúdo…" (383x) + "Cliente encaminhou…" (64x) → **Cliente enviou informações e extratos — aguarda processamento**
+  - "Finaud escreveu — aguarda retorno do cliente" (49x) → 4 submotivos: solicitou extrato / deu orientação técnica / propôs reunião / fez pergunta
+  - "Finaud encerrou a conversa" (68x) → **Finaud concluiu a solicitação**
+- **Sessão noite — análise das 354 "caixa preta":** entrega 105x · pergunta 69x · misto 3x · outro 177x
+  - [sub: pergunta] → **Cliente fez pergunta — aguarda resposta da Finaud** ✅
+  - "Fix H:" (41x) + "Cliente confirmou — sem pendência" (39x) → **Cliente agradeceu — problema resolvido** ✅
+  - [sub: outro] (~177x) → pendente investigação em chat novo
+- **Arquivos alterados:** `documentações/PENDENCIAS.md` (tabela de aprovações atualizada)
+- **Validação:** ⚠️ VALIDAÇÃO PENDENTE — textos aprovados por Michel mas ainda não implementados em `_determinar_status()` (`scripts/banco_threads.py`). Implementação e `recalcular_status_todos()` ficam para após aprovação de todos os motivos.
+
+---
+
+## 2026-08-27 — Porta local corrigida (5001 → 8004) e SSO portal (8002 → 8000)
+
+### ~20:00 — Dois números errados nos scripts e nos testes
+
+**🔎 Em miúdos:** o sistema estava configurado para abrir na porta errada do computador do Michel,
+e o portal de login consultava outro aplicativo em vez do correto. Nenhum usuário final é afetado
+(o servidor de produção é configurado por variável de ambiente) — mas qualquer desenvolvedor que
+rodasse o sistema localmente encontraria um comportamento diferente do esperado.
+
+- **Problema A:** `scripts/servidor_telas.py` usava porta padrão 5001; a porta real do PC é 8004.
+  `scripts/executar_pipeline.py` mostrava `http://localhost:8004` na mensagem de log, mas o
+  servidor subia em 5001. `CLAUDE.md` §1 e `documentações/DEPLOY.md` tinham a porta errada.
+- **Problema B:** `scripts/portal_sso.py` apontava `PORTAL_AUTH_URL` para `http://127.0.0.1:8002`
+  (porta do Normativos no PC) em vez de `8000` (porta correta do portal de autenticação).
+- **Correção:**
+  - `scripts/servidor_telas.py` linha 937: `os.environ.get('PORT', 8004)`
+  - `scripts/portal_sso.py`: `PORTAL_AUTH_URL` default → `http://127.0.0.1:8000`; comentário explicando 8002=Normativos
+  - `scripts/executar_pipeline.py`: mensagem de log corrigida para 8004
+  - `CLAUDE.md` §1 e `documentações/DEPLOY.md`: referências atualizadas
+  - `tests/test_servidor_telas.py`: novo teste `test_porta_padrao_no_pc_e_8004`
+  - `tests/test_sso_portal.py`: novo teste `test_portal_auth_padrao_e_8000_nao_8002`
+- **Validação:** ⚠️ VALIDAÇÃO PENDENTE (VPS) — `pytest` não rodou no PC (venv não existe localmente; venv fica na VPS). Testes escritos e cobrem o comportamento exato. Rodará na próxima conexão SSH.
+
+---
+
 ## 2026-08-27 — Histórico dos diários passa a ir para o GitHub
 
 ### 15:40 — Exceção no `.gitignore` só para `sessao_atual_historico`
