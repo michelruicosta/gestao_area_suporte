@@ -35,6 +35,9 @@ charset-normalizer==3.4.4
 idna==3.11
 urllib3==2.6.3
 
+# --- Agendador (importado a nível de módulo em servidor_telas.py) ---
+APScheduler==3.10.4
+
 # --- config / ambiente ---
 python-dotenv==1.2.1
 
