@@ -2,6 +2,29 @@
 
 ---
 
+## 2026-08-27 — Decisão: trabalhamos direto na `main`
+
+**🔎 Em miúdos:** a regra dizia "nunca salvar direto na versão oficial do projeto" — um
+costume de time grande, onde várias pessoas mexem nos mesmos arquivos ao mesmo tempo. Aqui só
+Michel e Claude trabalham, e a publicação no servidor sai justamente dessa versão oficial. A
+regra virava um passo a mais sem proteger nada. Agora está escrito como de fato funciona.
+
+- **Problema:** a regra "nunca commitar direto na `main`" contradizia (a) o `DEPLOY.md`, que
+  manda commit + push na `main`, e (b) a prática real — os últimos 5 commits do projeto foram
+  direto na `main`. Regra que ninguém segue enfraquece as regras que importam.
+- **Decisão (Michel, 27/08/2026):** trabalhar direto na `main`. A segurança do projeto vem do
+  push só com OK explícito e da reversibilidade de qualquer commit — não do ramo.
+  **Exceção mantida:** mudança grande que talvez seja descartada inteira (refactor pesado,
+  experiência) usa ramo separado, com aviso ao Michel antes de criar.
+- **Como apareceu:** durante a reorganização do CLAUDE.md (entrada abaixo), Claude criou o
+  ramo `docs/reorganizar-claude-md` seguindo a regra escrita e apontou a contradição. O ramo
+  foi trazido para a `main` e apagado.
+- **Arquivos:** `CLAUDE.md` (§6 Versionamento e testes)
+- **Validação:** ✅ VALIDADO — regra alinhada ao `DEPLOY.md` e à prática. Sem teste: mudança
+  de regra de processo, sem código.
+
+---
+
 ## 2026-08-27 — Reorganização do CLAUDE.md + dois erros factuais corrigidos
 
 ### — CLAUDE.md dividido em dois: essencial + detalhado

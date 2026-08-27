@@ -248,7 +248,12 @@ Exemplos brutos: **no máximo 10**; mais só se Michel pedir.
 - **Auto-declaração obrigatória ANTES de cada commit:** *"Mudei código de produção?
   [SIM/NÃO]. Se SIM → teste incluído? [SIM / não, porque ___]."*
 - **Nunca** `git push` sem mostrar o que vai e ter o OK; **nunca** `git push --force`
-- **Nunca** commitar direto na `main` nem pular verificações (`--no-verify`)
+- **Trabalhamos direto na `main`.** O projeto tem um único par de mãos (Michel decide, Claude
+  executa) e o deploy publica a partir dela — ramo separado resolveria um problema que este
+  projeto não tem. A segurança vem do push só com OK e do fato de todo commit ser reversível.
+  **Exceção:** mudança grande que talvez seja descartada inteira (refactor pesado, experiência)
+  → aí sim ramo separado, **avisando o Michel antes de criar**. *(Decidido em 27/08/2026.)*
+- **Nunca** pular verificações (`--no-verify`)
 - Mensagens no padrão `fix:` `feat:` `test:` `refactor:` `docs:` (+ escopo), em português
 - `.gitignore` blinda segredos e dados — nunca forçá-los para dentro
 - **Faxina antes de cada commit:** varrer temporários soltos (`tmp*`, `_probe_*`, `*.out`,
