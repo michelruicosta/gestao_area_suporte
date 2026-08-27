@@ -1663,3 +1663,96 @@ def test_correcao62_fp_preenchimento_drl_nao_vira_retorno():
         f"C62 FP: RETORNO_BACEN indevido em entrega DRL; obtido {r['categorias']}"
     assert 'DRL_2160' in r['categorias'], \
         f"C62 FP: esperado DRL_2160 para planilha DRL; obtido {r['categorias']}"
+
+
+# ── Testes de reavaliar_automaticos (rede de segurança §4) ───────────────────
+
+def _fake_db_ctx(db_path):
+    """Retorna um context manager que abre o SQLite em db_path com Row factory."""
+    import sqlite3
+
+    class Ctx:
+        def __enter__(self):
+            c = sqlite3.connect(str(db_path))
+            c.row_factory = sqlite3.Row
+            return c
+        def __exit__(self, *a):
+            pass
+    return Ctx()
+
+
+def test_reavaliar_automaticos_move_automatico_para_descartes(tmp_path):
+    """
+    reavaliar_automaticos() deve detectar thread com destino='principal' cujo
+    remetente está na lista de bloqueio e movê-la para 'descartes'.
+    """
+    import importlib
+    import sqlite3
+    from unittest.mock import patch
+
+    db = tmp_path / 'threads.db'
+    conn = sqlite3.connect(str(db))
+    conn.execute('''CREATE TABLE threads (
+        thread_id TEXT PRIMARY KEY, assunto TEXT, destino TEXT,
+        mensagens_json TEXT, ultima_sync TEXT
+    )''')
+    conn.execute('''INSERT INTO threads VALUES (
+        'th001', 'Cesta Solidariedade', 'principal',
+        '[{"remetente":"contato@cestaincentivo.com.br"}]',
+        datetime('now')
+    )''')
+    conn.commit()
+    conn.close()
+
+    movidas_log = []
+
+    def fake_atualizar(tid, destino, motivo_descarte=None):
+        movidas_log.append((tid, destino, motivo_descarte))
+
+    mod = importlib.import_module('classificador_regras')
+    # Patcha onde reavaliar_automaticos importa: banco_threads._conectar e banco_threads.atualizar_classificacao
+    with patch('banco_threads._conectar', return_value=_fake_db_ctx(db)), \
+         patch('banco_threads.atualizar_classificacao', fake_atualizar):
+        resultado = mod.reavaliar_automaticos(janela_horas=48)
+
+    assert resultado['movidas'] == 1, f"Esperado 1 movida, obtido {resultado}"
+    assert resultado['reavaliadas'] >= 1
+    assert movidas_log[0][0] == 'th001'
+    assert movidas_log[0][1] == 'descartes'
+    assert 'cestaincentivo' in (movidas_log[0][2] or '')
+
+
+def test_reavaliar_automaticos_nao_move_thread_normal(tmp_path):
+    """
+    reavaliar_automaticos() NÃO deve mover threads de remetentes legítimos.
+    """
+    import importlib
+    import sqlite3
+    from unittest.mock import patch
+
+    db = tmp_path / 'threads.db'
+    conn = sqlite3.connect(str(db))
+    conn.execute('''CREATE TABLE threads (
+        thread_id TEXT PRIMARY KEY, assunto TEXT, destino TEXT,
+        mensagens_json TEXT, ultima_sync TEXT
+    )''')
+    conn.execute('''INSERT INTO threads VALUES (
+        'th002', 'DDR Maio 2026', 'principal',
+        '[{"remetente":"cliente@banco.com.br"}]',
+        datetime('now')
+    )''')
+    conn.commit()
+    conn.close()
+
+    movidas_log = []
+
+    def fake_atualizar(tid, destino, motivo_descarte=None):
+        movidas_log.append((tid, destino, motivo_descarte))
+
+    mod = importlib.import_module('classificador_regras')
+    with patch('banco_threads._conectar', return_value=_fake_db_ctx(db)), \
+         patch('banco_threads.atualizar_classificacao', fake_atualizar):
+        resultado = mod.reavaliar_automaticos(janela_horas=48)
+
+    assert resultado['movidas'] == 0, f"Nenhuma thread deveria ser movida; obtido {resultado}"
+    assert not movidas_log

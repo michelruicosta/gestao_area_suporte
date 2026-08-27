@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-08-26 — Automáticos escaparam para a fila de Aguardando Finaud
+
+### 22:45 — Filtro §4 falhou silenciosamente na coleta das 19:29
+
+**🔎 Em miúdos:** e-mails automáticos (relatórios internos do RiskDriver, avisos do sistema Finaud e spam de uma cesta solidariedade) apareceram na lista de "Aguardando Finaud" em vez de ir direto para o descarte. 5 threads foram movidas manualmente para o descarte e o código foi corrigido para impedir que isso aconteça de novo.
+
+- **Problema (1):** o filtro que bloqueia automáticos falhou silenciosamente durante a coleta das 19:29 de 26/08 — nenhum descarte foi registrado em 42 threads processadas. O `print()` usado nos logs era suprimido pelo servidor de produção (Gunicorn), então o problema ficou invisível.
+- **Problema (2):** o endereço `contato@cestaincentivo.com.br` (spam de cesta solidariedade) não estava na lista de bloqueio — então passava pelo filtro mesmo quando ele funcionava.
+- **Correção A — logging visível:** substituídas todas as chamadas `print()` em `classificador_regras.py` por `_log.info()`/`_log.warning()`/`_log.error()` que aparecem no `journalctl`. Erro ao importar o filtro passa de `except ImportError` para `except Exception`, com log de alerta explícito.
+- **Correção B — rede de segurança:** nova função `reavaliar_automaticos()` em `classificador_regras.py` que verifica, após cada coleta, se há threads recentes em `principal` que deveriam ter sido descartadas. Chamada no `servidor_telas.py` logo após o `classificar_banco()`. Garante que, mesmo se o filtro falhar, a rodada seguinte corrige os escapes.
+- **Correção C — lista de bloqueio:** `contato@cestaincentivo.com.br` adicionado a `_ENDERECOS_EXATOS` em `validador_classificacao.py`.
+- **Correção manual (produção):** 5 threads movidas para `descartes` diretamente no banco `gestao.db` do servidor via SSH com `motivo_descarte = 'correcao manual 26/08/2026: automatico escapou filtro §4'`.
+- **Arquivos:** `scripts/validador_classificacao.py`, `scripts/classificador_regras.py`, `scripts/servidor_telas.py`, `tests/test_validador_filtro.py`, `tests/test_classificador_regras.py`
+- **Validação:** ✅ VALIDADO — 393 testes passando (0 regressões). Inclui: `test_filtro_cestaincentivo_bloqueado`, `test_reavaliar_automaticos_move_automatico_para_descartes`, `test_reavaliar_automaticos_nao_move_thread_normal`.
+- **Pendência gerada:** UI para gerenciar a lista de bloqueio pela tela (registrada em PENDENCIAS.md).
+
+---
+
 ## 2026-08-26 — Esqueceu a senha não fazia nada
 
 ### 22:10 — Clique em "Esqueceu a senha?" na tela de login

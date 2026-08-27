@@ -28,6 +28,16 @@ O servidor Hostinger (`31.97.82.203`) roda **Python 3.9**, que já não recebe m
 
 ---
 
+## TELAS — Gerenciar lista de bloqueio automático pela tela (identificado em 26/08/2026)
+
+Hoje a lista de endereços que são bloqueados automaticamente antes de chegar ao classificador (`_ENDERECOS_EXATOS` em `scripts/validador_classificacao.py`) só pode ser alterada diretamente no código. Se aparecer um novo spam recorrente, é necessário abrir o código para adicionar o endereço.
+
+**O que fazer:** criar uma tela de administração (ou uma seção na tela existente) onde o Michel possa adicionar ou remover endereços da lista de bloqueio sem precisar mexer no código. A lista seria persistida em arquivo de configuração (JSON ou similar) e lida pelo `validador_classificacao.py` na inicialização.
+
+**Quando fazer:** futuro — não é urgente. O sistema tem a correção manual como alternativa enquanto isso.
+
+---
+
 ## TELAS — Painel Unificado configurável (identificado em 26/08/2026)
 
 **Ideia:** substituir a navegação por seções separadas por um único painel onde o usuário seleciona quais widgets quer ver (Classificação e Status, Evolução, FOG Visão Consolidada, Lista de Casos, FOG Evolução). Cada widget auto-atualiza no mesmo intervalo já configurado. O botão de tela cheia por widget (já implementado em 26/08) seria a base para fullscreen por widget dentro do painel.
@@ -532,6 +542,87 @@ Ideias levantadas por Michel para evoluir o painel:
 ## APÓS A FASE 1 ESTAR RODANDO
 
 > Fazer depois que o sistema (coletor + classificador + 3 telas) estiver funcionando em produção.
+
+---
+
+### 🟡 BANCO/TELAS — Remetente mascarado: 645 e-mails de clientes guardados com suporte@finaud no lugar do cliente real (identificado 26/08/2026)
+
+#### O que é o problema
+
+Quando um cliente envia e-mail para `suporte@finaud.com.br`, o e-mail é entregue pelo **Google Groups** (lista de suporte). Nessa entrega, o Gmail **substitui o remetente original** pelo endereço da lista. O campo `From` do e-mail, que deveria trazer o cliente, chega assim:
+
+```
+"'George Lucas Ramos Junckes' via Suporte" <suporte@finaud.com.br>
+```
+
+Em vez do correto:
+
+```
+George Lucas Ramos Junckes <george.junckes@eqi.com.br>
+```
+
+O nosso coletor (`scripts/coletor_gmail.py`, linha 129) lê o campo `From` e grava esse valor mascarado no banco como `remetente_principal` e como `remetente` de cada mensagem no JSON interno.
+
+#### O que foi verificado (26/08/2026)
+
+Varredura completa do banco de produção (`/srv/finaud/tec/gestao_area_suporte/data/gestao.db`) com 1.589 threads:
+
+| Situação | Qtd |
+|---|---|
+| Threads com remetente mascarado (`suporte@finaud.com.br`) | 675 (42,5%) |
+| → Clientes externos reais com dado errado no banco | **645** |
+| → Sarah Sá / Pedro Silva / suporte genérico (Finaud enviando pela lista — dado correto) | ~20 |
+| → Facebook/redes sociais roteados pela lista (automáticos) | ~6 (já filtrados) |
+
+O e-mail bruto contém campos que revelam o remetente real:
+- `X-Original-From: George Lucas Ramos Junckes <george.junckes@eqi.com.br>` — nome + e-mail real
+- `X-Original-Sender: george.junckes@eqi.com.br` — só o e-mail real
+- `Reply-To: George Lucas Ramos Junckes <george.junckes@eqi.com.br>` — já coletamos; resolve 645/645 casos
+
+A Gmail API no formato `full` já retorna todos esses cabeçalhos. Hoje só lemos `From` e `Reply-To`. Os campos `X-Original-From` e `X-Original-Sender` chegam mas são ignorados.
+
+#### O que o problema afeta — e o que NÃO afeta
+
+**Não afeta (já resolvido no código atual):**
+
+- **Tela principal de classificação e status** (`scripts/servidor_telas.py`, linha 405): já tem lógica que detecta `suporte@finaud` no remetente e usa o `Reply-To` no lugar. A coluna "DE" que Michel vê na tela já mostra o cliente correto — confirmado em tela em 26/08/2026.
+- **Classificador determinístico** (`scripts/classificador_regras.py`): não usa o campo remetente em momento algum — classifica apenas por assunto, corpo e nome dos anexos. Completamente imune.
+- **Lógica de status** (`scripts/banco_threads.py`, linha 366): já tem tratamento específico — quando vê `suporte@finaud` como remetente com Reply-To externo, entende que é cliente, não Finaud.
+- **Filtro de automáticos** (`scripts/validador_classificacao.py`, função `eh_automatico()`): `suporte@finaud.com.br` não está na lista de bloqueados — e-mails de clientes passam normalmente. Correto.
+
+**Afeta (problema cosmético e de qualidade de dado):**
+
+- **O campo `remetente_principal` no banco**: guarda o valor mascarado. Dado de base incorreto, mesmo que as telas principais já contornem.
+- **Telas secundárias** (`servidor_telas.py`, linhas 476 e 495): listagens de descartados e outras que usam `remetente_principal` diretamente sem o tratamento. Podem mostrar `suporte@finaud.com.br` em vez do cliente.
+- **Qualidade do dado histórico**: se no futuro alguém exportar ou analisar o campo `remetente_principal` diretamente (relatório, BI, nova tela), receberá `suporte@finaud.com.br` nos 645 casos — sem o dado real do cliente.
+
+#### Proposta de correção
+
+**Parte 1 — Coletor (novos e-mails):** ao processar cada mensagem em `_processar_mensagem()` (`coletor_gmail.py`, linha 114), antes de gravar o `remetente`, verificar:
+
+1. Se `From` contém `suporte@finaud.com.br` → tentar `X-Original-From` (já vem na API, só não é lido)
+2. Se `X-Original-From` não existir → tentar `X-Original-Sender`
+3. Se nem esse existir → manter `From` (fallback seguro)
+
+Isso garante que todos os novos e-mails entrem no banco já com o remetente correto — sem precisar tratar nas telas.
+
+**Parte 2 — Banco histórico (retroceder os 645 casos):** script de migração que percorre as 645 threads mascaradas, lê o `Reply-To` que já está salvo no JSON interno das mensagens, e atualiza o campo `remetente_principal` (e o `remetente` de cada mensagem no JSON). Antes de rodar: backup obrigatório em `data/backups/`.
+
+**Parte 3 — Telas secundárias:** após a Parte 2, os campos já estarão corretos no banco — as telas que hoje usam `remetente_principal` direto passarão a mostrar o dado certo automaticamente, sem mudar o código delas.
+
+#### Por que não é urgente
+
+A tela que Michel usa diariamente já mostra o cliente correto. O classificador e o status funcionam bem. O problema é de qualidade do dado de base — relevante para o futuro (relatórios, novas telas, auditoria) mas sem impacto operacional hoje.
+
+#### Arquivos a alterar
+
+| Arquivo | O que muda |
+|---|---|
+| `scripts/coletor_gmail.py` | `_processar_mensagem()` — lógica de fallback para remetente: `X-Original-From` → `X-Original-Sender` → `From` |
+| Script de migração (novo, descartável) | Percorre 645 threads mascaradas e atualiza `remetente_principal` + JSON usando o `Reply-To` salvo |
+| `data/backups/AAAAMMDD_HHMM_fix_remetente/` | Backup obrigatório antes de rodar a migração |
+
+**Quando fazer:** após a Fase 1 estar estável em produção — não bloqueia nada hoje.
 
 ---
 

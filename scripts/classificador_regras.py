@@ -15,8 +15,11 @@ Fluxo:
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
+
+_log = logging.getLogger('classificador')
 
 try:
     import pytesseract
@@ -678,21 +681,26 @@ def classificar_banco() -> dict:
     import json as _json
     from banco_threads import buscar_sem_classificar, atualizar_classificacao
 
+    _filtro_ativo = True
     try:
         from validador_classificacao import eh_automatico
-    except ImportError:
-        def eh_automatico(t):  # fallback se o módulo não estiver disponível
+    except Exception as exc:
+        _log.error('classificar_banco: falha ao importar filtro §4 — %s', exc)
+        _filtro_ativo = False
+        def eh_automatico(t):
             return None
+
+    if not _filtro_ativo:
+        _log.warning('classificar_banco: filtro §4 desativado — automáticos podem passar!')
 
     threads = buscar_sem_classificar()
 
     if not threads:
-        print('Nenhuma thread nova para classificar.')
+        _log.info('Nenhuma thread nova para classificar.')
         return {'principal': 0, 'revisao': 0, 'descartes': 0}
 
     contagens = {'principal': 0, 'revisao': 0, 'descartes': 0}
-
-    print(f'Classificando {len(threads)} thread(s)...')
+    _log.info('Classificando %d thread(s)...', len(threads))
 
     for row in threads:
         thread_id = row['thread_id']
@@ -709,7 +717,7 @@ def classificar_banco() -> dict:
         if motivo_descarte:
             atualizar_classificacao(thread_id, 'descartes', motivo_descarte=motivo_descarte)
             contagens['descartes'] += 1
-            print(f'  [DESCARTE] {row["assunto"][:55]} → {motivo_descarte}')
+            _log.info('[DESCARTE] %s → %s', row['assunto'][:55], motivo_descarte)
             continue
 
         # Classificador determinístico
@@ -724,14 +732,70 @@ def classificar_banco() -> dict:
             motivo_classificacao=motivo,
         )
         contagens['principal'] += 1
-        print(f'  [OK] {row["assunto"][:55]} → {categoria}')
+        _log.info('[OK] %s → %s', row['assunto'][:55], categoria)
 
     total = sum(contagens.values())
-    print(f'\nClassificação concluída: {total} thread(s)')
-    print(f'  Principal : {contagens["principal"]}')
-    print(f'  Descartes : {contagens["descartes"]}')
-    print(f'  Revisão   : {contagens["revisao"]}')
+    _log.info(
+        'Classificação concluída: %d thread(s) — principal=%d descartes=%d revisão=%d',
+        total, contagens['principal'], contagens['descartes'], contagens['revisao'],
+    )
     return contagens
+
+
+def reavaliar_automaticos(janela_horas: int = 48) -> dict:
+    """
+    Re-avalia threads recentes com destino='principal' contra o filtro §4.
+    Se o filtro retornar motivo, move para 'descartes'.
+
+    Rede de segurança: se o filtro falhou silenciosamente numa coleta,
+    a rodada seguinte corrige as threads que escaparam.
+    Retorna {'reavaliadas': N, 'movidas': M}.
+    """
+    import json as _json
+    from datetime import datetime, timedelta
+    from banco_threads import _conectar, atualizar_classificacao
+
+    try:
+        from validador_classificacao import eh_automatico
+    except Exception as exc:
+        _log.error('reavaliar_automaticos: falha ao importar filtro §4 — %s', exc)
+        return {'reavaliadas': 0, 'movidas': 0}
+
+    limite = (datetime.now() - timedelta(hours=janela_horas)).strftime('%Y-%m-%d %H:%M:%S')
+
+    with _conectar() as conn:
+        rows = conn.execute(
+            """SELECT thread_id, assunto, mensagens_json
+               FROM threads
+               WHERE destino = 'principal'
+                 AND ultima_sync >= ?
+               ORDER BY ultima_sync DESC""",
+            (limite,),
+        ).fetchall()
+
+    movidas = 0
+    for row in rows:
+        thread = {'assunto': row['assunto'], 'mensagens': []}
+        if row['mensagens_json']:
+            try:
+                thread['mensagens'] = _json.loads(row['mensagens_json'])
+            except Exception:
+                pass
+
+        motivo = eh_automatico(thread)
+        if motivo:
+            atualizar_classificacao(row['thread_id'], 'descartes', motivo_descarte=motivo)
+            movidas += 1
+            _log.warning(
+                'Re-avaliação §4: moveu para DESCARTADO — "%s" → %s',
+                row['assunto'][:55], motivo,
+            )
+
+    _log.info(
+        'Re-avaliação §4: %d threads verificadas, %d movidas para DESCARTADO',
+        len(rows), movidas,
+    )
+    return {'reavaliadas': len(rows), 'movidas': movidas}
 
 
 if __name__ == '__main__':

@@ -41,6 +41,7 @@ _ENDERECOS_EXATOS = {
     'coleta.oraculo@finaud.com.br',
     'do-not-reply@finaud.fogbugz.com',
     'comunicacao@comunicacao.bcb.gov.br',
+    'contato@cestaincentivo.com.br',
 }
 
 _PADROES_ENDERECO = re.compile(

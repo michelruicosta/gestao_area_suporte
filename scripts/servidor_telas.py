@@ -45,6 +45,7 @@ _CONFIG_PATH = os.path.join(_ROOT_DIR, 'data', 'config.json')
 sys.path.insert(0, _SCRIPTS_DIR)
 import banco_threads as bt
 from paths import criar_log
+from portal_sso import COOKIE_AUDITORIA, COOKIE_PORTAL, usuario_pelos_cookies
 
 _log = criar_log('servidor')
 
@@ -92,9 +93,10 @@ def _job_coleta_automatica():
     try:
         sys.path.insert(0, _SCRIPTS_DIR)
         from coletor_gmail import coletar
-        from classificador_regras import classificar_banco
+        from classificador_regras import classificar_banco, reavaliar_automaticos
         log_id = coletar()
         contagens = classificar_banco()
+        reavaliar_automaticos()
         if log_id:
             bt.atualizar_classif_coleta(
                 log_id,
@@ -328,11 +330,46 @@ def _chave_data(t: dict) -> str:
         return d
 
 
-# ── Autenticação ──────────────────────────────────────────────────────────────
+def _parametros_cookie_portal() -> dict:
+    """Mesmo domínio do cookie do portal, para o Sair encerrar a sessão do grupo."""
+    params = {'path': '/', 'httponly': True, 'samesite': 'lax'}
+    domain = os.environ.get('AUTH_COOKIE_DOMAIN', '.finaudapps.com.br').strip()
+    if domain:
+        params['domain'] = domain
+    secure_env = os.environ.get('AUTH_COOKIE_SECURE')
+    if secure_env is None:
+        params['secure'] = bool(domain)
+    elif secure_env.strip().lower() in ('1', 'true', 'yes'):
+        params['secure'] = True
+    return params
+
+
+def _redirecionar_ao_portal_saindo():
+    session.clear()
+    resp = redirect(_PORTAL_URL)
+    params = _parametros_cookie_portal()
+    for nome in (COOKIE_AUDITORIA, COOKIE_PORTAL):
+        resp.delete_cookie(nome, **params)
+    return resp
+
+
+def _aplicar_sso_portal() -> bool:
+    """Abre o app se o cookie do portal ainda for válido."""
+    if session.get('logado'):
+        return True
+    usuario = usuario_pelos_cookies(request.cookies)
+    if usuario is None:
+        return False
+    session['logado'] = True
+    session['email'] = usuario.email
+    return True
+
 
 def _requer_login(f):
     @wraps(f)
     def _wrap(*args, **kwargs):
+        if not session.get('logado'):
+            _aplicar_sso_portal()
         if not session.get('logado'):
             if request.is_json:
                 return jsonify({'erro': 'não autenticado'}), 401
@@ -343,6 +380,8 @@ def _requer_login(f):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if request.method == 'GET' and _aplicar_sso_portal():
+        return redirect(url_for('index'))
     erro = None
     if request.method == 'POST':
         email = (request.form.get('email') or '').strip()
@@ -370,8 +409,7 @@ def recuperar_senha():
 
 @app.route('/sair')
 def sair():
-    session.clear()
-    return redirect(_PORTAL_URL)
+    return _redirecionar_ao_portal_saindo()
 
 
 # ── Tela principal ─────────────────────────────────────────────────────────────
@@ -775,8 +813,7 @@ def page_custos():
 
 @app.route('/logout')
 def logout():
-    session.clear()
-    return redirect(_PORTAL_URL)
+    return _redirecionar_ao_portal_saindo()
 
 
 @app.route('/perfil')

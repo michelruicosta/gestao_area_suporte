@@ -75,3 +75,11 @@ def test_fogbugz_filtrado_pelo_assunto_independente_de_remetente(assunto):
     t = _thread(assunto, remetente='"Qualquer Nome" <qualquer@outro.com.br>')
     assert eh_automatico(t) is not None, \
         f"FogBugz não filtrado para assunto: '{assunto}'"
+
+
+def test_filtro_cestaincentivo_bloqueado():
+    """contato@cestaincentivo.com.br deve ser bloqueado pelo endereço exato (26/08/2026)."""
+    t = _thread("Cesta de Solidariedade", remetente='"Cesta Incentivo" <contato@cestaincentivo.com.br>')
+    motivo = eh_automatico(t)
+    assert motivo is not None, "cestaincentivo.com.br não foi bloqueado"
+    assert 'cestaincentivo.com.br' in motivo
