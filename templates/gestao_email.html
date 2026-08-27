@@ -116,7 +116,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 
 /* ─── Sidebar ──────────────────────────────────────────────────────── */
 .sidebar {
-  width: 270px; flex-shrink: 0;
+  width: 230px; flex-shrink: 0;
   background: var(--sidebar-bg); color: #e2e8f0;
   display: flex; flex-direction: column;
 }
@@ -478,9 +478,18 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
 .email-tabbar { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.25rem; }
 .email-tab { padding: 9px 16px; border: none; background: none; color: var(--muted);
   font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;
-  border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color .15s, border-color .15s; }
+  border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color .15s, border-color .15s;
+  white-space: nowrap; display: inline-flex; align-items: center; }
 .email-tab:hover { color: var(--text); }
 .email-tab.ativa { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.tab-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: #e53e3e; color: #fff;
+  font-size: 0.69rem; font-weight: 700;
+  min-width: 18px; height: 18px; padding: 0 5px;
+  border-radius: 999px; margin-left: 5px; vertical-align: middle; line-height: 1;
+}
+.tab-badge[hidden] { display: none !important; }
 
 .content { flex: 1; padding: 1.5rem 1.75rem 2rem; overflow-y: auto; }
 .page { display: none; }
@@ -1049,12 +1058,10 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
         <button class="nav-item" data-pagina="nao-classificados" onclick="navegar(this)">
           <span class="nav-ico">📥</span>
           <span class="nav-txt">Não Classificadas</span>
-          <span class="nav-badge" id="badge-nao-class">—</span>
         </button>
         <button class="nav-item" data-pagina="bloqueados" onclick="navegar(this)">
           <span class="nav-ico">🚫</span>
           <span class="nav-txt">Bloqueadas por Regras</span>
-          <span class="nav-badge" id="badge-bloqueados">—</span>
         </button>
       </div>
     </div>
@@ -1159,8 +1166,8 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
       <div class="email-tabbar">
         <button class="email-tab ativa" data-pagina="classificados" onclick="navegar(this)">Classificação e Status</button>
         <button class="email-tab" data-pagina="historico" onclick="navegar(this)">Evolução</button>
-        <button class="email-tab" data-pagina="nao-classificados" onclick="navegar(this)">Não Classificadas</button>
-        <button class="email-tab" data-pagina="bloqueados" onclick="navegar(this)">Bloqueadas por Regras</button>
+        <button class="email-tab" data-pagina="nao-classificados" onclick="navegar(this)">Não Classificadas<span class="tab-badge tab-badge-nao-class" hidden></span></button>
+        <button class="email-tab" data-pagina="bloqueados" onclick="navegar(this)">Bloqueadas por Regras<span class="tab-badge tab-badge-bloqueados" hidden></span></button>
       </div>
       <div class="page-header" style="margin-bottom:0.75rem">
         <div class="page-header-left">
@@ -1213,8 +1220,8 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
       <div class="email-tabbar">
         <button class="email-tab" data-pagina="classificados" onclick="navegar(this)">Classificação e Status</button>
         <button class="email-tab ativa" data-pagina="historico" onclick="navegar(this)">Evolução</button>
-        <button class="email-tab" data-pagina="nao-classificados" onclick="navegar(this)">Não Classificadas</button>
-        <button class="email-tab" data-pagina="bloqueados" onclick="navegar(this)">Bloqueadas por Regras</button>
+        <button class="email-tab" data-pagina="nao-classificados" onclick="navegar(this)">Não Classificadas<span class="tab-badge tab-badge-nao-class" hidden></span></button>
+        <button class="email-tab" data-pagina="bloqueados" onclick="navegar(this)">Bloqueadas por Regras<span class="tab-badge tab-badge-bloqueados" hidden></span></button>
       </div>
       <div class="page-header" style="margin-bottom:0.75rem">
         <div class="page-header-left">
@@ -1297,8 +1304,8 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
       <div class="email-tabbar">
         <button class="email-tab" data-pagina="classificados" onclick="navegar(this)">Classificação e Status</button>
         <button class="email-tab" data-pagina="historico" onclick="navegar(this)">Evolução</button>
-        <button class="email-tab ativa" data-pagina="nao-classificados" onclick="navegar(this)">Não Classificadas</button>
-        <button class="email-tab" data-pagina="bloqueados" onclick="navegar(this)">Bloqueadas por Regras</button>
+        <button class="email-tab ativa" data-pagina="nao-classificados" onclick="navegar(this)">Não Classificadas<span class="tab-badge tab-badge-nao-class" hidden></span></button>
+        <button class="email-tab" data-pagina="bloqueados" onclick="navegar(this)">Bloqueadas por Regras<span class="tab-badge tab-badge-bloqueados" hidden></span></button>
       </div>
       <div class="page-header">
         <div>
@@ -1586,8 +1593,8 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
       <div class="email-tabbar">
         <button class="email-tab" data-pagina="classificados" onclick="navegar(this)">Classificação e Status</button>
         <button class="email-tab" data-pagina="historico" onclick="navegar(this)">Evolução</button>
-        <button class="email-tab" data-pagina="nao-classificados" onclick="navegar(this)">Não Classificadas</button>
-        <button class="email-tab ativa" data-pagina="bloqueados" onclick="navegar(this)">Bloqueadas por Regras</button>
+        <button class="email-tab" data-pagina="nao-classificados" onclick="navegar(this)">Não Classificadas<span class="tab-badge tab-badge-nao-class" hidden></span></button>
+        <button class="email-tab ativa" data-pagina="bloqueados" onclick="navegar(this)">Bloqueadas por Regras<span class="tab-badge tab-badge-bloqueados" hidden></span></button>
       </div>
       <div class="page-header">
         <div>
@@ -2284,11 +2291,11 @@ async function carregarResumo() {
     const d = await _get('/api/resumo');
     const now = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 
-    // Badges sidebar
-    document.getElementById('badge-nao-class').textContent  = d.nao_class  || '0';
-    document.getElementById('badge-bloqueados').textContent = d.bloqueados || '0';
-    if ((d.nao_class || 0) > 0)   document.getElementById('badge-nao-class').classList.add('alerta');
-    if ((d.bloqueados || 0) > 0)  document.getElementById('badge-bloqueados').classList.add('alerta');
+    // Badges nas abas (só aparecem se > 0)
+    const _naoClass = +(d.nao_class || 0);
+    const _bloq = +(d.bloqueados || 0);
+    document.querySelectorAll('.tab-badge-nao-class').forEach(el => { el.textContent = _naoClass; el.hidden = _naoClass === 0; });
+    document.querySelectorAll('.tab-badge-bloqueados').forEach(el => { el.textContent = _bloq; el.hidden = _bloq === 0; });
 
     // Tabela
     _dadosResumo = {categorias: d.categorias, totais: d.totais};
