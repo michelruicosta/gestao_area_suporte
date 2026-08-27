@@ -12,9 +12,10 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
+| 27/08 | Organização dos chats + conserto do `/fechar` | abaixo |
 | 27/08 | Reorganização do CLAUDE.md | abaixo |
 | 27/08 | Textos do campo MOTIVO | abaixo |
-| 26/08 | Esqueceu a senha + faxina FOG | abaixo |
+| 26/08 | Esqueceu a senha + faxina FOG | arquivo |
 | 26/08 | Badges nas abas + CI corrigido | arquivo |
 | 26/08 | SSO + Sair encerra o portal | arquivo |
 | 26/08 | Fix filtro §4 — automáticos na fila de suporte | arquivo |
@@ -28,6 +29,61 @@
 >
 > **Regra:** este arquivo guarda as **3 sessões mais recentes**. O `/fechar` acrescenta a
 > linha nova aqui e move a 4ª sessão para o arquivo.
+
+---
+
+## 📓 Diário da sessão (2026-08-27 — fim da tarde) — Organização dos chats + conserto do `/fechar`
+
+### O que foi feito
+
+**Frente única: organizar as conversas do projeto — e consertar o que mantinha isso vivo**
+
+Michel abriu o chat perguntando como organizar as conversas para não perder o que já foi falado
+e feito. Virou três frentes, e uma quarta apareceu no caminho.
+
+**1. Dois tipos de chat — regra nova no `CLAUDE.md` §2.5**
+Michel apontou o furo da primeira proposta: nem todo chat é sessão de trabalho, e uma resposta
+gera dúvidas novas. A regra ficou: **Michel não decide nada na abertura** — abre e pergunta;
+quem detecta que virou trabalho é o Gestor, com três frases de gatilho (vou escrever num
+arquivo / isso é decisão / essa dúvida tem trabalho próprio). O `/iniciar` funciona a qualquer
+momento do chat, não precisa ser a 1ª mensagem.
+Michel também reprovou o jargão "parquear" pela regra §2.2 → virou **"anotar e continuar"**.
+
+**2. Grupos na barra lateral — feito por Michel no app**
+Quatro grupos, por assunto: ⚙️ CLAUDE CONFIGURAÇÕES (como trabalhamos) · 📐 REGRAS DE NEGÓCIOS
+(o que o sistema deve fazer) · 🔧 DESENVOLVIMENTO (fazer funcionar) · 🔁 Rotinas. Os 8 chats
+soltos foram distribuídos; "Sem grupo" deve ficar permanentemente vazio.
+
+**3. Índice de sessões — `SESSAO_ATUAL.md` 450 → 183 linhas**
+Tabela "🗂️ Sessões anteriores" no topo com todas as sessões, 3 diários completos abaixo, o
+resto no arquivo do mês. É a resposta à pergunta original: *"onde vejo tudo o que já fizemos?"*
+
+**4. (Apareceu no caminho) O `/fechar` apontava para o projeto antigo**
+9 referências ao `oraculo_360_finaud`: dois `cd` para uma pasta que não existe, a pasta de
+memórias errada e 6 documentos inexistentes. Dois blocos falhavam e eram pulados toda vez.
+**Nada foi perdido** — verificado: o projeto antigo não existe no computador, e o bordo e as
+memórias sempre foram gravados nas pastas certas. O que nunca rodou foram as duas conferências
+automáticas (auditoria de documentação e links quebrados) — viraram pendência.
+
+### Estado atual
+
+**Produção:** sem alteração — nenhum código tocado. `pytest` não rodado: nenhum `.py` mudou.
+**GitHub:** `main` alinhada ao origin (`4ed3290`) — subiu junto o commit pendente de ontem.
+**Versionamento:** `_archive/sessao_atual_historico/*.md` passou a ir para o GitHub (exceção no
+`.gitignore`, decidida por Michel). O resto do `_archive/` continua fora — 5,5 MB de código e
+dados do sistema antigo.
+
+### Próximo passo
+
+🔴 **Definir os motivos do grupo ❌ (caixa preta + Fix H + Fix R)** — inalterado desde a manhã.
+São os motivos mais frequentes e os que expõem nome interno na tela do usuário.
+Depois: implementar os textos aprovados em `_determinar_status()` (`scripts/banco_threads.py`).
+
+*(Cruzado com o `PENDENCIAS.md`: entrou hoje a seção PROCESSO — recriar as 2 conferências
+automáticas do `/fechar` e definir a conferência de números pelo banco `gestao.db`. Prioridade
+MÉDIA; não passa na frente dos motivos.)*
+
+Último /fechar: 2026-08-27 15:50 — memórias revisadas ✅
 
 ---
 
@@ -139,44 +195,5 @@ Sessão de revisão colaborativa: Michel e Claude analisaram os dados reais do b
 Depois: implementar todos os textos aprovados no código (`_determinar_status()` em `scripts/banco_threads.py`).
 
 Último /fechar: 2026-08-27 — memórias revisadas ✅
-
----
-
-## 📓 Diário da sessão (2026-08-26 — noite) — Esqueceu a senha + faxina FOG
-
-### O que foi feito
-
-**Frente 1: “Esqueceu a senha?” não fazia nada**
-
-- O botão na tela de entrar estava desligado de propósito. Passou a abrir **Recuperar acesso** no mesmo cartão (padrão Finaud): e-mail → senha temporária no correio → essa senha vira a senha de entrar.
-- Michel testou no site, recebeu o e-mail, entrou e **aprovou**.
-- A tela **Alterar senha** (dentro do app, no menu do nome) ainda só mostra “Senha atualizada” e **não grava**. Quem entra depois de “Esqueceu a senha?” está usando a senha do e-mail — isso é o fluxo certo. Mudar senha pelo perfil continua pendente.
-
-**Frente 2: pendências fechadas nesta conversa**
-
-- Robô de coleta: Michel confirmou que já rodou sozinho. Item “confirmar amanhã” saiu da fila.
-- Classificação por IA: Michel decidiu **não usar IA para classificar**. O item 🔴 SPEC §10 saiu do `PENDENCIAS.md`. Continua valendo só o classificador de regras.
-
-**Frente 3: atalhos mortos do FogBugz**
-
-- Apagadas as URLs `/fog/gerencial` e `/fog/operacional` (não estavam em nenhum menu; se alguém digitasse, a página quebrava). FogBugz que você usa não mudou. Publicado no ar.
-
-### Estado atual
-
-**Produção:** `https://gestao-suporte.finaudapps.com.br` — senha, Sair, SSO e faxina FOG no ar.
-**Nada urgente** nesta fila.
-
-### Próximo passo
-
-Fila futura (nenhum 🔴):
-- Python 3.9 no servidor (🟡 risco de segurança futuro)
-- Lista de bloqueio pela tela
-- Painel unificado configurável
-- Alterar senha pelo perfil (hoje não grava)
-- Mostrar nome do colaborador Finaud em vez de "suporte" nas threads (investigado 26/08 — padrão identificado, pendência registrada em PENDENCIAS.md)
-
-**Investigação registrada (pós-fechar 23:40):** varrido o banco de produção para entender como o cabeçalho `smtp.mailfrom` se compara com o `Reply-To`. Resultado: o nome do colaborador (ex.: "Sarah Sá") já está gravado no campo `remetente` — o sistema só precisa exibir o nome em vez do endereço do grupo. Padrão para distinguir cliente de colaborador: clientes têm "via Suporte" no From, colaboradores não têm.
-
-Último /fechar: 2026-08-26 23:59 — memórias revisadas ✅
 
 ---

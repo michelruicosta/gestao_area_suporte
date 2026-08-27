@@ -2,6 +2,30 @@
 
 ---
 
+## 2026-08-27 — Histórico dos diários passa a ir para o GitHub
+
+### 15:40 — Exceção no `.gitignore` só para `sessao_atual_historico`
+
+**🔎 Em miúdos:** a pasta de arquivo morto nunca ia para o GitHub. Como os diários de sessão
+agora moram lá, eles ficariam só no computador do Michel — e se o computador se perder, some a
+única cópia. Agora só a pastinha dos diários (104 KB de texto) vai para o GitHub; o resto do
+arquivo morto continua fora.
+
+- **Problema:** `.gitignore` linha 47 ignorava `_archive/` inteiro. Depois do arquivamento dos
+  diários (entrada de 14:25), o histórico de sessões deixaria de ter cópia fora da máquina.
+  **Micro:** os 3 `.md` de `_archive/sessao_atual_historico/` não eram rastreados.
+  **Macro:** o `_archive/` tem 5,5 MB de código, documentação e 3 bancos vazios do sistema
+  antigo — versionar tudo devolveria ao repositório justamente o que foi limpo de propósito.
+- **Decisão (Michel, 27/08/2026):** abrir exceção só para a pasta dos diários.
+- **Correção:** `.gitignore` — `_archive/` virou `_archive/*` com três linhas de exceção
+  liberando apenas `_archive/sessao_atual_historico/*.md`.
+- **Validação:** ✅ VALIDADO — `git check-ignore` confirma que `pipeline_scripts`,
+  `dados_oraculo/banco.db`, `documentacao_sistema_antigo` e `templates_antigos` seguem
+  ignorados; `git status -uall` lista exatamente os 3 markdown dos diários. Sem teste:
+  configuração do git, sem código.
+
+---
+
 ## 2026-08-27 — SESSAO_ATUAL.md enxugado + índice de todas as sessões
 
 ### 14:25 — O bordo passou a guardar 3 sessões, com um índice no topo
