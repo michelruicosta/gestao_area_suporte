@@ -54,13 +54,16 @@ Ler `SESSAO_ATUAL.md` e procurar a linha:
    | Situação | Modelo ideal |
    |---|---|
    | Documentação, análise, escrita | **Sonnet** ✅ (padrão) |
-   | Implementação, refactor, debugging | **Sonnet** ✅ |
-   | Raciocínio muito complexo, sessão pesada | **Opus** — ativar `/fast` |
-   | Após tarefa complexa com Opus | Voltar para Sonnet (`/fast` de novo) |
+   | Implementação, refactor, debugging | **Sonnet** ✅ (esforço Alto) |
+   | Raciocínio muito complexo, sessão pesada | **Opus** |
+   | Após tarefa complexa com Opus | Voltar para Sonnet |
    | Qualquer implementação ou debugging | **Nunca Haiku** |
 
+   ⚠️ **Trocar de modelo é pelo seletor de modelo do app** (ou `/model` no terminal
+   interativo). O `/fast` **não troca de modelo** — ele liga o modo rápido do Opus.
+
    **Regra de ouro:** Claude não troca de modelo sozinho. Ao terminar tarefa Opus, avise:
-   *"Michel, parte difícil concluída — pode voltar para o Sonnet com `/fast`."*
+   *"Michel, parte difícil concluída — pode voltar para o Sonnet."*
 
 ## Passo 2 — INTAKE (só se houver pedido)
 

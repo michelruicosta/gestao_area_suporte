@@ -2,6 +2,67 @@
 
 ---
 
+## 2026-08-27 — Reorganização do CLAUDE.md + dois erros factuais corrigidos
+
+### — CLAUDE.md dividido em dois: essencial + detalhado
+
+**🔎 Em miúdos:** o arquivo de instruções que o Claude lê era carregado inteiro em **toda
+mensagem de todo chat** — 520 linhas, entre 6 e 8 mil tokens pagos a cada resposta, mesmo
+quando o assunto do dia não tinha nada a ver com a maioria das regras. Ele foi enxugado para
+o que vale sempre; os procedimentos que só se lê quando o assunto aparece foram para um
+arquivo novo. Nenhuma regra foi perdida — todas continuam válidas, só mudaram de lugar.
+
+- **Problema:** (a) custo fixo alto por resposta, contrariando a própria regra de "chat curto
+  = menor custo" do arquivo; (b) quatro regras diferentes diziam a mesma coisa ("verifique
+  antes de afirmar"), espalhadas — regra espalhada é regra que se perde; (c) conteúdo no
+  arquivo errado, contrariando a tabela do próprio CLAUDE.md sobre onde cada coisa vai.
+- **Correção:**
+  - `CLAUDE.md` reescrito: 520 → ~300 linhas, com índice navegável no topo.
+  - Criado `documentações/REGRAS_TRABALHO.md` — recebeu: ciclo de rodada paga (§1, as 4
+    regras de 06/08 consolidadas num procedimento de 4 passos), tipografia das telas (§2),
+    recursos externos (§3), procedimento de backup (§4), resumo do deploy (§5).
+  - As 4 regras de verificação viraram a seção única "Antes de afirmar ou corrigir: as quatro
+    verificações", com as justificativas datadas preservadas.
+  - Tabela "Regras de negócio de status" (24/08/2026) movida do `CLAUDE.md` para a spec,
+    §8.3 — é regra de negócio, e a própria tabela de destinos do CLAUDE.md manda regra de
+    negócio para a spec.
+  - Regra "abrir o artifact ao iniciar" removida do `CLAUDE.md` — já era o Passo 0 do
+    `/iniciar`; estava duplicada em dois lugares, com risco de divergirem.
+  - **Adicionado:** seção "Como rodar o projeto" (não existia) e "Ordem de prioridade" para
+    desempate entre regras que se chocam.
+- **Arquivos:** `CLAUDE.md`, `documentações/REGRAS_TRABALHO.md` (novo),
+  `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md` (§8.3), `.claude/commands/iniciar.md`
+- **Validação:** ✅ VALIDADO — nenhuma regra removida sem destino; conferido item a item
+  contra a versão anterior (recuperável por `git show HEAD:CLAUDE.md`).
+  **Sem teste: mudança só de documentação e instruções, sem código de produção.**
+
+### — Erro factual: `/fast` não troca de modelo
+
+**🔎 Em miúdos:** as instruções mandavam "mude para Opus com `/fast`". O `/fast` não troca de
+modelo — ele liga o modo rápido do Opus. Quem seguisse a instrução achava que tinha trocado
+de modelo sem ter trocado.
+
+- **Problema:** instrução errada aparecia em dois lugares — `CLAUDE.md` (seção Saúde do chat)
+  e `.claude/commands/iniciar.md` (matriz de modelo).
+- **Correção:** os dois textos agora dizem que a troca de modelo é pelo seletor de modelo do
+  app (ou `/model` no terminal interativo), e explicam o que o `/fast` realmente faz.
+- **Arquivos:** `CLAUDE.md`, `.claude/commands/iniciar.md`
+- **Validação:** ✅ VALIDADO — sem teste: mudança de texto instrucional.
+
+### — Erro factual: porta do servidor era 5000, é 5001
+
+**🔎 Em miúdos:** o rodapé do CLAUDE.md dizia que a tela roda em `localhost:5000`. O servidor
+sobe na porta **5001**.
+
+- **Problema:** `scripts/servidor_telas.py:938` usa `int(os.environ.get('PORT', 5001))` — a
+  porta padrão é 5001. O CLAUDE.md dizia 5000 desde a criação.
+- **Correção:** porta corrigida dentro da nova seção "Como rodar o projeto", junto com o
+  comando exato para subir o servidor, rodar o pipeline e rodar os testes.
+- **Arquivos:** `CLAUDE.md`
+- **Validação:** ✅ VALIDADO contra o código-fonte. Sem teste: mudança de documentação.
+
+---
+
 ## 2026-08-27 — Decisão: textos aprovados para o campo MOTIVO
 
 ### — Novos textos de MOTIVO aprovados por Michel

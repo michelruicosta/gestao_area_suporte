@@ -1135,6 +1135,24 @@ Se o cliente disser apenas "ok, vou corrigir" sem confirmar a transmissão → t
 
 > **Decisão confirmada por Michel (05/08/2026).**
 
+**Padrões de encerramento identificados no pente fino (aprovados por Michel, 24/08/2026):**
+
+Estes padrões definem o status correto independente do que o código calculou. Enquanto não
+virarem regra de código, são aplicados manualmente no banco quando identificados em pente
+fino ou revisão.
+
+| Padrão no e-mail | Status correto | Motivo |
+|---|---|---|
+| Última mensagem é um **cancelamento Outlook** ("X deseja cancelar a mensagem Y") | Concluída | Cliente retirou o próprio e-mail; não há ação pendente |
+| Última mensagem é um **convite de reunião** (Google Meet, Teams, calendar invite) | Concluída | Resolução encaminhada para canal síncrono; sem follow-up digital |
+| Cliente confirma **horário de reunião proposto pela Finaud** | Concluída | Reunião agendada; se a thread atualizar, o status atualiza conforme o novo conteúdo |
+| Cliente informa que **arquivos foram submetidos ao BACEN** | Concluída | Responsabilidade passou para o cliente com o BACEN; Finaud não tem mais ação pendente |
+| Cliente confirma que DLO/sistema está **"normalizado"** + agradece | Concluída | Issue resolvida no lado do cliente |
+| Cliente diz que vai **ligar** (ou chamar) para a Finaud + agradece | Concluída | Resolução encaminhada para canal síncrono (ligação); sem follow-up digital pendente |
+
+> Complementam o código em `scripts/banco_threads.py`. Candidatas a virarem Fixes de código
+> em sessão futura.
+
 ---
 
 ### 8.4 Reabertura de caso
