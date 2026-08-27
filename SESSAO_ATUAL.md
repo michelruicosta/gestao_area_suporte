@@ -39,8 +39,11 @@ Fila futura (nenhum 🔴):
 - Lista de bloqueio pela tela
 - Painel unificado configurável
 - Alterar senha pelo perfil (hoje não grava)
+- Mostrar nome do colaborador Finaud em vez de "suporte" nas threads (investigado 26/08 — padrão identificado, pendência registrada em PENDENCIAS.md)
 
-Último /fechar: 2026-08-26 23:40 — memórias revisadas ✅
+**Investigação registrada (pós-fechar 23:40):** varrido o banco de produção para entender como o cabeçalho `smtp.mailfrom` se compara com o `Reply-To`. Resultado: o nome do colaborador (ex.: "Sarah Sá") já está gravado no campo `remetente` — o sistema só precisa exibir o nome em vez do endereço do grupo. Padrão para distinguir cliente de colaborador: clientes têm "via Suporte" no From, colaboradores não têm.
+
+Último /fechar: 2026-08-26 23:59 — memórias revisadas ✅
 
 ---
 

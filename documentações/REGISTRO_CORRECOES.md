@@ -26,6 +26,20 @@
 
 ---
 
+## 2026-08-26 — Encerramento: senha, FOG e fila
+
+### 23:40 — Tela Alterar senha (perfil) não grava; resto deste papo já no ar
+
+**🔎 Em miúdos:** o “Esqueceu a senha?” do login já funciona de verdade. A tela **Alterar senha** dentro do sistema ainda finge que gravou. Isso ficou anotado na lista do que falta. O robô de coleta foi confirmado. As duas URLs mortas do FogBugz já tinham sido apagadas e publicadas.
+
+- **Problema:** `_salvarSenha()` em `templates/gestao_email.html` só dá um alerta; não chama o servidor.
+- **Correção nesta sessão:** nenhuma no código dessa tela — só registro da pendência. Recuperação por e-mail continua sendo o caminho que grava.
+- **Arquivos:** `documentações/PENDENCIAS.md`, `SESSAO_ATUAL.md`
+- **Validação:** lacuna registrada em `PENDENCIAS.md` (não é correção de código). Critério quando for feito: mudar a senha pelo perfil e entrar de novo com a senha nova, sem usar o e-mail de recuperação.
+- **sem teste:** só documentação da lacuna; código da tela não mudou
+
+---
+
 ## 2026-08-26 — Sair volta ao portal e permanece no login
 
 ### 23:20 — Cookie do grupo apagado no Sair
@@ -148,7 +162,7 @@
 - **Problema:** o código que liga o agendador (`_scheduler.start()`) estava dentro do bloco `if __name__ == '__main__':`. Esse bloco só executa quando o servidor é iniciado manualmente no terminal. Em produção, o Gunicorn importa o módulo de outro jeito e esse bloco nunca roda — o agendador nunca ligava.
 - **Correção:** movidas as linhas de inicialização do agendador para fora do bloco `if __name__ == '__main__':`, para nível de módulo. Agora o agendador liga em qualquer situação (Gunicorn em produção ou terminal em desenvolvimento). Adicionado log de confirmação de início e de cada disparo automático.
 - **Arquivos:** `scripts/servidor_telas.py`
-- **Validação:** ✅ PARCIALMENTE VALIDADO — log "Agendador iniciado — coleta automática a cada 60 minuto(s)." apareceu no journal imediatamente após o restart (19:23:27). Confirmação final: aguardar 20:23 para ver se o coletor roda automaticamente sem disparar manualmente.
+- **Validação:** ✅ VALIDADO — log no journal (19:23:27) + Michel confirmou na noite de 26/08 que a coleta automática já rodou sozinha.
 
 ---
 
@@ -1607,7 +1621,7 @@ DRM - 2060 JULHO, RE: DRL JULHO / 26, DDR 2011 - 11/08/2026, DDR 2011 - 10/08/20
 
 **Decisão:** substituir `classificar_thread()` (GPT) por um classificador Python determinístico que lê regras do `regras_classificador_threads.json` e as aplica em ordem de prioridade.
 
-**Validação:** ⚠️ VALIDAÇÃO PENDENTE — classificador determinístico ainda a construir.
+**Validação:** ✅ VALIDADO — classificador de regras no ar desde 17/08 (764/768). Em 26/08 Michel confirmou: sem IA na classificação.
 
 ---
 

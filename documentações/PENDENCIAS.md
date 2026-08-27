@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Gestão Área Suporte
 
-**Atualizado:** 2026-08-26 23:21
+**Atualizado:** 2026-08-26 23:40
 **Organização:** por etapa que bloqueia — reorganizado em 03/08/2026 para seguir as fases sem brechas.
 **Regra:** este arquivo lista **só o que ainda falta** (aberto / aguardando decisão / backlog).
 Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada no
@@ -25,6 +25,70 @@ O servidor Hostinger (`31.97.82.203`) roda **Python 3.9**, que já não recebe m
 **Quando fazer:** não é urgente agora — o sistema funciona. Planejar para uma janela de manutenção com o responsável do servidor.
 
 **Impacto se não fizer:** com o tempo, pacotes de segurança deixarão de ser compatíveis com Python 3.9 e o servidor ficará vulnerável.
+
+---
+
+## COLETOR — Mostrar nome do colaborador Finaud em vez de "suporte" (identificado em 26/08/2026)
+
+### O problema
+
+Quando um colaborador da Finaud (ex.: Sarah Sá) responde a um cliente usando o endereço de grupo `suporte@finaud.com.br`, a mensagem chega assim no banco:
+
+```
+remetente: "Sarah Sá" <suporte@finaud.com.br>
+reply_to:  (vazio)
+```
+
+O nome "Sarah Sá" **já está gravado** — o problema é que a tela e o classificador usam o endereço de e-mail (`suporte@finaud.com.br`) para identificar quem enviou. O resultado é que aparece "suporte" em vez de "Sarah Sá".
+
+Compare com um cliente respondendo pelo mesmo grupo:
+
+```
+remetente: "'Leonardo Ueda' via Suporte" <suporte@finaud.com.br>
+reply_to:  Leonardo Ueda <Leonardo.Ueda@westernunion.com>
+```
+
+O cliente traz "via Suporte" no nome — o colaborador Finaud **não traz**. Esse padrão é o que permite distinguir os dois casos.
+
+### Por que é importante
+
+- **Na tela:** hoje a thread aparece como enviada por "suporte", sem indicar quem da equipe respondeu.
+- **No classificador:** uma resposta de Sarah a um cliente pode ser erroneamente tratada como e-mail novo de cliente, em vez de resposta de colaborador interno.
+- **Para auditoria:** saber que Sarah respondeu (e não apenas que o grupo suporte respondeu) é informação de gestão.
+
+### Como fazer
+
+**Passo 1 — resolver o remetente real (em `coletor_gmail.py` ou `banco_threads.py`):**
+
+Ao salvar uma mensagem, verificar:
+- Se o `remetente` termina em `<suporte@finaud.com.br>` **e não contém "via Suporte"** → é um colaborador Finaud.
+- Nesse caso, extrair o nome da parte antes do `<` (ex.: "Sarah Sá") e gravar um campo `remetente_real = "Sarah Sá (via suporte)"` — ou simplesmente preferir o nome na exibição.
+
+**Passo 2 — exibir o nome na tela:**
+
+Na tela de e-mails, onde o remetente é mostrado, usar o nome extraído do `From` em vez do endereço de e-mail quando o endereço for `suporte@finaud.com.br`.
+
+**Passo 3 (opcional) — usar no classificador:**
+
+Ao classificar, se o remetente real for da Finaud (nome sem "via Suporte" + endereço suporte@finaud.com.br), considerar como mensagem INTERNA (não como novo pedido de cliente).
+
+### Evidência dos dados (26/08/2026)
+
+Varrido o banco de produção. Padrão confirmado em 5 amostras:
+- Colaboradores Finaud: `"Sarah Sá" <suporte@finaud.com.br>` — reply_to vazio
+- Clientes: `'Leonardo Ueda' via Suporte <suporte@finaud.com.br>` — reply_to com e-mail real do cliente
+
+**Quando fazer:** futuro — não é urgente. Priorizar quando a tela de e-mails estiver com mais uso.
+
+---
+
+## TELAS — Alterar senha pelo perfil ainda não grava (identificado em 26/08/2026)
+
+Na tela de login, **Esqueceu a senha?** já funciona: manda senha temporária e essa senha passa a ser a de entrar. Dentro do app, o botão **Alterar senha** (menu do nome) só mostra “Senha atualizada com sucesso!” e **não salva** de verdade.
+
+**O que fazer:** ligar essa tela a um endereço no servidor que confirme a senha atual e grave a nova (mesmo jeito da recuperação: hash no `data/config.json`).
+
+**Quando fazer:** futuro — não é urgente. Enquanto isso, quem esquecer a senha usa **Esqueceu a senha?** na tela de entrar.
 
 ---
 
