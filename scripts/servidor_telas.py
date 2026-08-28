@@ -820,7 +820,8 @@ def logout():
 @app.route('/perfil')
 @_requer_login
 def perfil():
-    return render_template('perfil.html')
+    # Senha e dados da conta ficam no portal Finaud — não há tela de perfil neste app.
+    return redirect(url_for('index'))
 
 
 @app.route('/configuracoes')

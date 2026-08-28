@@ -1,6 +1,6 @@
 """
 test_servidor_telas.py
-Sair volta ao portal. Recuperar senha segue o fluxo Finaud (e-mail → senha temporária).
+Sair volta ao portal. Login segue o padrão Finaud (olho na senha, sem Esqueceu a senha).
 """
 from __future__ import annotations
 
@@ -27,13 +27,17 @@ def test_sair_e_logout_redirecionam_para_o_portal():
         assert '/login' not in destino, rota
 
 
-def test_login_tem_fluxo_recuperar_senha():
+def test_login_sem_esqueceu_senha_olho_dentro_do_campo():
+    """Senha se recupera no portal — o login do app não mostra Esqueceu a senha."""
     html = app.test_client().get('/login').get_data(as_text=True)
-    assert 'Esqueceu a senha?' in html
-    assert 'onclick="return false;"' not in html
-    assert 'Recuperar acesso' in html
-    assert 'form-recuperar' in html
-    assert 'Enviar senha temporária' in html
+    assert 'Esqueceu a senha?' not in html
+    assert 'form-recuperar' not in html
+    assert 'Recuperar acesso' not in html
+    assert 'Enviar senha temporária' not in html
+    assert 'campo-senha-toggle' in html
+    assert 'class="olho-btn"' not in html
+    assert 'Entrar' in html
+    assert 'Portal de apps' in html
 
 
 def test_recuperar_senha_nao_revela_se_email_existe(monkeypatch):
@@ -96,3 +100,28 @@ def test_porta_padrao_no_pc_e_8004():
 
     fonte = inspect.getsource(st)
     assert "os.environ.get('PORT', 8004)" in fonte
+
+
+def test_menu_usuario_nao_tem_meu_perfil():
+    """Senha passa a ser alterada no portal — o Gestão não mostra Meu Perfil."""
+    caminho = os.path.join(RAIZ, 'templates', 'gestao_email.html')
+    with open(caminho, encoding='utf-8') as f:
+        html = f.read()
+    assert 'Meu Perfil' not in html
+    assert 'abrirPerfil' not in html
+    assert 'Alterar senha' not in html
+    assert 'user-menu' in html
+    assert '/sair' in html
+
+
+def test_rota_perfil_volta_para_a_tela_principal():
+    """Quem abrir /perfil (atalho antigo) cai na tela principal, não numa página quebrada."""
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess['logado'] = True
+        sess['email'] = st._ADMIN_EMAIL
+    resp = client.get('/perfil', follow_redirects=False)
+    assert resp.status_code == 302
+    destino = resp.headers.get('Location', '')
+    assert destino.endswith('/')
+    assert '/perfil' not in destino.rstrip('/')

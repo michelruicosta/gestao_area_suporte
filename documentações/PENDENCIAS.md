@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Gestão Área Suporte
 
-**Atualizado:** 2026-08-27 14:07
+**Atualizado:** 2026-08-27 23:30
 **Organização:** por etapa que bloqueia — reorganizado em 03/08/2026 para seguir as fases sem brechas.
 **Regra:** este arquivo lista **só o que ainda falta** (aberto / aguardando decisão / backlog).
 Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada no
@@ -203,16 +203,6 @@ Varrido o banco de produção. Padrão confirmado em 5 amostras:
 - Clientes: `'Leonardo Ueda' via Suporte <suporte@finaud.com.br>` — reply_to com e-mail real do cliente
 
 **Quando fazer:** futuro — não é urgente. Priorizar quando a tela de e-mails estiver com mais uso.
-
----
-
-## TELAS — Alterar senha pelo perfil ainda não grava (identificado em 26/08/2026)
-
-Na tela de login, **Esqueceu a senha?** já funciona: manda senha temporária e essa senha passa a ser a de entrar. Dentro do app, o botão **Alterar senha** (menu do nome) só mostra “Senha atualizada com sucesso!” e **não salva** de verdade.
-
-**O que fazer:** ligar essa tela a um endereço no servidor que confirme a senha atual e grave a nova (mesmo jeito da recuperação: hash no `data/config.json`).
-
-**Quando fazer:** futuro — não é urgente. Enquanto isso, quem esquecer a senha usa **Esqueceu a senha?** na tela de entrar.
 
 ---
 

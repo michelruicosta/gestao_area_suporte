@@ -2,6 +2,48 @@
 
 ---
 
+## 2026-08-27 — Login: olho dentro da senha e sem Esqueceu a senha
+
+### ~23:30 — Padrão Finaud (Leiautes) + recuperação só no portal
+
+**🔎 Em miúdos:** o olho para ver a senha ficou **dentro** da caixa, como nos outros apps.
+O link **Esqueceu a senha?** saiu desta tela — quem esquecer a senha usa o **portal**.
+
+- **Problema:** o olho era um quadradinho separado ao lado da senha. O “Esqueceu a senha?”
+  recuperava a senha **deste app**, mas a conta agora entra pelo portal.
+- **Correção:**
+  - `templates/gestao_login.html`: olho no canto direito da caixa (`campo-senha-toggle`);
+    removidos o link e o formulário de recuperar acesso
+  - Pendência “Alterar senha pelo perfil ainda não grava” sai da lista: perfil e recuperação
+    neste app foram desligados de propósito (senha no portal)
+- **Arquivos:** `templates/gestao_login.html`, `tests/test_servidor_telas.py`,
+  `documentações/PENDENCIAS.md`
+- **Validação:** ✅ Michel no PC (27/08 ~23:49) — olho dentro da caixa da senha; sem “Esqueceu a senha?”.
+
+---
+
+## 2026-08-27 — Menu Meu Perfil escondido (senha no portal)
+
+### ~22:10 — Item do menu do usuário e janela de alterar senha saíram desta tela
+
+**🔎 Em miúdos:** o menu do canto (nome + setinha) tinha a opção **Meu Perfil**, que abria uma
+janela para mudar a senha neste aplicativo. A senha agora é alterada no portal Finaud, então
+esse caminho foi retirado daqui. O menu continua com aparência e Sair.
+
+- **Problema:** o Gestão mostrava "Meu Perfil" / "Alterar senha" num lugar que não é mais o
+  responsável pela conta. Quem usasse isso acharia que a senha mudou aqui (a tela só avisava
+  "sucesso" e não gravava de verdade).
+- **Correção:**
+  - `templates/gestao_email.html`: removidos o botão **Meu Perfil**, a janela e o código de senha
+  - `scripts/servidor_telas.py`: `/perfil` deixa de procurar um arquivo que não existia e
+    redireciona para a tela principal
+- **Arquivos:** `templates/gestao_email.html`, `scripts/servidor_telas.py`, `tests/test_servidor_telas.py`
+- **Validação:** ✅ Michel no PC (27/08 ~23:10) — menu do nome: Meu Perfil sumiu. No código, `/perfil`
+  logado responde 302 para `/`. `pytest` neste PC não coleta (atalho `venv` aponta para pasta antiga
+  inexistente).
+
+---
+
 ## 2026-08-27 — Textos do campo MOTIVO: aprovações das sessões manhã e noite
 
 ### ~22:00 — Decisões de design do campo MOTIVO (grupo ❌ e unificações)

@@ -134,34 +134,39 @@ body::before {
   color: rgba(244, 246, 251, 0.28);
 }
 
-/* Campo senha com botão olho */
+/* Campo senha — olho dentro da caixa (padrão Leiautes / CampoSenha) */
 .campo-senha-wrap {
-  display: flex;
-  gap: 0.5rem;
-  align-items: stretch;
+  position: relative;
 }
 
-.campo-senha-wrap .field-input { flex: 1; }
+.campo-senha-wrap .field-input {
+  padding-right: 2.75rem;
+}
 
-.olho-btn {
-  width: 44px;
-  min-width: 44px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06);
+.campo-senha-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.45rem;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
   color: rgba(244, 246, 251, 0.58);
   cursor: pointer;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
 }
 
-.olho-btn:hover {
+.campo-senha-toggle:hover {
   color: #f4f6fb;
   background: rgba(255, 255, 255, 0.08);
 }
 
-.olho-btn svg {
+.campo-senha-toggle svg {
   width: 20px;
   height: 20px;
   fill: none;
@@ -172,61 +177,11 @@ body::before {
   pointer-events: none;
 }
 
-/* Link esqueceu */
-.esqueceu {
-  display: block;
-  text-align: right;
-  font-size: 0.8rem;
-  color: rgba(244, 246, 251, 0.58);
-  text-decoration: underline;
-  margin-top: 0.35rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font: inherit;
-  padding: 0;
-}
-
-.esqueceu:hover { color: #f4f6fb; }
-
-.login-titulo-recuperar {
-  margin: 0 0 0.5rem;
-  font-size: 1.15rem;
-  font-weight: 600;
-  text-align: center;
-  color: #f4f6fb;
-}
-
-.login-subtitulo {
-  margin: 0 0 1rem;
-  font-size: 0.9rem;
-  color: rgba(244, 246, 251, 0.58);
-  line-height: 1.5;
-  text-align: center;
-}
-
-.login-rodape {
-  text-align: center;
-  margin-top: 0.75rem;
-}
-
-.login-rodape .esqueceu {
-  display: inline;
-  text-align: center;
-}
-
-/* Erro / sucesso */
+/* Erro */
 .erro-msg {
   color: #ffb4ab;
   font-size: 0.9rem;
   margin: 0 0 1rem;
-  white-space: pre-line;
-}
-
-.sucesso-msg {
-  color: #b4d84a;
-  font-size: 0.9rem;
-  margin: 1rem 0 0;
   white-space: pre-line;
 }
 
@@ -293,42 +248,18 @@ body::before {
           <div class="campo-senha-wrap">
             <input class="field-input" type="password" id="senha" name="senha"
                    autocomplete="current-password" required>
-            <button type="button" class="olho-btn" id="olho-btn" aria-label="Mostrar ou ocultar senha">
-              <svg id="olho-aberto" viewBox="0 0 24 24">
-                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
-              <svg id="olho-fechado" viewBox="0 0 24 24" style="display:none">
-                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
-                <line x1="1" y1="1" x2="23" y2="23"/>
+            <button type="button" class="campo-senha-toggle" id="olho-btn"
+                    aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path id="olho-path" d="M2.5 12c1-3 4.5-7 9.5-7s8.5 4 9.5 7c-1 3-4.5 7-9.5 7s-8.5-4-9.5-7Z M12 9a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z"/>
               </svg>
             </button>
           </div>
-          <button type="button" class="esqueceu" id="btn-esqueci-senha">Esqueceu a senha?</button>
         </div>
 
         <button type="submit" class="btn-entrar">Entrar</button>
       </form>
     </div>
-
-    <form id="form-recuperar" hidden>
-      <h2 class="login-titulo-recuperar">Recuperar acesso</h2>
-      <p class="login-subtitulo">
-        Informe seu e-mail corporativo. Se a conta estiver ativa, enviamos
-        uma senha temporária.
-      </p>
-      <div class="field">
-        <label class="field-label" for="recuperar-email">E-mail corporativo</label>
-        <input class="field-input" type="email" id="recuperar-email" name="email"
-               autocomplete="username" placeholder="nome@finaud.com.br" required>
-      </div>
-      <button type="submit" class="btn-entrar" id="btn-recuperar">Enviar senha temporária</button>
-      <p id="recuperar-erro" class="erro-msg" hidden></p>
-      <p id="recuperar-sucesso" class="sucesso-msg" hidden></p>
-      <p class="login-rodape">
-        <button type="button" class="esqueceu" id="btn-voltar-login">← Voltar ao login</button>
-      </p>
-    </form>
 
     <a class="portal-link" href="https://finaudapps.com.br">Portal de apps</a>
   </div>
@@ -337,73 +268,17 @@ body::before {
 (function () {
   var inp = document.getElementById('senha');
   var btn = document.getElementById('olho-btn');
-  var aberto = document.getElementById('olho-aberto');
-  var fechado = document.getElementById('olho-fechado');
-  var blocoLogin = document.getElementById('bloco-login');
-  var formRecuperar = document.getElementById('form-recuperar');
-  var btnEsqueci = document.getElementById('btn-esqueci-senha');
-  var btnVoltar = document.getElementById('btn-voltar-login');
-  var btnRecuperar = document.getElementById('btn-recuperar');
-  var erroRecuperar = document.getElementById('recuperar-erro');
-  var sucessoRecuperar = document.getElementById('recuperar-sucesso');
+  var path = document.getElementById('olho-path');
+  var olhoAberto = 'M2.5 12c1-3 4.5-7 9.5-7s8.5 4 9.5 7c-1 3-4.5 7-9.5 7s-8.5-4-9.5-7Z M12 9a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z';
+  var olhoFechado = 'M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.2A9.8 9.8 0 0 1 12 5c5 0 8.5 4 9.5 7a10.7 10.7 0 0 1-2.2 3.5M6.7 6.7A10.8 10.8 0 0 0 2.5 12c1 3 4.5 7 9.5 7 1.5 0 2.9-.4 4.1-1';
 
   btn.addEventListener('click', function () {
     var ver = inp.type === 'password';
     inp.type = ver ? 'text' : 'password';
-    aberto.style.display = ver ? 'none' : '';
-    fechado.style.display = ver ? '' : 'none';
-  });
-
-  function mostrarFormRecuperar() {
-    blocoLogin.hidden = true;
-    formRecuperar.hidden = false;
-    erroRecuperar.hidden = true;
-    sucessoRecuperar.hidden = true;
-    btnRecuperar.disabled = false;
-    btnRecuperar.textContent = 'Enviar senha temporária';
-    var emailLogin = document.getElementById('email').value.trim();
-    if (emailLogin) {
-      document.getElementById('recuperar-email').value = emailLogin;
-    }
-    document.getElementById('recuperar-email').focus();
-  }
-
-  function mostrarFormLogin() {
-    formRecuperar.hidden = true;
-    blocoLogin.hidden = false;
-    document.getElementById('email').focus();
-  }
-
-  btnEsqueci.addEventListener('click', mostrarFormRecuperar);
-  btnVoltar.addEventListener('click', mostrarFormLogin);
-
-  formRecuperar.addEventListener('submit', function (e) {
-    e.preventDefault();
-    erroRecuperar.hidden = true;
-    sucessoRecuperar.hidden = true;
-    var email = document.getElementById('recuperar-email').value.trim();
-    btnRecuperar.disabled = true;
-    btnRecuperar.textContent = 'Enviando...';
-    fetch('{{ url_for("recuperar_senha") }}', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email })
-    })
-      .then(function (res) {
-        if (!res.ok) throw new Error('Não foi possível enviar o pedido. Tente novamente.');
-        return res.json();
-      })
-      .then(function (body) {
-        sucessoRecuperar.textContent = body.mensagem;
-        sucessoRecuperar.hidden = false;
-        btnRecuperar.textContent = 'E-mail solicitado';
-      })
-      .catch(function (err) {
-        erroRecuperar.textContent = err.message || 'Não foi possível enviar o pedido.';
-        erroRecuperar.hidden = false;
-        btnRecuperar.disabled = false;
-        btnRecuperar.textContent = 'Enviar senha temporária';
-      });
+    btn.setAttribute('aria-label', ver ? 'Ocultar senha' : 'Mostrar senha');
+    btn.setAttribute('aria-pressed', ver ? 'true' : 'false');
+    btn.setAttribute('title', ver ? 'Ocultar senha' : 'Mostrar senha');
+    path.setAttribute('d', ver ? olhoFechado : olhoAberto);
   });
 })();
 </script>
