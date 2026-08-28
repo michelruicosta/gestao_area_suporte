@@ -250,15 +250,15 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
   cursor: pointer; font-family: inherit; transition: all .15s; text-align: center;
 }
 .t-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
-.t-btn.active { background: var(--ui-lima); border-color: var(--ui-lima); color: var(--ui-lima-ink); }
+.t-btn.active { background: #2e3192; border-color: #2e3192; color: #fff; }
 .menu-item-btn {
   display: flex; align-items: center; gap: 10px; padding: 10px 16px;
-  color: var(--muted); font-size: 13px; cursor: pointer; transition: background .1s;
+  color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; transition: background .1s;
   border: none; background: none; width: 100%; font-family: inherit; text-align: left;
   text-decoration: none;
 }
 .menu-item-btn:hover { background: var(--accent-bg); color: var(--text); }
-.menu-item-btn.sair { color: var(--neg); }
+.menu-item-btn.sair { color: #e85d4c; font-weight: 600; }
 
 /* ─── Sortable headers ──────────────────────────────────────────────── */
 .th-sort { cursor: pointer; user-select: none; transition: color .12s; }
@@ -1081,24 +1081,15 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
           <span style="font-size:9px;color:var(--muted);margin-left:2px">▼</span>
         </button>
         <div class="user-menu" id="user-menu" role="menu">
-          <div class="menu-info">
-            <div class="user-avatar" id="user-av2" style="width:36px;height:36px;font-size:13px">?</div>
-            <div>
-              <div class="menu-email-text">{{ email }}</div>
-              <div class="menu-role">Administrador</div>
-            </div>
-          </div>
           <div class="menu-section">
             <div class="menu-section-title">Aparência</div>
             <div class="theme-opts">
-              <button class="t-btn active" data-t="sistema" onclick="setTheme(this)">🖥 Sistema</button>
-              <button class="t-btn" data-t="claro" onclick="setTheme(this)">☀ Claro</button>
-              <button class="t-btn" data-t="escuro" onclick="setTheme(this)">☾ Escuro</button>
+              <button class="t-btn" data-t="claro" onclick="setTheme(this)">Claro</button>
+              <button class="t-btn" data-t="escuro" onclick="setTheme(this)">Escuro</button>
             </div>
           </div>
-          <a href="/sair" class="menu-item-btn sair">
-            <span style="font-size:14px;width:18px;text-align:center">↩</span> Sair
-          </a>
+          <a href="{{ portal_url }}" class="menu-item-btn">Portal de apps</a>
+          <a href="/sair" class="menu-item-btn sair">Sair</a>
         </div>
       </div>
     </div>
@@ -2762,9 +2753,8 @@ function setTheme(btn) {
 }
 (function() {
   const s = localStorage.getItem('o360_theme');
-  if (s) setTheme(s);
-  const av2 = document.getElementById('user-av2');
-  if (av2) av2.textContent = document.getElementById('user-email').textContent.trim().slice(0,2).toUpperCase();
+  const tema = (!s || s === 'sistema') ? 'escuro' : s;
+  setTheme(tema);
 })();
 
 // ── Menu do usuário ───────────────────────────────────────────────────
