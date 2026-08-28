@@ -23,6 +23,17 @@ def test_sair_e_logout_redirecionam_para_o_portal():
         resp = client.get(rota, follow_redirects=False)
         destino = resp.headers.get('Location', '')
         assert resp.status_code == 302, rota
+        assert destino == 'http://127.0.0.1:8000/portal-preview/', rota
+        assert '/login' not in destino, rota
+
+    for rota in ('/sair', '/logout'):
+        resp = client.get(
+            rota,
+            follow_redirects=False,
+            headers={'Host': 'gestao-suporte.finaudapps.com.br'},
+        )
+        destino = resp.headers.get('Location', '')
+        assert resp.status_code == 302, rota
         assert destino == 'https://finaudapps.com.br', rota
         assert '/login' not in destino, rota
 

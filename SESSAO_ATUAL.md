@@ -12,9 +12,10 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
+| 27/08 | Senha no portal — perfil e login | abaixo |
 | 27/08 | Textos campo MOTIVO — grupo ❌ (noite) | abaixo |
 | 27/08 | Organização dos chats + conserto do `/fechar` | abaixo |
-| 27/08 | Reorganização do CLAUDE.md | abaixo |
+| 27/08 | Reorganização do CLAUDE.md | arquivo |
 | 27/08 | Textos campo MOTIVO (manhã) | arquivo |
 | 26/08 | Esqueceu a senha + faxina FOG | arquivo |
 | 26/08 | Badges nas abas + CI corrigido | arquivo |
@@ -30,6 +31,50 @@
 >
 > **Regra:** este arquivo guarda as **3 sessões mais recentes**. O `/fechar` acrescenta a
 > linha nova aqui e move a 4ª sessão para o arquivo.
+
+---
+
+## 📓 Diário da sessão (2026-08-27 — noite tarde) — Senha no portal — perfil e login
+
+### O que foi feito
+
+**Frente única: conta e senha saem deste app e ficam no portal Finaud**
+
+Michel pediu para esconder **Meu Perfil** (a senha passa a ser alterada no portal). Em seguida
+padronizou o login com o Leiautes: olho **dentro** da caixa da senha, e tirou **Esqueceu a senha?**
+— recuperação também é no portal. E-mail, senha, Entrar e Portal de apps continuam (quem abre o
+link direto ainda entra).
+
+**O que mudou na tela**
+
+| Antes | Depois |
+|---|---|
+| Menu do nome → Meu Perfil → Alterar senha (não gravava de verdade) | Só aparência e Sair |
+| Olho da senha num quadradinho ao lado da caixa | Olho no canto direito, dentro da caixa |
+| Link Esqueceu a senha? + formulário de senha temporária neste app | Sumiu; quem esquecer usa o portal |
+
+**Publicação:** GitHub + VPS (`gestao-suporte.finaudapps.com.br`). No primeiro pull o git do
+servidor estava com dono misturado (root vs finaud-tec); corrigido o dono da pasta `.git` e o
+código subiu. Michel confirmou no PC; login publicado conferido (sem Esqueceu, olho dentro).
+
+### Estado atual
+
+**Produção:** no ar com as mudanças de perfil e login.
+**GitHub:** `main` em `a581c7a` (código desta sessão já commitado e enviado antes do `/fechar`).
+**Pendência resolvida:** “Alterar senha pelo perfil ainda não grava” saiu da lista — não vamos
+ligar isso neste app.
+
+### Próximo passo
+
+🔴 **Novo chat: investigar ~130 threads sem padrão ("outro")** — por que o sistema não identificou?
+O que são? Só após a investigação: nomear o motivo final.
+Depois: aprovar textos pendentes (saudação 15x, arquivo sem entrega 5x, Fix R) e implementar tudo
+em `_determinar_status()` (`scripts/banco_threads.py`).
+
+*(Cruzado com o `PENDENCIAS.md`: nenhum 🔴 URGENTE novo. Conferências automáticas do `/fechar` =
+prioridade MÉDIA, não passam na frente dos motivos.)*
+
+Último /fechar: 2026-08-28 00:16 — memórias revisadas ✅
 
 ---
 
@@ -129,61 +174,3 @@ MÉDIA; não passa na frente dos motivos.)*
 
 Último /fechar: 2026-08-27 15:50 — memórias revisadas ✅
 
----
-
-## 📓 Diário da sessão (2026-08-27 — tarde) — Reorganização do CLAUDE.md
-
-### O que foi feito
-
-**Frente única: revisão e reorganização do arquivo de instruções (`CLAUDE.md`)**
-
-Michel pediu sugestões de melhoria no `CLAUDE.md`. Levantadas 7, todas aplicadas. Nenhum código
-de produção alterado — só documentação e instruções.
-
-**O problema central:** o `CLAUDE.md` é carregado inteiro em **toda mensagem de todo chat**. Com
-519 linhas, custava entre 6 e 8 mil tokens por resposta — contrariando a própria regra de "chat
-curto = menor custo" que está dentro dele.
-
-**O que mudou:**
-
-| # | Melhoria | Resultado |
-|---|---|---|
-| 1 | Dividir o arquivo | `CLAUDE.md` 519 → 371 linhas · criado `documentações/REGRAS_TRABALHO.md` (190 linhas) |
-| 2 | "Declarar plano" separado por consequência | Escreve ou gasta API → aguarda OK · Só lê → faz e mostra |
-| 3 | Juntar as 4 regras de "verifique antes de afirmar" | Viraram uma seção única com 4 itens |
-| 4 | Corrigir o erro do `/fast` | `/fast` não troca de modelo — liga o modo rápido do Opus |
-| 5 | Cada coisa no arquivo certo | Tabela de status → spec §8.3 · regra do artifact → já era o Passo 0 do `/iniciar` |
-| 6 | Adicionar "Como rodar o projeto" | Não existia · porta corrigida de 5000 para **5001** |
-| 7 | Ordem de prioridade entre regras | Dados > OK do Michel > registro > tokens > velocidade |
-
-**Decisão de processo tomada no caminho:** ao criar um ramo seguindo a regra "nunca commitar
-direto na `main`", apareceu a contradição — o `DEPLOY.md` manda publicar da `main` e os últimos
-5 commits foram direto nela. Michel decidiu: **trabalhamos direto na `main`**. Ramo separado só
-para mudança grande que talvez seja descartada, com aviso antes. Regra reescrita no `CLAUDE.md`
-§6 e registrada no `REGISTRO_CORRECOES.md`.
-
-**Ganho real:** ~30% menos tokens por resposta (não os ~65% estimados no começo — entraram ~50
-linhas novas que não existiam: índice, "Como rodar" e ordem de prioridade).
-
-### Estado atual
-
-**Produção:** sem alteração — nada foi publicado, nenhum código tocado.
-**Suíte de testes:** não rodada — nenhum `.py` foi modificado nesta sessão.
-**GitHub:** `main` alinhada ao origin (`6003021`).
-**Arquivo novo:** `documentações/REGRAS_TRABALHO.md` — rodada paga, tipografia, recursos
-externos, backup e resumo do deploy.
-
-### Próximo passo
-
-🔴 **Definir os motivos do grupo ❌ (caixa preta + Fix H + Fix R)** — segue sendo o item mais
-quente, herdado da sessão da manhã. São os motivos mais frequentes e os que expõem nome interno
-na tela do usuário.
-Depois: implementar todos os textos aprovados em `_determinar_status()`
-(`scripts/banco_threads.py`).
-
-*(Cruzado com o `PENDENCIAS.md`: nenhum item urgente novo entrou hoje; a tela de gerenciamento
-de motivos está marcada como prioridade ALTA e vem logo depois da definição do grupo ❌.)*
-
-Último /fechar: 2026-08-27 13:05 — memórias revisadas ✅
-
----

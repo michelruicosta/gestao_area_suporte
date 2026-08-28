@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-08-28 — No PC, “Portal de apps” e Sair voltam à prévia local
+
+### ~00:16 — Registrado no `/fechar` (já estava no código, ainda sem commit)
+
+**🔎 Em miúdos:** neste computador, o link Portal de apps e o Sair passam a abrir a prévia do
+portal na porta 8000. No site publicado, continuam indo para finaudapps.com.br.
+
+- **Problema:** no PC, Sair/Portal mandavam para o site público, em vez da prévia local do portal.
+- **Correção:** `scripts/servidor_telas.py` — se o acesso é `localhost`/`127.0.0.1`, o destino é
+  `http://127.0.0.1:8000/portal-preview/`; senão, `https://finaudapps.com.br`. O login usa
+  `{{ portal_url }}`.
+- **Arquivos:** `scripts/servidor_telas.py`, `templates/gestao_login.html`, `tests/test_servidor_telas.py`
+- **Validação:** ⚠️ VALIDAÇÃO PENDENTE — teste no código cobre os dois destinos; falta Michel
+  clicar Sair / Portal de apps neste PC e no site.
+
+---
+
 ## 2026-08-27 — Login: olho dentro da senha e sem Esqueceu a senha
 
 ### ~23:30 — Padrão Finaud (Leiautes) + recuperação só no portal
@@ -19,6 +36,7 @@ O link **Esqueceu a senha?** saiu desta tela — quem esquecer a senha usa o **p
 - **Arquivos:** `templates/gestao_login.html`, `tests/test_servidor_telas.py`,
   `documentações/PENDENCIAS.md`
 - **Validação:** ✅ Michel no PC (27/08 ~23:49) — olho dentro da caixa da senha; sem “Esqueceu a senha?”.
+  Site publicado (28/08 ~00:00): login em `gestao-suporte.finaudapps.com.br` conferido.
 
 ---
 
@@ -39,8 +57,8 @@ esse caminho foi retirado daqui. O menu continua com aparência e Sair.
     redireciona para a tela principal
 - **Arquivos:** `templates/gestao_email.html`, `scripts/servidor_telas.py`, `tests/test_servidor_telas.py`
 - **Validação:** ✅ Michel no PC (27/08 ~23:10) — menu do nome: Meu Perfil sumiu. No código, `/perfil`
-  logado responde 302 para `/`. `pytest` neste PC não coleta (atalho `venv` aponta para pasta antiga
-  inexistente).
+  logado responde 302 para `/`. Publicado na VPS na mesma noite. `pytest` neste PC não coleta (atalho
+  `venv` aponta para pasta antiga inexistente).
 
 ---
 

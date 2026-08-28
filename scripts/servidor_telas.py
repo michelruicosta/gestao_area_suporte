@@ -141,15 +141,29 @@ def _injetar_usuario():
     return {'current_user': _Usuario(logado, session.get('email', ''))}
 
 
+@app.context_processor
+def _injetar_portal_url():
+    return {'portal_url': _url_portal_destino()}
+
+
 # Credencial de acesso (variáveis de ambiente sobrescrevem o padrão)
 _ADMIN_EMAIL = os.environ.get('GESTAO_EMAIL', 'michel@finaud.com.br')
 _ADMIN_SENHA = os.environ.get('GESTAO_SENHA', 'finaud2026')
 _PORTAL_URL = os.environ.get('PORTAL_URL', 'https://finaudapps.com.br').rstrip('/')
+_PORTAL_PREVIEW_LOCAL = 'http://127.0.0.1:8000/portal-preview/'
 _MENSAGEM_RECUPERAR = (
     'Se este e-mail estiver cadastrado e ativo, enviaremos uma senha temporária em instantes.\n\n'
     'Não recebeu? Verifique o spam ou contate o administrador do sistema.'
 )
 _ALFABETO_SENHA_TEMP = string.ascii_letters + string.digits
+
+
+def _url_portal_destino() -> str:
+    """Neste PC volta à prévia do portal; no ar continua finaudapps.com.br."""
+    host = (request.host or '').split(':')[0].strip().lower()
+    if host in ('127.0.0.1', 'localhost'):
+        return _PORTAL_PREVIEW_LOCAL
+    return _PORTAL_URL
 
 
 def _senha_confere(senha: str) -> bool:
@@ -347,7 +361,7 @@ def _parametros_cookie_portal() -> dict:
 
 def _redirecionar_ao_portal_saindo():
     session.clear()
-    resp = redirect(_PORTAL_URL)
+    resp = redirect(_url_portal_destino())
     params = _parametros_cookie_portal()
     for nome in (COOKIE_AUDITORIA, COOKIE_PORTAL):
         resp.delete_cookie(nome, **params)
