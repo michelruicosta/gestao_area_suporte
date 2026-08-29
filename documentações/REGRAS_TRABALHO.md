@@ -182,9 +182,8 @@ deploy inteiro via SSH** — nunca pedir para Michel colar comandos no terminal.
    `gestao-suporte`
 4. `git checkout main && git pull origin main` como `finaud-tec` — se o pull bloquear, mostrar
    o diff e perguntar
-5. App Flask — **não rodar npm build** · Gunicorn workers = **1** (não aumentar: o APScheduler
-   roda dentro do processo)
-6. `systemctl restart gestao-suporte` → conferir `is-active` → abrir
-   `https://gestao-suporte.finaudapps.com.br`
+5. App Flask — **não rodar npm build** · Gunicorn workers = **1**
+6. `systemctl restart gestao-suporte` (e `gestao-suporte-agendador` se esse serviço já existir)
+   → conferir `is-active` → abrir `https://gestao-suporte.finaudapps.com.br`
 7. Depois de "Sair": deve redirecionar para `https://finaudapps.com.br` (não para o `/login`
    deste app)

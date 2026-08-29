@@ -100,8 +100,22 @@ def _salvar_config(cfg: dict) -> None:
         json.dump(cfg, f, ensure_ascii=False, indent=2)
 
 # ── Agendador de coleta automática ────────────────────────────────────────────
+# Relógio alvo: processo à parte (`executar_pipeline.py --agendar`).
+# Na tela só liga se GESTAO_AGENDADOR_EXTERNO não estiver ativo (compatível com o servidor atual).
 
 _scheduler = BackgroundScheduler(daemon=True)
+
+
+def _agendador_externo_ligado() -> bool:
+    flag = (os.environ.get('GESTAO_AGENDADOR_EXTERNO') or '').strip().lower()
+    return flag in ('1', 'true', 'sim', 'yes')
+
+
+def _deve_ligar_agendador_na_tela() -> bool:
+    if 'pytest' in sys.modules:
+        return False
+    return not _agendador_externo_ligado()
+
 
 def _job_coleta_automatica():
     global _coleta_em_andamento, _ultimo_erro_coleta
@@ -111,19 +125,8 @@ def _job_coleta_automatica():
     _ultimo_erro_coleta = None
     _log.info('Coleta automática disparada pelo agendador.')
     try:
-        sys.path.insert(0, _SCRIPTS_DIR)
-        from coletor_gmail import coletar
-        from classificador_regras import classificar_banco, reavaliar_automaticos
-        log_id = coletar()
-        contagens = classificar_banco()
-        reavaliar_automaticos()
-        if log_id:
-            bt.atualizar_classif_coleta(
-                log_id,
-                contagens.get('principal', 0),
-                contagens.get('descartes', 0),
-                contagens.get('revisao', 0),
-            )
+        from executar_pipeline import rodar_coleta_ciclo
+        rodar_coleta_ciclo()
     except Exception as e:
         _ultimo_erro_coleta = str(e)
         _log.exception('Coleta automática falhou: %s', e)
@@ -131,6 +134,8 @@ def _job_coleta_automatica():
         _coleta_em_andamento = False
 
 def _reagendar_coleta(intervalo_min: int) -> None:
+    if not _deve_ligar_agendador_na_tela():
+        return
     if _scheduler.get_job('coleta_automatica'):
         _scheduler.remove_job('coleta_automatica')
     if intervalo_min > 0:
@@ -146,33 +151,11 @@ def _reagendar_coleta(intervalo_min: int) -> None:
 
 def _job_sem_retorno():
     """Job diário (06h) que arquiva threads sem resposta conforme os limites configurados."""
-    cfg = _ler_config()
-    dias_af = int(cfg.get('dias_sr_af', 30))
-    dias_ac = int(cfg.get('dias_sr_ac', 60))
-    _log.info('Sem Retorno — iniciando arquivamento (AF=%d dias, AC=%d dias).', dias_af, dias_ac)
     try:
-        contagens = bt.arquivar_threads_inativas(dias_af=dias_af, dias_ac=dias_ac)
-        total = contagens['af'] + contagens['ac']
-        mensagem = f"Arquivadas {total} thread(s): {contagens['af']} AF, {contagens['ac']} AC."
-        bt.registrar_coleta(
-            tipo='sem_retorno',
-            threads_proc=total,
-            erros=0,
-            duracao_seg=0,
-            status='concluida',
-            mensagem=mensagem,
-        )
-        _log.info('Sem Retorno — %s', mensagem)
-    except Exception as e:
-        bt.registrar_coleta(
-            tipo='sem_retorno',
-            threads_proc=0,
-            erros=1,
-            duracao_seg=0,
-            status='erro',
-            mensagem=str(e),
-        )
-        _log.exception('Sem Retorno — falhou: %s', e)
+        from executar_pipeline import rodar_sem_retorno
+        rodar_sem_retorno()
+    except Exception:
+        _log.exception('Sem Retorno — falhou.')
 
 
 class _Usuario:
@@ -1018,25 +1001,31 @@ def api_fog_evolucao():
 
 
 # ── Inicialização ─────────────────────────────────────────────────────────────
-# Roda ao carregar o módulo — necessário para que o agendador funcione quando
-# o servidor é iniciado pelo Gunicorn (que importa o módulo sem executar __main__).
+# Banco sempre. Relógio na tela só se o processo separado ainda não estiver no ar.
 
 bt.criar_banco()
 _cfg_inicial = _ler_config()
-_reagendar_coleta(_cfg_inicial.get('intervalo_coleta_min', 60))
-_scheduler.add_job(
-    _job_sem_retorno,
-    'cron',
-    hour=6,
-    minute=0,
-    id='sem_retorno_diario',
-    replace_existing=True,
-)
-if not _scheduler.running:
-    _scheduler.start()
+if _deve_ligar_agendador_na_tela():
+    _reagendar_coleta(_cfg_inicial.get('intervalo_coleta_min', 60))
+    _scheduler.add_job(
+        _job_sem_retorno,
+        'cron',
+        hour=6,
+        minute=0,
+        id='sem_retorno_diario',
+        replace_existing=True,
+    )
+    if not _scheduler.running:
+        _scheduler.start()
+        _log.info(
+            'Agendador na tela (legado) — coleta a cada %d minuto(s). '
+            'Para separar: GESTAO_AGENDADOR_EXTERNO=1 + python scripts/executar_pipeline.py --agendar',
+            _cfg_inicial.get('intervalo_coleta_min', 60),
+        )
+else:
     _log.info(
-        'Agendador iniciado — coleta automática a cada %d minuto(s).',
-        _cfg_inicial.get('intervalo_coleta_min', 60),
+        'Agendador na tela desligado (pytest ou GESTAO_AGENDADOR_EXTERNO). '
+        'O relógio deve ser: python scripts/executar_pipeline.py --agendar'
     )
 
 if __name__ == '__main__':

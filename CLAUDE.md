@@ -44,7 +44,8 @@ Ambiente: Python + Flask, `venv/` na raiz. Rodar sempre da raiz do projeto.
 | O que | Comando | Observação |
 |---|---|---|
 | Subir a tela web | `python scripts/servidor_telas.py` | http://localhost:**8004** (variável `PORT` muda a porta). Não mandar o link se o servidor não estiver no ar. |
-| Coletar + classificar | `python scripts/executar_pipeline.py` | coleta do Gmail, depois classifica o que está sem categoria |
+| Coletar + classificar (uma vez) | `python scripts/executar_pipeline.py` | coleta do Gmail, depois classifica o que está sem categoria |
+| Relógio (e-mail automático) | `python scripts/executar_pipeline.py --agendar` | Processo à parte da tela. No servidor: ligar isto + `GESTAO_AGENDADOR_EXTERNO=1` na tela. |
 | Rodar os testes | `pytest tests/ -q` | obrigatório antes de qualquer commit |
 
 **Onde ficam as coisas:**
@@ -53,8 +54,9 @@ Ambiente: Python + Flask, `venv/` na raiz. Rodar sempre da raiz do projeto.
 - Logs diários: `logs/`
 - Telas: `templates/` + `static/`
 
-⚠️ O servidor já inicia o agendador interno (APScheduler) ao carregar o módulo — por isso, em
-produção, **Gunicorn com 1 worker apenas**.
+⚠️ Relógio alvo = `executar_pipeline.py --agendar` (fora da tela). Enquanto o servidor
+ainda não tiver esse processo, a tela liga o agendador sozinha (compatível). Com
+`GESTAO_AGENDADOR_EXTERNO=1`, a tela **não** liga o relógio. Gunicorn pode ficar com 1 worker.
 
 ---
 

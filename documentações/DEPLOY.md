@@ -157,7 +157,7 @@ ssh -o RequestTTY=no finaud-vps "export TERM=dumb
 | 1 | SSH via alias `finaud-vps` com `-o RequestTTY=no` | Nunca pedir para Michel colar o comando |
 | 2 | `git checkout main && git pull origin main` como `finaud-tec` | Se o pull bloquear por arquivo local: mostrar o diff e **perguntar** — nunca apagar produção no escuro |
 | 3 | Se `requirements.txt` mudou: `pip install -r requirements.txt` no venv do app | Este app é Flask — **não rodar npm build** |
-| 4 | `systemctl restart gestao-suporte` | Gunicorn: workers = 1 (APScheduler interno — **não aumentar**) |
+| 4 | `systemctl restart gestao-suporte` | Se o relógio separado já estiver no ar: também `systemctl restart gestao-suporte-agendador` |
 | 5 | Verificar: `systemctl is-active gestao-suporte` deve retornar `active` | Se não: `journalctl -u gestao-suporte -n 50` para diagnóstico |
 | 6 | Abrir `https://gestao-suporte.finaudapps.com.br` e confirmar funcionando | Após "Sair": deve redirecionar para `https://finaudapps.com.br` — **não** para `/login` deste app |
 
@@ -178,11 +178,13 @@ ssh -o RequestTTY=no finaud-vps "export TERM=dumb
 | Subdomínio | `gestao-suporte.finaudapps.com.br` |
 | Pasta no servidor | `/srv/finaud/tec/gestao_area_suporte` |
 | Usuário Linux | `finaud-tec` (compartilhado com normativos e leiautes_bacen) |
-| Serviço systemd | `gestao-suporte` |
+| Serviço systemd (tela) | `gestao-suporte` |
+| Serviço systemd (relógio) | `gestao-suporte-agendador` — `python scripts/executar_pipeline.py --agendar` |
 | Callable Gunicorn | `servidor_telas:app` |
 | WorkingDirectory systemd | `/srv/finaud/tec/gestao_area_suporte/scripts` |
 | PYTHONPATH systemd | `/srv/finaud/tec/gestao_area_suporte/scripts` |
-| Workers Gunicorn | `1` (APScheduler interno — não aumentar) |
+| Workers Gunicorn | `1` (pode permanecer 1) |
+| Separar relógio da tela | No `.env` da tela: `GESTAO_AGENDADOR_EXTERNO=1`. Sem isso, a tela ainda liga o relógio sozinha (não para o e-mail no pull). |
 | Autenticação Gmail | Service Account — não expira |
 
 ---
