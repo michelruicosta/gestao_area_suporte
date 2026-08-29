@@ -205,86 +205,92 @@ mostrar a tabela ao Michel e obter aprovação.
 
 ---
 
+**7. Bug Outlook corrigido, testado e aplicado em produção (commit `bce6add`)**
+
+Bug encontrado na investigação do grupo "saudação": `_extrair_texto_novo()` parava na
+primeira linha `De:` ou `From:` sem verificar se havia conteúdo real antes. E-mails com
+cabeçalho automático do Outlook retornavam texto vazio → motivo "saudação" errado.
+
+**Correção (3 linhas em `scripts/banco_threads.py`):** só interrompe se já houver conteúdo
+real antes do separador. Separador no início do corpo = cabeçalho automático → pula com
+`continue`.
+
+**Escopo confirmado antes de aplicar:**
+- Foto do antes: 16 threads saudação → 4 com texto vazio (bug), 12 genuínas
+- Após correção local: 3 threads mudaram de motivo (1 e-mail Outlook, 2 convites Teams)
+- 13 permanecem como saudação genuína
+
+**Validação:** 2 testes novos + 400 testes passando. Commit `bce6add`, push ao GitHub,
+deploy na VPS, `recalcular_status_todos()` (1.364 threads). 3 threads verificadas na tela de
+produção com motivos corretos ✅
+
+---
+
 ### Estado atual
 
-**Produção:** sem alteração de código — nenhum commit chegou ao GitHub nesta sessão.
-**GitHub:** `main` em `faa851b` (menu do Gestão alinhado ao padrão Finaud).
-**Banco local:** 1.643 threads, `thread_id_grupo = NULL`, `message_id_index` vazia.
-**Servidor local:** rodando em http://127.0.0.1:8004 (código `faa851b`).
+**Produção:** bug Outlook corrigido — commit `bce6add` no ar.
+**GitHub:** `main` em `bce6add` (bug `_extrair_texto_novo()` + 2 testes novos — 400 passando).
+**Banco local:** 1.364 threads (restaurado + recalculado após correção).
+**Banco de produção:** 1.364 threads recalculadas via `recalcular_status_todos()`.
+**Artefato motivos:** 79% — 15 de 19 aprovados. Grupo saudação (16 threads): 3 mudaram de
+motivo após correção, 13 são genuinamente saudação.
 
 ### Próximo passo
 
-🔴 **Passo 1 — Corrigir o bug do Outlook em `_extrair_texto_novo()`**
+🔴 **Passo 1 — Fechar o artefato de motivos**
 
-**O que é:** a função remove conteúdo após blocos "De: ... Enviada em: ..." (cabeçalho de
-mensagens citadas do Outlook). Quando o próprio e-mail começa com esse bloco (auto-cabeçalho),
-o conteúdo real da mensagem é descartado junto.
+O bug Outlook foi corrigido. O grupo "saudação" tem 16 threads: 3 mudaram de motivo após a
+correção (tinham conteúdo real descartado pelo sistema), 13 são genuinamente saudação.
+Verificar o que ficou no grupo, propor e aprovar o texto final do motivo.
 
-**Onde corrigir:** `scripts/banco_threads.py` — grep por `_extrair_texto_novo` para localizar
-a função. Ela tem a lógica de remoção de conteúdo citado.
-
-**Abordagem sugerida:** só descartar o bloco "De: ... Enviada em: ..." se houver conteúdo
-real ANTES dele (o texto novo vem antes da citação, não depois). Se o corpo começa direto
-com esse bloco sem nada antes, não descartar.
-
-**Como medir o impacto antes de aplicar:**
-1. Contar threads com corpo começando por linha vazia + "De: ... Enviada em: ..." no banco
-2. Corrigir só a função `_extrair_texto_novo()` — sem tocar nas regras de status ainda
-3. `pytest tests/ -q` — zero regressões obrigatório
-4. Rodar reclassificação em AMBIENTE LOCAL (banco de produção restaurado no PC, não a VPS):
-   `recalcular_status_todos()` em `scripts/banco_threads.py`
-5. Ver quantas threads mudam de "saudação" para outro motivo — revisar os casos antes de
-   aplicar em produção
-6. Testar amostra de 20 threads para validar que nenhuma reclassificação é errada
-7. Só depois: commitar + push + aplicar na VPS
-
-**Risco principal:** a remoção de citações é importante — threads com múltiplas respostas
-mostram o histórico nos blocos "De: ...". Se a correção for ampla demais, o sistema pode
-ler conteúdo de mensagens anteriores como novo. **Testar com amostra antes de rodar tudo.**
+Artefato: https://claude.ai/code/artifact/30448858-e3b1-4a40-a64d-4b989b0b7029
 
 ---
 
-🟡 **Passo 1b — In-Reply-To (agrupamento de threads) — chat planejado APÓS o bug Outlook**
+🟡 **Passo 2 — Verificar cobertura dos motivos em produção**
 
-Antes de qualquer código: mapear todos os cenários de como threads relacionadas aparecem no
-Gmail (1 conversa real dividida em 2 thread_ids vs. 2 conversas reais com assuntos parecidos).
-Caso confirmado do problema real: "Tratamento prudencial dos Direitos de Uso na apuração do DLO"
-— 3 thread_ids no Gmail para 1 única conversa de negócio.
-Ver `PENDENCIAS.md` → seção "COLETOR + TELAS — Agrupar threads relacionadas".
+Antes de montar a planilha, confirmar que os 19 motivos do artefato cobrem TODAS as threads
+em produção — nenhuma thread deve ficar com motivo fora da lista aprovada.
+Script: contar threads por `motivo_status` no banco e cruzar com o artefato.
 
 ---
 
-🟡 **Passo 2 — Aprovar texto do grupo "saudação" APÓS a correção**
-
-Após corrigir e recalcular, ver o que sobrou no grupo "saudação":
-- Threads Planner CADOC 4111 (corpo = "Boa Tarde!" + anexo, assunto = "CADOC 4111 DIA..."):
-  verificar se a melhoria de detecção por assunto resolve — ou se precisam de texto próprio
-- Para o que realmente é só saudação: propor texto honesto sem "possível"
-- Só depois de saber o que sobrou: propor e aprovar o texto final com Michel
-
----
-
-🟡 **Passo 3 — Montar o Excel APÓS todos os motivos aprovados**
+🟡 **Passo 3 — Montar o Excel APÓS cobertura confirmada**
 
 **Arquivo a criar:** `documentações/matriz_classificacao_motivos.xlsx`
 **Ferramenta:** openpyxl (pré-instalado) — skill `/xlsx` disponível
 
 **Aba REGRAS — 13 linhas já prontas** (ver item 4 acima para o conteúdo completo).
 Para preencher "Termos que acionaram": buscar os valores em `_determinar_status()` em
-`scripts/banco_threads.py` — as frases e listas de palavras já estão no código; só precisam
-ser extraídas para a planilha.
-Para "Razão do motivo": escrever em linguagem simples o que cada motivo representa de negócio.
+`scripts/banco_threads.py`. Para "Razão do motivo": linguagem simples de negócio.
 
 **Aba ALTERAÇÕES DE REGRAS:**
 Primeira entrada de cada motivo: Quando = data de aprovação por Michel · Campo alterado =
 Criação · Antes = — · Depois = Regra criada
 
-**Formatação mínima:**
-- Cabeçalho com fundo colorido e negrito
-- Largura das colunas ajustada ao conteúdo
-- Situação: Ativa em verde / Inativa em cinza (quando houver)
+**Formatação mínima:** cabeçalho colorido + negrito; largura ajustada; Situação: Ativa
+em verde / Inativa em cinza.
 
-Último /fechar: 2026-08-29 21:30 — memórias revisadas ✅
+---
+
+🟡 **Passo 4 — Tela de regras no sistema**
+
+Baseada na planilha: Michel vê e mantém Status/Motivo/Razão/Termos sem precisar abrir código.
+
+---
+
+🟡 **Passo 5 — Tela gerencial de busca (futuro)**
+
+Michel pesquisa por assunto e traz todas as informações da thread sem navegar na tela atual.
+
+---
+
+🟡 **Passo 6 — In-Reply-To (agrupamento de threads) — chat dedicado**
+
+Antes de qualquer código: mapear todos os cenários de como threads relacionadas aparecem no
+Gmail. Ver `PENDENCIAS.md` → "COLETOR + TELAS — Agrupar threads relacionadas".
+
+Último /fechar: 2026-08-29 23:30 — memórias revisadas ✅
 
 ---
 

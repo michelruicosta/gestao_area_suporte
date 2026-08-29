@@ -2,6 +2,37 @@
 
 ---
 
+## 2026-08-29 — Correção do bug Outlook em `_extrair_texto_novo()`
+
+### ~23:30 — Bug de extração de texto: cabeçalho Outlook/Teams descartava conteúdo real
+
+**🔎 Em miúdos:** quando um e-mail do Outlook começa com "De: ... Enviada em: ...", o sistema
+descartava tudo o que vinha depois — inclusive o conteúdo real da mensagem. 3 threads eram
+classificadas como "saudação" quando tinham conteúdo real.
+
+**Problema:** `_extrair_texto_novo()` em `scripts/banco_threads.py` parava na primeira linha
+que correspondia ao padrão `_SEP_HISTORICO` (`De:`, `From:`, `___`, etc.) — sem verificar se
+havia conteúdo real antes dela. O Outlook coloca esse cabeçalho no início do corpo, então a
+função parava na linha 1 e retornava string vazia.
+
+**Causa raiz:** o padrão `_SEP_HISTORICO` foi criado para detectar histórico citado (conteúdo
+antigo), mas quando o separador aparece no início do corpo é um cabeçalho automático do Outlook
+ou convite do Teams — não histórico citado.
+
+**Correção:** só interrompe a leitura se já houver conteúdo real antes do separador.
+Se o separador aparecer antes de qualquer texto (resultado vazio), pula a linha (`continue`)
+em vez de encerrar (`break`). 3 linhas alteradas em `scripts/banco_threads.py`.
+
+**Validação:** ✅ VALIDADO
+- Foto do antes: 16 threads com motivo saudação; 4 VAZIO (bug ativo), 12 genuinamente saudação
+- Após correção + recalcular local: 3 threads mudaram de motivo (conforme esperado)
+- 2 testes novos em `tests/test_banco_threads.py` — 400 testes passando, zero regressões
+- Deploy na VPS: commit `bce6add` — `systemctl is-active gestao-suporte` → `active`
+- `recalcular_status_todos()` na VPS: 1.364 threads recalculadas
+- 3 threads verificadas na tela de produção com motivos corretos ✅
+
+---
+
 ## 2026-08-29 — Tentativa de In-Reply-To revertida + investigação de falso positivo
 
 ### ~21:30 — Feature de agrupamento de threads: implementada, testada e revertida

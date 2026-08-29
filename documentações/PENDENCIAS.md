@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Gestão Área Suporte
 
-**Atualizado:** 2026-08-29 21:30
+**Atualizado:** 2026-08-29 23:30
 **Organização:** por etapa que bloqueia — reorganizado em 03/08/2026 para seguir as fases sem brechas.
 **Regra:** este arquivo lista **só o que ainda falta** (aberto / aguardando decisão / backlog).
 Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada no
@@ -10,7 +10,7 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ## COLETOR + TELAS — Agrupar threads relacionadas via In-Reply-To/References (identificado em 28/08/2026)
 
-**Prioridade: APÓS correção do bug Outlook.**
+**Prioridade: bug Outlook CORRIGIDO (commit `bce6add`, 29/08). Pode iniciar.**
 
 ### O problema confirmado
 
@@ -107,7 +107,7 @@ O campo **MOTIVO** exibido na tela de e-mails é hoje muito genérico em vários
 |---|---|---|
 | "Cliente escreveu — aguarda resposta da Finaud" — restante | ~130x | **Investigar antes de nomear** — o sistema não identificou o padrão; entender o que são antes de definir o texto (próximo chat) |
 | "Fix R: cliente prometeu retornar..." | ~0x banco | ✅ Texto aprovado: **"Cliente prometeu retornar com informações — aguarda retorno"** — aguarda implementação |
-| "Cliente enviou saudação — possível entrega de arquivo" | 16x | ⚠️ Bug Outlook encontrado: `_extrair_texto_novo()` descarta conteúdo real após auto-cabeçalho do Outlook. Corrigir primeiro, depois aprovar texto do que sobrar. Ver SESSAO_ATUAL.md → Passo 1 |
+| "Cliente enviou saudação — possível entrega de arquivo" | 13x | ✅ **Bug Outlook CORRIGIDO** (commit `bce6add`, 29/08). Das 16 threads: 3 mudaram de motivo (conteúdo real recuperado), 13 são genuinamente saudação. **Pendente:** aprovar texto final do motivo para as 13 que ficaram. Ver artefato: https://claude.ai/code/artifact/30448858-e3b1-4a40-a64d-4b989b0b7029 |
 | "Finaud enviou arquivo sem linguagem de entrega" | 5x | ✅ Texto aprovado: **"Finaud enviou arquivo — aguarda retorno do cliente"** — aguarda implementação |
 
 ---
@@ -862,6 +862,29 @@ O README antigo foi arquivado. Escrever o novo só quando algo estiver funcionan
 ### ✅ STATUS — Pente fino das AF — concluído (24/08/2026)
 
 Pente fino completo das AF (todas as categorias). 8 correções manuais no banco. ~99% das threads estavam corretas. Ver `REGISTRO_CORRECOES.md` entrada 24/08 para detalhes.
+
+---
+
+### 🟡 MOTIVOS — Verificar cobertura em produção antes de montar a planilha (identificado 29/08/2026)
+
+Após fechar o artefato de motivos (19 aprovados), rodar script que cruza todos os
+`motivo_status` distintos no banco de produção com a lista aprovada — confirmar que nenhuma
+thread ficou com motivo fora da lista. Só depois montar a planilha `matriz_classificacao_motivos.xlsx`.
+
+**Script:** contar `SELECT motivo_status, COUNT(*) FROM threads GROUP BY motivo_status` e
+comparar com os 19 motivos do artefato.
+
+**Quando fazer:** imediatamente após o artefato ser fechado (Passo 1 do próximo chat).
+
+---
+
+### 🟡 TELA — Gerencial de busca por assunto (identificado 29/08/2026, futuro)
+
+Michel pesquisa um assunto e a tela traz todas as informações da thread (status, motivo,
+razão, histórico) sem precisar navegar pela tela de status atual. Pensado para buscar casos
+específicos durante manutenções ou investigações.
+
+**Quando fazer:** após a tela de regras estar funcionando (Passo 4 do próximo chat).
 
 ---
 
