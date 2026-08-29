@@ -1,10 +1,59 @@
 # PENDÊNCIAS — Gestão Área Suporte
 
-**Atualizado:** 2026-08-28 00:16
+**Atualizado:** 2026-08-29 21:30
 **Organização:** por etapa que bloqueia — reorganizado em 03/08/2026 para seguir as fases sem brechas.
 **Regra:** este arquivo lista **só o que ainda falta** (aberto / aguardando decisão / backlog).
 Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada no
 `REGISTRO_CORRECOES.md` — nesta ordem: primeiro grava no REGISTRO, depois remove daqui.
+
+---
+
+## COLETOR + TELAS — Agrupar threads relacionadas via In-Reply-To/References (identificado em 28/08/2026)
+
+**Prioridade: APÓS correção do bug Outlook.**
+
+### O problema confirmado
+
+O Gmail às vezes cria `thread_id` distintos para o que é uma única conversa de negócio:
+- Quando adiciona `**UNVERIFIED SENDER**` ao assunto (remetente externo não verificado)
+- Quando os destinatários mudam no meio da troca (alguém entra ou sai do CC)
+- Quando alguém responde em um ramo mais antigo da cadeia em vez da última mensagem
+
+**Caso concreto confirmado (outro chat):** "Tratamento prudencial dos Direitos de Uso na
+apuração do DLO" — aparece como 3 thread_ids separados no Gmail quando é 1 conversa de negócio.
+
+### O que NÃO é problema
+
+Durante a investigação de 29/08/2026, confirmamos que nem toda thread duplicada é erro:
+- "Arquivo DLO maio rejeitado" — 2 threads no sistema, 2 conversas no Gmail → **correto**
+- MiraeAsset relatórios diários — cliente usa "Responder" para enviar cada dia → **são entidades distintas**
+
+### Regra de ouro antes de implementar
+
+**Seguir o que o Gmail mostra na tela.** Se o Gmail mostra 2 conversas → nosso sistema mostrando
+2 está certo. Só há problema quando o Gmail mostra 1 conversa mas o Gmail API retornou 2
+`thread_id` distintos e nosso sistema mostra 2.
+
+### O que fazer antes de escrever qualquer código
+
+1. **Mapear os cenários** — para cada tipo de situação (UNVERIFIED SENDER, mudança de CC,
+   resposta em ramo antigo, cliente usando Responder para novo relatório), verificar no Gmail
+   como aparece na tela e como a API retorna. Montar tabela de cenários.
+2. **Mostrar a tabela ao Michel** e definir: qual deve agrupar? qual não deve?
+3. **Só depois:** propor o algoritmo de agrupamento, mostrar, obter OK, codificar.
+4. **Testar com caso real:** "Tratamento prudencial dos Direitos de Uso" deve aparecer como 1
+   entry após a implementação.
+
+### Aprendizado de 29/08/2026
+
+A primeira tentativa usou apenas `In-Reply-To`/`References` sem verificar o assunto. Resultado:
+66 relatórios diários da MiraeAsset foram agrupados sob 1 canonical — cada um é uma entrega
+separada. O algoritmo precisa distinguir:
+- Mesmo assunto, 2 thread_ids → **agrupar** (é a mesma conversa que o Gmail dividiu)
+- Assunto diferente, referência técnica → **não agrupar** (são entregas distintas que o cliente
+  enviou como reply por hábito)
+
+**Quando fazer:** chat dedicado após correção do bug Outlook em `_extrair_texto_novo()`.
 
 ---
 

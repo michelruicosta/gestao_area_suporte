@@ -168,12 +168,49 @@ depois. Resultado: `texto_novo` = vazio → `_so_cortesia("")` = True → classi
 - @menção interna (2 threads): "+@Nome Atenciosamente" — etiquetagem interna sem conteúdo
 - Aceite de reunião (1 thread "Aceita: Risk S5"): corpo vazio — aceite automático de convite
 
+---
+
+**6. Tentativa de implementar agrupamento In-Reply-To — revertida**
+
+Feature implementada em commit `70edd02` (local, nunca enviada ao GitHub): leitura dos
+cabeçalhos `In-Reply-To` e `References` para vincular threads do mesmo assunto que o Gmail
+separou em thread_ids distintos. Banco local reimportado (1.643 threads); backfill detectou
+512 vínculos em 94 grupos.
+
+**Falso positivo encontrado em teste:** MiraeAsset — o sistema agrupou 66 threads sob 1
+canonical porque o cliente usa "Responder" para enviar cada relatório diário (o `In-Reply-To`
+aponta para o dia anterior, mas o assunto muda: `20260703_AUDIT` → `20260706_AUDIT` → ...).
+No Gmail esses relatórios aparecem como conversas separadas — e são mesmo entidades distintas
+de negócio. Agrupar foi errado.
+
+**Resultado do teste comparativo:**
+- "Arquivo DLO maio rejeitado": 2 threads no nosso sistema = 2 conversas no Gmail → **correto,
+  sem problema real**
+- "Tratamento prudencial dos Direitos de Uso na apuração do DLO": confirmado em outro chat
+  que o Gmail mostra 3 threads para 1 conversa de negócio → **esse é o problema real a resolver**
+
+**Erro de processo:** o código foi escrito sem mapear todos os cenários primeiro (violação
+de CLAUDE.md §8 e da regra "spec antes de implementar"). O cenário de clientes que usam
+Responder para enviar relatórios novos não foi considerado.
+
+**Reversão executada:**
+- `git reset --hard HEAD~1` → código voltou ao estado `faa851b`
+- `tests/test_vinculos_threads.py` apagado
+- `data/gestao.db`: `thread_id_grupo = NULL` em 512 threads; `message_id_index` limpa
+- 1 thread com `status_workflow = 'Concluida'` (sem acento) corrigida para `'Concluída'`
+
+**Implementação do In-Reply-To:** adiada para chat dedicado, após correção do bug Outlook.
+Antes de escrever código: mapear todos os cenários (como o Gmail realmente agrupa cada tipo),
+mostrar a tabela ao Michel e obter aprovação.
+
+---
+
 ### Estado atual
 
-**Produção:** sem alteração de código nesta sessão — só planejamento e investigação.
-**Commits:** nenhum nesta sessão.
-**PENDENCIAS.md:** atualizado — adicionadas seções de In-Reply-To e Legenda na tela; textos
-Fix R e Finaud sem entrega marcados como aprovados.
+**Produção:** sem alteração de código — nenhum commit chegou ao GitHub nesta sessão.
+**GitHub:** `main` em `faa851b` (menu do Gestão alinhado ao padrão Finaud).
+**Banco local:** 1.643 threads, `thread_id_grupo = NULL`, `message_id_index` vazia.
+**Servidor local:** rodando em http://127.0.0.1:8004 (código `faa851b`).
 
 ### Próximo passo
 
@@ -207,6 +244,16 @@ ler conteúdo de mensagens anteriores como novo. **Testar com amostra antes de r
 
 ---
 
+🟡 **Passo 1b — In-Reply-To (agrupamento de threads) — chat planejado APÓS o bug Outlook**
+
+Antes de qualquer código: mapear todos os cenários de como threads relacionadas aparecem no
+Gmail (1 conversa real dividida em 2 thread_ids vs. 2 conversas reais com assuntos parecidos).
+Caso confirmado do problema real: "Tratamento prudencial dos Direitos de Uso na apuração do DLO"
+— 3 thread_ids no Gmail para 1 única conversa de negócio.
+Ver `PENDENCIAS.md` → seção "COLETOR + TELAS — Agrupar threads relacionadas".
+
+---
+
 🟡 **Passo 2 — Aprovar texto do grupo "saudação" APÓS a correção**
 
 Após corrigir e recalcular, ver o que sobrou no grupo "saudação":
@@ -237,7 +284,7 @@ Criação · Antes = — · Depois = Regra criada
 - Largura das colunas ajustada ao conteúdo
 - Situação: Ativa em verde / Inativa em cinza (quando houver)
 
-Último /fechar: 2026-08-29 — memórias revisadas ⬜
+Último /fechar: 2026-08-29 21:30 — memórias revisadas ✅
 
 ---
 

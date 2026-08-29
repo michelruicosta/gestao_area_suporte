@@ -2,6 +2,46 @@
 
 ---
 
+## 2026-08-29 — Tentativa de In-Reply-To revertida + investigação de falso positivo
+
+### ~21:30 — Feature de agrupamento de threads: implementada, testada e revertida
+
+**🔎 Em miúdos:** tentamos fazer o sistema agrupar threads do Gmail que são a mesma conversa
+mas chegam com IDs diferentes. O teste revelou um falso positivo grave (relatórios diários da
+MiraeAsset sendo incorretamente agrupados). Revertemos tudo. O problema real existe (confirmado
+por outro chat com a thread "Tratamento prudencial..."), mas precisa ser implementado com
+análise de cenários mais cuidadosa.
+
+**Problema:** o Gmail às vezes cria dois `thread_id` distintos para o que é uma única conversa
+de negócio (quando adiciona `**UNVERIFIED SENDER**` ao assunto, quando destinatários mudam,
+etc.). Nossa tela mostrava 2 entradas para o que deveria ser 1.
+
+**Causa raiz do falso positivo:** a MiraeAsset usa "Responder" para enviar cada relatório diário
+novo — o `In-Reply-To` no cabeçalho aponta para o e-mail do dia anterior, mas o assunto muda
+(`20260703_AUDIT` → `20260706_AUDIT`). O sistema leu a referência e agrupou todos os relatórios
+diários sob um único canonical. No Gmail cada relatório é uma conversa separada — e é mesmo uma
+entrega separada de negócio.
+
+**Erro de processo identificado (Michel):** o código foi escrito antes de mapear todos os
+cenários. Violou CLAUDE.md §8 (spec antes de implementar) e a regra de "spec cobre máximo de
+cenários". O cenário de clientes que usam Responder para enviar documentos novos não foi
+considerado.
+
+**Correção:**
+- `git reset --hard HEAD~1` — reverteu o commit `70edd02`
+- `tests/test_vinculos_threads.py` apagado
+- `data/gestao.db`: `thread_id_grupo = NULL` em 512 threads; tabela `message_id_index` limpa
+- 1 thread com `status_workflow = 'Concluida'` corrigida para `'Concluída'`
+
+**Validação:** ✅ banco volta ao estado anterior; servidor rodando em `faa851b`; `pytest` não
+foi rodado (não houve mudança de código de produção — reversão total).
+
+**Próxima etapa:** implementar In-Reply-To em chat dedicado, após bug Outlook. Antes de codificar:
+mapear cenários comparando Gmail na tela vs. thread_ids que a API retorna para cada tipo de
+situação.
+
+---
+
 ## 2026-08-29 — Planejamento: planilha de motivos + investigação bug Outlook
 
 ### ~23:00 — Aprovações de texto + bug descoberto (sem alteração de código)
