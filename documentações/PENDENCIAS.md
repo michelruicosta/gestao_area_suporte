@@ -866,16 +866,10 @@ Pente fino completo das AF (todas as categorias). 8 correções manuais no banco
 
 ---
 
-### 🟡 MOTIVOS — Verificar cobertura em produção antes de montar a planilha (identificado 29/08/2026)
+### ✅ MOTIVOS — Verificar cobertura em produção — concluído (29/08/2026)
 
-Após fechar o artefato de motivos (19 aprovados), rodar script que cruza todos os
-`motivo_status` distintos no banco de produção com a lista aprovada — confirmar que nenhuma
-thread ficou com motivo fora da lista. Só depois montar a planilha `matriz_classificacao_motivos.xlsx`.
-
-**Script:** contar `SELECT motivo_status, COUNT(*) FROM threads GROUP BY motivo_status` e
-comparar com os 19 motivos do artefato.
-
-**Quando fazer:** imediatamente após o artefato ser fechado (Passo 1 do próximo chat).
+Artefato fechado com 18 linhas aprovadas. Banco de produção varrido: 23 motivos distintos →
+todos cobertos pelas 18 linhas. Ver REGISTRO_CORRECOES.md (29/08 continuação).
 
 ---
 

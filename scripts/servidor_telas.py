@@ -37,6 +37,9 @@ from functools import wraps
 from flask import Flask, abort, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 from apscheduler.schedulers.background import BackgroundScheduler
+from dotenv import load_dotenv
+
+load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env'))
 
 _SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 _ROOT_DIR    = os.path.dirname(_SCRIPTS_DIR)

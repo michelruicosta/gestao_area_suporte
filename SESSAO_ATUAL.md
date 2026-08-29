@@ -228,11 +228,10 @@ produção com motivos corretos ✅
 
 ### Estado atual
 
-**Produção:** bug Outlook `bce6add` + bug `_so_cortesia()` (commit a fazer) — aguarda push/deploy.
-**GitHub:** `main` em `bce6add` (fix `_extrair_texto_novo()` + 2 testes — 400 passando).
-**Banco local:** 1.364 threads. Brazabank (RE: DRM 05.2026) saiu da saudação → caixa preta. Caroline (DLO_2061) movida para Concluída manualmente.
-**Banco de produção:** ainda em `bce6add` — pendente deploy + atualização da Caroline na VPS.
-**Artefato motivos:** investigação do grupo saudação concluída (ver análise abaixo). Motivos a fechar: Paulo Henrique 9x, Trustee B[14], Aceite convite C, Caroline D.
+**GitHub:** `main` em `a5ecaf0` (fix filtro "Aceita:" + teste — 403 passando).
+**Produção:** `a5ecaf0` no ar, serviço ativo ✅
+**Banco de produção:** 1.363 threads. Caroline (DLO_2061) = Concluída ✅. Thread "Aceita: Risk S5" (`19f6b1cf9af0e81b`) movida para descartes ✅. Brazabank = caixa preta (aguarda "enviado" como termo de entrega).
+**Artefato motivos:** ✅ CONCLUÍDO — 18 de 18 aprovados. Todos os 23 motivos distintos do banco de produção estão cobertos pelas 18 linhas.
 
 **Análise do grupo saudação (15 threads) — feita nesta sessão:**
 
@@ -253,35 +252,24 @@ e extratos" automaticamente.
 
 ### Próximo passo
 
-🔴 **Passo 1 — Push + deploy do fix `_so_cortesia()` + atualizar Caroline na VPS**
+✅ **Passo 1 — CONCLUÍDO (29/08 ~20:30)**
+Deploy, migração, recalculate, Caroline corrigida, site no ar. Ver REGISTRO_CORRECOES.md.
 
-Commit local pronto (fix + 2 testes + documentos). Aguarda push e deploy.
-Após deploy: atualizar Caroline no banco de produção (UPDATE direto via SSH).
-Artefato motivos: https://claude.ai/code/artifact/30448858-e3b1-4a40-a64d-4b989b0b7029
+✅ **Passo 1b — CONCLUÍDO (29/08)**
+Artefato de motivos fechado — 18 de 18 aprovados. Todos os 23 motivos do banco cobertos.
+Fix filtro "Aceita:" (commit `a5ecaf0`), thread Risk S5 movida para descartes em produção.
 
----
-
-🟡 **Passo 1b — Fechar o artefato de motivos (motivos a aprovar)**
-
-Grupo saudação analisado — ainda falta aprovar texto para: Paulo Henrique (9x), Trustee B[14],
-aceite de convite C. Depois de aprovar os textos → verificar cobertura no banco → montar Excel.
+✅ **Passo 2 — CONCLUÍDO (29/08)**
+Cobertura verificada em produção: 23 motivos distintos → todos mapeados para as 18 linhas aprovadas.
 
 ---
 
-🟡 **Passo 2 — Verificar cobertura dos motivos em produção**
-
-Antes de montar a planilha, confirmar que os 19 motivos do artefato cobrem TODAS as threads
-em produção — nenhuma thread deve ficar com motivo fora da lista aprovada.
-Script: contar threads por `motivo_status` no banco e cruzar com o artefato.
-
----
-
-🟡 **Passo 3 — Montar o Excel APÓS cobertura confirmada**
+🔴 **Passo 3 — PRÓXIMO — Montar o Excel**
 
 **Arquivo a criar:** `documentações/matriz_classificacao_motivos.xlsx`
 **Ferramenta:** openpyxl (pré-instalado) — skill `/xlsx` disponível
 
-**Aba REGRAS — 13 linhas já prontas** (ver item 4 acima para o conteúdo completo).
+**Aba REGRAS — 18 linhas prontas** (artefato concluído em 29/08 — ver REGISTRO_CORRECOES.md).
 Para preencher "Termos que acionaram": buscar os valores em `_determinar_status()` em
 `scripts/banco_threads.py`. Para "Razão do motivo": linguagem simples de negócio.
 
@@ -311,7 +299,7 @@ Michel pesquisa por assunto e traz todas as informações da thread sem navegar 
 Antes de qualquer código: mapear todos os cenários de como threads relacionadas aparecem no
 Gmail. Ver `PENDENCIAS.md` → "COLETOR + TELAS — Agrupar threads relacionadas".
 
-Último /fechar: 2026-08-29 23:30 — memórias revisadas ✅
+Último /fechar: 2026-08-29 (continuação) — memórias revisadas ✅
 
 ---
 

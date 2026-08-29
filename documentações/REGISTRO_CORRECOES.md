@@ -2,6 +2,49 @@
 
 ---
 
+## 2026-08-29 (continuação) — Artefato de motivos concluído + decisões de mapeamento
+
+### Sessão 29/08 (continuação) — Fechamento do artefato de motivos
+
+**🔎 Em miúdos:** O artefato de textos do campo MOTIVO foi concluído — 18 linhas aprovadas cobrindo 100% dos 23 motivos distintos no banco de produção. Dois casos discutidos com Michel foram mapeados para linhas já existentes (sem criar linhas novas). Novo requisito de design registrado para a futura tela de manutenção.
+
+**Decisões aprovadas:**
+- `Cliente confirmou recebimento — reação do Teams` (14x) → mapeia para **"Finaud entregou arquivo ao cliente"** (Concluída). A confirmação do Teams é uma resposta automática ao recebimento de arquivo regulatório — mesmo caso, sem linha nova.
+- `Finaud enviou arquivo e aguarda resposta do cliente` (8x) → mapeia para **"Finaud enviou arquivo — aguarda retorno do cliente"** (Aguardando Cliente). Mesma situação, variação de texto.
+- Cobertura verificada em produção: 23 motivos → todos cobertos pelas 18 linhas.
+
+**Requisito registrado:** tela de manutenção deve validar unicidade de termos classificatórios — bloquear salvamento se o mesmo termo aparecer em dois motivos. Ver `PENDENCIAS.md` → "TELA DE MANUTENÇÃO — Validar unicidade".
+
+**Artefato:** https://claude.ai/code/artifact/30448858-e3b1-4a40-a64d-4b989b0b7029 — 18 de 18 ✓
+
+**Validação:** ✅ VALIDADO — banco de produção varrido, nenhum motivo fora da lista aprovada.
+
+sem teste: decisões de negócio e mapeamento de categorias, sem alteração de código.
+
+---
+
+## 2026-08-29 (~20:30) — deploy + migração + Caroline + SECRET_KEY
+
+### Sessão 29/08 — Deploy dos commits acumulados + correção do banco de produção
+
+**🔎 Em miúdos:** Cinco commits novos foram aplicados na VPS (incluindo o fix do `_so_cortesia()` e a feature SEM RETORNO), o banco de produção foi migrado para ter a coluna `inativa_desde`, todas as threads foram recalculadas com as novas regras, a thread da Caroline foi corrigida manualmente, e o `SECRET_KEY` foi adicionado ao `.env` do servidor (o commit `afd1f16` havia removido o valor de fábrica).
+
+**O que foi feito:**
+
+1. `git pull origin main` na VPS — 5 commits novos aplicados (`a5ecaf0` até `4d99c8b`)
+2. `systemctl restart gestao-suporte` → falhou por falta de `SECRET_KEY` no `.env`
+3. `criar_banco()` executado na VPS: coluna `inativa_desde` adicionada ao banco de produção via migração segura (`ALTER TABLE IF NOT EXISTS`)
+4. `recalcular_status_todos()` na VPS: 1.363 threads reprocessadas com as regras novas (fix `_so_cortesia()` em vigor)
+5. Caroline (`1a01b7bb8a4e4c5c`) atualizada no banco de produção E local: `status_workflow = 'Concluída'`, `motivo_status = 'Cliente agradeceu — problema resolvido'`
+6. `SECRET_KEY` gerado (`secrets.token_hex(32)`) e adicionado ao `.env` da VPS
+7. `systemctl restart gestao-suporte` → `active` ✅ — site respondendo HTTP 200
+
+**Impacto do SECRET_KEY:** sessões anteriores expiraram — usuários precisam fazer login novamente (comportamento esperado).
+
+**Validação:** ✅ VALIDADO — `https://gestao-suporte.finaudapps.com.br/login` retorna HTTP 200; serviço `active`.
+
+---
+
 ## 2026-08-29 — feat(sem-retorno): Arquivamento automático de threads inativas
 
 ### (~sessão 29/08) — Feature completa: SEM RETORNO
