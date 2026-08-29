@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-08-29 — Fix filtro §4: `Aceita:` (feminino) não era descartado como aceite de convite
+
+### (~sessão 29/08) — Assunto "Aceita: …" passava pelo filtro de automáticos
+
+**🔎 Em miúdos:** resposta automática de calendário com assunto começando em `"Aceita:"` entrava no sistema como thread normal. Apenas a forma masculina `"Aceito:"` era filtrada.
+
+**Problema:** `validador_classificacao.py` linha 94 verificava só `assunto.startswith('Aceito:')`. No caso real (thread `19f6b1cf9af0e81b` — "Aceita: Risk S5"), o Outlook gerou um aceite no feminino que não foi descartado.
+
+**Correção:** condição expandida para `assunto.startswith('Aceito:') or assunto.startswith('Aceita:')`. 1 linha alterada em `scripts/validador_classificacao.py`.
+
+**Validação:** ✅ VALIDADO
+- Novo teste `test_filtro_aceita_convite` em `tests/test_validador_filtro.py` com o assunto real "Aceita: Risk S5"
+- 403 testes passando, zero regressões
+- Log de re-avaliação §4 confirma: "Aceita: Risk S5" → `aceite de convite de calendário` ✅
+
+---
+
 ## 2026-08-29 — Fix `_so_cortesia()`: fallback 4-linhas + Caroline movida para Concluída
 
 ### (sessão pós-23:30) — Bug das 4 linhas em branco descartava conteúdo real antes do sign-off

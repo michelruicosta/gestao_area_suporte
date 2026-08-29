@@ -47,6 +47,10 @@ def test_filtro_aceito_convite():
     t = _thread("Aceito: Reunião semanal")
     assert eh_automatico(t) is not None
 
+def test_filtro_aceita_convite():
+    t = _thread("Aceita: Risk S5 — reunião mensal")
+    assert eh_automatico(t) is not None
+
 
 # ── Casos que NÃO devem ser filtrados ────────────────────────────────────────
 

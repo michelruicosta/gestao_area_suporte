@@ -91,7 +91,7 @@ def eh_automatico(thread: dict) -> str | None:
         return 'confirmação de conta Finaud'
     if 'IT Service Desk' in assunto:
         return 'IT Service Desk'
-    if assunto.startswith('Aceito:'):
+    if assunto.startswith('Aceito:') or assunto.startswith('Aceita:'):
         return 'aceite de convite de calendário'
     assunto_u = assunto.upper()
     if any(p in assunto_u for p in ('CÓDIGO DE VERIFICAÇÃO', 'CODIGO DE VERIFICACAO',
