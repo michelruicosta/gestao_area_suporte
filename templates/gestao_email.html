@@ -266,6 +266,10 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .th-sort.sort-active { color: var(--marca) !important; }
 .si { font-size: 9px; margin-left: 2px; opacity: .7; }
 #tbl-resumo tbody td:first-child { text-transform: uppercase; color: var(--text); font-weight: 600; }
+#tbody-sr { border-top: 3px double var(--border); }
+#tbody-sr tr { cursor: pointer; }
+#tbody-sr tr:hover td { background: var(--hover, rgba(255,255,255,.04)); }
+#tbody-sr td:first-child { color: var(--muted) !important; letter-spacing:.05em; }
 
 /* ─── Painel Evolução Histórica ─────────────────────────────────────── */
 .evo { background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
@@ -1054,6 +1058,10 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
           <span class="nav-ico">🕐</span>
           <span class="nav-txt">Agendamentos</span>
         </button>
+        <button class="nav-item" data-pagina="admin" data-aba="sem-retorno" onclick="navegar(this)">
+          <span class="nav-ico">⏸</span>
+          <span class="nav-txt">Regras de Sem Retorno</span>
+        </button>
         <button class="nav-item" data-pagina="usuarios" onclick="navegar(this)">
           <span class="nav-ico">👥</span>
           <span class="nav-txt">Usuários e Perfis</span>
@@ -1146,6 +1154,7 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
           <tbody id="tbody-resumo">
             <tr><td colspan="10" class="vazio">Carregando…</td></tr>
           </tbody>
+          <tbody id="tbody-sr"></tbody>
           <tfoot id="tfoot-resumo"></tfoot>
         </table>
       </div>
@@ -1287,6 +1296,7 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
         <button class="email-tab ativa" onclick="_admMudarAba('coletor',this)">Coletor</button>
         <button class="email-tab" onclick="_admMudarAba('historico',this)">Histórico de execuções</button>
         <button class="email-tab" onclick="_admMudarAba('agendamentos',this)">Agendamentos</button>
+        <button class="email-tab" onclick="_admMudarAba('sem-retorno',this)">Regras de Sem Retorno</button>
       </div>
 
       <div id="adm-aba-coletor">
@@ -1370,6 +1380,49 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
             <div style="display:flex;align-items:center;gap:1rem">
               <button class="btn-coletar" onclick="_admSalvarConfig()">Salvar agendamentos</button>
               <span id="cfg-feedback" style="font-size:0.85rem;color:var(--muted)"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="adm-aba-sem-retorno" style="display:none">
+        <div class="admin-card">
+          <h2 style="margin:0 0 0.5rem">Regras de Sem Retorno</h2>
+          <p style="font-size:0.82rem;color:var(--muted);margin:0 0 1.5rem">
+            Threads sem resposta por mais do que o limite abaixo são movidas automaticamente
+            para a categoria <strong>SEM RETORNO</strong>. O processo roda uma vez por dia às 06h.
+            Quando chegar uma resposta nova, a thread volta para a categoria original.
+          </p>
+          <div style="display:flex;flex-direction:column;gap:1.5rem;max-width:480px">
+            <div>
+              <label style="display:block;font-weight:600;margin-bottom:0.4rem">
+                Aguardando Finaud — dias sem resposta
+              </label>
+              <p style="font-size:0.82rem;color:var(--muted);margin:0 0 0.6rem">
+                Threads que estão aguardando resposta da Finaud há mais do que este limite.
+              </p>
+              <div style="display:flex;align-items:center;gap:0.75rem">
+                <input type="number" id="cfg-sr-af" min="1" max="365" step="1"
+                  style="width:90px;padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:6px;font-size:1rem;background:var(--surface);color:var(--text);font-family:inherit">
+                <span style="color:var(--muted);font-size:0.9rem">dias</span>
+              </div>
+            </div>
+            <div>
+              <label style="display:block;font-weight:600;margin-bottom:0.4rem">
+                Aguardando Cliente — dias sem resposta
+              </label>
+              <p style="font-size:0.82rem;color:var(--muted);margin:0 0 0.6rem">
+                Threads que estão aguardando resposta do cliente há mais do que este limite.
+              </p>
+              <div style="display:flex;align-items:center;gap:0.75rem">
+                <input type="number" id="cfg-sr-ac" min="1" max="365" step="1"
+                  style="width:90px;padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:6px;font-size:1rem;background:var(--surface);color:var(--text);font-family:inherit">
+                <span style="color:var(--muted);font-size:0.9rem">dias</span>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:1rem">
+              <button class="btn-coletar" onclick="_admSalvarSr()">Salvar</button>
+              <span id="cfg-sr-feedback" style="font-size:0.85rem;color:var(--muted)"></span>
             </div>
           </div>
         </div>
@@ -1973,6 +2026,46 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
   </div>
 </div>
 
+<!-- Modal: SEM RETORNO (threads arquivadas por inatividade) -->
+<div class="modal-backdrop" id="modal-sr">
+  <div class="modal modal-lg">
+    <div class="modal-head">
+      <h2>SEM RETORNO</h2>
+      <button class="modal-fechar" onclick="fecharModal('modal-sr')">×</button>
+    </div>
+    <div class="modal-tabs" id="modal-sr-tabs">
+      <button class="tab-btn ativo" data-tab="sr-af" onclick="trocarAbaSr(this)">
+        Aguardando Finaud <span class="tab-count" id="sr-ct-af">—</span>
+      </button>
+      <button class="tab-btn" data-tab="sr-ac" onclick="trocarAbaSr(this)">
+        Aguardando Cliente <span class="tab-count" id="sr-ct-ac">—</span>
+      </button>
+    </div>
+    <div class="busca-wrap">
+      <input class="busca-input" id="busca-sr" type="search"
+             placeholder="🔍  Filtrar por assunto…" oninput="filtrarThreadsSr()">
+    </div>
+    <div class="modal-body" style="padding:0.75rem 1.25rem; overflow-x: auto;">
+      <div class="tab-panel ativo" id="tab-panel-sr-af">
+        <div class="tabela-wrap">
+          <table class="tabela">
+            <thead><tr><th>Assunto</th><th>De</th><th>Para</th><th>Arquivado em</th><th class="num">Msgs</th></tr></thead>
+            <tbody id="tbody-sr-af"><tr><td colspan="5" class="vazio">Carregando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tab-panel" id="tab-panel-sr-ac">
+        <div class="tabela-wrap">
+          <table class="tabela">
+            <thead><tr><th>Assunto</th><th>De</th><th>Para</th><th>Arquivado em</th><th class="num">Msgs</th></tr></thead>
+            <tbody id="tbody-sr-ac"><tr><td colspan="5" class="vazio">Carregando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: thread completa -->
 <div class="modal-backdrop" id="modal-thread">
   <div class="modal">
@@ -2168,6 +2261,7 @@ async function carregarResumo() {
     // Tabela
     _dadosResumo = {categorias: d.categorias, totais: d.totais};
     renderResumo();
+    _renderSrRow(d.sem_retorno, d.totais);
 
     // Rodapé — linha de totais + linha de legenda
     const t = d.totais;
@@ -2410,8 +2504,10 @@ function _admMudarAba(aba, btn) {
   document.getElementById('adm-aba-coletor').style.display       = aba === 'coletor'       ? '' : 'none';
   document.getElementById('adm-aba-historico').style.display     = aba === 'historico'     ? '' : 'none';
   document.getElementById('adm-aba-agendamentos').style.display  = aba === 'agendamentos'  ? '' : 'none';
+  document.getElementById('adm-aba-sem-retorno').style.display   = aba === 'sem-retorno'   ? '' : 'none';
   if (aba === 'historico')    carregarLogColetas();
   if (aba === 'agendamentos') _admCarregarConfig();
+  if (aba === 'sem-retorno')  _admCarregarSr();
 }
 
 async function _admCarregarConfig() {
@@ -2421,6 +2517,35 @@ async function _admCarregarConfig() {
     document.getElementById('cfg-intervalo-fog').value    = cfg.intervalo_fog_min    ?? 15;
   } catch (e) {
     document.getElementById('cfg-feedback').textContent = 'Erro ao carregar configurações.';
+  }
+}
+
+async function _admCarregarSr() {
+  try {
+    const cfg = await _get('/api/admin/config');
+    document.getElementById('cfg-sr-af').value = cfg.dias_sr_af ?? 30;
+    document.getElementById('cfg-sr-ac').value = cfg.dias_sr_ac ?? 60;
+  } catch (e) {
+    document.getElementById('cfg-sr-feedback').textContent = 'Erro ao carregar configurações.';
+  }
+}
+
+async function _admSalvarSr() {
+  const srAf = parseInt(document.getElementById('cfg-sr-af').value, 10);
+  const srAc = parseInt(document.getElementById('cfg-sr-ac').value, 10);
+  const fb = document.getElementById('cfg-sr-feedback');
+  fb.textContent = 'Salvando…';
+  try {
+    const r = await fetch('/api/admin/config', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({dias_sr_af: srAf, dias_sr_ac: srAc}),
+    });
+    if (!r.ok) throw new Error();
+    fb.textContent = '✓ Salvo com sucesso.';
+    setTimeout(() => { fb.textContent = ''; }, 3000);
+  } catch (e) {
+    fb.textContent = 'Erro ao salvar.';
   }
 }
 
@@ -2552,7 +2677,9 @@ async function carregarLogColetas() {
     document.getElementById('tbody-log').innerHTML = logs.map(l => {
       const chipTipo = l.tipo === 'historica'
         ? `<span class="chip chip-hist">Histórica</span>`
-        : `<span class="chip chip-inc">Incremental</span>`;
+        : l.tipo === 'sem_retorno'
+          ? `<span class="chip" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);">Sem Retorno</span>`
+          : `<span class="chip chip-inc">Incremental</span>`;
       const chipStatus = l.status === 'concluida'
         ? `<span class="chip chip-ok">✓ Concluída</span>`
         : `<span class="chip chip-erro">✕ Erro</span>`;
@@ -2770,6 +2897,101 @@ document.addEventListener('click', e => {
     if (m) m.classList.remove('open');
   }
 });
+
+// ── SEM RETORNO — linha na tabela e modal ─────────────────────────────
+let _srThreads = [];
+
+function _renderSrRow(sr, totais) {
+  const tbody = document.getElementById('tbody-sr');
+  if (!sr || sr.total === 0) { tbody.innerHTML = ''; return; }
+  const tot = (totais && totais.total > 0) ? totais.total + sr.total : sr.total;
+  const pct = (sr.total / tot * 100).toFixed(1);
+  const af  = sr.af  ? `<span class="n-af">${sr.af}</span>`  : '<span class="n-zero">—</span>';
+  const ac  = sr.ac  ? `<span class="n-ac">${sr.ac}</span>`  : '<span class="n-zero">—</span>';
+  const vaf = _chipVar(sr.delta_af,  false);
+  const vac = _chipVar(sr.delta_ac,  false);
+  const vto = _chipVar(sr.delta_tot, false);
+  tbody.innerHTML = `<tr onclick="abrirSemRetorno()">
+    <td>SEM RETORNO</td>
+    <td class="num pct">${pct}%</td>
+    <td class="num">${af}</td>
+    <td class="num td-var">${vaf}</td>
+    <td class="num">${ac}</td>
+    <td class="num td-var">${vac}</td>
+    <td class="num"><span class="n-zero">—</span></td>
+    <td class="num td-var"><span class="n-zero">—</span></td>
+    <td class="num"><strong>${sr.total}</strong></td>
+    <td class="num td-var">${vto}</td>
+  </tr>`;
+}
+
+async function abrirSemRetorno() {
+  ['sr-af','sr-ac'].forEach(s => {
+    document.getElementById('tbody-sr-' + s).innerHTML =
+      '<tr><td colspan="5" class="vazio">Carregando…</td></tr>';
+    document.getElementById('sr-ct-' + s).textContent = '—';
+  });
+  document.getElementById('modal-sr-tabs').querySelector('.tab-btn').click();
+  abrirModal('modal-sr');
+  try {
+    const d = await _get('/api/threads/sem-retorno');
+    _srThreads = d.threads || [];
+    _renderThreadsSr();
+  } catch (e) {
+    ['sr-af','sr-ac'].forEach(s => {
+      document.getElementById('tbody-sr-' + s).innerHTML =
+        '<tr><td colspan="5" class="vazio">Erro ao carregar.</td></tr>';
+    });
+  }
+}
+
+function _renderThreadsSr() {
+  const q = (document.getElementById('busca-sr')?.value || '').toLowerCase().trim();
+  const grupos = {af: [], ac: []};
+  _srThreads.forEach(t => {
+    if (q && !((t.assunto || '').toLowerCase().includes(q))) return;
+    if      (t.status_workflow === 'Aguardando Finaud')   grupos.af.push(t);
+    else if (t.status_workflow === 'Aguardando Cliente')  grupos.ac.push(t);
+  });
+  ['af','ac'].forEach(s => {
+    const lista = grupos[s];
+    document.getElementById('sr-ct-' + s).textContent = lista.length;
+    document.getElementById('tbody-sr-' + s).innerHTML = lista.length
+      ? lista.map(t => {
+          const diasArq = t.inativa_desde
+            ? Math.floor((Date.now() - new Date(t.inativa_desde.replace(' ','T')).getTime()) / 86400000)
+            : 0;
+          const motivo = `<br><span style="font-size:0.75rem;color:#94a3b8;">Sem retorno há ${diasArq} dia(s) — aguarda retorno</span>`;
+          const de   = escHtml(t.remetente_ultima_msg || t.remetente_principal || '—');
+          const para = escHtml(t.destinatario_ultima_msg || '—');
+          const data = escHtml(_fmtData(t.inativa_desde));
+          return `<tr>
+            <td>${escHtml(t.assunto || '(sem assunto)')}${motivo}</td>
+            <td style="white-space:nowrap;font-size:0.84rem;">${de}</td>
+            <td style="white-space:nowrap;font-size:0.84rem;">${para}</td>
+            <td style="white-space:nowrap;font-size:0.84rem;">${data}</td>
+            <td class="num">${t.qtd_mensagens || 0}</td>
+          </tr>`;
+        }).join('')
+      : `<tr><td colspan="5" class="vazio">Nenhuma thread ${s === 'af' ? 'aguardando Finaud' : 'aguardando cliente'}.</td></tr>`;
+  });
+}
+
+function _fmtData(dtStr) {
+  if (!dtStr) return '—';
+  const d = new Date(dtStr.replace(' ', 'T'));
+  return isNaN(d) ? dtStr : d.toLocaleDateString('pt-BR');
+}
+
+function trocarAbaSr(btn) {
+  const tabId = btn.dataset.tab;
+  document.querySelectorAll('#modal-sr-tabs .tab-btn').forEach(b => b.classList.remove('ativo'));
+  btn.classList.add('ativo');
+  document.querySelectorAll('#modal-sr .tab-panel').forEach(p => p.classList.remove('ativo'));
+  document.getElementById('tab-panel-' + tabId)?.classList.add('ativo');
+}
+
+function filtrarThreadsSr() { _renderThreadsSr(); }
 
 // ── Ordenação da tabela principal ─────────────────────────────────────
 let _dadosResumo = null, mainSortKey = null, mainSortDir = -1;

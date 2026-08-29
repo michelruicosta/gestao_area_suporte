@@ -134,6 +134,7 @@ def criar_banco() -> None:
             'destinatario_ultima_msg TEXT',
             'reply_to_ultima_msg TEXT',
             'visto_em TEXT',
+            'inativa_desde TEXT',
         ]:
             try:
                 conn.execute(f'ALTER TABLE threads ADD COLUMN {col_def}')
@@ -744,13 +745,21 @@ def classificar_manual(thread_id: str, categoria: str) -> None:
 def recalcular_status_todos() -> int:
     """
     Recalcula status_workflow, motivo_status e destinatario_principal
-    para todas as threads do destino 'principal'.
-    Usado para backfill após migrações de schema.
+    para todas as threads ativas do destino 'principal'.
+    Threads com inativa_desde preenchido são reativadas automaticamente
+    se chegou nova mensagem após o arquivamento; as demais são ignoradas.
     Retorna o número de threads atualizadas.
     """
     with _conectar() as conn:
+        # Reativa threads cujo inativa_desde é anterior à última mensagem
+        conn.execute("""
+            UPDATE threads
+            SET inativa_desde = NULL
+            WHERE inativa_desde IS NOT NULL
+              AND data_ultima_msg > inativa_desde
+        """)
         rows = conn.execute(
-            "SELECT thread_id, mensagens_json FROM threads WHERE destino = 'principal'"
+            "SELECT thread_id, mensagens_json FROM threads WHERE destino = 'principal' AND inativa_desde IS NULL"
         ).fetchall()
     atualizadas = 0
     for row in rows:
@@ -785,6 +794,35 @@ def atualizar_status(thread_id: str, status_workflow: str) -> None:
         )
 
 
+def arquivar_threads_inativas(dias_af: int = 30, dias_ac: int = 60) -> dict:
+    """
+    Carimba inativa_desde nas threads sem resposta há mais dias que o limite.
+    - Threads em status 'Aguardando Finaud': arquiva após `dias_af` dias.
+    - Threads em status 'Aguardando Cliente': arquiva após `dias_ac` dias.
+    Threads já arquivadas (inativa_desde IS NOT NULL) são ignoradas.
+    Retorna {'af': N, 'ac': M} com a quantidade arquivada em cada grupo.
+    """
+    agora = _agora()
+    with _conectar() as conn:
+        af = conn.execute("""
+            UPDATE threads
+            SET    inativa_desde = ?
+            WHERE  destino = 'principal'
+              AND  inativa_desde IS NULL
+              AND  status_workflow = 'Aguardando Finaud'
+              AND  julianday('now') - julianday(data_ultima_msg) >= ?
+        """, (agora, dias_af)).rowcount
+        ac = conn.execute("""
+            UPDATE threads
+            SET    inativa_desde = ?
+            WHERE  destino = 'principal'
+              AND  inativa_desde IS NULL
+              AND  status_workflow = 'Aguardando Cliente'
+              AND  julianday('now') - julianday(data_ultima_msg) >= ?
+        """, (agora, dias_ac)).rowcount
+    return {'af': af, 'ac': ac}
+
+
 # ── Consultas ──────────────────────────────────────────────────────────────────
 
 def buscar_sem_classificar(apenas_nao_vistas: bool = False) -> list[dict]:
@@ -800,6 +838,8 @@ def buscar_sem_classificar(apenas_nao_vistas: bool = False) -> list[dict]:
 def buscar_por_destino(destino: str, apenas_nao_vistas: bool = False) -> list[dict]:
     """
     Retorna threads de um destino específico para as telas.
+    Threads arquivadas (inativa_desde IS NOT NULL) são excluídas — use
+    buscar_threads_sem_retorno() para acessá-las.
     Não inclui mensagens_json (pesado) — use buscar_thread_completa para detalhes.
     """
     filtro = " AND visto_em IS NULL" if apenas_nao_vistas else ""
@@ -811,9 +851,28 @@ def buscar_por_destino(destino: str, apenas_nao_vistas: bool = False) -> list[di
                    destino, categoria, status_workflow, motivo_status,
                    motivo_descarte, motivo_classificacao
             FROM   threads
-            WHERE  destino = ?{filtro}
+            WHERE  destino = ? AND inativa_desde IS NULL{filtro}
             ORDER  BY data_ultima_msg DESC
         """, (destino,)).fetchall()
+    return [dict(r) for r in rows]
+
+
+def buscar_threads_sem_retorno() -> list[dict]:
+    """
+    Retorna threads arquivadas (inativa_desde IS NOT NULL) para o modal SEM RETORNO.
+    Inclui inativa_desde para calcular há quantos dias está arquivada.
+    """
+    with _conectar() as conn:
+        rows = conn.execute("""
+            SELECT thread_id, assunto, qtd_mensagens, data_primeira_msg,
+                   data_ultima_msg, remetente_principal, destinatario_principal,
+                   remetente_ultima_msg, destinatario_ultima_msg, reply_to_ultima_msg,
+                   destino, categoria, status_workflow, motivo_status,
+                   motivo_descarte, motivo_classificacao, inativa_desde
+            FROM   threads
+            WHERE  destino = 'principal' AND inativa_desde IS NOT NULL
+            ORDER  BY inativa_desde DESC
+        """).fetchall()
     return [dict(r) for r in rows]
 
 
@@ -888,26 +947,57 @@ def marcar_vistas(grupo: str) -> None:
 # ── Snapshots de contadores por categoria ────────────────────────────────────
 
 def salvar_snapshot() -> None:
-    """Grava o estado atual dos contadores por categoria — chamado pelo coletor antes de cada rodada."""
-    threads = buscar_por_destino('principal')
+    """Grava o estado atual dos contadores por categoria — chamado pelo coletor antes de cada rodada.
+    Threads arquivadas (inativa_desde IS NOT NULL) são excluídas das contagens por categoria
+    e agrupadas separadamente sob a categoria SEM RETORNO."""
+    agora = _agora()
+    with _conectar() as conn:
+        rows_ativas = conn.execute("""
+            SELECT COALESCE(categoria, 'DESCONHECIDA') AS categoria,
+                   status_workflow, COUNT(*) AS cnt
+            FROM   threads
+            WHERE  destino = 'principal' AND inativa_desde IS NULL
+            GROUP  BY categoria, status_workflow
+        """).fetchall()
+        rows_sr = conn.execute("""
+            SELECT status_workflow, COUNT(*) AS cnt
+            FROM   threads
+            WHERE  destino = 'principal' AND inativa_desde IS NOT NULL
+            GROUP  BY status_workflow
+        """).fetchall()
+
     contagens: dict[str, dict] = {}
-    for t in threads:
-        cat    = t.get('categoria') or 'DESCONHECIDA'
-        status = t.get('status_workflow') or 'Aguardando Finaud'
+    for r in rows_ativas:
+        cat = r['categoria']
         if cat not in contagens:
             contagens[cat] = {'af': 0, 'ac': 0, 'co': 0}
-        if status == 'Aguardando Finaud':
-            contagens[cat]['af'] += 1
-        elif status == 'Aguardando Cliente':
-            contagens[cat]['ac'] += 1
-        elif status == 'Concluída':
-            contagens[cat]['co'] += 1
-    agora = _agora()
+        sw = r['status_workflow'] or ''
+        if sw == 'Aguardando Finaud':
+            contagens[cat]['af'] += r['cnt']
+        elif sw == 'Aguardando Cliente':
+            contagens[cat]['ac'] += r['cnt']
+        elif sw == 'Concluída':
+            contagens[cat]['co'] += r['cnt']
+
+    sr = {'af': 0, 'ac': 0}
+    for r in rows_sr:
+        sw = r['status_workflow'] or ''
+        if sw == 'Aguardando Finaud':
+            sr['af'] += r['cnt']
+        elif sw == 'Aguardando Cliente':
+            sr['ac'] += r['cnt']
+
+    snapshot_rows = [
+        (agora, cat, c['af'], c['ac'], c['co'], c['af'] + c['ac'] + c['co'])
+        for cat, c in contagens.items()
+    ]
+    if sr['af'] + sr['ac'] > 0:
+        snapshot_rows.append((agora, 'SEM RETORNO', sr['af'], sr['ac'], 0, sr['af'] + sr['ac']))
+
     with _conectar() as conn:
         conn.executemany(
             'INSERT INTO snapshots (data_hora, categoria, af, ac, co, total) VALUES (?,?,?,?,?,?)',
-            [(agora, cat, c['af'], c['ac'], c['co'], c['af'] + c['ac'] + c['co'])
-             for cat, c in contagens.items()],
+            snapshot_rows,
         )
 
 

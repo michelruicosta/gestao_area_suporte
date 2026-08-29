@@ -68,12 +68,20 @@ _ultimo_erro_coleta: str | None = None
 
 # ── Configurações persistentes ─────────────────────────────────────────────────
 
+_CONFIG_DEFAULTS: dict = {
+    'intervalo_coleta_min': 60,
+    'intervalo_fog_min': 15,
+    'dias_sr_af': 30,
+    'dias_sr_ac': 60,
+}
+
 def _ler_config() -> dict:
     try:
         with open(_CONFIG_PATH, encoding='utf-8') as f:
-            return json.load(f)
+            dados = json.load(f)
     except Exception:
-        return {'intervalo_coleta_min': 60, 'intervalo_fog_min': 15}
+        dados = {}
+    return {**_CONFIG_DEFAULTS, **dados}
 
 def _salvar_config(cfg: dict) -> None:
     with open(_CONFIG_PATH, 'w', encoding='utf-8') as f:
@@ -122,6 +130,37 @@ def _reagendar_coleta(intervalo_min: int) -> None:
             replace_existing=True,
             next_run_time=datetime.now(),
         )
+
+
+def _job_sem_retorno():
+    """Job diário (06h) que arquiva threads sem resposta conforme os limites configurados."""
+    cfg = _ler_config()
+    dias_af = int(cfg.get('dias_sr_af', 30))
+    dias_ac = int(cfg.get('dias_sr_ac', 60))
+    _log.info('Sem Retorno — iniciando arquivamento (AF=%d dias, AC=%d dias).', dias_af, dias_ac)
+    try:
+        contagens = bt.arquivar_threads_inativas(dias_af=dias_af, dias_ac=dias_ac)
+        total = contagens['af'] + contagens['ac']
+        mensagem = f"Arquivadas {total} thread(s): {contagens['af']} AF, {contagens['ac']} AC."
+        bt.registrar_coleta(
+            tipo='sem_retorno',
+            threads_proc=total,
+            erros=0,
+            duracao_seg=0,
+            status='concluida',
+            mensagem=mensagem,
+        )
+        _log.info('Sem Retorno — %s', mensagem)
+    except Exception as e:
+        bt.registrar_coleta(
+            tipo='sem_retorno',
+            threads_proc=0,
+            erros=1,
+            duracao_seg=0,
+            status='erro',
+            mensagem=str(e),
+        )
+        _log.exception('Sem Retorno — falhou: %s', e)
 
 
 class _Usuario:
@@ -530,11 +569,27 @@ def api_resumo():
             cat['delta_tot'] = None
 
     nv = bt.contar_nao_vistas()
+
+    sr_threads = bt.buscar_threads_sem_retorno()
+    sr_af = sum(1 for t in sr_threads if t.get('status_workflow') == 'Aguardando Finaud')
+    sr_ac = sum(1 for t in sr_threads if t.get('status_workflow') == 'Aguardando Cliente')
+    sr_total = sr_af + sr_ac
+    snapshot_sr = snapshot.get('SEM RETORNO')
+    sem_retorno = {
+        'af':        sr_af,
+        'ac':        sr_ac,
+        'total':     sr_total,
+        'delta_af':  (sr_af  - snapshot_sr['af'])    if snapshot_sr else None,
+        'delta_ac':  (sr_ac  - snapshot_sr['ac'])    if snapshot_sr else None,
+        'delta_tot': (sr_total - snapshot_sr['total']) if snapshot_sr else None,
+    }
+
     return jsonify({
-        'categorias': categorias,
-        'totais':     {'af': total_af, 'ac': total_ac, 'co': total_co, 'total': total},
-        'nao_class':  nv['nao_class'],
-        'bloqueados': nv['bloqueados'],
+        'categorias':   categorias,
+        'totais':       {'af': total_af, 'ac': total_ac, 'co': total_co, 'total': total},
+        'sem_retorno':  sem_retorno,
+        'nao_class':    nv['nao_class'],
+        'bloqueados':   nv['bloqueados'],
     })
 
 
@@ -719,6 +774,13 @@ def api_admin_status_coleta():
     return jsonify({'em_andamento': _coleta_em_andamento, 'ultimo_erro': _ultimo_erro_coleta})
 
 
+@app.route('/api/threads/sem-retorno')
+@_requer_login
+def api_threads_sem_retorno():
+    threads = bt.buscar_threads_sem_retorno()
+    return jsonify({'threads': threads})
+
+
 @app.route('/api/admin/log-coletas')
 @_requer_login
 def api_admin_log_coletas():
@@ -743,6 +805,10 @@ def api_admin_config_post():
         cfg['intervalo_coleta_min'] = max(0, int(dados['intervalo_coleta_min']))
     if 'intervalo_fog_min' in dados:
         cfg['intervalo_fog_min'] = max(1, int(dados['intervalo_fog_min']))
+    if 'dias_sr_af' in dados:
+        cfg['dias_sr_af'] = max(1, int(dados['dias_sr_af']))
+    if 'dias_sr_ac' in dados:
+        cfg['dias_sr_ac'] = max(1, int(dados['dias_sr_ac']))
     _salvar_config(cfg)
     _reagendar_coleta(cfg['intervalo_coleta_min'])
     visivel = {k: v for k, v in cfg.items() if k != 'senha_hash'}
@@ -942,6 +1008,14 @@ def api_fog_evolucao():
 bt.criar_banco()
 _cfg_inicial = _ler_config()
 _reagendar_coleta(_cfg_inicial.get('intervalo_coleta_min', 60))
+_scheduler.add_job(
+    _job_sem_retorno,
+    'cron',
+    hour=6,
+    minute=0,
+    id='sem_retorno_diario',
+    replace_existing=True,
+)
 if not _scheduler.running:
     _scheduler.start()
     _log.info(
