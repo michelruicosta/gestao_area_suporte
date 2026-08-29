@@ -751,12 +751,16 @@ def recalcular_status_todos() -> int:
     Retorna o número de threads atualizadas.
     """
     with _conectar() as conn:
-        # Reativa threads cujo inativa_desde é anterior à última mensagem
+        # Reativa threads cujo inativa_desde é anterior à última mensagem.
+        # data_ultima_msg é 'DD/MM/YYYY HH:MM'; inativa_desde é ISO — converte para comparar.
         conn.execute("""
             UPDATE threads
             SET inativa_desde = NULL
             WHERE inativa_desde IS NOT NULL
-              AND data_ultima_msg > inativa_desde
+              AND (
+                substr(data_ultima_msg,7,4)||'-'||substr(data_ultima_msg,4,2)||'-'
+                ||substr(data_ultima_msg,1,2)||' '||substr(data_ultima_msg,12,5)
+              ) > inativa_desde
         """)
         rows = conn.execute(
             "SELECT thread_id, mensagens_json FROM threads WHERE destino = 'principal' AND inativa_desde IS NULL"
@@ -801,24 +805,32 @@ def arquivar_threads_inativas(dias_af: int = 30, dias_ac: int = 60) -> dict:
     - Threads em status 'Aguardando Cliente': arquiva após `dias_ac` dias.
     Threads já arquivadas (inativa_desde IS NOT NULL) são ignoradas.
     Retorna {'af': N, 'ac': M} com a quantidade arquivada em cada grupo.
+
+    data_ultima_msg é armazenada em formato 'DD/MM/YYYY HH:MM'; a conversão
+    para ISO é feita via substr() para compatibilidade com julianday() do SQLite.
     """
+    # Converte 'DD/MM/YYYY HH:MM' → 'YYYY-MM-DD HH:MM' para julianday()
+    _iso = (
+        "substr(data_ultima_msg,7,4)||'-'||substr(data_ultima_msg,4,2)||'-'"
+        "||substr(data_ultima_msg,1,2)||' '||substr(data_ultima_msg,12,5)"
+    )
     agora = _agora()
     with _conectar() as conn:
-        af = conn.execute("""
+        af = conn.execute(f"""
             UPDATE threads
             SET    inativa_desde = ?
             WHERE  destino = 'principal'
               AND  inativa_desde IS NULL
               AND  status_workflow = 'Aguardando Finaud'
-              AND  julianday('now') - julianday(data_ultima_msg) >= ?
+              AND  julianday('now') - julianday({_iso}) >= ?
         """, (agora, dias_af)).rowcount
-        ac = conn.execute("""
+        ac = conn.execute(f"""
             UPDATE threads
             SET    inativa_desde = ?
             WHERE  destino = 'principal'
               AND  inativa_desde IS NULL
               AND  status_workflow = 'Aguardando Cliente'
-              AND  julianday('now') - julianday(data_ultima_msg) >= ?
+              AND  julianday('now') - julianday({_iso}) >= ?
         """, (agora, dias_ac)).rowcount
     return {'af': af, 'ac': ac}
 

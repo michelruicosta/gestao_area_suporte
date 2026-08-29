@@ -33,13 +33,26 @@ def banco_tmp(monkeypatch, tmp_path):
     return db
 
 
-def _agora_str() -> str:
+def _agora_iso() -> str:
+    """Formato ISO 'YYYY-MM-DD HH:MM:SS' — usado para inativa_desde (gravado por _agora())."""
     return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 
 def _data_passada(dias: int) -> str:
+    """Formato BR 'DD/MM/YYYY HH:MM' — mesmo formato de data_ultima_msg no banco real."""
+    d = datetime.datetime.now() - datetime.timedelta(days=dias)
+    return d.strftime('%d/%m/%Y %H:%M')
+
+
+def _data_passada_iso(dias: int) -> str:
+    """Formato ISO para inativa_desde passado."""
     d = datetime.datetime.now() - datetime.timedelta(days=dias)
     return d.strftime('%Y-%m-%d %H:%M:%S')
+
+
+def _agora_br() -> str:
+    """Formato BR para data_ultima_msg recente."""
+    return datetime.datetime.now().strftime('%d/%m/%Y %H:%M')
 
 
 def _inserir_thread(conn, thread_id: str, status: str, data_ultima_msg: str):
@@ -87,7 +100,7 @@ def test_arquivar_ja_arquivada_nao_duplica(banco_tmp):
     with bt._conectar() as conn:
         _inserir_thread(conn, 'th-ja-arq', 'Aguardando Finaud', _data_passada(40))
         conn.execute('UPDATE threads SET inativa_desde=? WHERE thread_id=?',
-                     (_data_passada(5), 'th-ja-arq'))
+                     (_data_passada_iso(5), 'th-ja-arq'))
     resultado = bt.arquivar_threads_inativas(dias_af=30, dias_ac=60)
     assert resultado['af'] == 0
 
@@ -96,8 +109,8 @@ def test_arquivar_ja_arquivada_nao_duplica(banco_tmp):
 
 def test_reativacao_nova_mensagem(banco_tmp):
     """Thread arquivada com data_ultima_msg posterior a inativa_desde é reativada."""
-    arq_em = _data_passada(5)
-    nova_msg = _agora_str()
+    arq_em = _data_passada_iso(5)  # ISO — inativa_desde, 5 dias atrás
+    nova_msg = _agora_br()         # BR — data_ultima_msg, agora (depois do arquivamento)
     with bt._conectar() as conn:
         _inserir_thread(conn, 'th-reativa', 'Aguardando Finaud', nova_msg)
         conn.execute('UPDATE threads SET inativa_desde=? WHERE thread_id=?',
@@ -111,8 +124,8 @@ def test_reativacao_nova_mensagem(banco_tmp):
 
 def test_sem_nova_mensagem_permanece_arquivada(banco_tmp):
     """Thread arquivada sem nova mensagem mantém inativa_desde."""
-    arq_em = _agora_str()
-    msg_antes = _data_passada(40)
+    arq_em = _agora_iso()       # ISO — arquivada agora
+    msg_antes = _data_passada(40)  # BR — última msg há 40 dias (anterior ao arquivamento)
     with bt._conectar() as conn:
         _inserir_thread(conn, 'th-sem-retorno', 'Aguardando Finaud', msg_antes)
         conn.execute('UPDATE threads SET inativa_desde=? WHERE thread_id=?',
@@ -132,7 +145,7 @@ def test_buscar_sem_retorno_retorna_so_arquivadas(banco_tmp):
         _inserir_thread(conn, 'th-ativa', 'Aguardando Finaud', _data_passada(5))
         _inserir_thread(conn, 'th-arq', 'Aguardando Cliente', _data_passada(70))
         conn.execute('UPDATE threads SET inativa_desde=? WHERE thread_id=?',
-                     (_agora_str(), 'th-arq'))
+                     (_agora_iso(), 'th-arq'))
     resultado = bt.buscar_threads_sem_retorno()
     ids = [r['thread_id'] for r in resultado]
     assert 'th-arq' in ids
@@ -147,7 +160,7 @@ def test_salvar_snapshot_exclui_arquivadas_das_categorias(banco_tmp):
         _inserir_thread(conn, 'th-normal', 'Aguardando Finaud', _data_passada(2))
         _inserir_thread(conn, 'th-arq2', 'Aguardando Cliente', _data_passada(70))
         conn.execute('UPDATE threads SET inativa_desde=? WHERE thread_id=?',
-                     (_agora_str(), 'th-arq2'))
+                     (_agora_iso(), 'th-arq2'))
     bt.salvar_snapshot()
     with bt._conectar() as conn:
         rows = conn.execute('SELECT categoria, af, ac FROM snapshots').fetchall()
@@ -163,7 +176,7 @@ def test_salvar_snapshot_cria_linha_sem_retorno(banco_tmp):
     with bt._conectar() as conn:
         _inserir_thread(conn, 'th-sr', 'Aguardando Finaud', _data_passada(40))
         conn.execute('UPDATE threads SET inativa_desde=? WHERE thread_id=?',
-                     (_agora_str(), 'th-sr'))
+                     (_agora_iso(), 'th-sr'))
     bt.salvar_snapshot()
     with bt._conectar() as conn:
         row = conn.execute("SELECT af, ac FROM snapshots WHERE categoria='SEM RETORNO'").fetchone()

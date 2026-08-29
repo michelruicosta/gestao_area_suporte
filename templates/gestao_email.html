@@ -266,10 +266,9 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .th-sort.sort-active { color: var(--marca) !important; }
 .si { font-size: 9px; margin-left: 2px; opacity: .7; }
 #tbl-resumo tbody td:first-child { text-transform: uppercase; color: var(--text); font-weight: 600; }
-#tbody-sr { border-top: 3px double var(--border); }
-#tbody-sr tr { cursor: pointer; }
-#tbody-sr tr:hover td { background: var(--hover, rgba(255,255,255,.04)); }
-#tbody-sr td:first-child { color: var(--muted) !important; letter-spacing:.05em; }
+#tfoot-resumo .tr-sr td { border-top: 3px double var(--border); cursor: pointer; }
+#tfoot-resumo .tr-sr:hover td { background: var(--hover, rgba(255,255,255,.04)); }
+#tfoot-resumo .tr-sr td:first-child { text-transform: uppercase; font-weight: 600; letter-spacing:.05em; }
 
 /* ─── Painel Evolução Histórica ─────────────────────────────────────── */
 .evo { background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
@@ -1154,7 +1153,6 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
           <tbody id="tbody-resumo">
             <tr><td colspan="10" class="vazio">Carregando…</td></tr>
           </tbody>
-          <tbody id="tbody-sr"></tbody>
           <tfoot id="tfoot-resumo"></tfoot>
         </table>
       </div>
@@ -2902,8 +2900,10 @@ document.addEventListener('click', e => {
 let _srThreads = [];
 
 function _renderSrRow(sr, totais) {
-  const tbody = document.getElementById('tbody-sr');
-  if (!sr || sr.total === 0) { tbody.innerHTML = ''; return; }
+  const tfoot = document.getElementById('tfoot-resumo');
+  const existing = document.getElementById('tr-sr');
+  if (existing) existing.remove();
+  if (!sr || sr.total === 0) return;
   const tot = (totais && totais.total > 0) ? totais.total + sr.total : sr.total;
   const pct = (sr.total / tot * 100).toFixed(1);
   const af  = sr.af  ? `<span class="n-af">${sr.af}</span>`  : '<span class="n-zero">—</span>';
@@ -2911,7 +2911,11 @@ function _renderSrRow(sr, totais) {
   const vaf = _chipVar(sr.delta_af,  false);
   const vac = _chipVar(sr.delta_ac,  false);
   const vto = _chipVar(sr.delta_tot, false);
-  tbody.innerHTML = `<tr onclick="abrirSemRetorno()">
+  const tr = document.createElement('tr');
+  tr.id = 'tr-sr';
+  tr.className = 'tr-sr';
+  tr.setAttribute('onclick', 'abrirSemRetorno()');
+  tr.innerHTML = `
     <td>SEM RETORNO</td>
     <td class="num pct">${pct}%</td>
     <td class="num">${af}</td>
@@ -2922,11 +2926,12 @@ function _renderSrRow(sr, totais) {
     <td class="num td-var"><span class="n-zero">—</span></td>
     <td class="num"><strong>${sr.total}</strong></td>
     <td class="num td-var">${vto}</td>
-  </tr>`;
+  `;
+  tfoot.appendChild(tr);
 }
 
 async function abrirSemRetorno() {
-  ['sr-af','sr-ac'].forEach(s => {
+  ['af','ac'].forEach(s => {
     document.getElementById('tbody-sr-' + s).innerHTML =
       '<tr><td colspan="5" class="vazio">Carregando…</td></tr>';
     document.getElementById('sr-ct-' + s).textContent = '—';

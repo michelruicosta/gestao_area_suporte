@@ -879,6 +879,20 @@ comparar com os 19 motivos do artefato.
 
 ---
 
+### 🟡 TELA DE MANUTENÇÃO — Validar unicidade de termos classificatórios (identificado 29/08/2026)
+
+**Requisito de design aprovado por Michel em 29/08/2026.**
+
+A tela de manutenção das regras de motivo precisa garantir que o mesmo termo classificatório não apareça em dois motivos diferentes — caso contrário, o sistema não consegue decidir para qual motivo direcionar a thread.
+
+**Regra:** ao salvar qualquer alteração (novo motivo, edição de termos, edição de razão ou qualquer campo que influencie a classificação), o sistema valida se algum termo já existe em outro motivo. Se encontrar duplicata, **bloqueia o salvamento** e mostra onde está o conflito.
+
+**Escopo:** a validação se aplica ao campo "Termos que acionaram o motivo" e a qualquer outro campo que impacte a lógica de classificação — não apenas a um campo isolado.
+
+**Quando fazer:** no desenvolvimento da tela de manutenção das regras (Passo 4 previsto). Não iniciar a tela sem este requisito mapeado — é bloqueador de integridade do sistema.
+
+---
+
 ### 🟡 TELA — Gerencial de busca por assunto (identificado 29/08/2026, futuro)
 
 Michel pesquisa um assunto e a tela traz todas as informações da thread (status, motivo,

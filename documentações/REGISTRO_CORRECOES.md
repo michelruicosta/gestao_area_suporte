@@ -2,6 +2,77 @@
 
 ---
 
+## 2026-08-29 — feat(sem-retorno): Arquivamento automático de threads inativas
+
+### (~sessão 29/08) — Feature completa: SEM RETORNO
+
+**🔎 Em miúdos:** Threads sem resposta por muitos dias agora aparecem numa linha separada
+"SEM RETORNO" na tabela de Classificação e Status, com modal próprio (abas Aguardando
+Finaud / Aguardando Cliente). O processo roda automaticamente todo dia às 06h.
+
+**Implementação:**
+
+- `scripts/banco_threads.py`:
+  - Migração: coluna `inativa_desde TEXT` na tabela threads
+  - `recalcular_status_todos()`: reativa threads arquivadas quando chega mensagem nova (limpa `inativa_desde`); ignora threads arquivadas no recálculo
+  - `arquivar_threads_inativas(dias_af, dias_ac)`: carimba `inativa_desde` nas threads estáticas
+  - `buscar_threads_sem_retorno()`: retorna threads com `inativa_desde IS NOT NULL`
+  - `salvar_snapshot()`: refatorado para usar SQL GROUP BY; exclui arquivadas das categorias; grava linha "SEM RETORNO" separada quando > 0
+  - `buscar_por_destino()`: agora filtra `inativa_desde IS NULL` — threads arquivadas não aparecem nas categorias normais
+
+- `scripts/servidor_telas.py`:
+  - `_ler_config()`: merge com defaults `dias_sr_af=30`, `dias_sr_ac=60`
+  - `_job_sem_retorno()`: job diário (cron 06h) que chama `arquivar_threads_inativas` e registra no log com `tipo='sem_retorno'`
+  - `/api/threads/sem-retorno`: endpoint para o modal
+  - `/api/admin/config` POST: aceita `dias_sr_af` e `dias_sr_ac`
+  - `api_resumo()`: inclui campo `sem_retorno` com AF, AC, total e deltas
+
+- `templates/gestao_email.html`:
+  - Linha SEM RETORNO na tabela (double border, clicável, abre modal)
+  - Modal com abas AF/AC (sem Concluída) e busca por assunto
+  - Admin: aba "Regras de Sem Retorno" com inputs de dias e botão Salvar
+  - Histórico: tipo `sem_retorno` renderizado com chip cinza neutro
+
+**Validação:** ✅ VALIDADO
+- 10 testes novos em `tests/test_sem_retorno.py` (arquivamento, reativação, snapshot)
+- 413 testes passando, zero regressões
+- Commit `b8f54e9`
+
+---
+
+## 2026-08-29 — fix(sem-retorno): 3 bugs de UI corrigidos após testes de Michel
+
+### (~sessão 29/08) — Linha SEM RETORNO: negrito, posição e clique
+
+**🔎 Em miúdos:** Após Michel testar a feature, três problemas visuais foram corrigidos: o texto
+"SEM RETORNO" não estava em negrito, a linha aparecia acima do Total (e não abaixo), e clicar
+nela não abria o modal.
+
+**Problema 1 — sem negrito:** A regra CSS `#tbody-sr td:first-child` tinha `color: var(--muted)`
+com `!important`, sobrescrevendo a regra global `font-weight: 600` sem redefini-la.
+
+**Problema 2 — posição errada:** O `<tbody id="tbody-sr">` estava declarado antes do
+`<tfoot id="tfoot-resumo">`. Em HTML5 os elementos renderizam na ordem do DOM, então SEM RETORNO
+aparecia ACIMA do Total — o contrário do pedido ("embaixo do grid de totais").
+
+**Problema 3 — clique não abre modal:** `abrirSemRetorno()` iterava `['sr-af','sr-ac']` e
+construía IDs como `tbody-sr-sr-af` (que não existem). Isso lançava `TypeError` antes de
+chegar em `abrirModal('modal-sr')`.
+
+**Correção:**
+- CSS: selectors migrados de `#tbody-sr ...` para `#tfoot-resumo .tr-sr ...` com `font-weight`
+  correto e sem `!important` de cor
+- HTML: `<tbody id="tbody-sr">` removido; `_renderSrRow` agora anexa `<tr class="tr-sr">` ao
+  final de `tfoot-resumo` (depois do Total), usando `tfoot.appendChild(tr)`
+- JS `abrirSemRetorno`: `['sr-af','sr-ac']` → `['af','ac']` (os sufixos corretos dos IDs)
+- Banco: 967 threads arquivadas pelo teste com 1 dia foram restauradas (`inativa_desde = NULL`)
+
+**Validação:** ✅ VALIDADO
+- 413 testes passando, zero regressões
+- Michel deve testar localmente na porta 8004 após reiniciar o servidor
+
+---
+
 ## 2026-08-29 — Fix filtro §4: `Aceita:` (feminino) não era descartado como aceite de convite
 
 ### (~sessão 29/08) — Assunto "Aceita: …" passava pelo filtro de automáticos
