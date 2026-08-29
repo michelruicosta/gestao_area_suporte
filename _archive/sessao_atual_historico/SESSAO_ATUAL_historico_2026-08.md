@@ -7,6 +7,48 @@
 
 ---
 
+## 📓 Diário da sessão (2026-08-27 — fim da tarde) — Organização dos chats + conserto do `/fechar`
+
+### O que foi feito
+
+**Frente única: organizar as conversas do projeto — e consertar o que mantinha isso vivo**
+
+Michel abriu o chat perguntando como organizar as conversas para não perder o que já foi falado
+e feito. Virou três frentes, e uma quarta apareceu no caminho.
+
+**1. Dois tipos de chat — regra nova no `CLAUDE.md` §2.5**
+Michel apontou o furo da primeira proposta: nem todo chat é sessão de trabalho, e uma resposta
+gera dúvidas novas. A regra ficou: **Michel não decide nada na abertura** — abre e pergunta;
+quem detecta que virou trabalho é o Gestor, com três frases de gatilho. O `/iniciar` funciona
+a qualquer momento do chat, não precisa ser a 1ª mensagem.
+
+**2. Grupos na barra lateral — feito por Michel no app**
+Quatro grupos, por assunto: ⚙️ CLAUDE CONFIGURAÇÕES · 📐 REGRAS DE NEGÓCIOS · 🔧 DESENVOLVIMENTO
+· 🔁 Rotinas. Os chats soltos foram distribuídos; "Sem grupo" deve ficar permanentemente vazio.
+
+**3. Índice de sessões — `SESSAO_ATUAL.md` 450 → 183 linhas**
+Tabela "🗂️ Sessões anteriores" no topo com todas as sessões, 3 diários completos abaixo.
+
+**4. O `/fechar` apontava para o projeto antigo**
+9 referências ao `oraculo_360_finaud`: dois `cd` para pasta inexistente, memórias erradas e 6
+documentos inexistentes. Dois blocos falhavam e eram pulados. Nada foi perdido — bordo e
+memórias sempre foram gravados nas pastas certas. O que nunca rodou: as 2 conferências
+automáticas (auditoria de documentação e links quebrados) — viraram pendência.
+
+### Estado atual
+
+**Produção:** sem alteração — nenhum código tocado.
+**GitHub:** `main` alinhada ao origin (`4ed3290`).
+
+### Próximo passo
+
+🔴 **Definir os motivos do grupo ❌ (caixa preta + Fix H + Fix R).**
+Depois: implementar os textos aprovados em `_determinar_status()` (`scripts/banco_threads.py`).
+
+Último /fechar: 2026-08-27 15:50 — memórias revisadas ✅
+
+---
+
 ## 📓 Diário da sessão (2026-08-27 — tarde) — Reorganização do CLAUDE.md
 
 ### O que foi feito

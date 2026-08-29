@@ -2,6 +2,43 @@
 
 ---
 
+## 2026-08-29 — Planejamento: planilha de motivos + investigação bug Outlook
+
+### ~23:00 — Aprovações de texto + bug descoberto (sem alteração de código)
+
+**🔎 Em miúdos:** definimos como a planilha de referência de motivos vai funcionar, aprovamos
+2 textos de motivo novos e descobrimos que o grupo “saudação” é causado por um bug no extrator
+de texto, não por e-mails genuinamente sem conteúdo.
+
+**Decisões de design — planilha Excel (2 abas):**
+- Aba REGRAS: Status · Motivo · Razão do motivo · Termos que acionaram o motivo · Criado em · Situação
+- Aba ALTERAÇÕES DE REGRAS: Quando · Motivo · Campo alterado · Antes · Depois
+- Regra: nunca apagar linha — só inativar (Situação = Inativa)
+- 8 cenários de alteração cobertos: criação, renomear, alterar razão, adicionar/remover termo,
+  alterar status, desativar, reativar
+- Legenda aprovada para tela futura: “Esta thread está [Status] com o motivo '[Motivo]' porque
+  [Razão do motivo] — o sistema identificou os termos '[Termos]', regra desde [Criado em].”
+
+**Textos de motivo aprovados por Michel:**
+- Fix R (cliente prometeu retornar): **”Cliente prometeu retornar com informações — aguarda retorno”**
+- Finaud sem linguagem de entrega (5x): **”Finaud enviou arquivo — aguarda retorno do cliente”**
+- Implementação pendente — não commitada ainda (aguarda correção do bug Outlook primeiro)
+
+**Bug descoberto — grupo “saudação” (16x):**
+- Causa real: Outlook inclui auto-cabeçalho no corpo (“De: [remetente] Enviada em: [data]...”)
+  antes do conteúdo real. `_extrair_texto_novo()` em `scripts/banco_threads.py` trata como
+  citação e descarta tudo — inclusive o conteúdo real que vem depois.
+- Thread confirmada: `19fb43f4ae7336cb` — corpo tinha “Segue planilha preenchida.” descartado
+- Correção pendente: só descartar bloco “De: ... Enviada em: ...” se houver conteúdo real ANTES
+- **Validação:** ⚠️ PENDENTE — bug identificado, correção ainda não implementada
+
+**PENDENCIAS.md atualizado:**
+- Adicionada seção “Legenda de classificação na tela de e-mails”
+- Adicionada regra de cabeçalho (ler o cabeçalho antes de escrever qualquer linha)
+- Adicionada seção completa de In-Reply-To/References para agrupamento de threads
+
+---
+
 ## 2026-08-28 — No PC, “Portal de apps” e Sair voltam à prévia local
 
 ### ~00:16 — Registrado no `/fechar` (já estava no código, ainda sem commit)

@@ -54,12 +54,12 @@ O campo **MOTIVO** exibido na tela de e-mails é hoje muito genérico em vários
 
 ### ❌ Motivos ainda pendentes de decisão
 
-| Motivo atual | Qtd | Problema |
+| Motivo atual | Qtd | Situação |
 |---|---|---|
 | "Cliente escreveu — aguarda resposta da Finaud" — restante | ~130x | **Investigar antes de nomear** — o sistema não identificou o padrão; entender o que são antes de definir o texto (próximo chat) |
-| "Fix R: cliente prometeu retornar..." | ~0x banco | Nome interno "Fix R" aparece no código; sem registros no banco hoje mas texto precisa mudar |
-| "Cliente enviou saudação — possível entrega de arquivo" | 15x | "possível" é ruim — sistema não pode ser incerto |
-| "Finaud enviou arquivo sem linguagem de entrega" | 5x | Jargão interno |
+| "Fix R: cliente prometeu retornar..." | ~0x banco | ✅ Texto aprovado: **"Cliente prometeu retornar com informações — aguarda retorno"** — aguarda implementação |
+| "Cliente enviou saudação — possível entrega de arquivo" | 16x | ⚠️ Bug Outlook encontrado: `_extrair_texto_novo()` descarta conteúdo real após auto-cabeçalho do Outlook. Corrigir primeiro, depois aprovar texto do que sobrar. Ver SESSAO_ATUAL.md → Passo 1 |
+| "Finaud enviou arquivo sem linguagem de entrega" | 5x | ✅ Texto aprovado: **"Finaud enviou arquivo — aguarda retorno do cliente"** — aguarda implementação |
 
 ---
 
