@@ -125,6 +125,30 @@ def test_menu_usuario_nao_tem_meu_perfil():
     assert '/sair' in html
 
 
+def test_codigo_nao_guarda_senha_nem_chave_de_fabrica():
+    """Se o .env faltar, não pode sobrar senha/chave conhecida no código."""
+    caminho = os.path.join(RAIZ, 'scripts', 'servidor_telas.py')
+    with open(caminho, encoding='utf-8') as f:
+        fonte = f.read()
+    assert 'finaud2026' not in fonte
+    assert 'oraculo360-gestao-secret' not in fonte
+    assert "os.environ.get('SECRET_KEY', " not in fonte
+    assert "os.environ.get('GESTAO_SENHA', " not in fonte
+
+
+def test_login_local_sem_senha_configurada_nao_entra(monkeypatch):
+    """Sem GESTAO_SENHA e sem hash, a tela de login local recusa qualquer senha."""
+    monkeypatch.setattr(st, '_ADMIN_SENHA', '')
+    monkeypatch.setattr(st, '_ler_config', lambda: {})
+    resp = app.test_client().post(
+        '/login',
+        data={'email': st._ADMIN_EMAIL, 'senha': 'qualquer-coisa'},
+        follow_redirects=False,
+    )
+    assert resp.status_code == 200
+    assert 'incorretos' in resp.get_data(as_text=True)
+
+
 def test_rota_perfil_volta_para_a_tela_principal():
     """Quem abrir /perfil (atalho antigo) cai na tela principal, não numa página quebrada."""
     client = app.test_client()

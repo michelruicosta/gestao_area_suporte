@@ -14,6 +14,10 @@ from email.header import decode_header as email_decode_header
 # Raiz do projeto (pasta que contém painel_oraculo.py, data/, scripts/, etc.)
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# Testes precisam de SECRET_KEY e senha local. Em produção não há valor de fábrica.
+os.environ.setdefault('SECRET_KEY', 'chave-somente-teste-pytest')
+os.environ.setdefault('GESTAO_SENHA', 'senha-somente-teste-pytest')
+
 
 def decode_mime_header(s: str) -> str:
     """Decodifica RFC 2047 (=?charset?Q?…?= / =?charset?B?…?=). Contrato do frontend."""

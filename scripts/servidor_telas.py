@@ -54,7 +54,19 @@ app = Flask(
     template_folder=os.path.join(_ROOT_DIR, 'templates'),
     static_folder=os.path.join(_ROOT_DIR, 'static'),
 )
-app.secret_key = os.environ.get('SECRET_KEY', 'oraculo360-gestao-secret')
+
+
+def _exigir_secret_key() -> str:
+    """Sem chave no .env o servidor não sobe — não há senha/segredo de fábrica."""
+    chave = (os.environ.get('SECRET_KEY') or '').strip()
+    if not chave:
+        raise RuntimeError(
+            'SECRET_KEY ausente. Defina no .env do servidor. Sem isso o Gestão não sobe.'
+        )
+    return chave
+
+
+app.secret_key = _exigir_secret_key()
 
 @app.after_request
 def sem_cache(response):
@@ -185,9 +197,9 @@ def _injetar_portal_url():
     return {'portal_url': _url_portal_destino()}
 
 
-# Credencial de acesso (variáveis de ambiente sobrescrevem o padrão)
+# Login do dia a dia = portal. GESTAO_SENHA só se estiver no .env — sem senha de fábrica.
 _ADMIN_EMAIL = os.environ.get('GESTAO_EMAIL', 'michel@finaud.com.br')
-_ADMIN_SENHA = os.environ.get('GESTAO_SENHA', 'finaud2026')
+_ADMIN_SENHA = (os.environ.get('GESTAO_SENHA') or '').strip()
 _PORTAL_URL = os.environ.get('PORTAL_URL', 'https://finaudapps.com.br').rstrip('/')
 _PORTAL_PREVIEW_LOCAL = 'http://127.0.0.1:8000/portal-preview/'
 _MENSAGEM_RECUPERAR = (
@@ -206,10 +218,14 @@ def _url_portal_destino() -> str:
 
 
 def _senha_confere(senha: str) -> bool:
-    """Confere a senha digitada com o hash gravado, ou com GESTAO_SENHA se ainda não houve recuperação."""
+    """Confere com o hash gravado, ou com GESTAO_SENHA do .env. Sem os dois, o login local falha."""
+    if not senha:
+        return False
     h = _ler_config().get('senha_hash')
     if h:
         return check_password_hash(h, senha)
+    if not _ADMIN_SENHA:
+        return False
     return senha == _ADMIN_SENHA
 
 

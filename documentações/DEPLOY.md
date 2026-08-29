@@ -30,16 +30,15 @@ Criar o arquivo `.env` no servidor copiando o bloco abaixo e preenchendo os valo
 
 SECRET_KEY=coloque-aqui-uma-string-longa-e-aleatoria
 GESTAO_EMAIL=michel@finaud.com.br
-GESTAO_SENHA=sua-senha-aqui
 FOGBUGZ_TOKEN=seu-token-do-fogbugz-aqui
 PORT=8004
 ```
 
 | Variável | Descrição | Obrigatória |
 |---|---|---|
-| `SECRET_KEY` | Chave secreta do Flask — qualquer texto longo e aleatório | Sim |
-| `GESTAO_EMAIL` | E-mail de login na tela web | Sim |
-| `GESTAO_SENHA` | Senha de login na tela web | Sim |
+| `SECRET_KEY` | Chave secreta do Flask — texto longo e aleatório. **Sem ela o servidor não sobe.** Não há valor de fábrica. | Sim |
+| `GESTAO_EMAIL` | E-mail aceito no login direto da tela (se alguém abrir o app sem passar pelo portal) | Sim |
+| `GESTAO_SENHA` | Só se quiser login direto nesta tela. O dia a dia é o portal. **Não** há senha de fábrica. | Não |
 | `FOGBUGZ_TOKEN` | Token da API do FogBugz — gerar em Configurações > API no FogBugz | Sim |
 | `PORT` | Porta onde o servidor sobe no PC (padrão: **8004**) | Não |
 
