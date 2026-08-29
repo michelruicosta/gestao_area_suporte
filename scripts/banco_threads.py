@@ -282,7 +282,11 @@ def _extrair_texto_novo(corpo: str) -> str:
         if stripped.startswith('>'):
             continue
         if _SEP_HISTORICO.match(stripped):
-            break
+            # Só para se já há conteúdo real antes — separador no início do corpo
+            # é cabeçalho automático do Outlook/Teams, não histórico citado.
+            if any(l.strip() for l in resultado):
+                break
+            continue
         resultado.append(linha)
     return '\n'.join(resultado).strip()
 

@@ -111,6 +111,28 @@ def test_extrair_corpo_vazio():
     assert bt._extrair_texto_novo('') == ''
 
 
+def test_extrair_nao_descarta_conteudo_apos_cabecalho_outlook():
+    # Outlook coloca "De: ..." no INÍCIO do corpo antes do texto real.
+    # A função não deve parar aí — deve pular o cabeçalho e retornar o texto.
+    corpo = (
+        '\n\nDe: Risco Externo <risco@trustee.com>\n'
+        'Enviada em: sexta-feira, 31 de julho de 2026 15:40\n'
+        'Para: suporte@finaud.com.br\n'
+        'Assunto: RES: DLO\n\n'
+        'Miguel, segue planilha preenchida.'
+    )
+    resultado = bt._extrair_texto_novo(corpo)
+    assert 'segue planilha preenchida' in resultado
+
+
+def test_extrair_separador_apos_conteudo_real_ainda_corta():
+    # Comportamento antigo preservado: "De:" após texto real = histórico citado, deve cortar.
+    corpo = 'Obrigado pela orientação.\n\nDe: Finaud <suporte@finaud.com.br>\nTexto antigo'
+    resultado = bt._extrair_texto_novo(corpo)
+    assert 'Obrigado' in resultado
+    assert 'Texto antigo' not in resultado
+
+
 # ── _determinar_status — lista vazia ─────────────────────────────────────────
 
 def test_status_sem_mensagens():
