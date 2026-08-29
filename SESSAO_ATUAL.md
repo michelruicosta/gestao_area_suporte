@@ -228,22 +228,43 @@ produção com motivos corretos ✅
 
 ### Estado atual
 
-**Produção:** bug Outlook corrigido — commit `bce6add` no ar.
-**GitHub:** `main` em `bce6add` (bug `_extrair_texto_novo()` + 2 testes novos — 400 passando).
-**Banco local:** 1.364 threads (restaurado + recalculado após correção).
-**Banco de produção:** 1.364 threads recalculadas via `recalcular_status_todos()`.
-**Artefato motivos:** 79% — 15 de 19 aprovados. Grupo saudação (16 threads): 3 mudaram de
-motivo após correção, 13 são genuinamente saudação.
+**Produção:** bug Outlook `bce6add` + bug `_so_cortesia()` (commit a fazer) — aguarda push/deploy.
+**GitHub:** `main` em `bce6add` (fix `_extrair_texto_novo()` + 2 testes — 400 passando).
+**Banco local:** 1.364 threads. Brazabank (RE: DRM 05.2026) saiu da saudação → caixa preta. Caroline (DLO_2061) movida para Concluída manualmente.
+**Banco de produção:** ainda em `bce6add` — pendente deploy + atualização da Caroline na VPS.
+**Artefato motivos:** investigação do grupo saudação concluída (ver análise abaixo). Motivos a fechar: Paulo Henrique 9x, Trustee B[14], Aceite convite C, Caroline D.
+
+**Análise do grupo saudação (15 threads) — feita nesta sessão:**
+
+| Sub-grupo | Threads | Status | Situação |
+|---|---|---|---|
+| Paulo Henrique CADOC/DDR (A) | 9 | Aguardando Finaud ✅ | Corpo genuinamente só "Bom dia!" — CADOC vai como anexo. Aguarda texto do motivo |
+| Eduardo B[02] | 1 | Aguardando Finaud ⚠️ | 1ª msg tem entrega real; sistema lê última (só @menção). Aguarda Fix R + análise |
+| Monica/Ivan B[13] | 1 | Aguardando Finaud ❌ | "Já irei enviar" → deveria ser Aguardando Cliente. Aguarda Fix R |
+| Trustee B[14] | 1 | Aguardando Finaud ✅ | Última msg é @menção sem conteúdo. Aguarda texto do motivo |
+| Aceite convite C | 1 | Aguardando Finaud ⚠️ | Só 1 caso no banco. Aguarda decisão sobre regra específica |
+| Caroline D | 1 | → **Concluída** ✅ | Movida manualmente — DLO entregue por Flávio, Caroline só acusou recebimento |
+| Brazabank E | 1 | Aguardando Finaud ✅ | Bug `_so_cortesia()` corrigido — saiu da saudação; aguarda "enviado" nos termos de entrega |
+
+**Caso Brazabank para não perder:** "Enviado o DDR de 29/05 ajustado e DRM referente a 05/2026"
+não é detectado como entrega — cai na caixa preta. Quando "enviado" for adicionado como termo de
+entrega (PENDENCIAS.md §Implementação item 2), será classificado como "Cliente enviou informações
+e extratos" automaticamente.
 
 ### Próximo passo
 
-🔴 **Passo 1 — Fechar o artefato de motivos**
+🔴 **Passo 1 — Push + deploy do fix `_so_cortesia()` + atualizar Caroline na VPS**
 
-O bug Outlook foi corrigido. O grupo "saudação" tem 16 threads: 3 mudaram de motivo após a
-correção (tinham conteúdo real descartado pelo sistema), 13 são genuinamente saudação.
-Verificar o que ficou no grupo, propor e aprovar o texto final do motivo.
+Commit local pronto (fix + 2 testes + documentos). Aguarda push e deploy.
+Após deploy: atualizar Caroline no banco de produção (UPDATE direto via SSH).
+Artefato motivos: https://claude.ai/code/artifact/30448858-e3b1-4a40-a64d-4b989b0b7029
 
-Artefato: https://claude.ai/code/artifact/30448858-e3b1-4a40-a64d-4b989b0b7029
+---
+
+🟡 **Passo 1b — Fechar o artefato de motivos (motivos a aprovar)**
+
+Grupo saudação analisado — ainda falta aprovar texto para: Paulo Henrique (9x), Trustee B[14],
+aceite de convite C. Depois de aprovar os textos → verificar cobertura no banco → montar Excel.
 
 ---
 

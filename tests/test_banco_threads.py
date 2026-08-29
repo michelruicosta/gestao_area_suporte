@@ -242,6 +242,56 @@ def test_status_bom_dia_att_aguarda_finaud():
     assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status} | {motivo}'
 
 
+def test_status_entrega_apos_4_linhas_em_branco_com_sign_off():
+    """§8.8c fix: cumprimento + 4 linhas em branco + texto de entrega + sign-off → não é saudação.
+    Caso real Brazabank (RE: DRM 05.2026, 03/07/2026): _so_cortesia() cortava em 4 linhas em
+    branco e descartava 'Enviado o DDR de 29/05 ajustado e DRM referente a 05/2026'.
+    Fix: fallback das 4 linhas só se aplica quando não há sign-off explícito.
+    """
+    corpo = (
+        'Prezados, boa tarde!\n'
+        '\n'
+        '\n'
+        '\n'
+        'Enviado o DDR de 29/05 ajustado e DRM referente a 05/2026 de substituição:\n'
+        '\n'
+        '[cid:38f6c55a-19af-43a4-863b-5049d5e54c38]\n'
+        '\n'
+        ' ATT\n'
+        '\n'
+        'Talitha Gonzalez\n'
+        'Analista SR Risk\n'
+    )
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, motivo = bt._determinar_status(msgs)
+    assert 'saudação' not in motivo.lower(), (
+        f'Esperado motivo sem "saudação" (entrega real no corpo), got: {status} | {motivo}'
+    )
+
+
+def test_status_cumprimento_4_linhas_sem_sign_off_e_apenas_assinatura():
+    """§8.8c: fallback das 4 linhas ainda funciona quando não há sign-off explícito.
+    Garante que o fix não quebra o caso original: cumprimento + 4+ linhas em branco
+    + bloco de assinatura sem 'Att'/'Atenciosamente' → ainda classifica como saudação.
+    """
+    corpo = (
+        'Prezados, boa tarde!\n'
+        '\n'
+        '\n'
+        '\n'
+        'Paulo Henrique\n'
+        'Planner SCD – Financeiro/SPB\n'
+        'Avenida Brigadeiro Faria Lima, 3.900\n'
+        'Telefone: (11) 2172-2504\n'
+    )
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, motivo = bt._determinar_status(msgs)
+    assert 'saudação' in motivo.lower(), (
+        f'Esperado motivo com "saudação" (sem sign-off, só assinatura após 4 linhas), '
+        f'got: {status} | {motivo}'
+    )
+
+
 def test_status_texto_vazio_cliente_aguarda_finaud():
     """§8.8c: texto completamente vazio de cliente → Aguardando Finaud (só anexo enviado)."""
     msgs = [_msg(CLIENTE, corpo='')]

@@ -313,10 +313,14 @@ def _so_cortesia(texto: str) -> bool:
     texto = texto.replace('​', '')
     # Trunca a partir do sign-off ("Atenciosamente", "Att", etc.): tudo após é assinatura
     m = _SIGN_OFF_RE.search(texto)
+    sign_off_encontrado = m is not None
     if m:
         texto = texto[:m.start()]
-    # Fallback: bloco de 4+ linhas em branco seguidas = assinatura sem sign-off explícito
-    texto = re.sub(r'(\r?\n){4,}[\s\S]*', '', texto)
+    # Fallback: bloco de 4+ linhas em branco seguidas = assinatura sem sign-off explícito.
+    # Só aplica quando não há sign-off explícito — se há, o texto já foi cortado no
+    # ponto certo e o fallback poderia remover conteúdo real antes do sign-off.
+    if not sign_off_encontrado:
+        texto = re.sub(r'(\r?\n){4,}[\s\S]*', '', texto)
     # Remove URLs residuais (podem conter '?' que não indica pergunta real)
     texto = re.sub(r'https?://\S+', '', texto)
     texto = re.sub(r'\[https?://[^\]]*\]', '', texto)

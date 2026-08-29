@@ -2,6 +2,48 @@
 
 ---
 
+## 2026-08-29 — Fix `_so_cortesia()`: fallback 4-linhas + Caroline movida para Concluída
+
+### (sessão pós-23:30) — Bug das 4 linhas em branco descartava conteúdo real antes do sign-off
+
+**🔎 Em miúdos:** e-mails com cumprimento + 4 ou mais linhas em branco + texto de entrega + sign-off
+eram classificados como saudação — o texto real era descartado. Caso real: Brazabank (RE: DRM 05.2026)
+"Enviado o DDR de 29/05 ajustado e DRM referente a 05/2026 de substituição" sumia do sistema.
+
+**Problema:** `_so_cortesia()` em `scripts/banco_threads.py` aplicava a regra de fallback
+"4+ linhas em branco = início da assinatura" mesmo após o sign-off (`Att`, `ATT`, `Atenciosamente`)
+já ter cortado o texto no ponto certo. As 4 linhas entre o cumprimento e o conteúdo real faziam
+o fallback remover tudo — inclusive a entrega.
+
+**Correção:** variável `sign_off_encontrado` rastreia se o sign-off foi achado. O fallback das
+4 linhas só se aplica quando `not sign_off_encontrado`. 3 linhas alteradas em `_so_cortesia()`.
+
+**Validação:** ✅ VALIDADO
+- Diff antes/depois: 1 thread mudou (Brazabank RE: DRM 05.2026 — de "saudação" para caixa preta)
+- 2 testes novos: padrão Brazabank (sai da saudação ✅) + fallback sem sign-off (continua ativo ✅)
+- 402 testes passando, zero regressões
+- `recalcular_status_todos()` local: 1.364 threads, exatamente 1 mudou (esperado)
+- ⚠️ Brazabank ainda cai na caixa preta — pendente expansão do termo "enviado" (PENDENCIAS.md §Implementação item 2)
+
+### (sessão pós-23:30) — Thread Caroline DLO_2061 movida manualmente para Concluída
+
+**🔎 Em miúdos:** thread da Caroline (Global Exchange, `1a01b7bb8a4e4c5c`) marcada como Concluída.
+Flávio entregou os relatórios DLO; Caroline respondeu com "Prezados, boa tarde!" — a tarefa estava encerrada.
+
+**Motivo mantido como está** ("Cliente enviou saudação — possível entrega de arquivo"): será atualizado
+na verificação da planilha de motivos (próximos passos).
+
+**Atenção:** `recalcular_status_todos()` manual reverteria para "Aguardando Finaud" — a mensagem
+da Caroline é genuinamente uma saudação e o sistema não tem contexto da entrega anterior. Correção
+definitiva virá com a feature In-Reply-To (agrupamento de threads).
+
+**Correção:** `UPDATE threads SET status_workflow = 'Concluída' WHERE thread_id = '1a01b7bb8a4e4c5c'` — local.
+Deploy + aplicação no banco de produção: a fazer no próximo push/deploy.
+
+**Validação:** ⚠️ VALIDAÇÃO PENDENTE — verificar na tela de produção após deploy.
+
+---
+
 ## 2026-08-29 — Correção do bug Outlook em `_extrair_texto_novo()`
 
 ### ~23:30 — Bug de extração de texto: cabeçalho Outlook/Teams descartava conteúdo real

@@ -126,7 +126,8 @@ Os ~130 e-mails que sobram da caixa preta (nenhum padrão de entrega nem pergunt
 ### Implementação — quando todos os motivos estiverem aprovados
 
 1. Alterar `_determinar_status()` em `scripts/banco_threads.py` com os novos textos
-2. Expandir detecção de entrega: incluir "Seguem" em qualquer posição + "Anexo" como palavra solta
+2. Expandir detecção de entrega: incluir "Seguem" em qualquer posição + "Anexo" como palavra solta + "Enviado" no passado
+   - Caso real confirmado (29/08/2026): Brazabank (RE: DRM 05.2026) — corpo "Enviado o DDR de 29/05 ajustado e DRM referente a 05/2026 de substituição" não é detectado como entrega. Após o fix do `_so_cortesia()` este thread saiu da saudação mas caiu na caixa preta ("Cliente escreveu — aguarda resposta da Finaud"). Quando "enviado" for adicionado como termo de entrega, será classificado como "Cliente enviou informações e extratos — aguarda processamento".
 3. Rodar `pytest tests/ -q` — zero regressões
 4. Recalcular todos os registros com `recalcular_status_todos()`
 5. Testar na tela de e-mails
