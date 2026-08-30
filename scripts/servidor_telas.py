@@ -780,7 +780,32 @@ def api_admin_status_coleta():
 @_requer_login
 def api_threads_sem_retorno():
     threads = bt.buscar_threads_sem_retorno()
-    return jsonify({'threads': threads})
+    resultado = [
+        {
+            'thread_id':     t['thread_id'],
+            'assunto':       t.get('assunto') or '(sem assunto)',
+            'de':  _extrair_email(
+                       t.get('reply_to_ultima_msg') or ''
+                       if _eh_suporte(t.get('remetente_ultima_msg') or '')
+                          and (t.get('reply_to_ultima_msg') or '')
+                       else t.get('remetente_ultima_msg') or ''
+                   ),
+            'para': (
+                _primeiro_finaud_ou_primeiro(t.get('destinatario_ultima_msg') or '')
+                if (not _eh_finaud_addr(t.get('remetente_ultima_msg') or ''))
+                   or (_eh_suporte(t.get('remetente_ultima_msg') or '')
+                       and (t.get('reply_to_ultima_msg') or '')
+                       and not _eh_finaud_addr(t.get('reply_to_ultima_msg') or ''))
+                else _extrair_email(t.get('destinatario_ultima_msg') or '')
+            ),
+            'data':          _formatar_data(t.get('data_ultima_msg')),
+            'qtd_mensagens': t.get('qtd_mensagens', 0),
+            'status_workflow': t.get('status_workflow') or 'Aguardando Finaud',
+            'inativa_desde': t.get('inativa_desde'),
+        }
+        for t in threads
+    ]
+    return jsonify({'threads': resultado})
 
 
 @app.route('/api/admin/log-coletas')

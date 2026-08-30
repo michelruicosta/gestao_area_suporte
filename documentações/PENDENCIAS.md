@@ -172,6 +172,15 @@ Tela de configuração/gerenciamento onde Michel (e a IA) possam:
 
 **Quando fazer:** próxima fase após definição completa dos motivos nesta sessão.
 
+### Decisões de design já tomadas (29/08/2026) — registrar antes de implementar
+
+| Decisão | Detalhe |
+|---|---|
+| **Recalcular tudo ao salvar uma regra** | Quando Michel edita uma regra (adiciona/remove termo, renomeia motivo, inativa), o sistema recalcula todas as threads do banco com as novas regras — não só as novas. Motivo: sem recálculo, a mudança não aparece no que já está no sistema. |
+| **Sem termos duplicados** | O mesmo termo não pode existir em dois motivos diferentes — a tela bloqueia o salvamento e mostra onde está o conflito. Já registrado na seção "TELA DE MANUTENÇÃO — Validar unicidade". |
+| **Razão = tradução humana da lógica técnica** | O campo "Razão" é a explicação em linguagem de negócio do que o código faz tecnicamente para classificar aquele motivo. Quem lê a tela entende sem precisar conhecer o código. |
+| **Edição fica na tela de manutenção, não na thread** | Ao ver uma thread, Michel vê o status, motivo, razão e os termos encontrados naquele e-mail (evidências). Se discordar, vai à tela de manutenção para ajustar a regra — não edita diretamente na thread. |
+
 ---
 
 ## TELAS — Tela de notificações no app (identificado em 27/08/2026)

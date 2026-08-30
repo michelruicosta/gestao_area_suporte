@@ -266,9 +266,8 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .th-sort.sort-active { color: var(--marca) !important; }
 .si { font-size: 9px; margin-left: 2px; opacity: .7; }
 #tbl-resumo tbody td:first-child { text-transform: uppercase; color: var(--text); font-weight: 600; }
-#tfoot-resumo .tr-sr td { border-top: 3px double var(--border); cursor: pointer; }
-#tfoot-resumo .tr-sr:hover td { background: var(--hover, rgba(255,255,255,.04)); }
-#tfoot-resumo .tr-sr td:first-child { text-transform: uppercase; font-weight: 600; letter-spacing:.05em; }
+#tbody-resumo .tr-sr td { cursor: pointer; }
+#tbody-resumo .tr-sr:hover td { background: var(--hover, rgba(255,255,255,.04)); }
 
 /* ─── Painel Evolução Histórica ─────────────────────────────────────── */
 .evo { background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
@@ -591,6 +590,11 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
 
 /* Tabela do modal de categoria — scroll em ambos os eixos sempre visível */
 #modal-cat .tabela { min-width: 900px; }
+#modal-sr.modal { max-height: 85vh; display: flex; flex-direction: column; }
+#modal-sr .modal-body { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+#modal-sr .tab-panel.ativo { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+#modal-sr .tab-panel.ativo .tabela-wrap { flex: 1; overflow: auto; border-radius: 10px; }
+.sr-sub { font-size: 0.75rem; color: #94a3b8; }
 #modal-cat .modal-body { display: flex; flex-direction: column; }
 #modal-cat .tab-panel.ativo { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 #modal-cat .tab-panel.ativo .tabela-wrap { flex: 1; overflow: auto; border-radius: 10px; }
@@ -2043,7 +2047,7 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
       <input class="busca-input" id="busca-sr" type="search"
              placeholder="🔍  Filtrar por assunto…" oninput="filtrarThreadsSr()">
     </div>
-    <div class="modal-body" style="padding:0.75rem 1.25rem; overflow-x: auto;">
+    <div class="modal-body">
       <div class="tab-panel ativo" id="tab-panel-sr-af">
         <div class="tabela-wrap">
           <table class="tabela">
@@ -2259,7 +2263,6 @@ async function carregarResumo() {
     // Tabela
     _dadosResumo = {categorias: d.categorias, totais: d.totais};
     renderResumo();
-    _renderSrRow(d.sem_retorno, d.totais);
 
     // Rodapé — linha de totais + linha de legenda
     const t = d.totais;
@@ -2286,6 +2289,7 @@ async function carregarResumo() {
         <td class="num">${t.total}</td>
         <td class="num td-var">${_chipVar(dtotT, false)}</td>
       </tr>`;
+    _renderSrRow(d.sem_retorno, d.totais);
 
     document.getElementById('refresh-info').textContent =
       `Atualizado às ${now}`;
@@ -2898,9 +2902,11 @@ document.addEventListener('click', e => {
 
 // ── SEM RETORNO — linha na tabela e modal ─────────────────────────────
 let _srThreads = [];
+let _srData = null; // guarda dados para reuso ao re-renderizar (sort)
 
 function _renderSrRow(sr, totais) {
-  const tfoot = document.getElementById('tfoot-resumo');
+  _srData = (sr && sr.total > 0) ? {sr, totais} : null;
+  const tbody = document.getElementById('tbody-resumo');
   const existing = document.getElementById('tr-sr');
   if (existing) existing.remove();
   if (!sr || sr.total === 0) return;
@@ -2927,7 +2933,7 @@ function _renderSrRow(sr, totais) {
     <td class="num"><strong>${sr.total}</strong></td>
     <td class="num td-var">${vto}</td>
   `;
-  tfoot.appendChild(tr);
+  tbody.appendChild(tr);
 }
 
 async function abrirSemRetorno() {
@@ -2966,15 +2972,16 @@ function _renderThreadsSr() {
           const diasArq = t.inativa_desde
             ? Math.floor((Date.now() - new Date(t.inativa_desde.replace(' ','T')).getTime()) / 86400000)
             : 0;
-          const motivo = `<br><span style="font-size:0.75rem;color:#94a3b8;">Sem retorno há ${diasArq} dia(s) — aguarda retorno</span>`;
-          const de   = escHtml(t.remetente_ultima_msg || t.remetente_principal || '—');
-          const para = escHtml(t.destinatario_ultima_msg || '—');
-          const data = escHtml(_fmtData(t.inativa_desde));
+          const assunto = escHtml(t.assunto || '(sem assunto)');
+          const de   = escHtml(t.de || '—');
+          const para = escHtml(t.para || '—');
+          const data = escHtml(t.data || '—');
+          const sub  = `<br><span style="font-size:0.75rem;color:#94a3b8;">Sem retorno há ${diasArq} dia(s)</span>`;
           return `<tr>
-            <td>${escHtml(t.assunto || '(sem assunto)')}${motivo}</td>
-            <td style="white-space:nowrap;font-size:0.84rem;">${de}</td>
-            <td style="white-space:nowrap;font-size:0.84rem;">${para}</td>
-            <td style="white-space:nowrap;font-size:0.84rem;">${data}</td>
+            <td>${assunto}${sub}</td>
+            <td style="white-space:nowrap;">${de}</td>
+            <td style="white-space:nowrap;">${para}</td>
+            <td style="white-space:nowrap;">${data}</td>
             <td class="num">${t.qtd_mensagens || 0}</td>
           </tr>`;
         }).join('')
@@ -3064,6 +3071,8 @@ function renderResumo() {
     const si = th.querySelector('.si');
     if (si) si.textContent = th.dataset.s === mainSortKey ? (mainSortDir === 1 ? ' ▲' : ' ▼') : '';
   });
+  // Re-insere SR no final do tbody (foi apagado pelo innerHTML acima)
+  if (_srData) _renderSrRow(_srData.sr, _srData.totais);
 }
 
 function mainSort(key) {
