@@ -6,6 +6,7 @@ O que faz: roda o pipeline completo do Gestão Área Suporte em sequência:
 Rodar uma vez:  python scripts/executar_pipeline.py
 Relógio (à parte da tela): python scripts/executar_pipeline.py --agendar
 """
+from __future__ import annotations
 
 import json
 import os
