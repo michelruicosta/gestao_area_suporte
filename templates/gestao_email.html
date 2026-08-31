@@ -2051,7 +2051,7 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
       <div class="tab-panel ativo" id="tab-panel-sr-af">
         <div class="tabela-wrap">
           <table class="tabela">
-            <thead><tr><th>Assunto</th><th>De</th><th>Para</th><th>Arquivado em</th><th class="num">Msgs</th></tr></thead>
+            <thead><tr><th>Assunto</th><th>De</th><th>Para</th><th>Última msg</th><th class="num">Msgs</th></tr></thead>
             <tbody id="tbody-sr-af"><tr><td colspan="5" class="vazio">Carregando…</td></tr></tbody>
           </table>
         </div>
@@ -2059,7 +2059,7 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
       <div class="tab-panel" id="tab-panel-sr-ac">
         <div class="tabela-wrap">
           <table class="tabela">
-            <thead><tr><th>Assunto</th><th>De</th><th>Para</th><th>Arquivado em</th><th class="num">Msgs</th></tr></thead>
+            <thead><tr><th>Assunto</th><th>De</th><th>Para</th><th>Última msg</th><th class="num">Msgs</th></tr></thead>
             <tbody id="tbody-sr-ac"><tr><td colspan="5" class="vazio">Carregando…</td></tr></tbody>
           </table>
         </div>
@@ -2260,16 +2260,19 @@ async function carregarResumo() {
     document.querySelectorAll('.tab-badge-nao-class').forEach(el => { el.textContent = _naoClass; el.hidden = _naoClass === 0; });
     document.querySelectorAll('.tab-badge-bloqueados').forEach(el => { el.textContent = _bloq; el.hidden = _bloq === 0; });
 
-    // Tabela
-    _dadosResumo = {categorias: d.categorias, totais: d.totais};
+    // Tabela — passa o grand total (ativo + SR) para % consistentes
+    const sr = d.sem_retorno || {af:0, ac:0, total:0};
+    _dadosResumo = {categorias: d.categorias, totais: d.totais, srTotal: sr.total};
     renderResumo();
 
-    // Rodapé — linha de totais + linha de legenda
+    // Rodapé — Total inclui SEM RETORNO para que seja sempre o maior número
     const t = d.totais;
-    const afT = t.af ? `<span class="n-af">${t.af}</span>` : '<span class="n-zero">—</span>';
-    const acT = t.ac ? `<span class="n-ac">${t.ac}</span>` : '<span class="n-zero">—</span>';
-    const coT = t.co ? `<span class="n-co">${t.co}</span>` : '<span class="n-zero">—</span>';
-    // Deltas totais: soma das categorias (penúltimo snapshot vs. estado atual)
+    const grandAf  = t.af  + (sr.af  || 0);
+    const grandAc  = t.ac  + (sr.ac  || 0);
+    const grandTot = t.total + (sr.total || 0);
+    const afT  = grandAf  ? `<span class="n-af">${grandAf}</span>`  : '<span class="n-zero">—</span>';
+    const acT  = grandAc  ? `<span class="n-ac">${grandAc}</span>`  : '<span class="n-zero">—</span>';
+    const coT  = t.co     ? `<span class="n-co">${t.co}</span>`     : '<span class="n-zero">—</span>';
     const cats = d.categorias;
     const hasDelta = cats.some(c => c.delta_af != null);
     const dafT  = hasDelta ? cats.reduce((s, c) => s + (c.delta_af  || 0), 0) : null;
@@ -2286,10 +2289,10 @@ async function carregarResumo() {
         <td class="num td-var">${_chipVar(dacT, false)}</td>
         <td class="num">${coT}</td>
         <td class="num td-var">${_chipVar(dcoT, true)}</td>
-        <td class="num">${t.total}</td>
+        <td class="num">${grandTot}</td>
         <td class="num td-var">${_chipVar(dtotT, false)}</td>
       </tr>`;
-    _renderSrRow(d.sem_retorno, d.totais);
+    _renderSrRow(sr, d.totais);
 
     document.getElementById('refresh-info').textContent =
       `Atualizado às ${now}`;
@@ -2910,8 +2913,8 @@ function _renderSrRow(sr, totais) {
   const existing = document.getElementById('tr-sr');
   if (existing) existing.remove();
   if (!sr || sr.total === 0) return;
-  const tot = (totais && totais.total > 0) ? totais.total + sr.total : sr.total;
-  const pct = (sr.total / tot * 100).toFixed(1);
+  const grandTot = (totais && totais.total > 0) ? totais.total + sr.total : sr.total;
+  const pct = (sr.total / grandTot * 100).toFixed(1);
   const af  = sr.af  ? `<span class="n-af">${sr.af}</span>`  : '<span class="n-zero">—</span>';
   const ac  = sr.ac  ? `<span class="n-ac">${sr.ac}</span>`  : '<span class="n-zero">—</span>';
   const vaf = _chipVar(sr.delta_af,  false);
@@ -2969,15 +2972,20 @@ function _renderThreadsSr() {
     document.getElementById('sr-ct-' + s).textContent = lista.length;
     document.getElementById('tbody-sr-' + s).innerHTML = lista.length
       ? lista.map(t => {
-          const diasArq = t.inativa_desde
-            ? Math.floor((Date.now() - new Date(t.inativa_desde.replace(' ','T')).getTime()) / 86400000)
-            : 0;
+          // Conta dias desde a última mensagem (DD/MM/YYYY), não desde o arquivamento
+          const diasArq = (() => {
+            if (!t.data) return 0;
+            const p = t.data.split('/');
+            if (p.length < 3) return 0;
+            const d = new Date(+p[2], +p[1]-1, +p[0]);
+            return Math.floor((Date.now() - d.getTime()) / 86400000);
+          })();
           const assunto = escHtml(t.assunto || '(sem assunto)');
           const de   = escHtml(t.de || '—');
           const para = escHtml(t.para || '—');
           const data = escHtml(t.data || '—');
           const sub  = `<br><span style="font-size:0.75rem;color:#94a3b8;">Sem retorno há ${diasArq} dia(s)</span>`;
-          return `<tr>
+          return `<tr onclick="abrirThread('${escHtml(t.thread_id)}')">
             <td>${assunto}${sub}</td>
             <td style="white-space:nowrap;">${de}</td>
             <td style="white-space:nowrap;">${para}</td>
@@ -3025,8 +3033,8 @@ function _chipVar(delta, invertido) {
 
 function renderResumo() {
   if (!_dadosResumo) return;
-  const {categorias, totais} = _dadosResumo;
-  const tot = totais.total || 1;
+  const {categorias, totais, srTotal} = _dadosResumo;
+  const tot = (totais.total || 0) + (srTotal || 0) || 1;
   let cats = [...categorias];
   if (mainSortKey) {
     cats.sort((a, b) => {
