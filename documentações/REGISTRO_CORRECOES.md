@@ -2,6 +2,36 @@
 
 ---
 
+## 2026-08-31 — Passo B: 4 motivos novos + correção de aviso de confidencialidade
+
+### Passo B — Detecção de 4 motivos sem lógica no código
+
+**🔎 Em miúdos:** O sistema passou a detectar 4 situações que já estavam aprovadas no artefato mas não tinham regra de classificação: Finaud pediu documento, Finaud deu orientação técnica, Finaud propôs reunião, e cliente fez solicitação sem pergunta.
+
+**Problema:** Esses 4 motivos estavam na planilha aprovada mas o código retornava motivos genéricos ("Finaud escreveu — aguarda retorno do cliente", "Cliente escreveu — aguarda resposta da Finaud") nessas situações.
+
+**Correção:** Adicionadas 3 constantes de termos (`_FRASES_SOLICITA_EXTRATO`, `_FRASES_ORIENTACAO_TECNICA`, `_FRASES_REUNIAO`) e 4 novos blocos de detecção em `scripts/banco_threads.py`. Impacto estimado nas threads de produção: ~50 "Cliente fez solicitação", ~9 "Finaud solicitou extrato", ~8 "Finaud deu orientação técnica", 1 "Finaud propôs reunião".
+
+**Arquivos:** `scripts/banco_threads.py`, `tests/test_banco_threads.py` (+5 testes novos)
+
+**Validação:** ✅ VALIDADO — 424 testes passando, amostra dos 4 motivos revisada com e-mails reais, todos alinhados ao artefato.
+
+---
+
+### Correção — Aviso de confidencialidade contaminando classificação
+
+**🔎 Em miúdos:** O sistema lia o rodapé jurídico dos e-mails ("Este e-mail e seus anexos destinam-se exclusivamente...") como se fosse conteúdo real, e palavras como "por favor" nesses avisos podiam causar classificação errada.
+
+**Problema:** Thread "DISTRATO CONECTA X FINAUD" foi classificada como "Cliente fez solicitação" porque o aviso de confidencialidade no rodapé continha "por favor, nos informe". O conteúdo real do e-mail era um pedido de cancelamento, cujo motivo correto é "Cliente escreveu — aguarda resposta da Finaud". Levantamento: 346 threads tinham disclaimer, 55 tinham termos de classificação dentro dele; apenas 1 estava com classificação errada por essa causa.
+
+**Correção:** Adicionada constante `_INICIO_DISCLAIMER` e função `_truncar_no_disclaimer()` em `scripts/banco_threads.py`. O texto é truncado no início do aviso antes de qualquer classificação.
+
+**Arquivos:** `scripts/banco_threads.py`, `tests/test_banco_threads.py` (+4 testes novos)
+
+**Validação:** ✅ VALIDADO — 428 testes passando. Comparação antes/depois nas 346 threads com disclaimer: 1 thread corrigida (DISTRATO CONECTA X FINAUD), 345 sem alteração. Correção cirúrgica confirmada.
+
+---
+
 ## 2026-08-29 (continuação) — Artefato de motivos concluído + decisões de mapeamento
 
 ### Sessão 29/08 (continuação) — Fechamento do artefato de motivos

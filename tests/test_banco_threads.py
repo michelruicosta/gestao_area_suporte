@@ -1916,6 +1916,100 @@ def test_status_fixv_e_retorno_cliente_prometeu_voltar_ac():
     assert 'prometeu retornar' in motivo
 
 
+# ── Passo B — 4 motivos novos ─────────────────────────────────────────────────
+
+def test_passo_b_solicita_extrato():
+    """Passo B: Finaud usa 'vou precisar' sem anexo → AC 'Finaud solicitou extrato ou planilha'."""
+    msgs = [
+        _msg('cliente@empresa.com', corpo='Bom dia, precisamos de ajuda.', assunto='Balanços'),
+        _msg(FINAUD, corpo='Bom dia! Vou precisar dos balanços de 2024 para dar continuidade.', assunto='Re: Balanços'),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Cliente'
+    assert 'extrato ou planilha' in motivo
+
+
+def test_passo_b_orientacao_tecnica():
+    """Passo B: Finaud usa 'orientamos que' → AC 'Finaud deu orientação técnica'."""
+    msgs = [
+        _msg('cliente@empresa.com', corpo='Como procedo com o COSIF?', assunto='COSIF'),
+        _msg(FINAUD, corpo='Orientamos que acesse o portal e faça o upload do arquivo conforme o manual.', assunto='Re: COSIF'),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Cliente'
+    assert 'orientação técnica' in motivo
+
+
+def test_passo_b_proposta_reuniao():
+    """Passo B: Finaud menciona 'reunião' sem anexo → AC 'Finaud propôs reunião ou ligação'."""
+    msgs = [
+        _msg('cliente@empresa.com', corpo='Precisamos conversar sobre o relatório.', assunto='Relatório'),
+        _msg(FINAUD, corpo='Podemos fazer uma reunião amanhã às 14h para alinharmos?', assunto='Re: Relatório'),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Cliente'
+    assert 'reunião ou ligação' in motivo
+
+
+def test_passo_b_cliente_fez_solicitacao():
+    """Passo B: cliente usa 'precisamos' sem '?' → AF 'Cliente fez solicitação'."""
+    msgs = [
+        _msg('cliente@empresa.com', corpo='Precisamos do relatório até sexta-feira.', assunto='Relatório'),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+    assert 'solicitação' in motivo
+
+
+def test_passo_b_cliente_pergunta_nao_ativa_solicitacao():
+    """Passo B — regressão: cliente usa 'precisamos?' com '?' → não ativa 'Cliente fez solicitação'."""
+    msgs = [
+        _msg('cliente@empresa.com', corpo='Precisamos mesmo enviar isso agora?', assunto='Dúvida'),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+    assert 'solicitação' not in motivo
+
+
+# ── Truncagem de aviso de confidencialidade ───────────────────────────────────
+
+_DISCLAIMER = (
+    '\n\nEste e-mail e seus anexos destinam-se exclusivamente ao(s) destinatário(s) '
+    'acima. Se você recebeu este e-mail equivocadamente, por favor, nos informe '
+    'imediatamente e destrua o original.'
+)
+
+
+def test_disclaimer_nao_dispara_favor():
+    """Disclaimer com 'por favor' não deve classificar como 'Cliente fez solicitação'."""
+    corpo = 'Venho solicitar o cancelamento dos serviços.' + _DISCLAIMER
+    msgs = [_msg('cliente@empresa.com', corpo=corpo, assunto='Distrato')]
+    status, motivo = bt._determinar_status(msgs)
+    assert 'solicitação' not in motivo
+
+
+def test_disclaimer_conteudo_real_preservado():
+    """'Favor' no conteúdo real (antes do disclaimer) ainda classifica corretamente."""
+    corpo = 'Favor encaminhar o extrato até sexta.' + _DISCLAIMER
+    msgs = [_msg('cliente@empresa.com', corpo=corpo, assunto='Extrato')]
+    status, motivo = bt._determinar_status(msgs)
+    assert 'solicitação' in motivo
+
+
+def test_truncar_no_disclaimer_unitario():
+    """_truncar_no_disclaimer corta no marcador e preserva texto anterior."""
+    texto = 'Mensagem real aqui.\n\nEste e-mail e seus anexos destinam-se exclusivamente...'
+    resultado = bt._truncar_no_disclaimer(texto)
+    assert 'Mensagem real aqui.' in resultado
+    assert 'destinam-se' not in resultado
+
+
+def test_truncar_no_disclaimer_sem_disclaimer():
+    """_truncar_no_disclaimer devolve texto intacto quando não há disclaimer."""
+    texto = 'Mensagem sem aviso algum.'
+    assert bt._truncar_no_disclaimer(texto) == texto
+
+
 def test_status_fixv_nao_afeta_retorno_bacen():
     """Fix V — regressão: 'retorno' como substantivo ('retorno BACEN') → não ativa Fix V."""
     corpo = (

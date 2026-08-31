@@ -260,6 +260,35 @@ _FRASES_PEDIDO_EXPLICITO = (
     'no aguardo',      # Fix S: "No aguardo." = Finaud está aguardando resposta do cliente → AC
 )
 
+# Subconjunto de _FRASES_PEDIDO_EXPLICITO que indica pedido de documento — AC específico
+_FRASES_SOLICITA_EXTRATO = (
+    'solicitamos encaminhar',
+    'solicitamos que encaminhe',
+    'solicitamos que envie',
+    'solicitamos enviar',
+    'poderia encaminhar por gentileza',
+    'pode encaminhar por gentileza',
+    'por gentileza, encaminhe',
+    'solicito ',
+    'vou precisar',
+    'no aguardo',
+)
+
+# Finaud instruiu o cliente a realizar um procedimento — aguarda execução
+_FRASES_ORIENTACAO_TECNICA = (
+    'orientamos que',
+    'verifique ',
+)
+
+# Finaud propôs contato síncrono — aguarda confirmação do cliente
+_FRASES_REUNIAO = (
+    'reunião',
+    'ligação',
+    'videoconferência',
+    'teams',
+    'meet',
+)
+
 _SAUDACAO_RE = re.compile(
     r'^(prezad[ao]s?|bom\s+dia|boa\s+tarde|boa\s+noite|ol[aá]|caro|cara)\b',
     re.IGNORECASE,
@@ -290,6 +319,28 @@ def _extrair_texto_novo(corpo: str) -> str:
             continue
         resultado.append(linha)
     return '\n'.join(resultado).strip()
+
+
+# Marcadores que indicam início do aviso de confidencialidade corporativo.
+# Texto a partir deste ponto é boilerplate jurídico — não deve influenciar classificação.
+_INICIO_DISCLAIMER = re.compile(
+    r'(?:'
+    r'este\s+e[\-\s]?mail\s+(?:e\s+seus\s+anexos|inclusive\s+seus\s+anexos)'
+    r'|this\s+e[\-\s]?mail\s+(?:and\s+its\s+attachments|including\s+any\s+attachments)'
+    r'|se\s+voc[eê]\s+recebeu\s+este\s+e[\-\s]?mail\s+(?:equivocadamente|por\s+engano)'
+    r'|if\s+you\s+(?:have\s+)?received\s+this\s+(?:e[\-\s]?mail|message)\s+in\s+error'
+    r'|[eé]\s+expressamente\s+proibid'
+    r'|strictly\s+prohibited'
+    r')',
+    re.IGNORECASE,
+)
+
+
+def _truncar_no_disclaimer(texto: str) -> str:
+    """Remove aviso de confidencialidade do texto antes de classificar.
+    Retorna o texto até o início do disclaimer; se não houver, retorna inteiro."""
+    m = _INICIO_DISCLAIMER.search(texto)
+    return texto[:m.start()].rstrip() if m else texto
 
 
 def _tem_pergunta_acao(texto: str) -> bool:
@@ -379,7 +430,7 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     _campo_para = destinatario if destinatario.strip() else cc_campo
     para_finaud = _todos_destinatarios_finaud(_campo_para)
 
-    texto_novo  = _extrair_texto_novo(corpo_raw)
+    texto_novo  = _truncar_no_disclaimer(_extrair_texto_novo(corpo_raw))
     texto_lower = texto_novo.lower()
     # Versão sem quebras de linha internas — para frases de entrega que podem ser
     # quebradas pelo cliente de e-mail (ex.: "segue em\r\nanexo" → "segue em anexo")
@@ -533,6 +584,12 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
             return 'Concluída', 'Finaud concluiu a solicitação'
         if any(f in texto_lower for f in _FRASES_AGUARDANDO_FINAUD_ATIVA):
             return 'Aguardando Finaud', 'Finaud prometeu retornar'
+        if any(f in texto_flat for f in _FRASES_SOLICITA_EXTRATO):
+            return 'Aguardando Cliente', 'Finaud solicitou extrato ou planilha — aguarda envio'
+        if any(f in texto_lower for f in _FRASES_ORIENTACAO_TECNICA):
+            return 'Aguardando Cliente', 'Finaud deu orientação técnica — aguarda execução'
+        if any(f in texto_lower for f in _FRASES_REUNIAO):
+            return 'Aguardando Cliente', 'Finaud propôs reunião ou ligação — aguarda confirmação'
         if _eh_cortesia_finaud(texto_novo):
             if len(msgs) == 1:
                 return 'Aguardando Finaud', 'Finaud acusou recibo — aguarda processamento'
@@ -622,6 +679,8 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
             and not _ENTREGA_DOC_CLI.search(texto_lower)
             and not _PEDIDO_IMPLICITO.search(texto_lower)):
         return 'Concluída', 'Cliente agradeceu — problema resolvido'
+    if '?' not in _texto_sem_url_q and _PEDIDO_IMPLICITO.search(texto_lower):
+        return 'Aguardando Finaud', 'Cliente fez solicitação — aguarda ação da Finaud'
     return 'Aguardando Finaud', 'Cliente escreveu — aguarda resposta da Finaud'
 
 
