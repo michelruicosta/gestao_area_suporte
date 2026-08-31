@@ -387,7 +387,7 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
 
     # §8.10: reação do Teams → cliente confirmou recebimento de mensagem da Finaud
     if _REACAO_TEAMS_RE.search(texto_novo):
-        return 'Concluída', 'Cliente confirmou recebimento — reação do Teams'
+        return 'Concluída', 'Cliente agradeceu — problema resolvido'
 
     # ── Helpers §8.6 — detecção de forward ───────────────────────────────────
 
@@ -495,42 +495,42 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
             if _eh_forward_para_cliente(corpo_raw):
                 # Sub-caso 1a: tem arquivo real → Concluída
                 if _tem_arquivo_entregavel(ultimo.get('nomes_anexos') or []):
-                    return 'Concluída', 'Finaud entregou arquivo ao cliente e registrou internamente'
+                    return 'Concluída', 'Finaud entregou arquivo ao cliente'
                 # Sub-caso 1b: verificar sinal de conclusão
                 if assunto.strip().upper().startswith('RES:'):
-                    return 'Concluída', 'Finaud encaminhou confirmação ao cliente e registrou internamente'
+                    return 'Concluída', 'Finaud concluiu a solicitação'
                 if any(f in texto_flat for f in _FRASES_CONCLUSIVAS_FINAUD):
-                    return 'Concluída', 'Finaud encaminhou confirmação ao cliente e registrou internamente'
+                    return 'Concluída', 'Finaud concluiu a solicitação'
                 # Fix N: texto_novo vazio = conteúdo dentro do forward; checar corpo completo
                 if not texto_novo.strip():
                     corpo_flat_fwd = re.sub(r'\s+', ' ', corpo_raw).lower()
                     if any(f in corpo_flat_fwd for f in _FRASES_CONCLUSIVAS_FINAUD):
-                        return 'Concluída', 'Finaud encaminhou confirmação ao cliente e registrou internamente'
+                        return 'Concluída', 'Finaud concluiu a solicitação'
                 # 1b-padrão: sem sinal claro → Aguardando Cliente (erro mais seguro)
                 return 'Aguardando Cliente', 'Finaud escreveu ao cliente — aguarda retorno'
             # E-mail interno genuíno (Cenário 3)
             # §8.7: assunto informativo → sem ação pendente (strip RES:/ENC: antes)
             assunto_lower = re.sub(r'^(res|enc|fwd|fw)\s*:\s*', '', assunto.strip(), flags=re.IGNORECASE).lower()
             if any(assunto_lower.startswith(p) for p in _ASSUNTOS_INFORMATIVOS):
-                return 'Concluída', 'Informativo interno — sem pendência'
+                return 'Concluída', 'Finaud concluiu a solicitação'
             return 'Aguardando Finaud', 'E-mail interno — aguarda ação da Finaud'
         # Finaud → Cliente
         tem_arquivo_real = _tem_arquivo_entregavel(ultimo.get('nomes_anexos') or [])
         if tem_arquivo_real:
             if _tem_pergunta_acao(texto_novo):
-                return 'Aguardando Cliente', 'Finaud enviou arquivo e aguarda resposta do cliente'
+                return 'Aguardando Cliente', 'Finaud enviou arquivo — aguarda retorno do cliente'
             if any(f in texto_flat for f in _FRASES_ENTREGA):
                 return 'Concluída', 'Finaud entregou arquivo ao cliente'
             if any(f in texto_lower for f in _FRASES_AGUARDANDO_FINAUD_ATIVA):
                 return 'Aguardando Finaud', 'Finaud prometeu retornar'
             if not texto_novo.strip():
                 return 'Concluída', 'Finaud entregou arquivo ao cliente'
-            return 'Aguardando Cliente', 'Finaud enviou arquivo sem linguagem de entrega'
+            return 'Aguardando Cliente', 'Finaud enviou arquivo — aguarda retorno do cliente'
         # Sem arquivo real
         if assunto.strip().upper().startswith('RES:'):
-            return 'Concluída', 'Finaud respondeu ao cliente'
+            return 'Concluída', 'Finaud concluiu a solicitação'
         if any(f in texto_flat for f in _FRASES_CONCLUSIVAS_FINAUD):
-            return 'Concluída', 'Finaud encerrou a conversa'
+            return 'Concluída', 'Finaud concluiu a solicitação'
         if any(f in texto_lower for f in _FRASES_AGUARDANDO_FINAUD_ATIVA):
             return 'Aguardando Finaud', 'Finaud prometeu retornar'
         if _eh_cortesia_finaud(texto_novo):
@@ -542,15 +542,15 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
                 anexos_ant = ant.get('nomes_anexos') or []
                 if not _eh_finaud_addr(rem_ant) and _tem_arquivo_entregavel(anexos_ant):
                     return 'Aguardando Finaud', 'Finaud recebeu arquivos do cliente — aguarda processamento'
-            return 'Concluída', 'Finaud encerrou com cortesia'
+            return 'Concluída', 'Finaud concluiu a solicitação'
         if len(msgs) >= 2 and para_finaud and all(_eh_finaud_addr((m.get('remetente') or '').lower()) for m in msgs):
-            return 'Aguardando Finaud', 'Coordenação interna Finaud'
+            return 'Aguardando Finaud', 'E-mail interno — aguarda ação da Finaud'
         return 'Aguardando Cliente', 'Finaud escreveu — aguarda retorno do cliente'
 
     # Remetente externo (cliente)
     # §8.8: cliente encaminhou algo (ENC:/FWD: ou assunto com EXTRATO) com texto vazio → Finaud precisa processar
     if _so_cortesia(texto_novo) and (_ENC_PREFIX.match(assunto.strip()) or _EXTRATO_RE.search(assunto)):
-        return 'Aguardando Finaud', 'Cliente encaminhou — aguarda processamento da Finaud'
+        return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
     # Fix I: cliente informa que o BACEN aceitou o arquivo → processo encerrado
     # Roda ANTES de §8.8b para não ser bloqueado por "Segue" no início da frase.
     # Ex.: "Segue protocolo de arquivo aceito do COS4111" — aceite do BACEN encerra o caso.
@@ -560,20 +560,20 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         return 'Concluída', 'Cliente informou aceite do BACEN — assunto encerrado'
     # §8.8b: "Segue [algo]" no início de linha = cliente entregando conteúdo — nunca é confirmação conclusiva
     if re.search(r'(?:^|\r?\n)\s*segue\b', texto_lower):
-        return 'Aguardando Finaud', 'Cliente enviou conteúdo — aguarda processamento da Finaud'
+        return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
     # §8.8c: saudação pura (sem palavra de confirmação) = provavelmente entrega de arquivo
     # "Boa Tarde + Att" ≠ confirmação; "Muito obrigado" = confirmação explícita
     if _so_cortesia(texto_novo) and _CONFIRMACAO_EXPLICITA.search(texto_lower):
-        return 'Concluída', 'Cliente confirmou — sem pendência'
+        return 'Concluída', 'Cliente agradeceu — problema resolvido'
     if _so_cortesia(texto_novo):
-        return 'Aguardando Finaud', 'Cliente enviou saudação — possível entrega de arquivo'
+        return 'Aguardando Finaud', 'Mensagem do cliente sem conteúdo para classificar — aguarda verificação'
     # Fix F: confirmação curta + assinatura corporativa sem sign-off explícito
     # Ex.: "De acordo\r\n\r\nEduardo Galasini\r\nFinance\r\nActivTrades CCTVM..."
     _primeiro_para = re.split(r'\r?\n\s*\r?\n', texto_novo)[0].strip()
     if ('?' not in texto_novo
             and _so_cortesia(_primeiro_para)
             and _CONFIRMACAO_EXPLICITA.search(_primeiro_para.lower())):
-        return 'Concluída', 'Cliente confirmou — sem pendência'
+        return 'Concluída', 'Cliente agradeceu — problema resolvido'
     # Fix G: cliente agradece e compromete-se a agir por conta própria sem pedir nada à Finaud
     # Ex.: "Muito obrigado, realizaremos o procedimento e enviaremos a alteração do report ao BCB."
     _ACAO_PROPRIA = re.compile(
@@ -584,7 +584,7 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     if ('?' not in texto_novo
             and _CONFIRMACAO_EXPLICITA.search(texto_lower)
             and _ACAO_PROPRIA.search(texto_lower)):
-        return 'Concluída', 'Cliente confirmou e comprometeu-se a agir — sem pendência para a Finaud'
+        return 'Concluída', 'Cliente agradeceu — problema resolvido'
     # Fix R: cliente prometeu retornar — ação pendente do cliente, não da Finaud
     # Ex.: "Vamos analisar e retornamos." / "Obrigada, retornarei amanhã."
     _CLIENTE_VAI_RETORNAR = re.compile(
@@ -593,7 +593,7 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         re.IGNORECASE,
     )
     if _CLIENTE_VAI_RETORNAR.search(texto_lower):
-        return 'Aguardando Cliente', 'Fix R: cliente prometeu retornar — aguardando o cliente'
+        return 'Aguardando Cliente', 'Cliente prometeu retornar com informações — aguarda retorno'
     # Fix H: cliente agradece sem pergunta e sem entrega de documento → Concluída
     # Regra aprovada por Michel em 21/08/2026: "se não houver perguntas, observações e
     # documento é concluída". Mais amplo que Fix G — não exige verbo de ação específico.
@@ -621,7 +621,7 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
             and _CONFIRMACAO_EXPLICITA.search(texto_lower)
             and not _ENTREGA_DOC_CLI.search(texto_lower)
             and not _PEDIDO_IMPLICITO.search(texto_lower)):
-        return 'Concluída', 'Cliente agradeceu sem pergunta ou documento — assunto encerrado'
+        return 'Concluída', 'Cliente agradeceu — problema resolvido'
     return 'Aguardando Finaud', 'Cliente escreveu — aguarda resposta da Finaud'
 
 

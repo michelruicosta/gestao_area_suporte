@@ -286,8 +286,8 @@ def test_status_cumprimento_4_linhas_sem_sign_off_e_apenas_assinatura():
     )
     msgs = [_msg(CLIENTE, corpo=corpo)]
     status, motivo = bt._determinar_status(msgs)
-    assert 'saudação' in motivo.lower(), (
-        f'Esperado motivo com "saudação" (sem sign-off, só assinatura após 4 linhas), '
+    assert 'sem conteúdo' in motivo.lower(), (
+        f'Esperado motivo com "sem conteúdo" (sem sign-off, só assinatura após 4 linhas), '
         f'got: {status} | {motivo}'
     )
 
@@ -662,7 +662,7 @@ def test_interno_divulgacao_instrucao_normativa():
     )]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Concluída'
-    assert 'nformativo' in motivo
+    assert 'Finaud concluiu' in motivo
 
 
 def test_interno_boas_vindas():
@@ -720,7 +720,7 @@ def test_enc_prefix_texto_vazio_aguarda_finaud():
     )]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud'
-    assert 'ncaminhou' in motivo
+    assert 'informações' in motivo
 
 
 def test_fwd_prefix_texto_curto_aguarda_finaud():
@@ -732,7 +732,7 @@ def test_fwd_prefix_texto_curto_aguarda_finaud():
     )]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud'
-    assert 'ncaminhou' in motivo
+    assert 'informações' in motivo
 
 
 def test_extrato_no_assunto_texto_curto_aguarda_finaud():
@@ -744,7 +744,7 @@ def test_extrato_no_assunto_texto_curto_aguarda_finaud():
     )]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud'
-    assert 'ncaminhou' in motivo
+    assert 'informações' in motivo
 
 
 def test_extrato_no_assunto_texto_real_aguarda_finaud():
@@ -820,7 +820,7 @@ def test_finaud_arquivo_com_pergunta_real_aguarda_cliente():
     )]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Cliente'
-    assert 'aguarda resposta' in motivo
+    assert 'aguarda retorno' in motivo
 
 
 def test_finaud_arquivo_com_multiplas_perguntas_aguarda_cliente():
@@ -897,7 +897,7 @@ def test_reacao_teams_heart_concluida():
     msgs = [_msg(CLIENTE, corpo=corpo)]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Concluída'
-    assert 'reação' in motivo.lower() or 'Teams' in motivo
+    assert 'agradeceu' in motivo
 
 
 def test_reacao_teams_like_concluida():
@@ -1767,7 +1767,7 @@ def test_status_fixr_cliente_vai_retornar_ac():
     ]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Cliente'
-    assert 'Fix R' in motivo
+    assert 'prometeu retornar' in motivo
 
 
 def test_status_fixr_retornarei_ac():
@@ -1913,7 +1913,7 @@ def test_status_fixv_e_retorno_cliente_prometeu_voltar_ac():
     ]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Cliente'
-    assert 'Fix R' in motivo
+    assert 'prometeu retornar' in motivo
 
 
 def test_status_fixv_nao_afeta_retorno_bacen():
