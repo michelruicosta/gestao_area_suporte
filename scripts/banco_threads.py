@@ -387,8 +387,9 @@ def _so_cortesia(texto: str) -> bool:
     # Remove URLs residuais (podem conter '?' que não indica pergunta real)
     texto = re.sub(r'https?://\S+', '', texto)
     texto = re.sub(r'\[https?://[^\]]*\]', '', texto)
-    # Remove referências [cid:...] de imagens inline do Outlook
+    # Remove referências de imagens inline (Outlook [cid:...] e Gmail [image: ...])
     texto = re.sub(r'\[cid:[^\]]+\]', '', texto)
+    texto = re.sub(r'\[image:[^\]]*\]', '', texto)
     # Remove menções @Nome<mailto:email> do Outlook/Teams — não é conteúdo real
     texto = re.sub(r'@[^<\n]+<mailto:[^>]+>', '', texto, flags=re.IGNORECASE)
     # Remove "tudo bem?", "tudo bom?" — saudações sociais que não são perguntas reais
@@ -650,6 +651,8 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         'anexo posições', # Western Union: relatório diário de posição de câmbio
         'anexo extratos', # BANVOX DTVM: extrato compromissada/custódia
         'anexo arquivo',  # entregas variadas: "Anexo arquivo DRL", "Anexo arquivo solicitado"
+        'acabei de envi', # Planner: "Acabei de envia a documentação suporte do dia X" (01/09/2026)
+        'pode seguir',    # Planner SCD: "pode seguir pois naqueles dias não tiveram" (01/09/2026)
     )
     if any(f in texto_lower for f in _SEGUE_MID):
         return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
@@ -728,6 +731,12 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         return 'Aguardando Finaud', 'Cliente fez solicitação — aguarda ação da Finaud'
     if _PEDIDO_FOLLOW_UP.search(texto_lower):
         return 'Aguardando Finaud', 'Cliente fez solicitação — aguarda ação da Finaud'
+    # §8.8-DDR: último recurso para entrega de DDR com assinatura extensa (ex: Wise)
+    # _so_cortesia() falha quando bloco de contato tem nome/cargo/empresa sem sign-off.
+    # Só dispara após todas as outras regras falharem: DDR no assunto + sem "?" (URL-stripped).
+    if (re.search(r'\bDDR\b', assunto, re.IGNORECASE)
+            and '?' not in _texto_sem_url_q):
+        return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
     return 'Aguardando Finaud', 'Cliente escreveu — aguarda resposta da Finaud'
 
 

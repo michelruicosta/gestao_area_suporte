@@ -2382,3 +2382,66 @@ def test_status_enc_pcam_nao_afeta_sem_enc_prefix():
     # deve cair em §8.8b pelo "Segue" no início — não em §8.8-PCAM
     assert status == 'Aguardando Finaud'
     assert motivo == 'Cliente enviou informações e extratos — aguarda processamento'
+
+
+# ── Grupo DDR — Decisão 13 (01/09/2026) ────────────────────────────────────────
+
+
+def test_so_cortesia_strip_image_inline():
+    # [image: ...] sem sign-off: após strip da imagem, só sobra saudação → True
+    corpo = '[image: logo.png]\r\n\r\nAtenciosamente,\r\nCarlos'
+    assert bt._so_cortesia(corpo) is True
+
+
+def test_so_cortesia_strip_image_inline_com_conteudo():
+    # [image: ...] + texto real: strip da imagem não elimina conteúdo → False
+    corpo = '[image: logo.png]\r\n\r\nPrecisamos do arquivo DDR até amanhã.'
+    assert bt._so_cortesia(corpo) is False
+
+
+def test_status_ddr_segue_mid_acabei_de_envi():
+    # Thread 1: Planner envia "Acabei de envia a documentação suporte do dia X"
+    # _SEGUE_MID: 'acabei de envi' → §8.8b → entrega (01/09/2026)
+    corpo = 'Acabei de envia a documentação suporte do dia 04/08.\r\n\r\nAtenciosamente,\r\nClarissa'
+    msgs = [_msg(CLIENTE, corpo=corpo, assunto='DDR DIA 04/08')]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+    assert motivo == 'Cliente enviou informações e extratos — aguarda processamento'
+
+
+def test_status_ddr_segue_mid_pode_seguir():
+    # Thread 4: Planner SCD envia "pode seguir pois naqueles dias não tiveram"
+    # _SEGUE_MID: 'pode seguir' → §8.8b → entrega (01/09/2026)
+    corpo = 'Boa tarde! Pode seguir pois naqueles dias não tiveram movimentação.\r\n\r\nAtt,\r\nPatricia'
+    msgs = [_msg(CLIENTE, corpo=corpo, assunto='DDR DIA 09/07 E 10/07')]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+    assert motivo == 'Cliente enviou informações e extratos — aguarda processamento'
+
+
+def test_status_ddr_assunto_corpo_so_assinatura():
+    # Thread 2: Wise envia DDR com corpo apenas bloco de contato extenso (sem sign-off)
+    # §8.8-DDR: DDR no assunto + sem "?" + sem solicitação → entrega (01/09/2026)
+    corpo = (
+        '[image: image.png]\r\n\r\n'
+        'Henrique Rezende (he/him)\r\n\r\n'
+        'Financial Risk Manager - Latam\r\n\r\n'
+        'henrique.rezende@wise.com <email@trasnferwise.com>\r\n\r\n'
+        'Wise\r\n'
+        '<https://wise.com/?utm_source=emailsignature>\r\n'
+        '| What we do\r\n'
+        '<https://www.wise.jobs/what-we-do/>\r\n'
+    )
+    msgs = [_msg(CLIENTE, corpo=corpo, assunto='DDR - 17/07 a 24/07')]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+    assert motivo == 'Cliente enviou informações e extratos — aguarda processamento'
+
+
+def test_status_ddr_assunto_com_pergunta_nao_e_entrega():
+    # §8.8-DDR NÃO deve disparar quando há "?" no corpo — é uma dúvida real
+    corpo = 'Bom dia. Vocês conseguiram processar o DDR de julho?\r\n\r\nAtt,\r\nCarlos'
+    msgs = [_msg(CLIENTE, corpo=corpo, assunto='DDR - 07/2026')]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+    assert 'extratos' not in motivo
