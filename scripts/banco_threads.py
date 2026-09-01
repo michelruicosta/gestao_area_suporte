@@ -677,7 +677,9 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     _PEDIDO_IMPLICITO = re.compile(
         r'\bprecis[ao]mos?\b|\bnecessit[ao]mos?\b|\bgostar[íi]amos?\b|\bprecisaria\b'
         r'|\bpe[çc]o\s'    # Fix T: "Peço que inclua..." — pedido educado do cliente → AF
-        r'|\bfavor\b',     # Fix U: "Favor considerar/enviar/verificar..." — pedido ao Finaud → AF
+        r'|\bfavor\b'      # Fix U: "Favor considerar/enviar/verificar..." — pedido ao Finaud → AF
+        r'|\bgentileza\b'  # "Gentileza enviar arquivo" / "Por gentileza enviar..." → AF
+        r'|\bpoderia[m]?\b',  # "Poderia nos ajudar enviando..." → AF
         re.IGNORECASE,
     )
     # Remove URLs e "??" (duplo ponto de interrogação informal/emoji) antes de checar

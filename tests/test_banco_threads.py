@@ -2122,3 +2122,31 @@ def test_status_trustee_sem_movimentacao_aguarda_finaud():
     msgs = [_msg(CLIENTE, corpo=corpo)]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud', f'got: {status} | {motivo}'
+
+
+def test_status_gentileza_enviar_solicita_finaud():
+    """'Gentileza enviar arquivo' → pedido implícito → motivo 'Cliente fez solicitação'.
+    Reproduz os 17 casos de pedido implícito sem ponto de interrogação.
+    """
+    corpo = (
+        'Prezados, boa tarde!\r\n\r\n'
+        'Gentileza enviar arquivo.\r\n\r\n'
+        'Atenciosamente,\r\nJacilaine'
+    )
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'got status: {status} | {motivo}'
+    assert 'solicita' in motivo.lower(), f'motivo errado: {motivo}'
+
+
+def test_status_poderia_nos_ajudar_solicita_finaud():
+    """'Poderia nos ajudar enviando a substituição...' → pedido implícito → 'Cliente fez solicitação'."""
+    corpo = (
+        'Pessoal, bom dia.\r\n\r\n'
+        'Poderiam nos ajudar enviando a substituição dos arquivos solicitados.\r\n\r\n'
+        'Att,\r\nCliente'
+    )
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'got status: {status} | {motivo}'
+    assert 'solicita' in motivo.lower(), f'motivo errado: {motivo}'
