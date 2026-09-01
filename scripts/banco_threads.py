@@ -186,6 +186,7 @@ _CONFIRMACAO_EXPLICITA = re.compile(
     r'pode\s+ignorar|'           # BCP: "Pode ignorar meu email" = retratação do cliente (01/09/2026)
     r'conversei\s+internamente|' # Planner SCD: cliente consultou equipe e trouxe resposta (01/09/2026)
     r'credenciamento\s+realizado|'     # VIS DTVM: cadastro no STA do BC concluído (01/09/2026)
+    r'foi\s+homologado|'               # Unicred COS4010: "Sim, foi! Foi homologado em 11/03." (01/09/2026)
     r'grat[ao]s?)\b',                  # Kinel: "Grato mais uma vez" = agradecimento formal (01/09/2026)
     re.IGNORECASE,
 )
@@ -650,8 +651,8 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     if (_ACEITACAO_BACEN.search(texto_lower)
             and '?' not in _texto_sem_url_fi):
         return 'Concluída', 'Cliente informou aceite do BACEN — assunto encerrado'
-    # §8.8b: "Segue/Seguem/Enviado/Anexo" no início de linha = cliente entregando conteúdo
-    if re.search(r'(?:^|\r?\n)\s*(?:seguem?|enviados?|anexo)\b', texto_lower):
+    # §8.8b: "Segue/Seguem/Enviado/Anexo/Arquivo(s) enviado(s)/reenviado(s)" no início de linha
+    if re.search(r'(?:^|\r?\n)\s*(?:seguem?|enviados?|arquivos?\s+(?:re)?enviados?|anexo)\b', texto_lower):
         return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
     # §8.8b.1: "segue" mid-frase, "em/anexo" entrega, ou relatório de status (aprovado 01/09/2026)
     _SEGUE_MID = (
@@ -744,7 +745,8 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         r'|\bgentileza\b'                             # UNVERIFIED: "Por gentileza, poderia retornar?" (01/09/2026)
         r'|\bseria\s+poss[íi]vel\b'                  # Acesso negado: "seria possível desbloquear?" (01/09/2026)
         r'|\batualiza[çc](?:[aã]o|[oõ]es)\b'           # Fair/Unicred: "Alguma atualização?" / "temos atualizações?" (01/09/2026)
-        r'|\bpode\s+(?:confirmar|verificar)\b',       # Coluna/Trinus: "Pode confirmar?" / "pode verificar?" (01/09/2026)
+        r'|\bpode\s+(?:confirmar|verificar)\b'        # Coluna/Trinus: "Pode confirmar?" / "pode verificar?" (01/09/2026)
+        r'|\bme\s+atualizar\b',                       # Trustee: "Agradeço se puder me atualizar do status" (01/09/2026)
         re.IGNORECASE,
     )
     # Remove URLs e "??" (duplo ponto de interrogação informal/emoji) antes de checar

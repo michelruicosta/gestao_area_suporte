@@ -117,3 +117,31 @@ def test_nao_filtra_cancelar_sem_frase_outlook():
         corpo='Oi, tudo bem? Vou precisar cancelar nossa reunião de amanhã.',
     )
     assert eh_automatico(t) is None
+
+
+# ── Decisão 21 — convite standalone (sem histórico) ──────────────────────────
+
+def test_convite_ics_standalone_descartado():
+    """Thread com 1 mensagem + anexo .ics → convite standalone → descartado (01/09/2026)."""
+    t = {
+        'assunto': 'Convite: [SANTS] 2061 e 2062',
+        'mensagens': [{
+            'remetente': '"Rodrigo Lima" <rodrigo@sants.com.br>',
+            'nomes_anexos': ['invite.ics'],
+            'corpo_texto': 'Você foi convidado para a reunião.',
+        }],
+    }
+    assert eh_automatico(t) is not None, 'Convite .ics standalone deveria ser descartado'
+
+
+def test_convite_teams_standalone_descartado():
+    """Thread com 1 mensagem + texto de onboarding Teams → descartado (01/09/2026)."""
+    t = {
+        'assunto': 'Robson Soares convidou você no Microsoft Teams',
+        'mensagens': [{
+            'remetente': '"Microsoft Teams" <noreply@email.teams.microsoft.com>',
+            'nomes_anexos': [],
+            'corpo_texto': 'Robson Soares convidou você para ingressar no Teams.',
+        }],
+    }
+    assert eh_automatico(t) is not None, 'Convite Teams standalone deveria ser descartado'

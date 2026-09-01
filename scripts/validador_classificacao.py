@@ -93,6 +93,14 @@ def eh_automatico(thread: dict) -> str | None:
         return 'IT Service Desk'
     if assunto.startswith('Aceito:') or assunto.startswith('Aceita:'):
         return 'aceite de convite de calendário'
+    # §4 — convite standalone (sem histórico de negócio): 1 mensagem + .ics ou Teams onboarding
+    if len(thread.get('mensagens', [])) == 1:
+        _msg0_anexos = (thread.get('mensagens', [{}])[0].get('nomes_anexos') or [])
+        if any(a.lower().endswith('.ics') for a in _msg0_anexos):
+            return 'convite de calendário standalone (sem histórico)'
+        _msg0_corpo = (thread.get('mensagens', [{}])[0].get('corpo_texto') or '').lower()
+        if 'convidou você para ingressar no teams' in _msg0_corpo:
+            return 'convite do Microsoft Teams standalone (sem histórico)'
     if assunto.startswith('Cancelar:'):
         msgs = thread.get('mensagens', [])
         corpo = ' '.join(m.get('corpo_texto', '') for m in msgs).lower()

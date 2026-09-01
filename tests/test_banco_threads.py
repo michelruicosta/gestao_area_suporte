@@ -1319,6 +1319,59 @@ def test_unverified_indice_basileia_duvida_e_caixa_preta():
     )
 
 
+# ── Decisão 21 — entrega "Arquivos enviados", "Arquivo reenviado", homologado, me atualizar ──
+
+def test_entrega_arquivos_enviados_banvox_e_entrega():
+    """Grupo A Thread A (COSIF 4010/Banvox): 'Arquivos enviados:' no início de parágrafo → entrega."""
+    msgs = [_msg(
+        CLIENTE,
+        corpo=(
+            'Boa tarde,\r\n\r\n'
+            'Arquivos enviados: COSIF 4010 referência 05/2026.\r\n\r\nAtenciosamente.'
+        ),
+        nomes_anexos=['COSIF_4010_05_2026.zip'],
+    )]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
+    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado entrega, got: {motivo}'
+
+
+def test_entrega_arquivo_reenviado_brazabank_e_entrega():
+    """Grupo A Thread B (DRM 06/Brazabank): 'Arquivo reenviado' no início de parágrafo → entrega."""
+    msgs = [_msg(
+        CLIENTE,
+        corpo=(
+            'Prezados,\r\n\r\n'
+            'Arquivo reenviado conforme solicitado.\r\n\r\nAtt.'
+        ),
+        nomes_anexos=['DRM_06_2026_corrigido.xlsx'],
+    )]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
+    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado entrega, got: {motivo}'
+
+
+def test_homologado_unicred_e_concluida():
+    """Grupo B (DTVM COS4010/Unicred): última msg 'Foi homologado em 11/03.' → Concluída."""
+    msgs = [
+        _msg(FINAUD, corpo='O credenciamento já foi homologado no sistema do BACEN?'),
+        _msg(CLIENTE, corpo='Sim, foi! Foi homologado em 11/03. Qualquer dúvida estou à disposição.'),
+    ]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Concluída', f'Esperado Concluída, got: {status}'
+
+
+def test_me_atualizar_trustee_e_solicitacao():
+    """Grupo C (Trustee Risco): 'me atualizar do status da análise' → solicitação (não caixa preta)."""
+    msgs = [
+        _msg(FINAUD, corpo='Vamos verificar a análise e retornamos.'),
+        _msg(CLIENTE, corpo='Agradeço se puder me atualizar do status da análise.'),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
+    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
+
+
 # ── Snapshots de contadores ───────────────────────────────────────────────────
 
 def test_snapshot_banco_vazio(monkeypatch, tmp_path):

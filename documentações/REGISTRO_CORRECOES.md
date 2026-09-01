@@ -2,6 +2,30 @@
 
 ---
 
+## 2026-09-01 — Grupos reunião/entrega/homologado/me atualizar — 5 threads saem da caixa preta (22 → 17) — Decisão 21
+
+**🔎 Em miúdos:** Threads de entrega com cabeçalho "Arquivos enviados:" ou "Arquivo reenviado", confirmação de homologação e pedido de atualização de status passam a ser classificadas corretamente. Convites de calendário e Teams sem histórico passam a ser descartados automaticamente.
+
+**Problema:** Cinco padrões não eram reconhecidos:
+- "Arquivos enviados:" no início de parágrafo → devia ser entrega (COSIF 4010/Banvox)
+- "Arquivo reenviado" no início de parágrafo → devia ser entrega (DRM 06/Brazabank)
+- "Foi homologado em 11/03." → devia ser Concluída (DTVM COS4010/Unicred)
+- "me atualizar do status" → devia ser solicitação (Trustee Risco)
+- Convite de calendário .ics standalone (1 mensagem, sem histórico) → devia ser descartado
+- Convite do Microsoft Teams standalone (1 mensagem, sem histórico) → devia ser descartado
+
+**Correção (3 adições em `banco_threads.py`, 1 em `validador_classificacao.py`):**
+1. `§8.8b` (regex entrega): estendido para capturar `arquivos?\s+(?:re)?enviados?` (cobre "Arquivos enviados:" e "Arquivo reenviado")
+2. `_CONFIRMACAO_EXPLICITA`: adicionado `foi\s+homologado` → Concluída
+3. `_PEDIDO_FOLLOW_UP`: adicionado `me\s+atualizar` → solicitação
+4. `eh_automatico()` em `validador_classificacao.py`: filtra convite standalone — thread com 1 mensagem + `.ics` ou corpo com "convidou você para ingressar no teams"
+
+**Arquivos:** `scripts/banco_threads.py`, `scripts/validador_classificacao.py`, `tests/test_banco_threads.py`, `tests/test_validador_filtro.py`
+
+**Validação:** ✅ VALIDADO — `pytest tests/ -q` → 521 passed (6 testes novos: 4 banco + 2 filtro).
+
+---
+
 ## 2026-09-01 — Grupo Entrega de arquivos — 4 threads saem da caixa preta (26 → 22) — Decisão 20
 
 **🔎 Em miúdos:** Threads onde o cliente entrega arquivos (planilha, DRM, COS4010 etc.) passam a aparecer corretamente — três como "entrega de dados" e uma como "Concluída".
