@@ -668,6 +668,19 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
   padding: 1.25rem 1.5rem; margin-bottom: 1.25rem;
 }
 .admin-card h2 { margin: 0 0 1rem; font-size: 0.95rem; font-weight: 700; color: var(--text); }
+.sit-linha { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0; border-bottom: 1px solid var(--border); }
+.sit-linha:last-child { border-bottom: none; }
+.sit-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.sit-dot.ok { background: var(--pos); }
+.sit-dot.ruim { background: #dc2626; }
+.sit-pill { font-size: 0.75rem; font-weight: 700; padding: 0.15rem 0.55rem; border-radius: 999px; }
+.sit-pill.ok { background: var(--pos-bg); color: var(--pos); }
+.sit-pill.ruim { background: #fee2e2; color: #b91c1c; }
+.nota-admin {
+  background: var(--surface); border: 1px dashed var(--border); border-radius: 8px;
+  padding: 0.65rem 0.85rem; font-size: 0.82rem; color: var(--muted); margin-bottom: 1rem;
+}
+.chk-grupo { display: flex; align-items: center; gap: 0.4rem; margin: 0.25rem 0; font-size: 0.88rem; }
 .btn-coletar {
   padding: 0.6rem 1.4rem; background: var(--marca); color: #fff;
   border: none; border-radius: 8px; font: inherit; font-size: 0.93rem;
@@ -1049,21 +1062,13 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
         <span class="nav-section-arrow">›</span>
       </div>
       <div class="nav-section-items">
-        <button class="nav-item" data-pagina="admin" data-aba="coletor" onclick="navegar(this)">
-          <span class="nav-ico">⚙️</span>
-          <span class="nav-txt">Coletor</span>
+        <button class="nav-item" data-pagina="admin" onclick="navegar(this)">
+          <span class="nav-ico">📧</span>
+          <span class="nav-txt">E-mail</span>
         </button>
-        <button class="nav-item" data-pagina="admin" data-aba="historico" onclick="navegar(this)">
-          <span class="nav-ico">📋</span>
-          <span class="nav-txt">Histórico de execuções</span>
-        </button>
-        <button class="nav-item" data-pagina="admin" data-aba="agendamentos" onclick="navegar(this)">
-          <span class="nav-ico">🕐</span>
-          <span class="nav-txt">Agendamentos</span>
-        </button>
-        <button class="nav-item" data-pagina="admin" data-aba="sem-retorno" onclick="navegar(this)">
-          <span class="nav-ico">⏸</span>
-          <span class="nav-txt">Regras de Sem Retorno</span>
+        <button class="nav-item" data-pagina="notificacoes" onclick="navegar(this)">
+          <span class="nav-ico">🔔</span>
+          <span class="nav-txt">Notificações</span>
         </button>
         <button class="nav-item" data-pagina="usuarios" onclick="navegar(this)">
           <span class="nav-ico">👥</span>
@@ -1289,23 +1294,27 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
     <section class="page" id="pag-admin">
       <div class="page-header">
         <div class="page-header-left">
-          <h1 class="page-titulo">Coletor</h1>
-          <p class="page-sub">Controles do coletor de e-mails</p>
+          <h1 class="page-titulo">E-mail</h1>
+          <p class="page-sub" id="adm-page-sub">Busca, histórico, relógio, regra de dias e situação — nesta tela.</p>
         </div>
       </div>
 
       <div class="email-tabbar" id="adm-tab-bar" style="margin-bottom:1rem">
-        <button class="email-tab ativa" onclick="_admMudarAba('coletor',this)">Coletor</button>
-        <button class="email-tab" onclick="_admMudarAba('historico',this)">Histórico de execuções</button>
-        <button class="email-tab" onclick="_admMudarAba('agendamentos',this)">Agendamentos</button>
-        <button class="email-tab" onclick="_admMudarAba('sem-retorno',this)">Regras de Sem Retorno</button>
+        <button class="email-tab ativa" data-aba="coletor" onclick="_admMudarAba('coletor',this)">Buscar e-mails agora</button>
+        <button class="email-tab" data-aba="historico" onclick="_admMudarAba('historico',this)">Histórico das buscas de e-mail</button>
+        <button class="email-tab" data-aba="agendamentos" onclick="_admMudarAba('agendamentos',this)">Agendamentos</button>
+        <button class="email-tab" data-aba="sem-retorno" onclick="_admMudarAba('sem-retorno',this)">Regras de Sem Retorno</button>
+        <button class="email-tab" data-aba="situacao" onclick="_admMudarAba('situacao',this)">Situação da busca</button>
       </div>
 
       <div id="adm-aba-coletor">
         <div class="admin-card">
-          <h2>Coletor de e-mails</h2>
+          <h2>Buscar e-mails agora</h2>
+          <p style="font-size:0.82rem;color:var(--muted);margin:0 0 0.85rem">
+            Busca os e-mails da caixa da área neste instante, sem esperar o relógio.
+          </p>
           <button class="btn-coletar" id="btn-coletar" onclick="dispararColeta()">
-            ▶ Rodar coletor agora
+            ▶ Buscar e-mails agora
           </button>
           <div class="status-linha">
             <span class="status-dot" id="status-dot"></span>
@@ -1315,7 +1324,7 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
       </div>
 
       <div id="adm-aba-historico" style="display:none">
-        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:0.75rem;">Exibindo apenas os últimos 7 dias.</p>
+        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:0.75rem;">As vezes em que a busca já rodou — não é a lista das conversas. Últimos 7 dias.</p>
         <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;font-size:0.8rem;color:var(--muted);">
           <span><span class="cpill cpill-princ" style="pointer-events:none;">✓ Classificadas</span> — e-mail novo identificado e classificado</span>
           <span><span class="cpill cpill-desc" style="pointer-events:none;">⊘ Spam</span> — bloqueado pelo filtro automático</span>
@@ -1352,28 +1361,14 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
 
             <div>
               <label style="display:block;font-weight:600;margin-bottom:0.4rem">
-                Coleta + Classificação de e-mails
+                Busca + classificação de e-mails
               </label>
               <p style="font-size:0.82rem;color:var(--muted);margin:0 0 0.6rem">
-                De quanto em quanto tempo o robô coleta e classifica os e-mails automaticamente.
-                Use 0 para desativar o automático.
+                De quanto em quanto tempo a busca de e-mails roda sozinha.
+                Use 0 para desativar o automático. Só e-mails — Fog não entra nesta tela.
               </p>
               <div style="display:flex;align-items:center;gap:0.75rem">
                 <input type="number" id="cfg-intervalo-coleta" min="0" max="1440" step="5"
-                  style="width:90px;padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:6px;font-size:1rem;background:var(--surface);color:var(--text);font-family:inherit">
-                <span style="color:var(--muted);font-size:0.9rem">minutos</span>
-              </div>
-            </div>
-
-            <div>
-              <label style="display:block;font-weight:600;margin-bottom:0.4rem">
-                Atualização dos dados do FOGBUGZ
-              </label>
-              <p style="font-size:0.82rem;color:var(--muted);margin:0 0 0.6rem">
-                De quanto em quanto tempo a tela do FOGBUGZ recarrega os dados.
-              </p>
-              <div style="display:flex;align-items:center;gap:0.75rem">
-                <input type="number" id="cfg-intervalo-fog" min="1" max="1440" step="5"
                   style="width:90px;padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:6px;font-size:1rem;background:var(--surface);color:var(--text);font-family:inherit">
                 <span style="color:var(--muted);font-size:0.9rem">minutos</span>
               </div>
@@ -1429,9 +1424,74 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
           </div>
         </div>
       </div>
+
+      <div id="adm-aba-situacao" style="display:none">
+        <p class="nota-admin"><strong>Só informação.</strong> Ligado ou parado. O e-mail de aviso está em Notificações.</p>
+        <div class="admin-card">
+          <h2>Situação da busca</h2>
+          <div class="sit-linha">
+            <span class="sit-dot ok" id="sit-site-dot"></span>
+            <div style="flex:1">
+              <strong>Site</strong>
+              <div id="sit-site-det" style="font-size:0.82rem;color:var(--muted);margin:0">Carregando…</div>
+            </div>
+            <span class="sit-pill ok" id="sit-site-pill">—</span>
+          </div>
+          <div class="sit-linha">
+            <span class="sit-dot" id="sit-busca-dot"></span>
+            <div style="flex:1">
+              <strong>Busca de e-mail</strong>
+              <div id="sit-busca-det" style="font-size:0.82rem;color:var(--muted);margin:0">Carregando…</div>
+            </div>
+            <span class="sit-pill" id="sit-busca-pill">—</span>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <!-- ── Página 5b: Detalhe de execução do Coletor ────────────────── -->
+    <!-- ── Administração · Notificações ───────────────────────────── -->
+    <section class="page" id="pag-notificacoes">
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1 class="page-titulo">Notificações</h1>
+          <p class="page-sub">O que é, ligada ou desligada, e quais grupos recebem (pode ser mais de um).</p>
+        </div>
+      </div>
+      <p class="nota-admin">Lista que pode crescer. A luz da busca continua em E-mail → Situação da busca. O envio do e-mail quando parar entra no passo do relógio — aqui você grava a regra.</p>
+      <div class="admin-card">
+        <div class="tabela-wrap">
+          <table class="tabela">
+            <thead>
+              <tr>
+                <th>O que é</th>
+                <th>Status</th>
+                <th>Grupos que recebem</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <strong>Busca de e-mail parou</strong>
+                  <div style="font-size:0.82rem;color:var(--muted);margin:0">A busca automática não rodou no tempo marcado em Agendamentos.</div>
+                </td>
+                <td>
+                  <label class="chk-grupo"><input type="checkbox" id="notif-busca-ativa"> Ligada</label>
+                </td>
+                <td>
+                  <label class="chk-grupo"><input type="checkbox" id="notif-g-administrador" value="administrador"> Administrador</label>
+                  <label class="chk-grupo"><input type="checkbox" id="notif-g-gestor" value="gestor"> Gestor</label>
+                  <label class="chk-grupo"><input type="checkbox" id="notif-g-operador" value="operador"> Operador</label>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;align-items:center;gap:1rem;margin-top:1rem">
+          <button class="btn-coletar" type="button" onclick="_notifSalvar()">Salvar notificações</button>
+          <span id="notif-feedback" style="font-size:0.85rem;color:var(--muted)"></span>
+        </div>
+      </div>
+    </section>
     <section class="page" id="pag-admin-detalhe">
       <div class="det-topo">
         <h1 class="page-titulo" id="det-titulo">Detalhe</h1>
@@ -1489,7 +1549,7 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
       <div class="usr-cabecalho">
         <div class="usr-cabecalho-info">
           <h1 class="page-titulo">Usuários e Perfis</h1>
-          <p class="page-sub">Quem acessa o sistema e o que cada perfil pode ver.</p>
+          <p class="page-sub">Quem entra neste app e o perfil. Senha no portal. Quem recebe cada notificação é o grupo marcado em Notificações.</p>
         </div>
         <button id="usr-btn-acao" class="btn-classificar" onclick="_usrBtnAcao()">+ Novo usuário</button>
       </div>
@@ -1506,7 +1566,7 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
         <div class="tabela-wrap">
           <table class="tabela">
             <thead><tr>
-              <th>Usuário</th><th>Perfil</th><th>Status</th><th>E-mail alerta</th><th>Ações</th>
+              <th>Usuário</th><th>Perfil</th><th>Status</th><th>Ações</th>
             </tr></thead>
             <tbody id="usr-tbody"></tbody>
           </table>
@@ -1563,10 +1623,6 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
           <label class="field">
             <span class="field-label">Departamento</span>
             <input class="field-input" id="usr-f-dept" />
-          </label>
-          <label class="field-check">
-            <input type="checkbox" id="usr-f-alerta" checked />
-            Receber e-mail de alertas
           </label>
           <label class="field-check">
             <input type="checkbox" id="usr-f-ativo" checked />
@@ -2161,8 +2217,11 @@ function navegar(btn) {
   // sidebar
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('ativo'));
   const sidebarItem = aba
-    ? document.querySelector(`.nav-item[data-pagina="${pag}"][data-aba="${aba}"]`)
-    : document.querySelector(`.nav-item[data-pagina="${pag}"]:not([data-aba])`);
+    ? (document.querySelector(`.nav-item[data-pagina="${pag}"][data-aba="${aba}"]`)
+       || document.querySelector(`.nav-item[data-pagina="${pag}"]:not([data-aba])`)
+       || document.querySelector(`.nav-item[data-pagina="${pag}"]`))
+    : document.querySelector(`.nav-item[data-pagina="${pag}"]:not([data-aba])`)
+      || document.querySelector(`.nav-item[data-pagina="${pag}"]`);
   if (sidebarItem) { sidebarItem.classList.add('ativo'); _expandirSecaoDo(pag); }
   // abas horizontais de e-mail (só as que têm data-pagina — evita afetar abas internas)
   document.querySelectorAll('.email-tab[data-pagina]').forEach(t => t.classList.remove('ativa'));
@@ -2175,31 +2234,35 @@ function navegar(btn) {
     'historico':         'E-MAILS · Evolução',
     'nao-classificados': 'E-MAILS · Não Classificadas',
     'bloqueados':        'E-MAILS · Bloqueadas por Regras',
-    'admin-detalhe':     'Administração · Coletor · Detalhe',
+    'admin-detalhe':     'Administração · E-mail · Detalhe',
     'usuarios':          'Administração · Usuários e Perfis',
+    'notificacoes':      'Administração · Notificações',
     'fog-casos':         'FOGBUGZ · Lista de Casos',
     'fog-kpis':          'FOGBUGZ · Visão Consolidada',
     'fog-evolucao':      'FOGBUGZ · Evolução',
   };
   const titulosAdmin = {
-    'coletor':      'Administração · Coletor',
-    'historico':    'Administração · Histórico de execuções',
-    'agendamentos': 'Administração · Agendamentos',
+    'coletor':      'Administração · E-mail · Buscar e-mails agora',
+    'historico':    'Administração · E-mail · Histórico das buscas de e-mail',
+    'agendamentos': 'Administração · E-mail · Agendamentos',
+    'sem-retorno':  'Administração · E-mail · Regras de Sem Retorno',
+    'situacao':     'Administração · E-mail · Situação da busca',
   };
   document.getElementById('topbar-titulo').textContent =
-    pag === 'admin' ? (titulosAdmin[aba] || 'Administração · Coletor') : (titulos[pag] || '');
+    pag === 'admin' ? (titulosAdmin[aba] || 'Administração · E-mail') : (titulos[pag] || '');
   if (pag === 'historico') { if (!evoHistorico.length) carregarHistorico(); else renderEvo(); }
   if (pag === 'nao-classificados') carregarNaoClassificados();
   if (pag === 'bloqueados') carregarBloqueados();
   if (pag === 'admin') {
     _atualizarStatusColeta();
     _iniciarAutoRefreshLog();
-    const tabBtn = document.querySelector(`#adm-tab-bar .email-tab[onclick*="'${aba || 'coletor'}'"]`);
+    const tabBtn = document.querySelector(`#adm-tab-bar .email-tab[data-aba="${aba || 'coletor'}"]`);
     if (tabBtn) _admMudarAba(aba || 'coletor', tabBtn);
     else if (!aba) carregarLogColetas();
   }
   if (pag === 'usuarios') { _usrRenderTabela(); }
-  else { _pararAutoRefreshLog(); }
+  if (pag === 'notificacoes') { _notifCarregar(); }
+  if (pag !== 'admin') { _pararAutoRefreshLog(); }
   if (pag === 'fog-evolucao') { carregarFogEvo(); }
   if (pag === 'fog-casos') {
     if (!_keepFogFiltros) {
@@ -2510,16 +2573,34 @@ function _admMudarAba(aba, btn) {
   document.getElementById('adm-aba-historico').style.display     = aba === 'historico'     ? '' : 'none';
   document.getElementById('adm-aba-agendamentos').style.display  = aba === 'agendamentos'  ? '' : 'none';
   document.getElementById('adm-aba-sem-retorno').style.display   = aba === 'sem-retorno'   ? '' : 'none';
+  document.getElementById('adm-aba-situacao').style.display      = aba === 'situacao'      ? '' : 'none';
+  const subs = {
+    coletor: 'Busca os e-mails da caixa da área neste instante.',
+    historico: 'As vezes em que a busca já rodou — últimos 7 dias.',
+    agendamentos: 'De quanto em quanto tempo a busca de e-mails roda sozinha.',
+    'sem-retorno': 'Quantos dias sem resposta para marcar Sem Retorno.',
+    situacao: 'Como está agora: ligado ou parado. Não é o e-mail de aviso.',
+  };
+  const subEl = document.getElementById('adm-page-sub');
+  if (subEl) subEl.textContent = subs[aba] || '';
+  const titulosAba = {
+    coletor: 'Administração · E-mail · Buscar e-mails agora',
+    historico: 'Administração · E-mail · Histórico das buscas de e-mail',
+    agendamentos: 'Administração · E-mail · Agendamentos',
+    'sem-retorno': 'Administração · E-mail · Regras de Sem Retorno',
+    situacao: 'Administração · E-mail · Situação da busca',
+  };
+  document.getElementById('topbar-titulo').textContent = titulosAba[aba] || 'Administração · E-mail';
   if (aba === 'historico')    carregarLogColetas();
   if (aba === 'agendamentos') _admCarregarConfig();
   if (aba === 'sem-retorno')  _admCarregarSr();
+  if (aba === 'situacao')     _admCarregarSituacao();
 }
 
 async function _admCarregarConfig() {
   try {
     const cfg = await _get('/api/admin/config');
     document.getElementById('cfg-intervalo-coleta').value = cfg.intervalo_coleta_min ?? 60;
-    document.getElementById('cfg-intervalo-fog').value    = cfg.intervalo_fog_min    ?? 15;
   } catch (e) {
     document.getElementById('cfg-feedback').textContent = 'Erro ao carregar configurações.';
   }
@@ -2556,19 +2637,76 @@ async function _admSalvarSr() {
 
 async function _admSalvarConfig() {
   const coletaMin = parseInt(document.getElementById('cfg-intervalo-coleta').value, 10);
-  const fogMin    = parseInt(document.getElementById('cfg-intervalo-fog').value, 10);
   const fb = document.getElementById('cfg-feedback');
   fb.textContent = 'Salvando…';
   try {
     const r = await fetch('/api/admin/config', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({intervalo_coleta_min: coletaMin, intervalo_fog_min: fogMin}),
+      body: JSON.stringify({intervalo_coleta_min: coletaMin}),
     });
     if (!r.ok) throw new Error();
-    _fogIntervalSecs = fogMin * 60;
-    _fogSecs = _fogIntervalSecs;
     _aplicarIntervaloColeta(coletaMin);
+    fb.textContent = '✓ Salvo com sucesso.';
+    setTimeout(() => { fb.textContent = ''; }, 3000);
+  } catch (e) {
+    fb.textContent = 'Erro ao salvar.';
+  }
+}
+
+async function _admCarregarSituacao() {
+  try {
+    const d = await _get('/api/admin/situacao-busca');
+    function pintar(prefixo, bloco) {
+      const ok = !!bloco.ok;
+      document.getElementById(prefixo + '-dot').className = 'sit-dot ' + (ok ? 'ok' : 'ruim');
+      document.getElementById(prefixo + '-pill').className = 'sit-pill ' + (ok ? 'ok' : 'ruim');
+      document.getElementById(prefixo + '-pill').textContent = bloco.rotulo || '—';
+      document.getElementById(prefixo + '-det').textContent = bloco.detalhe || '';
+    }
+    pintar('sit-site', d.site || {});
+    pintar('sit-busca', d.busca || {});
+  } catch (e) {
+    document.getElementById('sit-busca-det').textContent = 'Não foi possível ler a situação.';
+  }
+}
+
+async function _notifCarregar() {
+  try {
+    const cfg = await _get('/api/admin/config');
+    const n = (cfg.notificacoes || []).find(x => x.id === 'busca_email_parou') || {};
+    document.getElementById('notif-busca-ativa').checked = n.ativa !== false;
+    const grupos = n.grupos || ['administrador'];
+    ['administrador', 'gestor', 'operador'].forEach(g => {
+      const el = document.getElementById('notif-g-' + g);
+      if (el) el.checked = grupos.includes(g);
+    });
+  } catch (e) {
+    const fb = document.getElementById('notif-feedback');
+    if (fb) fb.textContent = 'Erro ao carregar.';
+  }
+}
+
+async function _notifSalvar() {
+  const grupos = ['administrador', 'gestor', 'operador'].filter(g => {
+    const el = document.getElementById('notif-g-' + g);
+    return el && el.checked;
+  });
+  const fb = document.getElementById('notif-feedback');
+  fb.textContent = 'Salvando…';
+  try {
+    const r = await fetch('/api/admin/config', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        notificacoes: [{
+          id: 'busca_email_parou',
+          ativa: document.getElementById('notif-busca-ativa').checked,
+          grupos: grupos.length ? grupos : ['administrador'],
+        }],
+      }),
+    });
+    if (!r.ok) throw new Error();
     fb.textContent = '✓ Salvo com sucesso.';
     setTimeout(() => { fb.textContent = ''; }, 3000);
   } catch (e) {
@@ -2642,9 +2780,9 @@ async function _atualizarStatusColeta() {
       dot.className = d.ultimo_erro ? 'status-dot erro' : 'status-dot ok';
       txt.innerHTML = d.ultimo_erro
         ? `<strong style="color:#ef4444">Erro na última coleta:</strong> ${d.ultimo_erro}`
-        : 'Coletor parado. Pronto para nova rodada.';
+        : 'Busca parada. Pronto para nova rodada.';
       btn.disabled = false;
-      btn.textContent = '▶ Rodar coletor agora';
+      btn.textContent = '▶ Buscar e-mails agora';
     }
   } catch (_) {}
 }
@@ -2662,7 +2800,7 @@ async function dispararColeta() {
     if (!r.ok) throw new Error();
     _atualizarStatusColeta();
   } catch (e) {
-    alert('Erro ao iniciar o coletor. Verifique o servidor.');
+    alert('Erro ao iniciar a busca. Verifique o servidor.');
     btn.disabled = false;
   }
 }
@@ -2763,7 +2901,7 @@ function _traduzirErro(raw) {
 }
 
 function _voltarAdmin() {
-  navegar(document.querySelector('[data-pagina="admin"][data-aba="coletor"]'));
+  navegar(document.querySelector('[data-pagina="admin"]'));
 }
 
 function _detFiltrar() {
@@ -2786,7 +2924,7 @@ async function abrirDetalheLog(logId, dataHora, status) {
   // Navegar para a tela de detalhe
   document.querySelectorAll('.page').forEach(p => p.classList.remove('ativa'));
   document.getElementById('pag-admin-detalhe').classList.add('ativa');
-  document.getElementById('topbar-titulo').textContent = 'Coletor · Detalhe';
+  document.getElementById('topbar-titulo').textContent = 'E-mail · Detalhe';
   document.getElementById('det-titulo').textContent = `Execução de ${dataHora}`;
   document.getElementById('det-erro-box').hidden = true;
   document.getElementById('det-threads-box').hidden = true;
@@ -3562,8 +3700,9 @@ const _USR_TELAS = [
   ['fog-kpis',         'FOGBUGZ · Visão Consolidada',      'Visão consolidada por status, responsável, casos mais antigos e parados há quantos dias.'],
   ['fog-casos',        'FOGBUGZ · Lista de Casos',         'Listagem de casos por projeto, responsável e status.'],
   ['fog-evolucao',     'FOGBUGZ · Evolução',               'Tendências de casos ao longo do tempo — aberturas, fechamentos, projetos e áreas.'],
-  ['admin',            'Administração · Coletor',          'Controles do robô de coleta. (Administrador)'],
-  ['usuarios',         'Administração · Usuários e Perfis','Gestão de usuários e permissões. (Administrador)'],
+  ['admin',            'Administração · E-mail',           'Busca, histórico, relógio, regra de dias e situação da busca. (Administrador)'],
+  ['notificacoes',     'Administração · Notificações',     'O que é, ligada ou desligada, e quais grupos recebem. (Administrador)'],
+  ['usuarios',         'Administração · Usuários e Perfis','Quem entra e o perfil. (Administrador)'],
 ];
 
 let _usrDados = [
@@ -3572,7 +3711,7 @@ let _usrDados = [
 let _permissoes = {
   operador:       ['classificados','historico'],
   gestor:         ['classificados','historico','nao-classificados','bloqueados','fog-casos','fog-kpis'],
-  administrador:  ['classificados','historico','nao-classificados','bloqueados','fog-casos','fog-kpis','admin','usuarios','agendamentos'],
+  administrador:  ['classificados','historico','nao-classificados','bloqueados','fog-casos','fog-kpis','admin','notificacoes','usuarios'],
 };
 let _usrAbaAtiva = 'usuarios';
 let _usrModalId   = null;
@@ -3606,7 +3745,7 @@ function _usrBtnAcao() {
 function _usrRenderTabela() {
   const tb = document.getElementById('usr-tbody');
   if (_usrDados.length === 0) {
-    tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:1.5rem;">Nenhum usuário cadastrado.</td></tr>';
+    tb.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:1.5rem;">Nenhum usuário cadastrado.</td></tr>';
     return;
   }
   tb.innerHTML = _usrDados.map(u => `
@@ -3614,7 +3753,6 @@ function _usrRenderTabela() {
       <td><strong>${escHtml(u.nome)}</strong><div style="font-size:0.8rem;color:var(--muted);">${escHtml(u.email)}</div></td>
       <td><span class="badge-perfil badge-perfil-${u.perfil}">${_usrRotuloPerfil(u.perfil)}</span></td>
       <td><span class="${u.ativo ? 'usr-status-ok' : 'usr-status-no'}">${u.ativo ? 'Ativo' : 'Inativo'}</span></td>
-      <td style="font-size:0.85rem;">${u.alerta && u.ativo ? 'Sim' : 'Não'}</td>
       <td><div class="acoes-linha">
         <button class="btn-secondary" onclick="_usrAbrirModal(${u.id})">Editar</button>
         <button class="btn-secondary" onclick="_usrToggleAtivo(${u.id})">${u.ativo ? 'Inativar' : 'Ativar'}</button>
@@ -3659,7 +3797,6 @@ function _usrAbrirModal(id) {
     document.getElementById('usr-f-perfil').value = 'operador';
     document.getElementById('usr-f-cargo').value  = '';
     document.getElementById('usr-f-dept').value   = '';
-    document.getElementById('usr-f-alerta').checked = true;
     document.getElementById('usr-f-ativo').checked  = true;
   } else {
     const u = _usrDados.find(x => x.id === id);
@@ -3669,7 +3806,6 @@ function _usrAbrirModal(id) {
     document.getElementById('usr-f-perfil').value = u.perfil;
     document.getElementById('usr-f-cargo').value  = u.cargo||'';
     document.getElementById('usr-f-dept').value   = u.dept||'';
-    document.getElementById('usr-f-alerta').checked = u.alerta;
     document.getElementById('usr-f-ativo').checked  = u.ativo;
   }
   document.getElementById('usr-modal-backdrop').classList.add('aberto');
@@ -3690,7 +3826,6 @@ function _usrSalvar() {
     perfil: document.getElementById('usr-f-perfil').value,
     cargo:  document.getElementById('usr-f-cargo').value.trim(),
     dept:   document.getElementById('usr-f-dept').value.trim(),
-    alerta: document.getElementById('usr-f-alerta').checked,
     ativo:  document.getElementById('usr-f-ativo').checked,
   };
   if (_usrModalId === null) {

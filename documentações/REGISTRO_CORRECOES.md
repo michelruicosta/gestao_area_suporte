@@ -2,6 +2,36 @@
 
 ---
 
+## 2026-09-01 — Administração: pasta E-mail, Situação da busca e Notificações
+
+**🔎 Em miúdos:** O menu Administração passou a ter três entradas. Tudo de e-mail ficou numa pasta só, com abas. A luz (ligada/parada) ficou separada do aviso por e-mail. Quem recebe o aviso é o grupo (pode ser mais de um), não uma caixa “tudo ou nada” no cadastro.
+
+**Problema:** Coletor, histórico, agendamento e Sem Retorno pareciam ferramentas soltas. Fog estava em Agendamentos sem relógio de verdade. Não havia lugar para a situação da busca nem para gravar notificações.
+
+**Correção:**
+- Menu: **E-mail**, **Notificações**, **Usuários e Perfis**.
+- Abas de E-mail: Buscar e-mails agora, Histórico das buscas de e-mail, Agendamentos (só e-mails), Regras de Sem Retorno, Situação da busca.
+- Fog saiu de Agendamentos (o intervalo antigo no config continua para a tela Fog).
+- Notificações grava no `data/config.json`: o que é, ligada/desligada, grupos.
+- Situação da busca lê o histórico de coletas (`/api/admin/situacao-busca`).
+- Cadastro de usuários: saiu a coluna “E-mail alerta”.
+
+**Arquivos:** `templates/gestao_email.html`, `scripts/servidor_telas.py`, `tests/test_servidor_telas.py`
+
+**Validação:** ✅ VALIDADO — `pytest tests/test_servidor_telas.py -q` → 16 passed. O **envio** do e-mail quando a busca parar ainda não dispara; esta entrega é a tela e a gravação da regra.
+
+---
+
+## 2026-09-01 — Texto do motivo "saudação" confirmado como já implementado no Passo A
+
+**🔎 Em miúdos:** O texto do motivo para e-mails de saudação pura (sem conteúdo para classificar) foi definido e implementado no Passo A. O item estava listado como pendente no PENDENCIAS.md por erro — a decisão já havia ocorrido ao fechar o artefato das 18 linhas em 29/08/2026.
+
+**Correção:** `_so_cortesia()` sem confirmação explícita retorna `'Mensagem do cliente sem conteúdo para classificar — aguarda verificação'` (substituiu `'Cliente enviou saudação — possível entrega de arquivo'`). `scripts/banco_threads.py` linha 626.
+
+**Validação:** ✅ VALIDADO — incluído nos 18 motivos do artefato aprovado em 29/08/2026; commit `ca52ded` (Passo A). 428 testes passando.
+
+---
+
 ## 2026-08-31 — Passo B: 4 motivos novos + correção de aviso de confidencialidade
 
 ### Passo B — Detecção de 4 motivos sem lógica no código

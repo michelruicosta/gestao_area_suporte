@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import os
 import sys
+from datetime import datetime
 
 from tests.conftest import RAIZ
 
@@ -160,3 +161,82 @@ def test_rota_perfil_volta_para_a_tela_principal():
     destino = resp.headers.get('Location', '')
     assert destino.endswith('/')
     assert '/perfil' not in destino.rstrip('/')
+
+
+def test_normalizar_notificacoes_aceita_varios_grupos():
+    out = st.normalizar_notificacoes([{
+        'id': 'busca_email_parou',
+        'ativa': True,
+        'grupos': ['administrador', 'gestor', 'lixo'],
+    }])
+    assert len(out) == 1
+    assert out[0]['grupos'] == ['administrador', 'gestor']
+    assert out[0]['ativa'] is True
+
+
+def test_normalizar_notificacoes_sem_lista_volta_ao_padrao():
+    out = st.normalizar_notificacoes(None)
+    assert out[0]['id'] == 'busca_email_parou'
+    assert out[0]['grupos'] == ['administrador']
+
+
+def test_avaliar_situacao_busca_parada_quando_atrasada():
+    agora = datetime(2026, 9, 1, 12, 0, 0)
+    logs = [{'status': 'concluida', 'data_hora': '2026-09-01 08:00:00'}]
+    r = st.avaliar_situacao_busca(
+        {'intervalo_coleta_min': 60}, logs, False, agora=agora,
+    )
+    assert r['site']['ok'] is True
+    assert r['busca']['ok'] is False
+    assert r['busca']['rotulo'] == 'Parada'
+
+
+def test_avaliar_situacao_busca_ligada_dentro_do_intervalo():
+    agora = datetime(2026, 9, 1, 12, 0, 0)
+    logs = [{'status': 'concluida', 'data_hora': '2026-09-01 11:30:00'}]
+    r = st.avaliar_situacao_busca(
+        {'intervalo_coleta_min': 60}, logs, False, agora=agora,
+    )
+    assert r['busca']['ok'] is True
+    assert r['busca']['rotulo'] == 'Ligada'
+
+
+def test_html_administracao_email_notificacoes_sem_fog():
+    caminho = os.path.join(RAIZ, 'templates', 'gestao_email.html')
+    with open(caminho, encoding='utf-8') as f:
+        html = f.read()
+    assert 'nav-txt">E-mail</span>' in html
+    assert 'Buscar e-mails agora' in html
+    assert 'Histórico das buscas de e-mail' in html
+    assert 'Situação da busca' in html
+    assert 'id="pag-notificacoes"' in html
+    assert 'notif-g-administrador' in html
+    assert 'cfg-intervalo-fog' not in html
+    assert 'Atualização dos dados do FOGBUGZ' not in html
+    assert 'Receber e-mail de alertas' not in html
+    assert 'data-pagina="admin" data-aba="coletor"' not in html
+
+
+def test_api_grava_notificacoes_com_varios_grupos(tmp_path, monkeypatch):
+    cfg = tmp_path / 'config.json'
+    cfg.write_text('{"intervalo_coleta_min": 60}', encoding='utf-8')
+    monkeypatch.setattr(st, '_CONFIG_PATH', str(cfg))
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess['logado'] = True
+        sess['email'] = st._ADMIN_EMAIL
+    resp = client.post(
+        '/api/admin/config',
+        json={
+            'notificacoes': [{
+                'id': 'busca_email_parou',
+                'ativa': True,
+                'grupos': ['administrador', 'gestor'],
+            }],
+        },
+    )
+    assert resp.status_code == 200
+    got = client.get('/api/admin/config')
+    assert got.status_code == 200
+    body = got.get_json()
+    assert body['notificacoes'][0]['grupos'] == ['administrador', 'gestor']

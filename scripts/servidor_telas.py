@@ -90,6 +90,131 @@ _CONFIG_DEFAULTS: dict = {
     'dias_sr_ac': 60,
 }
 
+_GRUPOS_NOTIF = ('administrador', 'gestor', 'operador')
+_NOTIF_BUSCA_ID = 'busca_email_parou'
+
+
+def _notificacao_busca_padrao() -> dict:
+    return {
+        'id': _NOTIF_BUSCA_ID,
+        'titulo': 'Busca de e-mail parou',
+        'descricao': (
+            'A busca automática não rodou no tempo marcado em Agendamentos.'
+        ),
+        'ativa': True,
+        'grupos': ['administrador'],
+    }
+
+
+def normalizar_notificacoes(bruto) -> list:
+    """Garante a lista de notificações: o que é, ligada/desligada, grupos (vários)."""
+    por_id: dict = {}
+    if isinstance(bruto, list):
+        for item in bruto:
+            if not isinstance(item, dict):
+                continue
+            nid = str(item.get('id') or '').strip()
+            if nid:
+                por_id[nid] = item
+    padrao = _notificacao_busca_padrao()
+    salvo = por_id.get(_NOTIF_BUSCA_ID, {})
+    grupos = salvo.get('grupos', padrao['grupos'])
+    if not isinstance(grupos, list):
+        grupos = list(padrao['grupos'])
+    grupos_ok = [g for g in grupos if g in _GRUPOS_NOTIF]
+    if not grupos_ok:
+        grupos_ok = ['administrador']
+    ativa = salvo.get('ativa', True)
+    if not isinstance(ativa, bool):
+        ativa = str(ativa).strip().lower() in ('1', 'true', 'sim', 'yes')
+    return [{**padrao, 'ativa': ativa, 'grupos': grupos_ok}]
+
+
+def _parse_data_hora_log(valor):
+    if not valor:
+        return None
+    if isinstance(valor, datetime):
+        return valor
+    texto = str(valor).strip()[:19]
+    for fmt in ('%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S'):
+        try:
+            return datetime.strptime(texto, fmt)
+        except ValueError:
+            continue
+    return None
+
+
+def avaliar_situacao_busca(cfg: dict, logs, em_andamento: bool, agora=None) -> dict:
+    """Informação da busca (luzes): não envia e-mail — isso é Notificações."""
+    agora = agora or datetime.now()
+    site = {
+        'ok': True,
+        'rotulo': 'Ligado',
+        'detalhe': 'O programa da tela está no ar.',
+    }
+    if em_andamento:
+        return {
+            'site': site,
+            'busca': {
+                'ok': True,
+                'rotulo': 'Buscando agora',
+                'detalhe': 'A busca de e-mails está em andamento.',
+            },
+        }
+    intervalo = int(cfg.get('intervalo_coleta_min') or 0)
+    if intervalo <= 0:
+        return {
+            'site': site,
+            'busca': {
+                'ok': True,
+                'rotulo': 'Automático desligado',
+                'detalhe': 'O relógio da busca está em 0 minutos em Agendamentos.',
+            },
+        }
+    ultimo_ok = None
+    for log in logs or []:
+        if str(log.get('status') or '') == 'concluida':
+            ultimo_ok = log
+            break
+    if ultimo_ok is None:
+        return {
+            'site': site,
+            'busca': {
+                'ok': False,
+                'rotulo': 'Parada',
+                'detalhe': 'Ainda não há busca concluída no histórico.',
+            },
+        }
+    quando = _parse_data_hora_log(ultimo_ok.get('data_hora'))
+    if quando is None:
+        return {
+            'site': site,
+            'busca': {
+                'ok': False,
+                'rotulo': 'Parada',
+                'detalhe': 'Não foi possível ler a data da última busca.',
+            },
+        }
+    minutos = (agora - quando).total_seconds() / 60.0
+    detalhe = f'Última busca ok: {quando.strftime("%d/%m %H:%M")}.'
+    if minutos > intervalo * 1.5:
+        return {
+            'site': site,
+            'busca': {
+                'ok': False,
+                'rotulo': 'Parada',
+                'detalhe': detalhe + ' Não rodou no intervalo combinado.',
+            },
+        }
+    return {
+        'site': site,
+        'busca': {
+            'ok': True,
+            'rotulo': 'Ligada',
+            'detalhe': detalhe,
+        },
+    }
+
 def _ler_config() -> dict:
     try:
         with open(_CONFIG_PATH, encoding='utf-8') as f:
@@ -820,6 +945,7 @@ def api_admin_log_coletas():
 def api_admin_config_get():
     cfg = dict(_ler_config())
     cfg.pop('senha_hash', None)
+    cfg['notificacoes'] = normalizar_notificacoes(cfg.get('notificacoes'))
     return jsonify(cfg)
 
 
@@ -836,10 +962,21 @@ def api_admin_config_post():
         cfg['dias_sr_af'] = max(1, int(dados['dias_sr_af']))
     if 'dias_sr_ac' in dados:
         cfg['dias_sr_ac'] = max(1, int(dados['dias_sr_ac']))
+    if 'notificacoes' in dados:
+        cfg['notificacoes'] = normalizar_notificacoes(dados.get('notificacoes'))
     _salvar_config(cfg)
     _reagendar_coleta(cfg['intervalo_coleta_min'])
     visivel = {k: v for k, v in cfg.items() if k != 'senha_hash'}
+    visivel['notificacoes'] = normalizar_notificacoes(visivel.get('notificacoes'))
     return jsonify({'ok': True, 'config': visivel})
+
+
+@app.route('/api/admin/situacao-busca')
+@_requer_login
+def api_admin_situacao_busca():
+    cfg = _ler_config()
+    logs = bt.ler_log_coletas(limite=30)
+    return jsonify(avaliar_situacao_busca(cfg, logs, _coleta_em_andamento))
 
 
 @app.route('/api/admin/log-detalhe/<int:log_id>')
