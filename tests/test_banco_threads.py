@@ -2299,3 +2299,16 @@ def test_status_enc_banco_central_nao_afeta_enc_sem_bacen():
     assert status == 'Aguardando Finaud', f'got: {status}'
     assert motivo == 'Cliente enviou informações e extratos — aguarda processamento', \
         f'motivo inesperado para ENC sem BACEN: {motivo}'
+
+
+def test_status_trustee_sem_movimentacao_aguarda_finaud():
+    """TRUSTEE DTVM envia extrato diário 'sem movimentação' → entrega de informação (01/09/2026)."""
+    corpo = (
+        'Compromissada: sem movimentação\r\n\r\nLFT: sem movimentação\r\n\r\n'
+        'Atenciosamente,\r\n\r\nRobson S. Neves\r\nContabilidade de Fundos'
+    )
+    msgs = [_msg(CLIENTE, corpo=corpo, assunto='TRUSTEE DTVM - EXTRATO COMPROMISSADA 2026.07.31')]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'got: {status}'
+    assert motivo == 'Cliente enviou informações e extratos — aguarda processamento', \
+        f'motivo errado: {motivo}'

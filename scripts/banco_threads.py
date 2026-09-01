@@ -641,6 +641,7 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     _SEGUE_MID = (
         'segue a planilha', 'segue balancete', 'segue a base',
         'houve compromissada', 'houveram compromissada',  # Planner SCD: "não houve compromissada no dia"
+        'sem movimenta',      # TRUSTEE DTVM: "Compromissada: sem movimentação / LFT: sem movimentação"
         'em anexo',       # "Em anexo arquivo solicitado" / "extratos em anexo"
         'anexo posições', # Western Union: relatório diário de posição de câmbio
         'anexo extratos', # BANVOX DTVM: extrato compromissada/custódia
