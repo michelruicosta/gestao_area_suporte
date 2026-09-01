@@ -976,6 +976,43 @@ def test_cadoc_peco_com_pergunta_e_solicitacao():
     assert 'solicitação' in motivo, f'Esperado motivo solicitação, got: {motivo}'
 
 
+# ── Grupo BANCO CENTRAL aviso (01/09/2026) ───────────────────────────────────
+
+def test_bc_aviso_credenciamento_realizado_e_concluida():
+    """BC aviso grupo: "Credenciamento realizado." — cliente confirma fim do processo STA.
+    Reproduz thread 'BANCO CENTRAL - AVISO DE ATRASO - CNPJ 38.429.045' (VIS DTVM, 01/09/2026).
+    """
+    msgs = [
+        _msg(CLIENTE, corpo='Monica, bom dia.\r\n\r\nGentileza verificar o aviso de atraso.'),
+        _msg(CLIENTE, corpo='Monica, boa tarde.\r\n\r\nPreciso do seu nome completo, data de nascimento e CPF.'),
+        _msg(CLIENTE, corpo='Monica, boa tarde.\r\n\r\nSegue seu login: 436880001.MOMACEDO'),
+        _msg(CLIENTE, corpo='Monica, bom dia.\r\n\r\nSegue evidência da senha e conta ativa.'),
+        _msg(CLIENTE, corpo='Monica,\r\n\r\nCredenciamento realizado.'),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída', f'Esperado Concluída, got: {status} | {motivo}'
+
+
+def test_bc_aviso_favor_solucionar_com_pergunta_e_solicitacao():
+    """BC aviso grupo: "Será que esquecemos do 4011?. Favor solucionar com prioridade."
+    "?" bloqueia _PEDIDO_IMPLICITO, mas "favor" em _PEDIDO_FOLLOW_UP dispara → solicitação.
+    Reproduz thread 'Fw: BANCO CENTRAL - AVISO - CNPJ 50.286.774' (CV DTVM, 01/09/2026).
+    """
+    corpo = 'Bom dia .\r\n\r\nSerá que esquecemos do 4011 ?.\r\n\r\nFavor solucionar com prioridade .'
+    msgs = [_msg(CLIENTE, assunto='Fw: BANCO CENTRAL - AVISO DE ATRASO EM REMESSA DE DOCUMENTO', corpo=corpo)]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
+    assert 'solicitação' in motivo, f'Esperado solicitação, got: {motivo}'
+
+
+def test_regressao_favor_em_pedido_implicito_sem_pergunta():
+    """Regressão: "favor" sem "?" já era solicitação via _PEDIDO_IMPLICITO — não deve regredir."""
+    msgs = [_msg(CLIENTE, corpo='Favor enviar o arquivo atualizado.')]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+    assert 'solicitação' in motivo
+
+
 # ── Snapshots de contadores ───────────────────────────────────────────────────
 
 def test_snapshot_banco_vazio(monkeypatch, tmp_path):

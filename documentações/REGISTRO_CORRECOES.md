@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-09-01 — Grupo BC Aviso — 2 threads saem da caixa preta (50 → 48)
+
+**🔎 Em miúdos:** 2 threads de aviso de atraso do Banco Central deixam de aparecer como "aguarda resposta da Finaud".
+
+**Problema:** 2 padrões de conclusão/pedido não eram reconhecidos.
+
+**Correção:**
+- "Credenciamento realizado" → `_CONFIRMACAO_EXPLICITA` → **Concluída** (VIS DTVM: cliente confirmou que o cadastro no STA do BC foi concluído)
+- "Favor solucionar" + "?" → `_PEDIDO_FOLLOW_UP` via `\bfavor\b` → **solicitação** (CV DTVM: pedido urgente com pergunta antes)
+
+**Arquivos:** `scripts/banco_threads.py`, `tests/test_banco_threads.py`
+
+**Validação:** ✅ VALIDADO — `pytest tests/ -q` → 494 passed (3 testes novos incluindo regressão do "favor" sem "?").
+
+---
+
 ## 2026-09-01 — Grupo CADOC 4111 — 3 threads saem da caixa preta (53 → 50)
 
 **🔎 Em miúdos:** 3 conversas do grupo CADOC 4111 que apareciam como "aguarda resposta da Finaud" passaram a ter classificação correta. Uma ficou como genuína.

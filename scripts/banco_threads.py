@@ -182,9 +182,10 @@ _CONFIRMACAO_EXPLICITA = re.compile(
     r'perfeito|valeu|confirmado|entendido|sem\s+problemas|'
     r'nos?\s+ajudou|me\s+ajudou|ajudou|deu\s+certo|voltou|funcionou|resolveu|'
     r'certo\b|tudo\s+(bem|certo|ok|bom)|arquivo\s+submetido|'
-    r'pode\s+transmitir|'    # Guru CTVM: "Pode transmitir" = autorização do cliente (01/09/2026)
-    r'pode\s+ignorar|'       # BCP: "Pode ignorar meu email" = retratação do cliente (01/09/2026)
-    r'conversei\s+internamente)\b',  # Planner SCD: cliente consultou equipe e trouxe resposta (01/09/2026)
+    r'pode\s+transmitir|'        # Guru CTVM: "Pode transmitir" = autorização do cliente (01/09/2026)
+    r'pode\s+ignorar|'           # BCP: "Pode ignorar meu email" = retratação do cliente (01/09/2026)
+    r'conversei\s+internamente|' # Planner SCD: cliente consultou equipe e trouxe resposta (01/09/2026)
+    r'credenciamento\s+realizado)\b',  # VIS DTVM: cadastro no STA do BC concluído (01/09/2026)
     re.IGNORECASE,
 )
 
@@ -724,7 +725,8 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         r'|\bpor\s+favor\b'                # "Por favor seria contigo estes ajustes?" (01/09/2026)
         r'|\bfoi\s+poss[íi]vel\b'          # "Foi possível realizar as substituições?" (01/09/2026)
         r'|\breuni[aã]o\s+do\s+microsoft\s+teams\b'   # convite Teams = pedido de reunião (01/09/2026)
-        r'|\bpe[çc]o\b',                              # Banvox: "peço que solicite ao Robson" + "?" (01/09/2026)
+        r'|\bpe[çc]o\b'                               # Banvox: "peço que solicite ao Robson" + "?" (01/09/2026)
+        r'|\bfavor\b',                                # CV DTVM: "Favor solucionar com prioridade" + "?" (01/09/2026)
         re.IGNORECASE,
     )
     # Remove URLs e "??" (duplo ponto de interrogação informal/emoji) antes de checar
