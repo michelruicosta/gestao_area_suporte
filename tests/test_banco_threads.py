@@ -2445,3 +2445,73 @@ def test_status_ddr_assunto_com_pergunta_nao_e_entrega():
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud'
     assert 'extratos' not in motivo
+
+
+# ── Grupo DLO — Decisão 14 (01/09/2026) ────────────────────────────────────────
+
+
+def test_status_dlo_por_favor_com_pergunta_e_solicitacao():
+    # Thread DLO00159: "Por favor seria contigo estes ajustes ?" — pedido com "?"
+    # _PEDIDO_FOLLOW_UP: 'por favor' dispara mesmo com "?" (01/09/2026)
+    corpo = 'Bom dia, Moises, tudo bem ?\r\n\r\nPor favor seria contigo estes ajustes ?\r\n\r\nMuito obrigado Moisés.'
+    msgs = [_msg(CLIENTE, corpo=corpo, assunto='RES: Prestação de Esclarecimento DLO00159')]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+    assert motivo == 'Cliente fez solicitação — aguarda ação da Finaud'
+
+
+def test_status_dlo_apenas_confirmando_e_entrega():
+    # DTVM DLO 2061: "Apenas confirmando, o aumento de capital foi integralizado"
+    # _SEGUE_MID: 'apenas confirmando' → §8.8b → entrega (01/09/2026)
+    corpo = 'Rodrigo, bom dia.\r\n\r\nApenas confirmando, o aumento de capital, R$ 1.950.000,00 foi integralizado.\r\n\r\nAtenciosamente,\r\nBarbara'
+    msgs = [_msg(CLIENTE, corpo=corpo, assunto='DTVM - DLO 2061 CALCULO DO PATRIMÔNIO')]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+    assert motivo == 'Cliente enviou informações e extratos — aguarda processamento'
+
+
+def test_status_dlo_fyi_forward_e_entrega():
+    # DLO Junho/2026: "FYI\r\nRaphael Marino..." — forward com só assinatura
+    # _SEGUE_MID: 'fyi' → §8.8b → entrega (01/09/2026)
+    corpo = 'FYI\r\n\r\nRaphael Marino\r\nManager | Credit and Risk Management\r\n\r\nraphael.pinheiromarino@wu.com'
+    msgs = [_msg(CLIENTE, corpo=corpo, assunto='FW: DLO Junho/2026')]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+    assert motivo == 'Cliente enviou informações e extratos — aguarda processamento'
+
+
+def test_status_dlo_foi_possivel_com_pergunta_e_solicitacao():
+    # DLO/DLI abril/26: "Foi possível realizar as substituições ?" — cobrança
+    # _PEDIDO_FOLLOW_UP: 'foi possível' dispara mesmo com "?" (01/09/2026)
+    corpo = 'Bom dia,\r\n\r\nFoi possível realizar as substituições ?\r\n\r\nAtenciosamente,\r\nLuiz Eduardo'
+    msgs = [_msg(CLIENTE, corpo=corpo, assunto='RE: DLO/DLI abril/26.')]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+    assert motivo == 'Cliente fez solicitação — aguarda ação da Finaud'
+
+
+def test_status_dlo_pode_transmitir_e_concluida():
+    # Guru CTVM: "Pode transmitir. O problema foi um aumento de capital..."
+    # _CONFIRMACAO_EXPLICITA: 'pode transmitir' = autorização → Concluída (01/09/2026)
+    corpo = 'Olá Andrea,\r\n\r\nPode transmitir. O problema foi um aumento de capital no último dia do mês.\r\n\r\nAtenciosamente,\r\nGuilherme'
+    msgs = [
+        _msg(FINAUD, corpo='Segue em anexo a remessa DLO para validação.'),
+        _msg(CLIENTE, corpo=corpo, assunto='Re: Guru CTVM: Planilha LEC para DLO 05/2026'),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída'
+    assert motivo == 'Cliente agradeceu — problema resolvido'
+
+
+def test_status_dlo_pode_ignorar_e_concluida():
+    # BCP Securities: "Pode ignorar meu email." — retratação do cliente
+    # _CONFIRMACAO_EXPLICITA: 'pode ignorar' → Concluída (01/09/2026)
+    corpo = 'Andrea,\r\n\r\nPode ignorar meu email.\r\n\r\nAtenciosamente,\r\nThaiana'
+    msgs = [
+        _msg(CLIENTE, corpo='Continuo tomando erro no DRM por conta de layout'),
+        _msg(FINAUD, corpo='Olá, verificando...'),
+        _msg(CLIENTE, corpo=corpo, assunto='RES: Erro do DRM e DLO'),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída'
+    assert motivo == 'Cliente agradeceu — problema resolvido'

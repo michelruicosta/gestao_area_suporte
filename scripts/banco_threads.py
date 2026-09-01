@@ -181,7 +181,9 @@ _CONFIRMACAO_EXPLICITA = re.compile(
     r'\b(obrigad[ao]s?|muito\s+obrigad[ao]s?|ok\b|de\s+acordo|concordo|recebido|'
     r'perfeito|valeu|confirmado|entendido|sem\s+problemas|'
     r'nos?\s+ajudou|me\s+ajudou|ajudou|deu\s+certo|voltou|funcionou|resolveu|'
-    r'certo\b|tudo\s+(bem|certo|ok|bom)|arquivo\s+submetido)\b',
+    r'certo\b|tudo\s+(bem|certo|ok|bom)|arquivo\s+submetido|'
+    r'pode\s+transmitir|'    # Guru CTVM: "Pode transmitir" = autorização do cliente (01/09/2026)
+    r'pode\s+ignorar)\b',    # BCP: "Pode ignorar meu email" = retratação do cliente (01/09/2026)
     re.IGNORECASE,
 )
 
@@ -653,6 +655,8 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         'anexo arquivo',  # entregas variadas: "Anexo arquivo DRL", "Anexo arquivo solicitado"
         'acabei de envi', # Planner: "Acabei de envia a documentação suporte do dia X" (01/09/2026)
         'pode seguir',    # Planner SCD: "pode seguir pois naqueles dias não tiveram" (01/09/2026)
+        'apenas confirmando', # DTVM: "Apenas confirmando, o aumento de capital foi integralizado" (01/09/2026)
+        'fyi',            # Western Union: "FYI" (forward interno, entrega de informação) (01/09/2026)
     )
     if any(f in texto_lower for f in _SEGUE_MID):
         return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
@@ -714,7 +718,9 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     # (diferente de _PEDIDO_IMPLICITO, que exige ausência de "?" para evitar dúvidas retóricas)
     _PEDIDO_FOLLOW_UP = re.compile(
         r'\balgu[mn]\s+retorno\b'  # "Algum retorno quanto a este caso?" (01/09/2026)
-        r'|\bconseguiram\b',       # "Conseguiram regularizar?" — cobrança sobre ação da Finaud (01/09/2026)
+        r'|\bconseguiram\b'        # "Conseguiram regularizar?" — cobrança sobre ação da Finaud (01/09/2026)
+        r'|\bpor\s+favor\b'        # "Por favor seria contigo estes ajustes?" — pedido com "?" (01/09/2026)
+        r'|\bfoi\s+poss[íi]vel\b', # "Foi possível realizar as substituições?" — cobrança (01/09/2026)
         re.IGNORECASE,
     )
     # Remove URLs e "??" (duplo ponto de interrogação informal/emoji) antes de checar
