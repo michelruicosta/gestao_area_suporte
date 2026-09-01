@@ -618,6 +618,8 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     # Remetente externo (cliente)
     # §8.8: cliente encaminhou algo (ENC:/FWD: ou assunto com EXTRATO) com texto vazio → Finaud precisa processar
     if _so_cortesia(texto_novo) and (_ENC_PREFIX.match(assunto.strip()) or _EXTRATO_RE.search(assunto)):
+        if 'BANCO CENTRAL' in assunto.upper():
+            return 'Aguardando Finaud', 'BANVOX encaminhou alerta do BACEN sobre documento — aguarda análise da Finaud'
         return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
     # Fix I: cliente informa que o BACEN aceitou o arquivo → processo encerrado
     # Roda ANTES de §8.8b para não ser bloqueado por "Segue" no início da frase.
@@ -626,8 +628,19 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     if (_ACEITACAO_BACEN.search(texto_lower)
             and '?' not in _texto_sem_url_fi):
         return 'Concluída', 'Cliente informou aceite do BACEN — assunto encerrado'
-    # §8.8b: "Segue [algo]" no início de linha = cliente entregando conteúdo — nunca é confirmação conclusiva
-    if re.search(r'(?:^|\r?\n)\s*segue\b', texto_lower):
+    # §8.8b: "Segue/Seguem [algo]" no início de linha = cliente entregando conteúdo
+    if re.search(r'(?:^|\r?\n)\s*seguem?\b', texto_lower):
+        return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
+    # §8.8b.1: "segue" mid-frase, "em/anexo" entrega, ou relatório de status (aprovado 01/09/2026)
+    _SEGUE_MID = (
+        'segue a planilha', 'segue balancete', 'segue a base',
+        'houve compromissada', 'houveram compromissada',  # Planner SCD: "não houve compromissada no dia"
+        'em anexo',       # "Em anexo arquivo solicitado" / "extratos em anexo"
+        'anexo posições', # Western Union: relatório diário de posição de câmbio
+        'anexo extratos', # BANVOX DTVM: extrato compromissada/custódia
+        'anexo arquivo',  # entregas variadas: "Anexo arquivo DRL", "Anexo arquivo solicitado"
+    )
+    if any(f in texto_lower for f in _SEGUE_MID):
         return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
     # §8.8c: saudação pura (sem palavra de confirmação) = provavelmente entrega de arquivo
     # "Boa Tarde + Att" ≠ confirmação; "Muito obrigado" = confirmação explícita
@@ -676,6 +689,7 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     )
     _PEDIDO_IMPLICITO = re.compile(
         r'\bprecis[ao]mos?\b|\bnecessit[ao]mos?\b|\bgostar[íi]amos?\b|\bprecisaria\b'
+        r'|\bpreciso\b'    # "preciso desse arquivo" / "Preciso dessas planilhas" (01/09/2026)
         r'|\bpe[çc]o\s'    # Fix T: "Peço que inclua..." — pedido educado do cliente → AF
         r'|\bfavor\b'      # Fix U: "Favor considerar/enviar/verificar..." — pedido ao Finaud → AF
         r'|\bgentileza\b'  # "Gentileza enviar arquivo" / "Por gentileza enviar..." → AF

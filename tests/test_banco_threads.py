@@ -2150,3 +2150,131 @@ def test_status_poderia_nos_ajudar_solicita_finaud():
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud', f'got status: {status} | {motivo}'
     assert 'solicita' in motivo.lower(), f'motivo errado: {motivo}'
+
+def test_status_preciso_singular_solicita_finaud():
+    """'preciso desse arquivo' → pedido implícito singular → 'Cliente fez solicitação'."""
+    corpo = 'Entao... preciso desse arquivo com os dados de jun/26.\r\n\r\nAtt,\r\nCliente'
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'got: {status} | {motivo}'
+    assert 'solicita' in motivo.lower(), f'motivo errado: {motivo}'
+
+
+# ── §8.8b extensão — seguem/segue mid-frase (01/09/2026) ─────────────────────
+
+def test_status_seguem_o_mapa_inicio_linha_aguarda_finaud():
+    """'Seguem o novo Mapa resumido...' no início da linha → §8.8b estendido → Aguardando Finaud."""
+    corpo = 'Prezados,\r\n\r\nSeguem o novo Mapa resumido dos Orçamentos Gerenciais.\r\n\r\nAtt,'
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'got: {status} | {motivo}'
+    assert 'enviou' in motivo.lower() or 'extratos' in motivo.lower(), f'motivo errado: {motivo}'
+
+def test_status_segue_planilha_mid_frase_aguarda_finaud():
+    """'segue a planilha do DRL' mid-frase → §8.8b.1 → Aguardando Finaud."""
+    corpo = 'Prezados, em continuação, segue a planilha do DRL relativo ao mês 07/2026.\r\n\r\nAtenciosamente,'
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'got: {status} | {motivo}'
+    assert 'enviou' in motivo.lower() or 'extratos' in motivo.lower(), f'motivo errado: {motivo}'
+
+def test_status_segue_balancete_mid_frase_aguarda_finaud():
+    """'Pessoal, segue balancete e arquivos.' → §8.8b.1 → Aguardando Finaud."""
+    corpo = 'Pessoal, segue balancete e arquivos.\r\n\r\nAtenciosamente,'
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'got: {status} | {motivo}'
+    assert 'enviou' in motivo.lower() or 'extratos' in motivo.lower(), f'motivo errado: {motivo}'
+
+def test_status_segue_base_mid_frase_aguarda_finaud():
+    """'segue a base completa de Maio/2026' mid-frase → §8.8b.1 → Aguardando Finaud."""
+    corpo = 'Boa tarde, segue a base completa de Maio/2026.\r\n\r\nObrigado!'
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'got: {status} | {motivo}'
+    assert 'enviou' in motivo.lower() or 'extratos' in motivo.lower(), f'motivo errado: {motivo}'
+
+def test_status_planner_nao_houve_compromissada_aguarda_finaud():
+    """'Neste dia não houve compromissada' → relatório status Planner SCD → Aguardando Finaud."""
+    corpo = 'Bom dia\r\n\r\nNeste dia não houve compromissada\r\n\r\nAtt\r\n\r\nPaulo Henrique\r\nPlanner SCD'
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'got: {status} | {motivo}'
+    assert 'enviou' in motivo.lower() or 'extratos' in motivo.lower(), f'motivo errado: {motivo}'
+
+def test_status_planner_nao_houveram_compromissadas_aguarda_finaud():
+    """'Nestes dias não houveram compromissadas' → plural → Aguardando Finaud."""
+    corpo = 'Bom dia\r\n\r\nNestes dias não houveram compromissadas\r\n\r\nAtt\r\n\r\nPaulo Henrique\r\nPlanner SCD'
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'got: {status} | {motivo}'
+    assert 'enviou' in motivo.lower() or 'extratos' in motivo.lower(), f'motivo errado: {motivo}'
+
+
+# ── §8.8b.1 — termos "em anexo" e "anexo [objeto]" (01/09/2026) ──────────────
+
+def test_status_em_anexo_arquivo_aguarda_finaud():
+    """'Em anexo arquivo solicitado' → entrega mid-frase → Aguardando Finaud."""
+    corpo = 'Andrea,\r\n\r\nEm anexo arquivo solicitado.\r\n\r\nAtt,\r\nCliente'
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'got: {status} | {motivo}'
+    assert 'enviou' in motivo.lower() or 'extratos' in motivo.lower(), f'motivo errado: {motivo}'
+
+def test_status_extratos_em_anexo_aguarda_finaud():
+    """'extratos em anexo. Att;' → ENC: EXTRATOS BANVOX/TRUSTEE → Aguardando Finaud."""
+    corpo = 'Bom dia,\r\n\r\nExtratos em anexo.\r\n\r\nAtt;\r\nCliente'
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'got: {status} | {motivo}'
+    assert 'enviou' in motivo.lower() or 'extratos' in motivo.lower(), f'motivo errado: {motivo}'
+
+def test_status_anexo_posicoes_western_union_aguarda_finaud():
+    """'Anexo Posições da Western Union Corretora [data]' → relatório diário → Aguardando Finaud."""
+    corpo = 'Pessoal!\r\n\r\nAnexo Posições da Western Union Corretora 14/08/2026:\r\n- Posição de Câmbio Contábil\r\n\r\nAtt'
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'got: {status} | {motivo}'
+    assert 'enviou' in motivo.lower() or 'extratos' in motivo.lower(), f'motivo errado: {motivo}'
+
+def test_status_anexo_extratos_banvox_aguarda_finaud():
+    """'Anexo extratos da Banvox referentes aos dias X' → BANVOX extrato → Aguardando Finaud."""
+    corpo = 'Prezados, bom dia!\r\n\r\nEspero que estejam bem.\r\nAnexo extratos da Banvox referentes aos dias 27 e 28/07/2026.\r\n\r\nAtenciosamente,\r\nJessica Barros'
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'got: {status} | {motivo}'
+    assert 'enviou' in motivo.lower() or 'extratos' in motivo.lower(), f'motivo errado: {motivo}'
+
+def test_nao_filtra_qualquer_anexo_disclaimer():
+    """'qualquer anexo é proibida' (disclaimer jurídico) NÃO deve ser detectado como entrega."""
+    corpo = 'Qualquer reprodução ou cópia desta mensagem ou de qualquer anexo é estritamente proibida.\r\n\r\nAtt,\r\nCliente'
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, motivo = bt._determinar_status(msgs)
+    # Deve cair em caixa preta — não é entrega
+    assert motivo != 'Cliente enviou informações e extratos — aguarda processamento', \
+        f'disclaimer foi erroneamente detectado como entrega: {motivo}'
+
+
+# ── _determinar_status — §8.8 ENC: BANCO CENTRAL (Decisão 9 — 01/09/2026) ───
+
+def test_status_enc_banco_central_motivo_especifico():
+    """ENC: BANCO CENTRAL + texto só assinatura ([undefined]) → motivo específico BACEN."""
+    corpo = '[undefined]\r\n\r\nAtenciosamente,\r\nJessica Barros da Silva\r\nBANVOX DTVM'
+    msgs = [
+        _msg(CLIENTE, corpo='Prezados, segue a comunicação do BACEN.'),
+        _msg(CLIENTE, corpo=corpo, assunto='ENC: BANCO CENTRAL - INDÍCIO DE PROBLEMA DE QUALIDADE IDENTIFICADO NO DOCUMENTO 4010 - CNPJ 02.671.743'),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'got: {status}'
+    assert 'BACEN' in motivo, f'motivo não menciona BACEN: {motivo}'
+    assert motivo == 'BANVOX encaminhou alerta do BACEN sobre documento — aguarda análise da Finaud'
+
+
+def test_status_enc_banco_central_nao_afeta_enc_sem_bacen():
+    """ENC: sem BANCO CENTRAL no assunto → motivo genérico de entrega (sem regressão)."""
+    corpo = '\r\nAtenciosamente,\r\nJessica'
+    msgs = [_msg(CLIENTE, corpo=corpo, assunto='ENC: DLO Jun/2026')]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'got: {status}'
+    assert motivo == 'Cliente enviou informações e extratos — aguarda processamento', \
+        f'motivo inesperado para ENC sem BACEN: {motivo}'
