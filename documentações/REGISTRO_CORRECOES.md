@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-09-01 — Grupo BC Aviso (complemento) — 1 thread sai da caixa preta (48 → 47)
+
+**🔎 Em miúdos:** Thread onde cliente agradeceu formalmente ("Grato") após confirmar horário de ligação passa a aparecer como Concluída.
+
+**Problema:** "Grato" (forma mais formal de "Obrigado") não estava nas confirmações explícitas.
+
+**Correção:** `grat[ao]s?` → `_CONFIRMACAO_EXPLICITA` → **Concluída** (Kinel Corretora: "Grato mais uma vez pela colaboração e atenção").
+
+**Arquivos:** `scripts/banco_threads.py`, `tests/test_banco_threads.py`
+
+**Validação:** ✅ VALIDADO — `pytest tests/ -q` → 495 passed (`test_bc_grato_pela_colaboracao_e_concluida`).
+
+---
+
 ## 2026-09-01 — Grupo BC Aviso — 2 threads saem da caixa preta (50 → 48)
 
 **🔎 Em miúdos:** 2 threads de aviso de atraso do Banco Central deixam de aparecer como "aguarda resposta da Finaud".

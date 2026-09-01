@@ -185,7 +185,8 @@ _CONFIRMACAO_EXPLICITA = re.compile(
     r'pode\s+transmitir|'        # Guru CTVM: "Pode transmitir" = autorização do cliente (01/09/2026)
     r'pode\s+ignorar|'           # BCP: "Pode ignorar meu email" = retratação do cliente (01/09/2026)
     r'conversei\s+internamente|' # Planner SCD: cliente consultou equipe e trouxe resposta (01/09/2026)
-    r'credenciamento\s+realizado)\b',  # VIS DTVM: cadastro no STA do BC concluído (01/09/2026)
+    r'credenciamento\s+realizado|'     # VIS DTVM: cadastro no STA do BC concluído (01/09/2026)
+    r'grat[ao]s?)\b',                  # Kinel: "Grato mais uma vez" = agradecimento formal (01/09/2026)
     re.IGNORECASE,
 )
 

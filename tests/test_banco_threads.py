@@ -1005,6 +1005,18 @@ def test_bc_aviso_favor_solucionar_com_pergunta_e_solicitacao():
     assert 'solicitação' in motivo, f'Esperado solicitação, got: {motivo}'
 
 
+def test_bc_grato_pela_colaboracao_e_concluida():
+    """BC aviso grupo: "Grato mais uma vez pela colaboração e atenção" = agradecimento formal → Concluída.
+    Reproduz thread 'Re: Arquivos para Bacen' (Kinel Corretora, 01/09/2026).
+    """
+    msgs = [
+        _msg(FINAUD, corpo='Tenho disponibilidade hoje às 11 hrs ou às 15 hrs. Retorne por gentileza.'),
+        _msg(CLIENTE, corpo='Hoje as 11hrs, te chamo\r\n\r\nGrato mais uma vez pela colaboração e atenção'),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída', f'Esperado Concluída, got: {status} | {motivo}'
+
+
 def test_regressao_favor_em_pedido_implicito_sem_pergunta():
     """Regressão: "favor" sem "?" já era solicitação via _PEDIDO_IMPLICITO — não deve regredir."""
     msgs = [_msg(CLIENTE, corpo='Favor enviar o arquivo atualizado.')]
