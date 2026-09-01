@@ -2,6 +2,62 @@
 
 ---
 
+## 2026-09-01 — Fog: caso fechado sem número em Sem atualização
+
+**🔎 Em miúdos:** Caso já encerrado não mostra mais “quanto tempo sem mexer”. A célula fica em branco (—). Essa pergunta só vale para caso aberto.
+
+**Problema:** O mesmo número aparecia nos fechados com o texto “duração do caso”, que era outra informação e confundia.
+
+**Correção:** Linha fechada: “—” na coluna Sem atualização; na ordenação esses casos vão para o fim.
+
+**Arquivos:** `templates/gestao_email.html`, `tests/test_servidor_telas.py`
+
+**Validação:** ✅ VALIDADO — `pytest tests/test_servidor_telas.py::test_tela_fog_legenda_e_cortes_em_dias_uteis -q` → 1 passed.
+
+---
+
+## 2026-09-01 — Fog: números em du e sem texto repetido na lista
+
+**🔎 Em miúdos:** Nos números de atraso passou a aparecer **du** (dias úteis), não só **d**. Na lista de casos, a linha não repete “Sem atualização há” — o título da coluna já diz isso.
+
+**Problema:** O ranking mostrava 429d, sem deixar claro que era dia útil. Na lista, o título e cada linha diziam a mesma coisa.
+
+**Correção:** Ranking, lista e evolução usam `du`. Removido o rótulo repetido nas linhas da lista.
+
+**Arquivos:** `templates/gestao_email.html`, `tests/test_servidor_telas.py`
+
+**Validação:** ✅ VALIDADO — `pytest tests/test_servidor_telas.py -q` → 24 passed.
+
+---
+
+## 2026-09-01 — Fog: feriados oficiais do Brasil na conta de dias úteis
+
+**🔎 Em miúdos:** Além de sábado e domingo, a coluna Sem atualização também ignora os feriados oficiais do Brasil (incluindo Carnaval e Corpus Christi, que mudam de data cada ano). Não entra feriado de cidade nem folga só da Finaud.
+
+**Problema:** Um caso parado numa terça de feriado (ex.: 7 de setembro) ainda “engordava” um dia, mesmo sem expediente no país.
+
+**Correção:** Função `feriados_oficiais_brasil` (calendário nacional/bancário, Consciência Negra a partir de 2024). `contar_dias_uteis` pula essas datas. Sem arquivo para atualizar todo ano — as datas móveis saem da Páscoa.
+
+**Arquivos:** `scripts/servidor_telas.py`, `tests/test_servidor_telas.py`
+
+**Validação:** ✅ VALIDADO — `pytest tests/test_servidor_telas.py -q` → 24 passed.
+
+---
+
+## 2026-09-01 — Fog: sem atualização em dias úteis (6 / 11)
+
+**🔎 Em miúdos:** A coluna Sem atualização passou a contar só segunda a sexta. As cores acompanham: verde abaixo de 6, âmbar de 6 a 10, vermelho a partir de 11. Na tela continua escrito “dias”.
+
+**Problema:** O número incluía sábado e domingo. Quem não trabalha no fim de semana via o caso “envelhecer” sem o time ter tido dia de expediente. Se a cor ficasse nos cortes antigos (8 e 15), o alerta não bateria com a conta nova.
+
+**Correção:** Função `contar_dias_uteis`. Cortes 6 e 11 (equivalentes ao peso de 8 e 15 corridos). Legenda, cartões, filtro e ranking usam a mesma régua. Sábado e domingo ficam de fora; feriado ainda não.
+
+**Arquivos:** `scripts/servidor_telas.py`, `templates/gestao_email.html`, `tests/test_servidor_telas.py`
+
+**Validação:** ✅ VALIDADO — `pytest tests/test_servidor_telas.py -q` → 23 passed.
+
+---
+
 ## 2026-09-01 — E-mail quando a busca de e-mail parar
 
 **🔎 Em miúdos:** Se a busca automática atrasar, o sistema manda um e-mail no visual Finaud (o rascunho que Michel aprovou). Manda uma vez por “parada”, não a cada poucos minutos.

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import os
 import sys
-from datetime import datetime
+from datetime import date, datetime
 
 from tests.conftest import RAIZ
 
@@ -334,3 +334,83 @@ def test_portal_no_email_nunca_e_localhost():
     from aviso_busca_parou import url_portal_no_email
 
     assert url_portal_no_email('http://127.0.0.1:8000/portal-preview/') == 'https://finaudapps.com.br'
+
+
+def test_contar_dias_uteis_pula_fim_de_semana():
+    """Sexta até segunda conta 1 dia; sábado e domingo não entram."""
+    assert st.contar_dias_uteis(date(2026, 8, 28), date(2026, 8, 31)) == 1
+    assert st.contar_dias_uteis(date(2026, 8, 28), date(2026, 8, 30)) == 0
+    assert st.contar_dias_uteis(date(2026, 9, 1), date(2026, 9, 1)) == 0
+    assert st.contar_dias_uteis(date(2026, 8, 24), date(2026, 8, 31)) == 5
+    assert st.contar_dias_uteis(date(2026, 8, 27), date(2026, 8, 28)) == 1
+
+
+def test_contar_dias_uteis_pula_feriado_oficial_do_brasil():
+    """Independência 2026 cai na segunda; Carnaval 2026 na segunda e terça."""
+    assert date(2026, 9, 7) in st.feriados_oficiais_brasil(2026)
+    assert date(2026, 2, 16) in st.feriados_oficiais_brasil(2026)
+    assert date(2026, 2, 17) in st.feriados_oficiais_brasil(2026)
+    assert date(2026, 11, 20) in st.feriados_oficiais_brasil(2026)
+    # sexta 4/9 → terça 8/9: sábado, domingo e 7/9 (feriado) ficam de fora → 1
+    assert st.contar_dias_uteis(date(2026, 9, 4), date(2026, 9, 8)) == 1
+    # sexta 13/2 → quarta 18/2: fim de semana + Carnaval → só a quarta conta
+    assert st.contar_dias_uteis(date(2026, 2, 13), date(2026, 2, 18)) == 1
+
+
+def test_buscar_fog_usa_contar_dias_uteis():
+    import inspect
+
+    fonte = inspect.getsource(st._buscar_fog)
+    assert 'contar_dias_uteis' in fonte
+    assert '(hoje - dt_upd).days' not in fonte
+
+
+def test_tela_fog_legenda_e_cortes_em_dias_uteis(monkeypatch):
+    """Legenda, cartões e cores usam 6 e 11 — a mesma régua da conta em dias úteis."""
+    monkeypatch.setattr(st, '_buscar_fog', lambda *a, **k: [
+        {
+            'id': '1', 'assunto': 'caso verde', 'projeto': 'P', 'area': 'A',
+            'responsavel': 'Ana', 'status': 'Ativo', 'dias_responsavel': 5,
+            'data': '2026-08-20', 'data_fechamento': None,
+        },
+        {
+            'id': '2', 'assunto': 'caso ambar', 'projeto': 'P', 'area': 'A',
+            'responsavel': 'Ana', 'status': 'Ativo', 'dias_responsavel': 6,
+            'data': '2026-08-15', 'data_fechamento': None,
+        },
+        {
+            'id': '3', 'assunto': 'caso vermelho', 'projeto': 'P', 'area': 'A',
+            'responsavel': 'Bia', 'status': 'Ativo', 'dias_responsavel': 11,
+            'data': '2026-08-01', 'data_fechamento': None,
+        },
+        {
+            'id': '9', 'assunto': 'caso fechado', 'projeto': 'P', 'area': 'A',
+            'responsavel': 'Ana', 'status': 'Fechado', 'dias_responsavel': 99,
+            'data': '2026-01-01', 'data_fechamento': '2026-03-01',
+        },
+    ])
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess['logado'] = True
+        sess['email'] = st._ADMIN_EMAIL
+    html = client.get('/').get_data(as_text=True)
+    assert 'Verde &lt; 6 dias' in html
+    assert 'Âmbar 6–10 dias' in html
+    assert 'Vermelho ≥ 11 dias' in html
+    assert 'Verde &lt; 8 dias' not in html
+    assert 'const FOG_CORTE_AMBAR = 6' in html
+    assert 'const FOG_CORTE_VERMELHO = 11' in html
+    assert 'menos de 6 dias' in html
+    assert 'parado há 6–10 dias' in html
+    assert 'parado há ≥ 11 dias' in html
+    assert 'fog-amber' in html
+    assert 'fog-red' in html
+    assert st._FOG_DIAS_AMBAR == 6
+    assert st._FOG_DIAS_VERMELHO == 11
+    assert 'Sem atualização há:' not in html
+    assert '5 du' in html
+    assert '6 du' in html
+    assert '11 du' in html
+    assert '11d</div>' not in html
+    assert 'duração do caso' not in html
+    assert '99 du' not in html

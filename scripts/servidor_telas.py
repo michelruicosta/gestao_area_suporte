@@ -31,8 +31,10 @@ if (
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 import requests
 import xml.etree.ElementTree as _ET
-from datetime import datetime, timezone, timedelta
+from datetime import date, datetime, timezone, timedelta
 from functools import wraps
+
+from dateutil.easter import easter
 
 from flask import Flask, abort, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -514,9 +516,9 @@ def index():
     ativos   = [t for t in _fog if t['status'] == 'Ativo']
     fechados = [t for t in _fog if t['status'] == 'Fechado']
     n = len(ativos) or 1
-    em_and  = sum(1 for t in ativos if t['dias_responsavel'] < 8)
-    atencao = sum(1 for t in ativos if 8 <= t['dias_responsavel'] < 15)
-    critico = sum(1 for t in ativos if t['dias_responsavel'] >= 15)
+    em_and  = sum(1 for t in ativos if t['dias_responsavel'] < _FOG_DIAS_AMBAR)
+    atencao = sum(1 for t in ativos if _FOG_DIAS_AMBAR <= t['dias_responsavel'] < _FOG_DIAS_VERMELHO)
+    critico = sum(1 for t in ativos if t['dias_responsavel'] >= _FOG_DIAS_VERMELHO)
     by_resp: dict = defaultdict(list)
     for t in ativos:
         by_resp[t['responsavel']].append(t)
@@ -549,6 +551,8 @@ def index():
         fog_responsaveis=fog_responsaveis,
         fog_stats=fog_stats,
         fog_simulado=False,
+        fog_corte_ambar=_FOG_DIAS_AMBAR,
+        fog_corte_vermelho=_FOG_DIAS_VERMELHO,
     )
 
 
@@ -989,6 +993,58 @@ def configuracoes():
 
 _fog_evo_cache: dict[str, tuple[float, list]] = {}
 _FOG_CACHE_TTL = 600  # 10 minutos
+# Cortes de cor (dias úteis). Verde abaixo do âmbar; vermelho a partir deste valor.
+_FOG_DIAS_AMBAR = 6
+_FOG_DIAS_VERMELHO = 11
+_cache_feriados_brasil: dict[int, set[date]] = {}
+
+
+def feriados_oficiais_brasil(ano: int) -> set[date]:
+    """Datas oficiais do Brasil naquele ano (nacionais, inclusive as que mudam de dia).
+
+    Calendário usado por bancos: Carnaval, Sexta-feira Santa, Corpus Christi
+    e Consciência Negra (a partir de 2024). Sem feriado de cidade.
+    """
+    if ano in _cache_feriados_brasil:
+        return _cache_feriados_brasil[ano]
+    pascoa = easter(ano)
+    feriados = {
+        date(ano, 1, 1),
+        pascoa - timedelta(days=48),  # segunda de Carnaval
+        pascoa - timedelta(days=47),  # terça de Carnaval
+        pascoa - timedelta(days=2),   # Sexta-feira Santa
+        date(ano, 4, 21),
+        date(ano, 5, 1),
+        pascoa + timedelta(days=60),  # Corpus Christi
+        date(ano, 9, 7),
+        date(ano, 10, 12),
+        date(ano, 11, 2),
+        date(ano, 11, 15),
+        date(ano, 12, 25),
+    }
+    if ano >= 2024:
+        feriados.add(date(ano, 11, 20))
+    _cache_feriados_brasil[ano] = feriados
+    return feriados
+
+
+def contar_dias_uteis(inicio: date, fim: date) -> int:
+    """Quantos dias de segunda a sexta separam duas datas.
+
+    Não conta o dia inicial. Sábado, domingo e feriado oficial do Brasil
+    ficam de fora. Mesmo dia (ou fim antes do início) devolve 0.
+    """
+    if inicio is None or fim is None:
+        return 0
+    if fim <= inicio:
+        return 0
+    total = 0
+    dia = inicio + timedelta(days=1)
+    while dia <= fim:
+        if dia.weekday() < 5 and dia not in feriados_oficiais_brasil(dia.year):
+            total += 1
+        dia += timedelta(days=1)
+    return total
 
 
 def _buscar_fog(periodo: str = 'desde2025', inicio: str = None, fim: str = None) -> list[dict]:
@@ -1004,12 +1060,12 @@ def _buscar_fog(periodo: str = 'desde2025', inicio: str = None, fim: str = None)
         _log.warning('FOGBUGZ_TOKEN não encontrado no .env — FOG sem dados.')
         return []
 
+    hoje = datetime.now(timezone.utc).date()
     if inicio and fim:
         desde_str = inicio.replace('-', '/')
         ate_str = fim.replace('-', '/')
         q_str = f'opened:"{desde_str}..{ate_str}"'
     else:
-        hoje = datetime.now(timezone.utc).date()
         if periodo == 'semana':
             desde = hoje - timedelta(days=7)
         elif periodo == 'mes':
@@ -1042,7 +1098,7 @@ def _buscar_fog(periodo: str = 'desde2025', inicio: str = None, fim: str = None)
             dt_str = _t('dtLastUpdated') or _t('dtOpened')
             try:
                 dt_upd = datetime.fromisoformat(dt_str.replace('Z', '+00:00')).date()
-                dias = (hoje - dt_upd).days
+                dias = contar_dias_uteis(dt_upd, hoje)
             except Exception:
                 dias = 0
             dt_closed = _t('dtClosed')

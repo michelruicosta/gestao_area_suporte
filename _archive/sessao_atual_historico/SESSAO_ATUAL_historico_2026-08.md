@@ -7,6 +7,102 @@
 
 ---
 
+## 📓 Diário da sessão (2026-08-27 — noite tarde) — Senha no portal — perfil e login
+
+### O que foi feito
+
+**Frente única: conta e senha saem deste app e ficam no portal Finaud**
+
+Michel pediu para esconder **Meu Perfil** (a senha passa a ser alterada no portal). Em seguida
+padronizou o login com o Leiautes: olho **dentro** da caixa da senha, e tirou **Esqueceu a senha?**
+— recuperação também é no portal. E-mail, senha, Entrar e Portal de apps continuam (quem abre o
+link direto ainda entra).
+
+**O que mudou na tela**
+
+| Antes | Depois |
+|---|---|
+| Menu do nome → Meu Perfil → Alterar senha (não gravava de verdade) | Só aparência e Sair |
+| Olho da senha num quadradinho ao lado da caixa | Olho no canto direito, dentro da caixa |
+| Link Esqueceu a senha? + formulário de senha temporária neste app | Sumiu; quem esquecer usa o portal |
+
+**Publicação:** GitHub + VPS (`gestao-suporte.finaudapps.com.br`). No primeiro pull o git do
+servidor estava com dono misturado (root vs finaud-tec); corrigido o dono da pasta `.git` e o
+código subiu. Michel confirmou no PC; login publicado conferido (sem Esqueceu, olho dentro).
+
+### Estado atual
+
+**Produção:** no ar com as mudanças de perfil e login.
+**GitHub:** `main` em `a581c7a` (código desta sessão já commitado e enviado antes do `/fechar`).
+**Pendência resolvida:** "Alterar senha pelo perfil ainda não grava" saiu da lista — não vamos
+ligar isso neste app.
+
+### Próximo passo
+
+**Investigação ~130 "outro" threads: CONCLUÍDA.** 3 grupos encontrados + textos aprovados.
+**Textos pendentes** sendo resolvidos em chat paralelo (28/08):
+- Fix R + arquivo sem entrega (5x): propostas prontas, aprovação em andamento
+- Saudação (~16x): maioria são "Segue" singular não detectado — verificar e corrigir antes do texto
+- Excel de referência (2 abas: Regras + Alterações): sendo montado lá
+
+🔴 **Quando o outro chat terminar — voltar aqui para:**
+1. Fechar artefato visual de motivos (100%) → https://claude.ai/code/artifact/30448858-e3b1-4a40-a64d-4b989b0b7029
+2. Atualizar PENDENCIAS com todos os motivos aprovados
+3. Alterar `_determinar_status()` para ler regras de tabela no banco (não hardcoded)
+   ⚠️ ANTES de implementar: analisar impacto (sistema em produção, não pode quebrar),
+   testar localmente, definir plano de rollback, decidir se vale fazer em etapas
+4. Criar tela no sistema: usuário mantém regras de classificação sem código
+   — Aba Regras: ver/editar regras ativas · Aba Alterações: histórico automático
+
+*(Conferências automáticas do `/fechar` = prioridade MÉDIA, não passam na frente.)*
+
+Último /fechar: 2026-08-28 00:16 — memórias revisadas ✅
+
+---
+
+## 📓 Diário da sessão (2026-08-27 — noite) — Textos campo MOTIVO — grupo ❌
+
+### O que foi feito
+
+**Frente única: definir submotivos para a "caixa preta" e aprovar textos restantes do grupo ❌**
+
+Metodologia continuada da manhã: analisar dados reais primeiro, nomear depois.
+
+**Análise das 354 threads da "caixa preta"** (motivo atual: "Cliente escreveu — aguarda resposta da Finaud"):
+
+| Grupo | Critério de detecção | Threads |
+|---|---|---|
+| Entrega | "segue", "em anexo", "encaminho"... | ~105 (29%) |
+| Pergunta | "?" real (não saudação/URL) | ~69 (19%) |
+| Misto | Entrega + Pergunta | ~3 (0%) |
+| Outro | Nenhum padrão detectado | ~177 (50%) |
+
+**Textos aprovados nesta sessão:**
+
+| Texto aprovado | Status | Qtd |
+|---|---|---|
+| **Cliente fez pergunta — aguarda resposta da Finaud** | Aguardando Finaud | ~69x |
+| **Cliente agradeceu — problema resolvido** (unifica "Fix H" 41x + "Cliente confirmou" 39x) | Concluída | ~80x |
+
+**Grupo "outro" (~177):** texto "Cliente enviou mensagem" rejeitado por Michel (redundante — todo registro é uma mensagem). Decisão: chat novo para investigar por que o sistema não detectou padrão em ~130 dessas threads.
+
+**Artefato publicado:** rastreador visual de todos os motivos em aprovação:
+https://claude.ai/code/artifact/30448858-e3b1-4a40-a64d-4b989b0b7029
+
+### Estado atual
+
+**Produção:** sem alteração — nenhum código de classificação modificado nesta sessão.
+**Commit desta sessão (`/fechar`):** 9 arquivos — corrigida a porta do servidor local (5001→8004), SSO portal (8002→8000), testes de ambos, CLAUDE.md, DEPLOY.md, PENDENCIAS.md, arquivo histórico.
+
+### Próximo passo
+
+🔴 **Novo chat: investigar ~130 threads sem padrão ("outro")** — por que o sistema não identificou? O que são? Só após a investigação: nomear o motivo final.
+Depois: aprovar textos pendentes (saudação 15x, arquivo sem entrega 5x, Fix R) e implementar tudo em `_determinar_status()` (`scripts/banco_threads.py`).
+
+Último /fechar: 2026-08-27 — memórias revisadas ✅
+
+---
+
 ## 📓 Diário da sessão (2026-08-27 — fim da tarde) — Organização dos chats + conserto do `/fechar`
 
 ### O que foi feito

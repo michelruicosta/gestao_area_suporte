@@ -12,9 +12,11 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
+| 01/09 | Fog: dias úteis, feriados e Sem atualização | abaixo |
+| 01/09 | Administração: E-mail, Notificações e aviso por e-mail | abaixo |
 | 28-29/08 | Planilha de classificação de motivos + bug Outlook no grupo saudação | abaixo |
-| 27/08 | Senha no portal — perfil e login | abaixo |
-| 27/08 | Textos campo MOTIVO — grupo ❌ (noite) | abaixo |
+| 27/08 | Senha no portal — perfil e login | arquivo |
+| 27/08 | Textos campo MOTIVO — grupo ❌ (noite) | arquivo |
 | 27/08 | Organização dos chats + conserto do `/fechar` | arquivo |
 | 27/08 | Reorganização do CLAUDE.md | arquivo |
 | 27/08 | Textos campo MOTIVO (manhã) | arquivo |
@@ -32,6 +34,80 @@
 >
 > **Regra:** este arquivo guarda as **3 sessões mais recentes**. O `/fechar` acrescenta a
 > linha nova aqui e move a 4ª sessão para o arquivo.
+
+---
+
+## 📓 Diário da sessão (2026-09-01) — Fog: dias úteis, feriados e Sem atualização
+
+### O que foi feito
+
+**Frente única: a coluna Sem atualização do Fog passou a contar dia útil**
+
+Michel viu que o número incluía sábado e domingo. Só desenvolvedor trabalha fora do útil; misturar relógio por pessoa bagunçaria a tela. Decisão: **uma conta só, para todo mundo, em dias úteis**.
+
+**Decisões aprovadas**
+- Função `contar_dias_uteis` — segunda a sexta, sem o dia inicial.
+- Cores alinhadas à conta nova: verde &lt; 6 · âmbar 6–10 · vermelho ≥ 11 (equivalente ao peso de 8 e 15 corridos).
+- Na tela o número leva **du**; a legenda continua com a palavra “dias”.
+- Feriados: só oficiais do Brasil (calendário de banco, inclusive Carnaval e Corpus Christi). Sem feriado de cidade e sem folga só da Finaud. Datas móveis saem da Páscoa — sem lista anual.
+- O número mede **o caso parado no Fog** (qualquer mexida zera). Caso fechado: célula em branco (—); “duração do caso” saiu. Não criamos coluna de duração.
+
+**Arquivos:** `scripts/servidor_telas.py`, `templates/gestao_email.html`, `tests/test_servidor_telas.py`, `documentações/REGISTRO_CORRECOES.md`
+
+### Estado atual
+
+**Produção:** sobe neste /fechar para `gestao-suporte.finaudapps.com.br`.
+**pytest:** `tests/test_servidor_telas.py` — 24 passed (inclui feriado, cortes 6/11, fechado sem número).
+**Assunto deste chat:** encerrado.
+
+### Próximo passo
+
+Este tema (Fog Sem atualização em dias úteis) **está fechado**.
+
+Motivos / Passo C e planilha continuam no **outro chat** — não misturar.
+
+Último /fechar: 2026-09-01 13:36 — memórias revisadas ✅
+
+---
+
+## 📓 Diário da sessão (2026-09-01) — Administração: E-mail, Notificações e aviso por e-mail
+
+### O que foi feito
+
+**Frente única: organizar a Administração e o recado quando a busca de e-mail parar**
+
+Michel pediu um mapa claro ao abrir a tela, depois aprovou item a item e pediu para implementar e publicar.
+
+**Decisões aprovadas**
+- Administração só para administrador.
+- Três menus: **E-mail** (abas na mesma pasta), **Notificações**, **Usuários e Perfis**.
+- E-mail: buscar agora, histórico, agendamentos (só e-mails; Fog saiu), regras de Sem Retorno, situação da busca (só luz ligada/parada).
+- Notificações: o que é, ligada/desligada, grupos (Administrador / Gestor / Operador — pode marcar vários).
+- Primeiro recado: **Busca de e-mail parou**. Quem recebe = grupo, não caixa no cadastro.
+- Entrada no dia a dia pelo **portal**, não pela URL direta.
+- Visual do e-mail: envelope Finaud (igual Portal/Auditoria), botão Abrir a Gestão → portal.
+
+**O que subiu em produção** (`a8d7799`)
+- Telas novas da Administração.
+- E-mail no visual aprovado, um recado por episódio de parada (relógio a cada 15 min).
+- Não sobe neste commit: motivos/filtros do outro chat, lista de pendências, rascunhos HTML locais.
+
+### Estado atual
+
+**Produção:** no ar em `gestao-suporte.finaudapps.com.br` (entrar pelo portal).
+**GitHub:** `main` em `a8d7799`.
+**pytest:** `tests/test_servidor_telas.py` + `tests/test_agendador_pipeline.py` → 24 passed.
+**Assunto deste chat:** encerrado.
+
+### Próximo passo
+
+Este tema (Administração + e-mail de busca parou) **está fechado**.
+
+Motivos, planilha e filtros continuam no **outro chat** — não misturar.
+
+Futuro, não deste chat: avisos **dentro** do app (prazos, motivos) — item antigo em `PENDENCIAS.md`.
+
+Último /fechar: 2026-09-01 11:56 — memórias revisadas ✅
 
 ---
 
@@ -300,99 +376,3 @@ Antes de qualquer código: mapear todos os cenários de como threads relacionada
 Gmail. Ver `PENDENCIAS.md` → "COLETOR + TELAS — Agrupar threads relacionadas".
 
 Último /fechar: 2026-08-29 (continuação) — memórias revisadas ✅
-
----
-
-## 📓 Diário da sessão (2026-08-27 — noite tarde) — Senha no portal — perfil e login
-
-### O que foi feito
-
-**Frente única: conta e senha saem deste app e ficam no portal Finaud**
-
-Michel pediu para esconder **Meu Perfil** (a senha passa a ser alterada no portal). Em seguida
-padronizou o login com o Leiautes: olho **dentro** da caixa da senha, e tirou **Esqueceu a senha?**
-— recuperação também é no portal. E-mail, senha, Entrar e Portal de apps continuam (quem abre o
-link direto ainda entra).
-
-**O que mudou na tela**
-
-| Antes | Depois |
-|---|---|
-| Menu do nome → Meu Perfil → Alterar senha (não gravava de verdade) | Só aparência e Sair |
-| Olho da senha num quadradinho ao lado da caixa | Olho no canto direito, dentro da caixa |
-| Link Esqueceu a senha? + formulário de senha temporária neste app | Sumiu; quem esquecer usa o portal |
-
-**Publicação:** GitHub + VPS (`gestao-suporte.finaudapps.com.br`). No primeiro pull o git do
-servidor estava com dono misturado (root vs finaud-tec); corrigido o dono da pasta `.git` e o
-código subiu. Michel confirmou no PC; login publicado conferido (sem Esqueceu, olho dentro).
-
-### Estado atual
-
-**Produção:** no ar com as mudanças de perfil e login.
-**GitHub:** `main` em `a581c7a` (código desta sessão já commitado e enviado antes do `/fechar`).
-**Pendência resolvida:** "Alterar senha pelo perfil ainda não grava" saiu da lista — não vamos
-ligar isso neste app.
-
-### Próximo passo
-
-**Investigação ~130 "outro" threads: CONCLUÍDA.** 3 grupos encontrados + textos aprovados.
-**Textos pendentes** sendo resolvidos em chat paralelo (28/08):
-- Fix R + arquivo sem entrega (5x): propostas prontas, aprovação em andamento
-- Saudação (~16x): maioria são "Segue" singular não detectado — verificar e corrigir antes do texto
-- Excel de referência (2 abas: Regras + Alterações): sendo montado lá
-
-🔴 **Quando o outro chat terminar — voltar aqui para:**
-1. Fechar artefato visual de motivos (100%) → https://claude.ai/code/artifact/30448858-e3b1-4a40-a64d-4b989b0b7029
-2. Atualizar PENDENCIAS com todos os motivos aprovados
-3. Alterar `_determinar_status()` para ler regras de tabela no banco (não hardcoded)
-   ⚠️ ANTES de implementar: analisar impacto (sistema em produção, não pode quebrar),
-   testar localmente, definir plano de rollback, decidir se vale fazer em etapas
-4. Criar tela no sistema: usuário mantém regras de classificação sem código
-   — Aba Regras: ver/editar regras ativas · Aba Alterações: histórico automático
-
-*(Conferências automáticas do `/fechar` = prioridade MÉDIA, não passam na frente.)*
-
-Último /fechar: 2026-08-28 00:16 — memórias revisadas ✅
-
----
-
-## 📓 Diário da sessão (2026-08-27 — noite) — Textos campo MOTIVO — grupo ❌
-
-### O que foi feito
-
-**Frente única: definir submotivos para a "caixa preta" e aprovar textos restantes do grupo ❌**
-
-Metodologia continuada da manhã: analisar dados reais primeiro, nomear depois.
-
-**Análise das 354 threads da "caixa preta"** (motivo atual: "Cliente escreveu — aguarda resposta da Finaud"):
-
-| Grupo | Critério de detecção | Threads |
-|---|---|---|
-| Entrega | "segue", "em anexo", "encaminho"... | ~105 (29%) |
-| Pergunta | "?" real (não saudação/URL) | ~69 (19%) |
-| Misto | Entrega + Pergunta | ~3 (0%) |
-| Outro | Nenhum padrão detectado | ~177 (50%) |
-
-**Textos aprovados nesta sessão:**
-
-| Texto aprovado | Status | Qtd |
-|---|---|---|
-| **Cliente fez pergunta — aguarda resposta da Finaud** | Aguardando Finaud | ~69x |
-| **Cliente agradeceu — problema resolvido** (unifica "Fix H" 41x + "Cliente confirmou" 39x) | Concluída | ~80x |
-
-**Grupo "outro" (~177):** texto "Cliente enviou mensagem" rejeitado por Michel (redundante — todo registro é uma mensagem). Decisão: chat novo para investigar por que o sistema não detectou padrão em ~130 dessas threads.
-
-**Artefato publicado:** rastreador visual de todos os motivos em aprovação:
-https://claude.ai/code/artifact/30448858-e3b1-4a40-a64d-4b989b0b7029
-
-### Estado atual
-
-**Produção:** sem alteração — nenhum código de classificação modificado nesta sessão.
-**Commit desta sessão (`/fechar`):** 9 arquivos — corrigida a porta do servidor local (5001→8004), SSO portal (8002→8000), testes de ambos, CLAUDE.md, DEPLOY.md, PENDENCIAS.md, arquivo histórico.
-
-### Próximo passo
-
-🔴 **Novo chat: investigar ~130 threads sem padrão ("outro")** — por que o sistema não identificou? O que são? Só após a investigação: nomear o motivo final.
-Depois: aprovar textos pendentes (saudação 15x, arquivo sem entrega 5x, Fix R) e implementar tudo em `_determinar_status()` (`scripts/banco_threads.py`).
-
-Último /fechar: 2026-08-27 — memórias revisadas ✅
