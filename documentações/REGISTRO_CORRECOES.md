@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-09-01 — Grupo Cobranças/follow-ups — 6 threads saem da caixa preta (32 → 26) — Decisão 19
+
+**🔎 Em miúdos:** Threads onde o cliente pede uma atualização, confirmação ou verificação passam a aparecer como solicitação em vez de caixa preta.
+
+**Problema:** `_PEDIDO_FOLLOW_UP` cobria "algum retorno", "conseguiram" (plural), "por favor" etc., mas não cobria:
+- "atualização" / "atualizações" (Fair Corretora, Unicred)
+- "conseguiu" singular (Sthiff / Pendencias BACEN)
+- "pode confirmar" (Ivan Cândido / Coluna DTVM)
+- "pode verificar" (Guilherme / Trinus Bank)
+
+**Correção (3 adições ao `_PEDIDO_FOLLOW_UP`):**
+- `atualiza[çc](?:[aã]o|[oõ]es)` — cobre singular e plural de "atualização"
+- `consegui(?:u|ram)` — cobre tanto singular quanto plural
+- `pode\s+(?:confirmar|verificar)` — cobre pedidos de confirmação e verificação
+
+**Arquivos:** `scripts/banco_threads.py`, `tests/test_banco_threads.py`
+
+**Validação:** ✅ VALIDADO — `pytest tests/ -q` → 510 passed (6 testes novos incluindo regressão de plural).
+
+---
+
 ## 2026-09-01 — Grupo Usuário bloqueado / acesso — 1 thread sai da caixa preta (44 → 43) — Decisão 18
 
 **🔎 Em miúdos:** Thread de pedido de desbloqueio de acesso ("seria possível desbloquear?") passa a aparecer como solicitação.

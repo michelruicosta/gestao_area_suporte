@@ -728,14 +728,16 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     # (diferente de _PEDIDO_IMPLICITO, que exige ausência de "?" para evitar dúvidas retóricas)
     _PEDIDO_FOLLOW_UP = re.compile(
         r'\balgu[mn]\s+retorno\b'          # "Algum retorno quanto a este caso?" (01/09/2026)
-        r'|\bconseguiram\b'                # "Conseguiram regularizar?" — cobrança (01/09/2026)
+        r'|\bconsegui(?:u|ram)\b'          # "Conseguiu/Conseguiram verificar?" — cobrança (01/09/2026)
         r'|\bpor\s+favor\b'                # "Por favor seria contigo estes ajustes?" (01/09/2026)
         r'|\bfoi\s+poss[íi]vel\b'          # "Foi possível realizar as substituições?" (01/09/2026)
         r'|\breuni[aã]o\s+do\s+microsoft\s+teams\b'   # convite Teams = pedido de reunião (01/09/2026)
         r'|\bpe[çc]o\b'                               # Banvox: "peço que solicite ao Robson" + "?" (01/09/2026)
         r'|\bfavor\b'                                 # CV DTVM: "Favor solucionar com prioridade" + "?" (01/09/2026)
         r'|\bgentileza\b'                             # UNVERIFIED: "Por gentileza, poderia retornar?" (01/09/2026)
-        r'|\bseria\s+poss[íi]vel\b',                 # Acesso negado: "seria possível desbloquear?" (01/09/2026)
+        r'|\bseria\s+poss[íi]vel\b'                  # Acesso negado: "seria possível desbloquear?" (01/09/2026)
+        r'|\batualiza[çc](?:[aã]o|[oõ]es)\b'           # Fair/Unicred: "Alguma atualização?" / "temos atualizações?" (01/09/2026)
+        r'|\bpode\s+(?:confirmar|verificar)\b',       # Coluna/Trinus: "Pode confirmar?" / "pode verificar?" (01/09/2026)
         re.IGNORECASE,
     )
     # Remove URLs e "??" (duplo ponto de interrogação informal/emoji) antes de checar

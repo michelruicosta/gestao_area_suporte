@@ -1085,6 +1085,70 @@ def test_regressao_enc_sem_arquivo_nao_imagem_nao_e_enc_arquivo():
 
 # ── UNVERIFIED SENDER outros — grupo 01/09/2026 ──────────────────────────────
 
+# ── Cobranças: "atualização?", "conseguiu?", "pode confirmar/verificar?" ─────
+
+def test_cobranca_alguma_atualizacao_e_solicitacao():
+    """Thread A: 'Alguma atualização sobre a regularização?' → solicitação."""
+    msgs = [
+        _msg(CLIENTE, corpo='Alguma inconsistência no DRM 2060.'),
+        _msg(CLIENTE, corpo='Srs,\r\nAlguma atualização sobre a regularização?\r\n\r\nRodrigo Nelson'),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
+    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
+
+
+def test_cobranca_conseguiu_verificar_singular_e_solicitacao():
+    """Thread B: 'O time conseguiu verificar essa pendência?' — singular → solicitação."""
+    msgs = [
+        _msg(CLIENTE, corpo='Sarah, bom dia!\r\n\r\nO time conseguiu verificar essa pendência?\r\n\r\nAt.te,'),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
+    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
+
+
+def test_cobranca_temos_atualizacoes_e_solicitacao():
+    """Thread C: 'temos atualizações?' → solicitação."""
+    msgs = [_msg(
+        CLIENTE,
+        corpo='Bom dia!!\r\nTudo bem?\r\n\r\nQuanto a este ponto, temos atualizações?\r\n\r\nAgradeço e aguardo.',
+    )]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
+    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
+
+
+def test_cobranca_pode_confirmar_e_solicitacao():
+    """Thread D: 'Envio efetuado. Pode confirmar?' → solicitação."""
+    msgs = [_msg(
+        CLIENTE,
+        corpo='Boa tarde, Monica.\r\n\r\nEnvio efetuado.\r\n\r\nPode confirmar?\r\n\r\nAtt., Ivan Cândido',
+    )]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
+    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
+
+
+def test_cobranca_pode_verificar_e_solicitacao():
+    """Thread E: 'Está constando como atrasado. pode verificar?' → solicitação."""
+    msgs = [_msg(
+        CLIENTE,
+        corpo='Bom dia,\r\n\r\nEstá constando como atrasado.\r\n\r\n@monica.macedo@finaud.com.br pode verificar?',
+    )]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
+    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
+
+
+def test_regressao_conseguiram_plural_ainda_funciona():
+    """Regressão: 'conseguiram' plural ainda dispara após mudança para regex combinado."""
+    msgs = [_msg(CLIENTE, corpo='Conseguiram regularizar o arquivo? Aguardo retorno.')]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
+    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
+
+
 def test_unverified_gentileza_com_pergunta_e_solicitacao():
     """Thread A: 'Por gentileza, poderia retornar?' com '?' → solicitação.
     'gentileza' agora está em _PEDIDO_FOLLOW_UP, que dispara mesmo com '?'.
