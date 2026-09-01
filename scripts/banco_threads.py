@@ -622,6 +622,10 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
             and 'BANCO CENTRAL' in assunto.upper()
             and '[undefined]' in texto_lower):
         return 'Aguardando Finaud', 'BANVOX encaminhou alerta do BACEN sobre documento — aguarda análise da Finaud'
+    # §8.8-PCAM: Fair Corretora encaminha relatório PCAM diário (ENC: PCAM DD.MM.YYYY)
+    # _so_cortesia() falha: bloco de contato sem "Atenciosamente". Conteúdo real está no histórico.
+    if _ENC_PREFIX.match(assunto.strip()) and 'PCAM' in assunto.upper():
+        return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
     # §8.8: cliente encaminhou algo (ENC:/FWD: ou assunto com EXTRATO) com texto vazio → Finaud precisa processar
     if _so_cortesia(texto_novo) and (_ENC_PREFIX.match(assunto.strip()) or _EXTRATO_RE.search(assunto)):
         if 'BANCO CENTRAL' in assunto.upper():

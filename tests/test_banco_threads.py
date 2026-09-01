@@ -2328,3 +2328,27 @@ def test_status_arquivo_submetido_concluida():
     ]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Concluída', f'got: {status} | {motivo}'
+
+
+# ── _determinar_status — §8.8-PCAM (Decisão 11 — 01/09/2026) ────────────────
+
+def test_status_enc_pcam_fair_corretora_entrega():
+    """ENC: PCAM DD.MM.YYYY + corpo só com bloco de contato (sem Atenciosamente) → entrega."""
+    corpo = (
+        '\r\n\r\nJosélia Maria da Silva\r\nDepartamento Financeiro\r\n'
+        'Fair Corretora de Câmbio S/A\r\nTelefone: (011) 3191-2605\r\n'
+        'E mail: jsilva@faircorretora.com.br<mailto:jsilva@faircorretora.com.br>'
+    )
+    msgs = [_msg(CLIENTE, corpo=corpo, assunto='ENC: PCAM 16.07.2026')]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'got: {status}'
+    assert motivo == 'Cliente enviou informações e extratos — aguarda processamento'
+
+def test_status_enc_pcam_nao_afeta_sem_enc_prefix():
+    """'PCAM' no assunto sem prefixo ENC: não deve ser afetado pela regra §8.8-PCAM."""
+    corpo = 'Segue o relatório PCAM do dia.\r\nAtenciosamente,\r\nJosélia'
+    msgs = [_msg(CLIENTE, corpo=corpo, assunto='PCAM 16.07.2026')]
+    status, motivo = bt._determinar_status(msgs)
+    # deve cair em §8.8b pelo "Segue" no início — não em §8.8-PCAM
+    assert status == 'Aguardando Finaud'
+    assert motivo == 'Cliente enviou informações e extratos — aguarda processamento'
