@@ -1184,6 +1184,69 @@ def test_unverified_usuario_inexistente_e_caixa_preta():
 
 # ── Usuário bloqueado / acesso — grupo 01/09/2026 ────────────────────────────
 
+# ── Entrega de arquivos sem captura anterior — grupo 01/09/2026 ───────────────
+
+def test_entrega_arquivos_submetidos_plural_e_concluida():
+    """Thread D (Planilha LEC): 'Arquivos submetidos ao BACEN na data de hoje.' → Concluída.
+    _CONFIRMACAO_EXPLICITA agora cobre 'arquivos submetidos' (plural).
+    """
+    msgs = [
+        _msg(FINAUD, corpo='Prezada Jessica, segue a planilha LEC conforme solicitado.'),
+        _msg(
+            CLIENTE,
+            corpo='Prezados, bom dia!\r\n\r\nEspero que estejam bem.\r\n\r\nArquivos submetidos ao BACEN na data de hoje.\r\n\r\nAtenciosamente,',
+        ),
+    ]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Concluída', f'Esperado Concluída, got: {status}'
+
+
+def test_entrega_segue_o_mid_sentence_e_entrega():
+    """Thread A (Amaril Franklin DRM): 'Prezados, segue o COS4010' mid-sentence → entrega.
+    'segue o' adicionado ao _SEGUE_MID para cobrir segue mid-frase.
+    """
+    msgs = [_msg(
+        CLIENTE,
+        assunto='RELATÓRIO DRM 07/2026 - AMARIL FRANKLIN',
+        corpo='Prezados, segue o COS4010 para emissão do DRM, competência 07/2026.\r\n\r\nAtenciosamente, Philippe',
+        nomes_anexos=['17312661_4010_072026.xml'],
+    )]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
+    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado entrega, got: {motivo}'
+
+
+def test_entrega_anexo_inicio_paragrafo_e_entrega():
+    """Thread B (Accredito 2160): 'Anexo o arquivo' no início de parágrafo → entrega."""
+    msgs = [_msg(
+        CLIENTE,
+        corpo='Boa tarde,\r\n\r\nAnexo o arquivo para compilação e posterior remessa ao Bacen, qualquer dúvida estamos à disposição.',
+        nomes_anexos=['DRL 062026 - Accredito.xlsm'],
+    )]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
+    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado entrega, got: {motivo}'
+
+
+def test_entrega_enviado_inicio_paragrafo_e_entrega():
+    """Thread C (Brazabank DRM 05.2026): 'Enviado o DDR' no início de parágrafo → entrega."""
+    msgs = [_msg(
+        CLIENTE,
+        corpo='Prezados, boa tarde!\r\n\r\n\r\n\r\nEnviado o DDR de 29/05 ajustado e DRM referente a 05/2026 de substituição:\r\n\r\n ATT',
+        nomes_anexos=['image001.png'],
+    )]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
+    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado entrega, got: {motivo}'
+
+
+def test_regressao_arquivo_submetido_singular_ainda_concluida():
+    """Regressão: 'arquivo submetido' singular (anterior) ainda classifica como Concluída."""
+    msgs = [_msg(CLIENTE, corpo='Prezados, arquivo submetido com sucesso. Obrigado.')]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Concluída', f'Esperado Concluída, got: {status}'
+
+
 def test_acesso_negado_seria_possivel_e_solicitacao():
     """Thread C: 'seria possível desbloquear?' com '?' → solicitação.
     'seria possível' em _PEDIDO_FOLLOW_UP, que dispara mesmo com '?'.

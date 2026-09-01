@@ -181,7 +181,7 @@ _CONFIRMACAO_EXPLICITA = re.compile(
     r'\b(obrigad[ao]s?|muito\s+obrigad[ao]s?|ok\b|de\s+acordo|concordo|recebido|'
     r'perfeito|valeu|confirmado|entendido|sem\s+problemas|'
     r'nos?\s+ajudou|me\s+ajudou|ajudou|deu\s+certo|voltou|funcionou|resolveu|'
-    r'certo\b|tudo\s+(bem|certo|ok|bom)|arquivo\s+submetido|'
+    r'certo\b|tudo\s+(bem|certo|ok|bom)|arquivos?\s+submetidos?|'
     r'pode\s+transmitir|'        # Guru CTVM: "Pode transmitir" = autorização do cliente (01/09/2026)
     r'pode\s+ignorar|'           # BCP: "Pode ignorar meu email" = retratação do cliente (01/09/2026)
     r'conversei\s+internamente|' # Planner SCD: cliente consultou equipe e trouxe resposta (01/09/2026)
@@ -650,8 +650,8 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     if (_ACEITACAO_BACEN.search(texto_lower)
             and '?' not in _texto_sem_url_fi):
         return 'Concluída', 'Cliente informou aceite do BACEN — assunto encerrado'
-    # §8.8b: "Segue/Seguem [algo]" no início de linha = cliente entregando conteúdo
-    if re.search(r'(?:^|\r?\n)\s*seguem?\b', texto_lower):
+    # §8.8b: "Segue/Seguem/Enviado/Anexo" no início de linha = cliente entregando conteúdo
+    if re.search(r'(?:^|\r?\n)\s*(?:seguem?|enviados?|anexo)\b', texto_lower):
         return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
     # §8.8b.1: "segue" mid-frase, "em/anexo" entrega, ou relatório de status (aprovado 01/09/2026)
     _SEGUE_MID = (
@@ -668,6 +668,13 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         'fyi',            # Western Union: "FYI" (forward interno, entrega de informação) (01/09/2026)
     )
     if any(f in texto_lower for f in _SEGUE_MID):
+        return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
+    # §8.8b.2: arquivo não-imagem + "segue" no texto + sem "?" = entrega de dados mid-frase
+    # Cobre "Prezados, segue o COS4010 para emissão do DRM" (Amaril Franklin, 01/09/2026).
+    # Requer attachment real para não confundir com "segue o link de credencial + pergunta".
+    if (_tem_arquivo_entregavel(ultimo.get('nomes_anexos') or [])
+            and re.search(r'\bseguem?\b', texto_lower)
+            and '?' not in texto_novo):
         return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
     # §8.8c: saudação pura (sem palavra de confirmação) = provavelmente entrega de arquivo
     # "Boa Tarde + Att" ≠ confirmação; "Muito obrigado" = confirmação explícita

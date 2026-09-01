@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-09-01 — Grupo Entrega de arquivos — 4 threads saem da caixa preta (26 → 22) — Decisão 20
+
+**🔎 Em miúdos:** Threads onde o cliente entrega arquivos (planilha, DRM, COS4010 etc.) passam a aparecer corretamente — três como "entrega de dados" e uma como "Concluída".
+
+**Problema:** Quatro padrões de entrega não eram reconhecidos:
+- "Arquivos submetidos" (plural) → devia ser Concluída
+- "Anexo o arquivo para compilação" (início de parágrafo) → devia ser entrega
+- "Enviado o DDR de 29/05 ajustado" (início de parágrafo) → devia ser entrega
+- "Prezados, segue o COS4010 para emissão do DRM" + anexo XML → devia ser entrega
+
+**Correção (3 adições em `banco_threads.py`):**
+1. `_CONFIRMACAO_EXPLICITA`: `arquivo\s+submetido` → `arquivos?\s+submetidos?` (cobre singular e plural)
+2. `§8.8b` (regex início de linha): estendido de `seguem?` para também capturar `enviados?` e `anexo` no início de parágrafo
+3. `§8.8b.2` (nova regra): arquivo não-imagem + "segue" em qualquer posição + sem "?" → entrega (cobre Amaril Franklin / DRM 07/2026 com arquivo XML)
+
+**Arquivos:** `scripts/banco_threads.py`, `tests/test_banco_threads.py`
+
+**Validação:** ✅ VALIDADO — `pytest tests/ -q` → 515 passed (6 testes novos: 4 casos + 2 regressões).
+
+---
+
 ## 2026-09-01 — Grupo Cobranças/follow-ups — 6 threads saem da caixa preta (32 → 26) — Decisão 19
 
 **🔎 Em miúdos:** Threads onde o cliente pede uma atualização, confirmação ou verificação passam a aparecer como solicitação em vez de caixa preta.
