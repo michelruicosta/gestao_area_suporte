@@ -9,8 +9,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 from validador_classificacao import eh_automatico
 
 
-def _thread(assunto: str = "", remetente: str = "") -> dict:
-    return {"assunto": assunto, "mensagens": [{"remetente": remetente, "nomes_anexos": []}]}
+def _thread(assunto: str = "", remetente: str = "", corpo: str = "") -> dict:
+    return {"assunto": assunto, "mensagens": [{"remetente": remetente, "nomes_anexos": [], "corpo_texto": corpo}]}
 
 
 # ── Casos que DEVEM ser filtrados ────────────────────────────────────────────
@@ -87,3 +87,33 @@ def test_filtro_cestaincentivo_bloqueado():
     motivo = eh_automatico(t)
     assert motivo is not None, "cestaincentivo.com.br não foi bloqueado"
     assert 'cestaincentivo.com.br' in motivo
+
+
+# ── Cancelamento de mensagem Outlook (01/09/2026) ────────────────────────────
+
+def test_filtro_cancelar_outlook_descartado():
+    """Assunto 'Cancelar: X' + corpo 'deseja cancelar a mensagem' → descartado."""
+    t = _thread(
+        assunto='Cancelar: DLO Jun/26 - Crítica',
+        remetente='"Ana Maria Malagolli" <ana@novafutura.com.br>',
+        corpo='Ana Maria Mesquita Malagolli deseja cancelar a mensagem "DLO Jun/26 - Crítica".',
+    )
+    assert eh_automatico(t) == 'cancelamento de mensagem Outlook'
+
+def test_nao_filtra_cancelar_servico_real():
+    """E-mail de cancelamento de serviço (DISTRATO) não deve ser filtrado."""
+    t = _thread(
+        assunto='DISTRATO CONECTA X FINAUD',
+        remetente='"Kamila Pereira" <kamila@conectacambio.com.br>',
+        corpo='Venho solicitar formalmente o cancelamento dos serviços contratados.',
+    )
+    assert eh_automatico(t) is None
+
+def test_nao_filtra_cancelar_sem_frase_outlook():
+    """Assunto começa com 'Cancelar:' mas corpo não tem a frase Outlook → não filtrar."""
+    t = _thread(
+        assunto='Cancelar: reunião de amanhã',
+        remetente='"Cliente" <cliente@empresa.com.br>',
+        corpo='Oi, tudo bem? Vou precisar cancelar nossa reunião de amanhã.',
+    )
+    assert eh_automatico(t) is None

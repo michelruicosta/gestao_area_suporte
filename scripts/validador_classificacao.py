@@ -93,6 +93,11 @@ def eh_automatico(thread: dict) -> str | None:
         return 'IT Service Desk'
     if assunto.startswith('Aceito:') or assunto.startswith('Aceita:'):
         return 'aceite de convite de calendário'
+    if assunto.startswith('Cancelar:'):
+        msgs = thread.get('mensagens', [])
+        corpo = ' '.join(m.get('corpo_texto', '') for m in msgs).lower()
+        if 'deseja cancelar a mensagem' in corpo:
+            return 'cancelamento de mensagem Outlook'
     assunto_u = assunto.upper()
     if any(p in assunto_u for p in ('CÓDIGO DE VERIFICAÇÃO', 'CODIGO DE VERIFICACAO',
                                      'CÓDIGO DE ACESSO', 'CODIGO DE ACESSO',
