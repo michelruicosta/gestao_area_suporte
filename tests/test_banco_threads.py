@@ -1971,6 +1971,36 @@ def test_passo_b_cliente_pergunta_nao_ativa_solicitacao():
     assert 'solicitação' not in motivo
 
 
+# ── _determinar_status — _PEDIDO_FOLLOW_UP (Decisão 12 — 01/09/2026) ─────────
+
+def test_status_algum_retorno_e_solicitacao():
+    """'Algum retorno quanto a este caso?' → follow-up = solicitação mesmo com '?'."""
+    msgs = [
+        _msg(FINAUD, corpo='Monica, segue o arquivo DDR (2011) da ZIIN.'),
+        _msg(CLIENTE, corpo='Pessoal, boa tarde! Tudo bem?\r\n\r\nAlgum retorno quanto a este caso?\r\n\r\nAtt.,\r\nLuis Paulo'),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+    assert motivo == 'Cliente fez solicitação — aguarda ação da Finaud'
+
+def test_status_conseguiram_regularizar_e_solicitacao():
+    """'Conseguiram regularizar a situação?' → cobrança sobre ação da Finaud = solicitação."""
+    msgs = [
+        _msg(FINAUD, corpo='Segue evidência de aceite do DDR no STA.'),
+        _msg(CLIENTE, corpo='Olá, tudo bem?\r\n\r\nVocês conseguiram regularizar a situação do documento em atraso?\r\n\r\nAtenciosamente,\r\nGuilherme Marin'),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+    assert motivo == 'Cliente fez solicitação — aguarda ação da Finaud'
+
+def test_status_precisamos_com_pergunta_nao_e_follow_up():
+    """'Precisamos mesmo enviar isso agora?' (dúvida retórica com ?) → NÃO é solicitação."""
+    msgs = [_msg(CLIENTE, corpo='Precisamos mesmo enviar isso agora?')]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+    assert 'solicitação' not in motivo
+
+
 # ── Truncagem de aviso de confidencialidade ───────────────────────────────────
 
 _DISCLAIMER = (

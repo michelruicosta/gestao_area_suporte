@@ -707,6 +707,13 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         r'|\bpoderia[m]?\b',  # "Poderia nos ajudar enviando..." → AF
         re.IGNORECASE,
     )
+    # Padrões de cobrança/follow-up: sempre são solicitações mesmo quando terminam com "?"
+    # (diferente de _PEDIDO_IMPLICITO, que exige ausência de "?" para evitar dúvidas retóricas)
+    _PEDIDO_FOLLOW_UP = re.compile(
+        r'\balgu[mn]\s+retorno\b'  # "Algum retorno quanto a este caso?" (01/09/2026)
+        r'|\bconseguiram\b',       # "Conseguiram regularizar?" — cobrança sobre ação da Finaud (01/09/2026)
+        re.IGNORECASE,
+    )
     # Remove URLs e "??" (duplo ponto de interrogação informal/emoji) antes de checar
     # perguntas reais. "??" é ênfase informal ("Obrigado pelo aviso ??") — não é pergunta.
     # Mantém "?" simples: "Tudo bem?" e perguntas reais continuam bloqueando Fix H.
@@ -718,6 +725,8 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
             and not _PEDIDO_IMPLICITO.search(texto_lower)):
         return 'Concluída', 'Cliente agradeceu — problema resolvido'
     if '?' not in _texto_sem_url_q and _PEDIDO_IMPLICITO.search(texto_lower):
+        return 'Aguardando Finaud', 'Cliente fez solicitação — aguarda ação da Finaud'
+    if _PEDIDO_FOLLOW_UP.search(texto_lower):
         return 'Aguardando Finaud', 'Cliente fez solicitação — aguarda ação da Finaud'
     return 'Aguardando Finaud', 'Cliente escreveu — aguarda resposta da Finaud'
 
