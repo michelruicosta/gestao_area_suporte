@@ -717,10 +717,11 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     # Padrões de cobrança/follow-up: sempre são solicitações mesmo quando terminam com "?"
     # (diferente de _PEDIDO_IMPLICITO, que exige ausência de "?" para evitar dúvidas retóricas)
     _PEDIDO_FOLLOW_UP = re.compile(
-        r'\balgu[mn]\s+retorno\b'  # "Algum retorno quanto a este caso?" (01/09/2026)
-        r'|\bconseguiram\b'        # "Conseguiram regularizar?" — cobrança sobre ação da Finaud (01/09/2026)
-        r'|\bpor\s+favor\b'        # "Por favor seria contigo estes ajustes?" — pedido com "?" (01/09/2026)
-        r'|\bfoi\s+poss[íi]vel\b', # "Foi possível realizar as substituições?" — cobrança (01/09/2026)
+        r'\balgu[mn]\s+retorno\b'          # "Algum retorno quanto a este caso?" (01/09/2026)
+        r'|\bconseguiram\b'                # "Conseguiram regularizar?" — cobrança (01/09/2026)
+        r'|\bpor\s+favor\b'                # "Por favor seria contigo estes ajustes?" (01/09/2026)
+        r'|\bfoi\s+poss[íi]vel\b'          # "Foi possível realizar as substituições?" (01/09/2026)
+        r'|\breuni[aã]o\s+do\s+microsoft\s+teams\b',  # convite Teams = pedido de reunião (01/09/2026)
         re.IGNORECASE,
     )
     # Remove URLs e "??" (duplo ponto de interrogação informal/emoji) antes de checar

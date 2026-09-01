@@ -2515,3 +2515,18 @@ def test_status_dlo_pode_ignorar_e_concluida():
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Concluída'
     assert motivo == 'Cliente agradeceu — problema resolvido'
+
+
+def test_status_dlo_teams_invite_e_solicitacao():
+    # DLO / DLO-Maio: convite de reunião Teams = pedido para Finaud entrar na reunião
+    # _PEDIDO_FOLLOW_UP: 'reunião do microsoft teams' → solicitação (01/09/2026)
+    corpo = (
+        'Reunião do Microsoft Teams\r\n'
+        'Ingressar: https://teams.microsoft.com/meet/285391606170599?p=exBUuaPViFZIfhT9fk\r\n'
+        'ID da Reunião: 285 391 606 170 599\r\n'
+        'Senha: xy7Xg3W7'
+    )
+    msgs = [_msg(CLIENTE, corpo=corpo, assunto='DLO')]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud'
+    assert motivo == 'Cliente fez solicitação — aguarda ação da Finaud'
