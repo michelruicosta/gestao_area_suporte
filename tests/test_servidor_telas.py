@@ -215,6 +215,7 @@ def test_html_administracao_email_notificacoes_sem_fog():
     assert 'Atualização dos dados do FOGBUGZ' not in html
     assert 'Receber e-mail de alertas' not in html
     assert 'data-pagina="admin" data-aba="coletor"' not in html
+    assert 'um recado por episódio' in html
 
 
 def test_api_grava_notificacoes_com_varios_grupos(tmp_path, monkeypatch):
@@ -240,3 +241,96 @@ def test_api_grava_notificacoes_com_varios_grupos(tmp_path, monkeypatch):
     assert got.status_code == 200
     body = got.get_json()
     assert body['notificacoes'][0]['grupos'] == ['administrador', 'gestor']
+
+
+def test_html_aviso_busca_parou_segue_rascunho_aprovado():
+    from aviso_busca_parou import montar_html_aviso_busca_parou
+
+    html = montar_html_aviso_busca_parou(
+        'Michel', '01/09/2026 às 09:00', 60, 'https://finaudapps.com.br',
+    )
+    assert 'GESTÃO ÁREA SUPORTE' in html
+    assert 'Busca de e-mail parou' in html
+    assert 'não rodou no tempo marcado' in html
+    assert '01/09/2026 às 09:00' in html
+    assert '60 minutos' in html
+    assert 'Abrir a Gestão' in html
+    assert 'https://finaudapps.com.br' in html
+    assert 'Se a busca já tiver voltado a rodar' in html
+
+
+def test_aviso_busca_nao_repete_no_mesmo_episodio():
+    from aviso_busca_parou import verificar_e_avisar_busca_parada
+
+    agora = datetime(2026, 9, 1, 12, 0, 0)
+    logs = [{'status': 'concluida', 'data_hora': '2026-09-01 08:00:00'}]
+    cfg = {
+        'intervalo_coleta_min': 60,
+        'notificacoes': [{'id': 'busca_email_parou', 'ativa': True, 'grupos': ['administrador']}],
+    }
+    enviados = []
+
+    def fake_enviar(destino, html):
+        enviados.append((destino, html))
+        return True
+
+    cfg, ok1 = verificar_e_avisar_busca_parada(
+        cfg, logs, False,
+        admin_email='michel@finaud.com.br',
+        portal_url='https://finaudapps.com.br',
+        agora=agora,
+        enviar=fake_enviar,
+    )
+    assert ok1 is True
+    assert len(enviados) == 1
+    assert enviados[0][0] == 'michel@finaud.com.br'
+    assert 'Olá, <b>Michel</b>' in enviados[0][1]
+
+    cfg, ok2 = verificar_e_avisar_busca_parada(
+        cfg, logs, False,
+        admin_email='michel@finaud.com.br',
+        portal_url='https://finaudapps.com.br',
+        agora=agora,
+        enviar=fake_enviar,
+    )
+    assert ok2 is False
+    assert len(enviados) == 1
+
+
+def test_aviso_busca_nao_envia_quando_ligada_ou_desligada():
+    from aviso_busca_parou import verificar_e_avisar_busca_parada
+
+    agora = datetime(2026, 9, 1, 12, 0, 0)
+    logs_ok = [{'status': 'concluida', 'data_hora': '2026-09-01 11:30:00'}]
+    enviados = []
+
+    cfg, ok = verificar_e_avisar_busca_parada(
+        {'intervalo_coleta_min': 60}, logs_ok, False,
+        admin_email='michel@finaud.com.br',
+        portal_url='https://finaudapps.com.br',
+        agora=agora,
+        enviar=lambda *a: enviados.append(a) or True,
+    )
+    assert ok is False
+    assert enviados == []
+
+    logs_parada = [{'status': 'concluida', 'data_hora': '2026-09-01 08:00:00'}]
+    cfg_off = {
+        'intervalo_coleta_min': 60,
+        'notificacoes': [{'id': 'busca_email_parou', 'ativa': False, 'grupos': ['administrador']}],
+    }
+    cfg, ok = verificar_e_avisar_busca_parada(
+        cfg_off, logs_parada, False,
+        admin_email='michel@finaud.com.br',
+        portal_url='https://finaudapps.com.br',
+        agora=agora,
+        enviar=lambda *a: enviados.append(a) or True,
+    )
+    assert ok is False
+    assert enviados == []
+
+
+def test_portal_no_email_nunca_e_localhost():
+    from aviso_busca_parou import url_portal_no_email
+
+    assert url_portal_no_email('http://127.0.0.1:8000/portal-preview/') == 'https://finaudapps.com.br'

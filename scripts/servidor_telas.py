@@ -47,6 +47,12 @@ _CONFIG_PATH = os.path.join(_ROOT_DIR, 'data', 'config.json')
 
 sys.path.insert(0, _SCRIPTS_DIR)
 import banco_threads as bt
+from aviso_busca_parou import (
+    _INTERVALO_VIGIA_MIN,
+    avaliar_situacao_busca,
+    normalizar_notificacoes,
+    verificar_e_avisar_busca_parada,
+)
 from paths import criar_log
 from portal_sso import COOKIE_AUDITORIA, COOKIE_PORTAL, usuario_pelos_cookies
 
@@ -89,131 +95,6 @@ _CONFIG_DEFAULTS: dict = {
     'dias_sr_af': 30,
     'dias_sr_ac': 60,
 }
-
-_GRUPOS_NOTIF = ('administrador', 'gestor', 'operador')
-_NOTIF_BUSCA_ID = 'busca_email_parou'
-
-
-def _notificacao_busca_padrao() -> dict:
-    return {
-        'id': _NOTIF_BUSCA_ID,
-        'titulo': 'Busca de e-mail parou',
-        'descricao': (
-            'A busca automática não rodou no tempo marcado em Agendamentos.'
-        ),
-        'ativa': True,
-        'grupos': ['administrador'],
-    }
-
-
-def normalizar_notificacoes(bruto) -> list:
-    """Garante a lista de notificações: o que é, ligada/desligada, grupos (vários)."""
-    por_id: dict = {}
-    if isinstance(bruto, list):
-        for item in bruto:
-            if not isinstance(item, dict):
-                continue
-            nid = str(item.get('id') or '').strip()
-            if nid:
-                por_id[nid] = item
-    padrao = _notificacao_busca_padrao()
-    salvo = por_id.get(_NOTIF_BUSCA_ID, {})
-    grupos = salvo.get('grupos', padrao['grupos'])
-    if not isinstance(grupos, list):
-        grupos = list(padrao['grupos'])
-    grupos_ok = [g for g in grupos if g in _GRUPOS_NOTIF]
-    if not grupos_ok:
-        grupos_ok = ['administrador']
-    ativa = salvo.get('ativa', True)
-    if not isinstance(ativa, bool):
-        ativa = str(ativa).strip().lower() in ('1', 'true', 'sim', 'yes')
-    return [{**padrao, 'ativa': ativa, 'grupos': grupos_ok}]
-
-
-def _parse_data_hora_log(valor):
-    if not valor:
-        return None
-    if isinstance(valor, datetime):
-        return valor
-    texto = str(valor).strip()[:19]
-    for fmt in ('%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S'):
-        try:
-            return datetime.strptime(texto, fmt)
-        except ValueError:
-            continue
-    return None
-
-
-def avaliar_situacao_busca(cfg: dict, logs, em_andamento: bool, agora=None) -> dict:
-    """Informação da busca (luzes): não envia e-mail — isso é Notificações."""
-    agora = agora or datetime.now()
-    site = {
-        'ok': True,
-        'rotulo': 'Ligado',
-        'detalhe': 'O programa da tela está no ar.',
-    }
-    if em_andamento:
-        return {
-            'site': site,
-            'busca': {
-                'ok': True,
-                'rotulo': 'Buscando agora',
-                'detalhe': 'A busca de e-mails está em andamento.',
-            },
-        }
-    intervalo = int(cfg.get('intervalo_coleta_min') or 0)
-    if intervalo <= 0:
-        return {
-            'site': site,
-            'busca': {
-                'ok': True,
-                'rotulo': 'Automático desligado',
-                'detalhe': 'O relógio da busca está em 0 minutos em Agendamentos.',
-            },
-        }
-    ultimo_ok = None
-    for log in logs or []:
-        if str(log.get('status') or '') == 'concluida':
-            ultimo_ok = log
-            break
-    if ultimo_ok is None:
-        return {
-            'site': site,
-            'busca': {
-                'ok': False,
-                'rotulo': 'Parada',
-                'detalhe': 'Ainda não há busca concluída no histórico.',
-            },
-        }
-    quando = _parse_data_hora_log(ultimo_ok.get('data_hora'))
-    if quando is None:
-        return {
-            'site': site,
-            'busca': {
-                'ok': False,
-                'rotulo': 'Parada',
-                'detalhe': 'Não foi possível ler a data da última busca.',
-            },
-        }
-    minutos = (agora - quando).total_seconds() / 60.0
-    detalhe = f'Última busca ok: {quando.strftime("%d/%m %H:%M")}.'
-    if minutos > intervalo * 1.5:
-        return {
-            'site': site,
-            'busca': {
-                'ok': False,
-                'rotulo': 'Parada',
-                'detalhe': detalhe + ' Não rodou no intervalo combinado.',
-            },
-        }
-    return {
-        'site': site,
-        'busca': {
-            'ok': True,
-            'rotulo': 'Ligada',
-            'detalhe': detalhe,
-        },
-    }
 
 def _ler_config() -> dict:
     try:
@@ -284,6 +165,36 @@ def _job_sem_retorno():
         rodar_sem_retorno()
     except Exception:
         _log.exception('Sem Retorno — falhou.')
+
+
+def _job_vigia_busca():
+    """Olha se a busca atrasou e manda o recado (no máximo um por episódio)."""
+    try:
+        cfg = _ler_config()
+        logs = bt.ler_log_coletas(limite=30)
+        novo, _enviou = verificar_e_avisar_busca_parada(
+            cfg,
+            logs,
+            _coleta_em_andamento,
+            admin_email=_ADMIN_EMAIL,
+            portal_url=_PORTAL_URL,
+        )
+        if novo.get('aviso_busca_enviado_para', '') != cfg.get('aviso_busca_enviado_para', ''):
+            _salvar_config(novo)
+    except Exception:
+        _log.exception('Vigia da busca — falhou.')
+
+
+def _agendar_vigia_busca() -> None:
+    if _scheduler.get_job('vigia_busca_email'):
+        return
+    _scheduler.add_job(
+        _job_vigia_busca,
+        'interval',
+        minutes=_INTERVALO_VIGIA_MIN,
+        id='vigia_busca_email',
+        replace_existing=True,
+    )
 
 
 class _Usuario:
@@ -1180,6 +1091,7 @@ if _deve_ligar_agendador_na_tela():
         id='sem_retorno_diario',
         replace_existing=True,
     )
+    _agendar_vigia_busca()
     if not _scheduler.running:
         _scheduler.start()
         _log.info(

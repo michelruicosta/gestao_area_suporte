@@ -34,6 +34,7 @@ def test_pipeline_tem_modo_agendar():
     assert 'def ligar_agendador' in fonte
     assert 'def rodar_coleta_ciclo' in fonte
     assert 'def ficar_agendando' in fonte
+    assert 'vigia_busca_email' in fonte
 
 
 def test_reagendar_nao_mexo_se_relogio_for_externo(monkeypatch):

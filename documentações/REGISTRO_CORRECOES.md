@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-09-01 — E-mail quando a busca de e-mail parar
+
+**🔎 Em miúdos:** Se a busca automática atrasar, o sistema manda um e-mail no visual Finaud (o rascunho que Michel aprovou). Manda uma vez por “parada”, não a cada poucos minutos.
+
+**Problema:** A tela de Notificações já gravava a regra, mas o recado não saía. Também não havia modelo do e-mail.
+
+**Correção:**
+- HTML no envelope do Portal/Auditoria: assunto, última busca, intervalo, botão Abrir a Gestão (portal).
+- Relógio olha a cada 15 minutos. Quem recebe = grupos marcados (administrador usa o e-mail do `.env`).
+- Não envia se a notificação estiver desligada, se o automático estiver em 0 minutos, ou se a busca estiver no prazo.
+
+**Arquivos:** `scripts/aviso_busca_parou.py`, `scripts/servidor_telas.py`, `scripts/executar_pipeline.py`, `templates/gestao_email.html`, `tests/test_servidor_telas.py`, `tests/test_agendador_pipeline.py`
+
+**Validação:** ✅ VALIDADO — `pytest tests/test_servidor_telas.py tests/test_agendador_pipeline.py -q` → 24 passed.
+
+---
+
 ## 2026-09-01 — Administração: pasta E-mail, Situação da busca e Notificações
 
 **🔎 Em miúdos:** O menu Administração passou a ter três entradas. Tudo de e-mail ficou numa pasta só, com abas. A luz (ligada/parada) ficou separada do aviso por e-mail. Quem recebe o aviso é o grupo (pode ser mais de um), não uma caixa “tudo ou nada” no cadastro.

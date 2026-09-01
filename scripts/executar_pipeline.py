@@ -205,6 +205,31 @@ def ligar_agendador():
         id='ler_intervalo_config',
         replace_existing=True,
     )
+    from aviso_busca_parou import _INTERVALO_VIGIA_MIN, verificar_e_avisar_busca_parada
+
+    def _job_vigia_busca():
+        cfg = ler_config()
+        logs = bt.ler_log_coletas(limite=30)
+        admin = (os.environ.get('GESTAO_EMAIL') or 'michel@finaud.com.br').strip()
+        portal = (os.environ.get('PORTAL_URL') or 'https://finaudapps.com.br').rstrip('/')
+        novo, _enviou = verificar_e_avisar_busca_parada(
+            cfg,
+            logs,
+            False,
+            admin_email=admin,
+            portal_url=portal,
+        )
+        if novo.get('aviso_busca_enviado_para', '') != cfg.get('aviso_busca_enviado_para', ''):
+            with open(_CONFIG_PATH, 'w', encoding='utf-8') as f:
+                json.dump(novo, f, ensure_ascii=False, indent=2)
+
+    _AGENDADOR.add_job(
+        _job_vigia_busca,
+        'interval',
+        minutes=_INTERVALO_VIGIA_MIN,
+        id='vigia_busca_email',
+        replace_existing=True,
+    )
     _AGENDADOR.start()
     log.info('Agendador separado da tela — no ar.')
     return _AGENDADOR
