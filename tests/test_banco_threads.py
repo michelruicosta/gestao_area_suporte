@@ -2270,6 +2270,27 @@ def test_status_enc_banco_central_motivo_especifico():
     assert motivo == 'BANVOX encaminhou alerta do BACEN sobre documento — aguarda análise da Finaud'
 
 
+def test_status_enc_banco_central_sem_signoff_motivo_especifico():
+    """ENC: BANCO CENTRAL + [undefined] + bloco de contato sem sign-off → motivo BACEN.
+    Reproduz o padrão real da assinatura BANVOX (Jessica): logo [undefined] + nome/cargo/tel/endereço
+    sem 'Atenciosamente' explícito, fazendo _so_cortesia() retornar False e §8.8 não disparar.
+    """
+    corpo = (
+        '\r\n\r\n[undefined]\r\n Jessica Barros da Silva\r\n  Contabilidade de Fundos\r\n'
+        '  E-mail: jessica.silva@banvox.com.br\r\n  Ramal: +55 11 2197-4619\r\n'
+        '  Av. Brig. Faria Lima, 3732, 6 andar, Itaim Bibi, São Paulo/SP'
+    )
+    msgs = [
+        _msg(CLIENTE, corpo='Prezados, segue o indício de qualidade do BACEN.'),
+        _msg(CLIENTE, corpo=corpo,
+             assunto='ENC: BANCO CENTRAL - INDÍCIO DE PROBLEMA DE QUALIDADE IDENTIFICADO NO DOCUMENTO 4010 - CNPJ 02.671.743'),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'got: {status}'
+    assert motivo == 'BANVOX encaminhou alerta do BACEN sobre documento — aguarda análise da Finaud', \
+        f'motivo errado: {motivo}'
+
+
 def test_status_enc_banco_central_nao_afeta_enc_sem_bacen():
     """ENC: sem BANCO CENTRAL no assunto → motivo genérico de entrega (sem regressão)."""
     corpo = '\r\nAtenciosamente,\r\nJessica'

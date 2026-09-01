@@ -616,6 +616,12 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         return 'Aguardando Cliente', 'Finaud escreveu — aguarda retorno do cliente'
 
     # Remetente externo (cliente)
+    # §8.8-BACEN: ENC: BANCO CENTRAL + [undefined] na assinatura (logo BANVOX sem sign-off)
+    # _so_cortesia() falha porque o bloco de contato é longo; detecção direta pelo assunto+logo.
+    if (_ENC_PREFIX.match(assunto.strip())
+            and 'BANCO CENTRAL' in assunto.upper()
+            and '[undefined]' in texto_lower):
+        return 'Aguardando Finaud', 'BANVOX encaminhou alerta do BACEN sobre documento — aguarda análise da Finaud'
     # §8.8: cliente encaminhou algo (ENC:/FWD: ou assunto com EXTRATO) com texto vazio → Finaud precisa processar
     if _so_cortesia(texto_novo) and (_ENC_PREFIX.match(assunto.strip()) or _EXTRATO_RE.search(assunto)):
         if 'BANCO CENTRAL' in assunto.upper():
