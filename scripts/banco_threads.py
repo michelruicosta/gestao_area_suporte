@@ -242,6 +242,16 @@ _FRASES_ENTREGA = _FRASES_CONCLUSIVAS_FINAUD + (
     'já concluímos', 'concluímos',
     'enviando em anexo',
     'qualquer dúvida fico a disposição',  # Fix M: Finaud respondeu pergunta e encerrou
+    # Termos de entrega do cliente aprovados em 01/09/2026
+    'seguem as',        # "Seguem as posições de TVM's..."
+    'seguem a ',        # "Seguem a planilha do DRL..."
+    'seguem valores',   # "Seguem valores para geração do CADOC 4111..."
+    'anexo ',           # "Anexo Posições da Western Union..." (palavra solta)
+    'arquivos enviados',  # "Arquivos enviados: [...]"
+    'favor considerar', # "Favor considerar os valores abaixo..."
+    'enviado o',        # "Enviado o DDR de 29/05 ajustado..."
+    'enviados os',      # "Enviados os arquivos..."
+    'enviadas as',      # "Enviadas as planilhas..."
 )
 
 # Bloqueiam detecção de cortesia — Finaud está pedindo algo ao cliente

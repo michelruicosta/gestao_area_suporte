@@ -2021,3 +2021,90 @@ def test_status_fixv_nao_afeta_retorno_bacen():
     ]
     status, _ = bt._determinar_status(msgs)
     assert status == 'Concluída'
+
+
+# ── Novos termos de entrega do cliente (01/09/2026) ───────────────────────────
+
+def test_status_seguem_as_posicoes_aguarda_finaud():
+    """'Seguem as posições de TVM's...' → cliente entregando dados → Aguardando Finaud.
+    Reproduz caso 'Relatórios de TVM e Dep a Vista' (Western Union / TRUSTEE).
+    """
+    corpo = (
+        'Prezados, bom dia!\r\n\r\n'
+        'Seguem as posições de TVM’s e o relatório do Deposito a Vista.\r\n\r\n'
+        'Atenciosamente,\r\nJair Bonetti'
+    )
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'got: {status} | {motivo}'
+
+
+def test_status_seguem_valores_cadoc_aguarda_finaud():
+    """'Seguem valores para geração do CADOC 4111' → entrega → Aguardando Finaud.
+    Reproduz caso TRUSTEE DTVM - CADOC 4111 (Robson Soares Neves).
+    """
+    corpo = (
+        'Miguel, boa tarde!\r\n\r\n'
+        'Seguem valores para geração do CADOC 4111 ref. 07/08/2026 A 12/08/2026 da TRUSTEE DTVM.\r\n\r\n'
+        'Atenciosamente,\r\nRobson'
+    )
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'got: {status} | {motivo}'
+
+
+def test_status_anexo_posicoes_aguarda_finaud():
+    """'Bom dia! Anexo Posições da Western Union...' → entrega → Aguardando Finaud.
+    Reproduz caso Posição de Câmbio corretora (Jair Bonetti, Western Union).
+    """
+    corpo = (
+        'Bom dia, pessoal!\r\n\r\n'
+        'Anexo Posições da Western Union Corretora 14/08/2026:\r\n\r\n'
+        '- Posição de Câmbio Contábil Change.\r\n'
+        '- Balancete de Câmbio Change em PDF e Excel.\r\n\r\n'
+        'Att,\r\nJair'
+    )
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'got: {status} | {motivo}'
+
+
+def test_status_arquivos_enviados_aguarda_finaud():
+    """'Arquivos enviados:' → entrega → Aguardando Finaud."""
+    corpo = (
+        'Miguel, boa noite!\r\n\r\n'
+        'Arquivos enviados:\r\n\r\n'
+        'Atenciosamente,\r\nRisco Externo'
+    )
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'got: {status} | {motivo}'
+
+
+def test_status_favor_considerar_aguarda_finaud():
+    """'Favor considerar os valores abaixo' → entrega de dados → Aguardando Finaud.
+    Reproduz caso REMITLY : Movimento (Lidiane Moreira) e BANVOX DTVM (Robson).
+    """
+    corpo = (
+        'Bom dia,\r\n\r\n'
+        'Favor considerar os valores abaixo. Identificamos que as vendas de Outbound '
+        'não haviam sido incluídas anteriormente.\r\n\r\n'
+        'Atenciosamente,\r\nLidiane'
+    )
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'got: {status} | {motivo}'
+
+
+def test_status_enviado_o_ddr_aguarda_finaud():
+    """'Enviado o DDR de 29/05 ajustado' → entrega → Aguardando Finaud.
+    Reproduz caso Brazabank (RE: DRM 05.2026) mencionado no PENDENCIAS.
+    """
+    corpo = (
+        'Bom dia,\r\n\r\n'
+        'Enviado o DDR de 29/05 ajustado e DRM referente a 05/2026 de substituição.\r\n\r\n'
+        'Att,\r\nEquipe Brazabank'
+    )
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'got: {status} | {motivo}'
