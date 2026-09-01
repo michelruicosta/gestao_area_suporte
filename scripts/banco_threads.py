@@ -312,7 +312,7 @@ _SAUDACAO_RE = re.compile(
 
 # Fix I: cliente confirma que o BACEN aceitou o arquivo → processo encerrado
 _ACEITACAO_BACEN = re.compile(
-    r'(?:protocolo|arquivo)\s+(?:(?:de\s+arquivo|foi)\s+)?aceito\b',
+    r'(?:protocolo|arquivo)\s+(?:(?:de\s+arquivo|(?:j[aá]\s+)?foi)\s+)?aceito\b',
     re.IGNORECASE,
 )
 
@@ -631,6 +631,12 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     # §8.8-PCAM: Fair Corretora encaminha relatório PCAM diário (ENC: PCAM DD.MM.YYYY)
     # _so_cortesia() falha: bloco de contato sem "Atenciosamente". Conteúdo real está no histórico.
     if _ENC_PREFIX.match(assunto.strip()) and 'PCAM' in assunto.upper():
+        return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
+    # §8.8-ENC-ARQUIVO: forward (ENC:/FWD:) com arquivo não-imagem = entrega de dados
+    # Cobre casos onde _so_cortesia() falha por assinatura corporativa com ícones/logos
+    # Ex.: FREEX Câmbio envia balancete zip com assinatura que inclui [Logo Freex] etc. (01/09/2026)
+    if (_ENC_PREFIX.match(assunto.strip())
+            and _tem_arquivo_entregavel(ultimo.get('nomes_anexos') or [])):
         return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
     # §8.8: cliente encaminhou algo (ENC:/FWD: ou assunto com EXTRATO) com texto vazio → Finaud precisa processar
     if _so_cortesia(texto_novo) and (_ENC_PREFIX.match(assunto.strip()) or _EXTRATO_RE.search(assunto)):

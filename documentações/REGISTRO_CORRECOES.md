@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-09-01 — Grupo ENC: outros — 2 threads saem da caixa preta (47 → 45)
+
+**🔎 Em miúdos:** 2 threads de encaminhamento (ENC:) deixam de aparecer como "aguarda resposta da Finaud".
+
+**Problema:** 2 padrões de ENC: não eram detectados.
+
+**Correção:**
+- `_ACEITACAO_BACEN` estendido: `(?:j[aá]\s+)?foi` cobre "arquivo já foi aceito" → **Concluída** (Denver Contábil: cliente confirmou que o BACEN aceitou o arquivo mesmo com divergência de dígito)
+- Nova regra §8.8-ENC-ARQUIVO: ENC: no assunto + arquivo não-imagem no anexo → **entrega**, independente de `_so_cortesia()` falhar por assinatura corporativa com ícones/logos (FREEX Câmbio: encaminhou zip com balancete mas só tinha assinatura com `[Logo Freex]`, `[Instagram]` etc.)
+
+**Arquivos:** `scripts/banco_threads.py`, `tests/test_banco_threads.py`
+
+**Validação:** ✅ VALIDADO — `pytest tests/ -q` → 498 passed (3 testes novos incluindo regressão).
+
+---
+
 ## 2026-09-01 — Grupo BC Aviso (complemento) — 1 thread sai da caixa preta (48 → 47)
 
 **🔎 Em miúdos:** Thread onde cliente agradeceu formalmente ("Grato") após confirmar horário de ligação passa a aparecer como Concluída.

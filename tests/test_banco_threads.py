@@ -1025,6 +1025,64 @@ def test_regressao_favor_em_pedido_implicito_sem_pergunta():
     assert 'solicitação' in motivo
 
 
+# ── Grupo ENC: outros (01/09/2026) ───────────────────────────────────────────
+
+def test_enc_risk_driver_arquivo_ja_foi_aceito_concluida():
+    """ENC outros grupo: "o arquivo já foi aceito... seguiremos assim para este mês"
+    _ACEITACAO_BACEN agora cobre "já foi aceito" → Concluída via Fix I.
+    Reproduz thread 'ENC: Risk Driver - ID CORRETORA' (Denver Contábil, 01/09/2026).
+    """
+    corpo = (
+        'Prezados, bom dia!\r\n\r\n'
+        'Veliquei e realmente está -8, não entendi como o Bacen aceitou, vou verificar aqui. '
+        'Mas o arquivo já foi aceito, se for só um alerta e não afetar os informes que usamos '
+        'no sistema, seguiremos assim para este mês.'
+    )
+    msgs = [
+        _msg(CLIENTE, corpo='Prezados, boa tarde!\r\n\r\nRecebi este e-mail ao realizar o 2061, qual seria o motivo do alerta?'),
+        _msg(FINAUD, corpo='Prezado Jean, bom dia.\r\n\r\nAcredito que o sistema apresentou a mensagem porque não localizou a conta cosif.'),
+        _msg(CLIENTE, assunto='ENC: Risk Driver - ID CORRETORA - CONTA(S) COSIF(S) NÃO CADASTRADA(S)', corpo=corpo),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída', f'Esperado Concluída, got: {status} | {motivo}'
+
+
+def test_enc_freex_zip_so_assinatura_e_entrega():
+    """ENC outros grupo: forward com zip real + assinatura com ícones ([Logo], [Instagram] etc.)
+    §8.8-ENC-ARQUIVO: ENC: + arquivo não-imagem → entrega independente de _so_cortesia().
+    Reproduz thread 'ENC: FREEX CORRETORA - Balancete e arquivos 05-2026' (01/09/2026).
+    """
+    corpo = (
+        '[Logo Freex]\r\n\r\n'
+        '[Instagram]<https://www.instagram.com/freexcambio/>\r\n'
+        '[LinkedIn]<https://www.linkedin.com/company/freex-cambio/>\r\n'
+        'patricia antero\r\nSupervisora Financeira\r\n[??]\r\n+55 11 5108-5138'
+    )
+    msgs = [_msg(
+        CLIENTE,
+        assunto='ENC: FREEX CORRETORA - Balancete e arquivos 05-2026',
+        corpo=corpo,
+        nomes_anexos=['image001.png', 'image002.png', 'COS4010_2026-05-I.zip'],
+    )]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
+    assert 'informações' in motivo, f'Esperado motivo entrega, got: {motivo}'
+
+
+def test_regressao_enc_sem_arquivo_nao_imagem_nao_e_enc_arquivo():
+    """Regressão §8.8-ENC-ARQUIVO: ENC: sem arquivo não-imagem não dispara a nova regra."""
+    msgs = [_msg(
+        CLIENTE,
+        assunto='ENC: relatório pendente',
+        corpo='Bom dia, segue conforme solicitado.',
+        nomes_anexos=['foto.png', 'logo.jpg'],
+    )]
+    # Sem zip/xlsx, não deve ser pego pela nova regra — cai no fluxo normal
+    status, _ = bt._determinar_status(msgs)
+    # "segue" → deve ser entrega de todas formas (§8.8b), mas via outro caminho
+    assert status == 'Aguardando Finaud'
+
+
 # ── Snapshots de contadores ───────────────────────────────────────────────────
 
 def test_snapshot_banco_vazio(monkeypatch, tmp_path):
