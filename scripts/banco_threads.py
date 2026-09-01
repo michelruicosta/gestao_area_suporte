@@ -183,7 +183,8 @@ _CONFIRMACAO_EXPLICITA = re.compile(
     r'nos?\s+ajudou|me\s+ajudou|ajudou|deu\s+certo|voltou|funcionou|resolveu|'
     r'certo\b|tudo\s+(bem|certo|ok|bom)|arquivo\s+submetido|'
     r'pode\s+transmitir|'    # Guru CTVM: "Pode transmitir" = autorização do cliente (01/09/2026)
-    r'pode\s+ignorar)\b',    # BCP: "Pode ignorar meu email" = retratação do cliente (01/09/2026)
+    r'pode\s+ignorar|'       # BCP: "Pode ignorar meu email" = retratação do cliente (01/09/2026)
+    r'conversei\s+internamente)\b',  # Planner SCD: cliente consultou equipe e trouxe resposta (01/09/2026)
     re.IGNORECASE,
 )
 
@@ -711,7 +712,8 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         r'|\bpe[çc]o\s'    # Fix T: "Peço que inclua..." — pedido educado do cliente → AF
         r'|\bfavor\b'      # Fix U: "Favor considerar/enviar/verificar..." — pedido ao Finaud → AF
         r'|\bgentileza\b'  # "Gentileza enviar arquivo" / "Por gentileza enviar..." → AF
-        r'|\bpoderia[m]?\b',  # "Poderia nos ajudar enviando..." → AF
+        r'|\bpoderia[m]?\b'   # "Poderia nos ajudar enviando..." → AF
+        r'|\bpode\s+enviar\b',  # Planner SCD: "Pode enviar a SCD do jeito que está" = pedido (01/09/2026)
         re.IGNORECASE,
     )
     # Padrões de cobrança/follow-up: sempre são solicitações mesmo quando terminam com "?"
@@ -721,7 +723,8 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         r'|\bconseguiram\b'                # "Conseguiram regularizar?" — cobrança (01/09/2026)
         r'|\bpor\s+favor\b'                # "Por favor seria contigo estes ajustes?" (01/09/2026)
         r'|\bfoi\s+poss[íi]vel\b'          # "Foi possível realizar as substituições?" (01/09/2026)
-        r'|\breuni[aã]o\s+do\s+microsoft\s+teams\b',  # convite Teams = pedido de reunião (01/09/2026)
+        r'|\breuni[aã]o\s+do\s+microsoft\s+teams\b'   # convite Teams = pedido de reunião (01/09/2026)
+        r'|\bpe[çc]o\b',                              # Banvox: "peço que solicite ao Robson" + "?" (01/09/2026)
         re.IGNORECASE,
     )
     # Remove URLs e "??" (duplo ponto de interrogação informal/emoji) antes de checar

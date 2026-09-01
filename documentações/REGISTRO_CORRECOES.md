@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-09-01 — Grupo CADOC 4111 — 3 threads saem da caixa preta (53 → 50)
+
+**🔎 Em miúdos:** 3 conversas do grupo CADOC 4111 que apareciam como "aguarda resposta da Finaud" passaram a ter classificação correta. Uma ficou como genuína.
+
+**Problema:** 3 padrões de texto não eram reconhecidos pelo sistema de classificação automática.
+
+**Correção:**
+- "Conversei internamente" → `_CONFIRMACAO_EXPLICITA` → **Concluída** (cliente consultou equipe e trouxe resposta)
+- "pode enviar" (sem "?") → `_PEDIDO_IMPLICITO` → **solicitação** (cliente pede à Finaud que envie o arquivo CADOC)
+- "peço" (mesmo com "?") → `_PEDIDO_FOLLOW_UP` → **solicitação** (pedido educado com pergunta junto)
+
+**Arquivos:** `scripts/banco_threads.py`, `tests/test_banco_threads.py`
+
+**Validação:** ✅ VALIDADO — `pytest tests/ -q` → 491 passed (3 testes novos: `test_cadoc_conversei_internamente_e_concluida`, `test_cadoc_pode_enviar_scd_e_solicitacao`, `test_cadoc_peco_com_pergunta_e_solicitacao`).
+
+---
+
 ## 2026-09-01 — Fog: caso fechado sem número em Sem atualização
 
 **🔎 Em miúdos:** Caso já encerrado não mostra mais “quanto tempo sem mexer”. A célula fica em branco (—). Essa pergunta só vale para caso aberto.

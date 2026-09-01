@@ -924,6 +924,58 @@ def test_regressao_cliente_escreveu_sem_reacao_aguarda_finaud():
     assert bt._determinar_status(msgs)[0] == 'Aguardando Finaud'
 
 
+# ── Grupo CADOC 4111 (01/09/2026) ────────────────────────────────────────────
+
+def test_cadoc_conversei_internamente_e_concluida():
+    """CADOC grupo: "Conversei internamente e, as próximas planilhas estarão..."
+    Cliente consultou equipe e trouxe a resposta → Concluída.
+    Reproduz thread 'RE: CADOC 4111 DIA 27/07 - Dúvida SCD' (Planner SCD, 01/09/2026).
+    """
+    corpo = (
+        'Oi Sarah!\r\n\r\n'
+        'Usar o valor nessas duas contas:\r\n\r\n'
+        'Disponibilidades e Depósitos bancários\r\n\r\n'
+        'Conversei internamente e, as próximas planilhas estarão com essas duas contas preenchidas'
+    )
+    msgs = [_msg(CLIENTE, assunto='RE: CADOC 4111 DIA 27/07 - Dúvida SCD', corpo=corpo)]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída', f'Esperado Concluída, got: {status} | {motivo}'
+
+
+def test_cadoc_pode_enviar_scd_e_solicitacao():
+    """CADOC grupo: "Pode enviar a SCD do jeito que está no relatório" (sem "?")
+    Cliente pede à Finaud que envie o arquivo gerado → solicitação.
+    Reproduz thread 'CADOC 4111 DIA 17/07 20/07 21/07 E 22/07' (Planner SCD, 01/09/2026).
+    """
+    corpo = 'Boa Tarde!\r\n\r\nPode enviar a SCD do jeito que está no relatório. Os outros dias também estão zerados'
+    msgs = [
+        _msg(CLIENTE, corpo='Bom dia!'),
+        _msg(CLIENTE, corpo='Oi Sarah! Faltou o anexo do dia 22/07 da SCD'),
+        _msg(CLIENTE, assunto='CADOC 4111 DIA 17/07 20/07 21/07 E 22/07', corpo=corpo),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
+    assert 'solicitação' in motivo, f'Esperado motivo solicitação, got: {motivo}'
+
+
+def test_cadoc_peco_com_pergunta_e_solicitacao():
+    """CADOC grupo: "De quais informações você se refere? ... peço que solicite ao Robson"
+    Mensagem tem "?" mas contém "peço" → _PEDIDO_FOLLOW_UP dispara → solicitação.
+    Reproduz thread 'RES: 4111 Do dia 16/07/2026 e 17/07/2026' (Banvox, 01/09/2026).
+    """
+    corpo = (
+        'Miguel, bom dia! Espero que esteja bem. '
+        'De quais informações você se refere? '
+        'Eu mando somente os extratos de compromissada e custódia da Banvox, '
+        'e os mesmos já foram enviados dessas respectivas datas. '
+        'Caso não seja isso, peço que solicite ao Robson. Desde já agradeço.'
+    )
+    msgs = [_msg(CLIENTE, assunto='RES: 4111 Do dia 16/07/2026 e 17/07/2026', corpo=corpo)]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
+    assert 'solicitação' in motivo, f'Esperado motivo solicitação, got: {motivo}'
+
+
 # ── Snapshots de contadores ───────────────────────────────────────────────────
 
 def test_snapshot_banco_vazio(monkeypatch, tmp_path):
