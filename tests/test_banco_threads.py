@@ -2108,3 +2108,17 @@ def test_status_enviado_o_ddr_aguarda_finaud():
     msgs = [_msg(CLIENTE, corpo=corpo)]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud', f'got: {status} | {motivo}'
+
+
+def test_status_trustee_sem_movimentacao_aguarda_finaud():
+    """'Compromissada: sem movimentação' → extrato diário TRUSTEE DTVM → Aguardando Finaud.
+    Reproduz os 24 casos de extrato compromissada/LFT da TRUSTEE DTVM.
+    """
+    corpo = (
+        'Compromissada: sem movimentação\r\n\r\n'
+        'LFT: sem movimentação\r\n\r\n'
+        'Atenciosamente,\r\nTRUSTEE DTVM'
+    )
+    msgs = [_msg(CLIENTE, corpo=corpo)]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'got: {status} | {motivo}'

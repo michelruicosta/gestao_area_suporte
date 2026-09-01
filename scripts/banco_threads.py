@@ -252,6 +252,7 @@ _FRASES_ENTREGA = _FRASES_CONCLUSIVAS_FINAUD + (
     'enviado o',        # "Enviado o DDR de 29/05 ajustado..."
     'enviados os',      # "Enviados os arquivos..."
     'enviadas as',      # "Enviadas as planilhas..."
+    'sem movimenta',    # "Compromissada: sem movimentação" — extrato diário TRUSTEE DTVM
 )
 
 # Bloqueiam detecção de cortesia — Finaud está pedindo algo ao cliente
