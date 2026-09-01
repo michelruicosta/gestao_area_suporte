@@ -1118,6 +1118,64 @@ def test_unverified_usuario_inexistente_e_caixa_preta():
     )
 
 
+# ── Usuário bloqueado / acesso — grupo 01/09/2026 ────────────────────────────
+
+def test_acesso_negado_seria_possivel_e_solicitacao():
+    """Thread C: 'seria possível desbloquear?' com '?' → solicitação.
+    'seria possível' em _PEDIDO_FOLLOW_UP, que dispara mesmo com '?'.
+    """
+    msgs = [_msg(
+        CLIENTE,
+        corpo=(
+            'Boa tarde, minha conta msapaio@nixfin se encontra como acesso negado.\n\n'
+            'Atualmente utilizados esta conta em dois computadores, seria possível desbloquear?\n\nAtt'
+        ),
+    )]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
+    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', (
+        f'Esperado motivo de solicitação, got: {motivo}'
+    )
+
+
+def test_acesso_trinus_credencial_com_pergunta_e_caixa_preta():
+    """Thread A: entrega de credencial + pergunta aberta → genuína (conteúdo misto)."""
+    msgs = [
+        _msg(CLIENTE, corpo='@Arleson poderia auxiliar? @Monica seria STA da DTVM ou SCD?'),
+        _msg(
+            CLIENTE,
+            corpo=(
+                'Monica Macedo, segue o link com a credencial BC da DTVM, abra o link com seu email.\n'
+                'https://share.1password.com/s#exemplo\n\n'
+                'Outro ponto, você tinha acesso ao BC da SCD?\n\nObrigado.'
+            ),
+        ),
+    ]
+    _, motivo = bt._determinar_status(msgs)
+    assert motivo == 'Cliente escreveu — aguarda resposta da Finaud', (
+        f'Esperado caixa preta, got: {motivo}'
+    )
+
+
+def test_acesso_senha_nova_sem_pergunta_e_caixa_preta():
+    """Thread B: cliente informa nova senha do arquivo C6 sem fazer pergunta → genuína."""
+    msgs = [
+        _msg(FINAUD, corpo='Podem verificar? Houve alguma mudança na senha?'),
+        _msg(
+            CLIENTE,
+            corpo=(
+                'Andrea, Boa tarde\n\n'
+                'O banco alterou a senha agora são os 4 primeiros dígitos 4432, '
+                'desculpe-nos por não termos avisado antes, juntamento com o envio dos extratos.\n\nSds'
+            ),
+        ),
+    ]
+    _, motivo = bt._determinar_status(msgs)
+    assert motivo == 'Cliente escreveu — aguarda resposta da Finaud', (
+        f'Esperado caixa preta, got: {motivo}'
+    )
+
+
 def test_unverified_indice_basileia_duvida_e_caixa_preta():
     """Thread C: dúvida técnica sobre cálculo do Índice de Basileia → caixa preta genuína."""
     msgs = [_msg(

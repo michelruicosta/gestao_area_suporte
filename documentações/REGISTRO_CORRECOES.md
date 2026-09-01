@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-09-01 — Grupo Usuário bloqueado / acesso — 1 thread sai da caixa preta (44 → 43) — Decisão 18
+
+**🔎 Em miúdos:** Thread de pedido de desbloqueio de acesso ("seria possível desbloquear?") passa a aparecer como solicitação.
+
+**Problema:** "seria possível" com "?" não era capturado. `_PEDIDO_IMPLICITO` (que cobre "poderia") não dispara com "?", e `_PEDIDO_FOLLOW_UP` não tinha o padrão.
+
+**Correção:** `seria\s+poss[íi]vel` → `_PEDIDO_FOLLOW_UP` → **solicitação** (Marcos Machioni — Acesso negado: "seria possível desbloquear?").
+
+2 threads permanecem como genuínas (Decisão 18):
+- Thread A: TRINUS — entrega de credencial de acesso ao BACEN + pergunta aberta sobre outro sistema (SCD)
+- Thread B: Atual Câmbio — cliente informou nova senha do arquivo C6 (dado pontual sem padrão automático)
+
+**Arquivos:** `scripts/banco_threads.py`, `tests/test_banco_threads.py`
+
+**Validação:** ✅ VALIDADO — `pytest tests/ -q` → 504 passed (3 testes novos).
+
+---
+
 ## 2026-09-01 — Grupo UNVERIFIED SENDER outros — 1 thread sai da caixa preta (45 → 44) — Decisão 17
 
 **🔎 Em miúdos:** Thread de follow-up com "Por gentileza, poderia retornar?" passa a aparecer como solicitação em vez de "aguarda resposta".

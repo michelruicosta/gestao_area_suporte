@@ -734,7 +734,8 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         r'|\breuni[aã]o\s+do\s+microsoft\s+teams\b'   # convite Teams = pedido de reunião (01/09/2026)
         r'|\bpe[çc]o\b'                               # Banvox: "peço que solicite ao Robson" + "?" (01/09/2026)
         r'|\bfavor\b'                                 # CV DTVM: "Favor solucionar com prioridade" + "?" (01/09/2026)
-        r'|\bgentileza\b',                            # UNVERIFIED: "Por gentileza, poderia retornar?" (01/09/2026)
+        r'|\bgentileza\b'                             # UNVERIFIED: "Por gentileza, poderia retornar?" (01/09/2026)
+        r'|\bseria\s+poss[íi]vel\b',                 # Acesso negado: "seria possível desbloquear?" (01/09/2026)
         re.IGNORECASE,
     )
     # Remove URLs e "??" (duplo ponto de interrogação informal/emoji) antes de checar
