@@ -746,7 +746,9 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         r'|\bseria\s+poss[íi]vel\b'                  # Acesso negado: "seria possível desbloquear?" (01/09/2026)
         r'|\batualiza[çc](?:[aã]o|[oõ]es)\b'           # Fair/Unicred: "Alguma atualização?" / "temos atualizações?" (01/09/2026)
         r'|\bpode\s+(?:confirmar|verificar)\b'        # Coluna/Trinus: "Pode confirmar?" / "pode verificar?" (01/09/2026)
-        r'|\bme\s+atualizar\b',                       # Trustee: "Agradeço se puder me atualizar do status" (01/09/2026)
+        r'|\bme\s+atualizar\b'                        # Trustee: "Agradeço se puder me atualizar do status" (01/09/2026)
+        r'|\brefor[çc]ar\b'                           # Unicred DRL: "reforçar que o prazo de envio é hoje" (01/09/2026)
+        r'|\bem\s+atraso\b',                          # Accredito: "estamos em atraso com as informações" (01/09/2026)
         re.IGNORECASE,
     )
     # Remove URLs e "??" (duplo ponto de interrogação informal/emoji) antes de checar

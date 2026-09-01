@@ -1372,6 +1372,34 @@ def test_me_atualizar_trustee_e_solicitacao():
     assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
 
 
+# ── Decisão 22 — cobrança de prazo: "reforçar" e "em atraso" ─────────────────
+
+def test_reforcar_prazo_unicred_e_solicitacao():
+    """Unicred DRL 06/2026: 'reforçar que o prazo de envio é hoje' → solicitação."""
+    msgs = [_msg(
+        CLIENTE,
+        corpo=(
+            'Monica, bom dia!\r\n\r\n'
+            'Vi aqui que o DRL da DTVM data base 06/2026 ainda não foi encaminhado ao Bacen, '
+            'passando para reforçar que o prazo de envio é hoje 14/07.\r\n\r\nAtt.'
+        ),
+    )]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
+    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
+
+
+def test_em_atraso_arquivo_2061_e_solicitacao():
+    """Accredito: 'estamos em atraso com as informações' → solicitação."""
+    msgs = [_msg(
+        CLIENTE,
+        corpo='O prazo para mandar os arquivos 2061 e 2062, foi ontem estamos em atraso com as informações!!',
+    )]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
+    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
+
+
 # ── Snapshots de contadores ───────────────────────────────────────────────────
 
 def test_snapshot_banco_vazio(monkeypatch, tmp_path):

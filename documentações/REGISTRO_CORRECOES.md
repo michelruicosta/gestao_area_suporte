@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-09-01 — Cobrança de prazo — 2 threads saem da caixa preta (16 → 14) — Decisão 22
+
+**🔎 Em miúdos:** Threads onde o cliente avisa que o prazo venceu ou está vencendo passam a aparecer como solicitação.
+
+**Problema:** `_PEDIDO_FOLLOW_UP` não reconhecia "reforçar" (Unicred: *"passando para reforçar que o prazo é hoje"*) nem "em atraso" (Accredito: *"estamos em atraso com as informações"*).
+
+**Correção:** adicionado `refor[çc]ar` e `em\s+atraso` ao `_PEDIDO_FOLLOW_UP` → ambas viram **solicitação**.
+
+**Arquivos:** `scripts/banco_threads.py`, `tests/test_banco_threads.py`
+
+**Validação:** ✅ VALIDADO — `pytest tests/ -q` → 523 passed (2 testes novos).
+
+---
+
 ## 2026-09-01 — Grupos reunião/entrega/homologado/me atualizar — 5 threads saem da caixa preta (22 → 17) — Decisão 21
 
 **🔎 Em miúdos:** Threads de entrega com cabeçalho "Arquivos enviados:" ou "Arquivo reenviado", confirmação de homologação e pedido de atualização de status passam a ser classificadas corretamente. Convites de calendário e Teams sem histórico passam a ser descartados automaticamente.
