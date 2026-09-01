@@ -1083,6 +1083,57 @@ def test_regressao_enc_sem_arquivo_nao_imagem_nao_e_enc_arquivo():
     assert status == 'Aguardando Finaud'
 
 
+# ── UNVERIFIED SENDER outros — grupo 01/09/2026 ──────────────────────────────
+
+def test_unverified_gentileza_com_pergunta_e_solicitacao():
+    """Thread A: 'Por gentileza, poderia retornar?' com '?' → solicitação.
+    'gentileza' agora está em _PEDIDO_FOLLOW_UP, que dispara mesmo com '?'.
+    """
+    msgs = [
+        _msg(FINAUD, corpo='Prezada Luiza, bom dia. Segue o acesso.'),
+        _msg(CLIENTE, corpo='Boa tarde, Por gentileza, poderia retornar?'),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
+    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', (
+        f'Esperado motivo de solicitação, got: {motivo}'
+    )
+
+
+def test_unverified_usuario_inexistente_e_caixa_preta():
+    """Thread B: 'não consegui desbloquear... usuário é inexistente' → caixa preta genuína.
+    Conteúdo técnico específico; nenhuma regra automática cobre.
+    """
+    msgs = [_msg(
+        CLIENTE,
+        corpo=(
+            'Boa tarde, Perdão, eu não consegui desbloquear. '
+            'Eu tenho salvo esse usuário: lmilet@GLOBALEXCHANGE, '
+            'mas está informando que o usuário é inexistente.'
+        ),
+    )]
+    _, motivo = bt._determinar_status(msgs)
+    assert motivo == 'Cliente escreveu — aguarda resposta da Finaud', (
+        f'Esperado caixa preta, got: {motivo}'
+    )
+
+
+def test_unverified_indice_basileia_duvida_e_caixa_preta():
+    """Thread C: dúvida técnica sobre cálculo do Índice de Basileia → caixa preta genuína."""
+    msgs = [_msg(
+        CLIENTE,
+        corpo=(
+            'Rodrigo, boa tarde. '
+            'Certo que isso não é por nenhum erro sistêmico ou de cálculo? '
+            'Na provisão que realizamos anteriormente não está próximo do que temos em sistema.'
+        ),
+    )]
+    _, motivo = bt._determinar_status(msgs)
+    assert motivo == 'Cliente escreveu — aguarda resposta da Finaud', (
+        f'Esperado caixa preta, got: {motivo}'
+    )
+
+
 # ── Snapshots de contadores ───────────────────────────────────────────────────
 
 def test_snapshot_banco_vazio(monkeypatch, tmp_path):

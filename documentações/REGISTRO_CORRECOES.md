@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-09-01 — Grupo UNVERIFIED SENDER outros — 1 thread sai da caixa preta (45 → 44) — Decisão 17
+
+**🔎 Em miúdos:** Thread de follow-up com "Por gentileza, poderia retornar?" passa a aparecer como solicitação em vez de "aguarda resposta".
+
+**Problema:** "gentileza" já estava em `_PEDIDO_IMPLICITO` mas esse filtro não dispara quando a frase tem "?". O texto da thread terminava com "?" então a regra não pegava.
+
+**Correção:** `gentileza` adicionado a `_PEDIDO_FOLLOW_UP`, que dispara mesmo com "?" (assim como `favor`, `por favor`, `peço` etc.) → **solicitação** (Thread A: Luiza Milet — "Por gentileza, poderia retornar?").
+
+2 threads permanecem como genuínas (Decisão 17):
+- Thread B: Luiza reportando "usuário é inexistente" (lmilet@GLOBALEXCHANGE) — conteúdo técnico específico
+- Thread C: Luiza questionando discrepância no Índice de Basileia — dúvida técnica de cálculo
+
+**Arquivos:** `scripts/banco_threads.py`, `tests/test_banco_threads.py`
+
+**Validação:** ✅ VALIDADO — `pytest tests/ -q` → 501 passed (3 testes novos).
+
+---
+
 ## 2026-09-01 — Grupo ENC: outros — 2 threads saem da caixa preta (47 → 45)
 
 **🔎 Em miúdos:** 2 threads de encaminhamento (ENC:) deixam de aparecer como "aguarda resposta da Finaud".
