@@ -2312,3 +2312,19 @@ def test_status_trustee_sem_movimentacao_aguarda_finaud():
     assert status == 'Aguardando Finaud', f'got: {status}'
     assert motivo == 'Cliente enviou informações e extratos — aguarda processamento', \
         f'motivo errado: {motivo}'
+
+
+def test_status_arquivo_submetido_concluida():
+    """'Arquivo submetido.' (cliente confirmou envio ao BACEN) → Concluída (01/09/2026).
+    Reproduz thread DRM Trustee 06/26: Jessica (BANVOX) confirmou submissão do DRM 2060.
+    """
+    corpo = (
+        'Pedro, boa tarde!\r\n\r\nEstou bem e espero que esteja também.\r\n\r\n'
+        'Arquivo submetido.\r\n\r\nAtenciosamente,\r\nJessica Barros da Silva'
+    )
+    msgs = [
+        _msg(FINAUD, corpo='Jessica, segue o DRM 2060 para submissão ao BACEN.'),
+        _msg(CLIENTE, corpo=corpo),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída', f'got: {status} | {motivo}'

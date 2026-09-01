@@ -181,7 +181,7 @@ _CONFIRMACAO_EXPLICITA = re.compile(
     r'\b(obrigad[ao]s?|muito\s+obrigad[ao]s?|ok\b|de\s+acordo|concordo|recebido|'
     r'perfeito|valeu|confirmado|entendido|sem\s+problemas|'
     r'nos?\s+ajudou|me\s+ajudou|ajudou|deu\s+certo|voltou|funcionou|resolveu|'
-    r'certo\b|tudo\s+(bem|certo|ok|bom))\b',
+    r'certo\b|tudo\s+(bem|certo|ok|bom)|arquivo\s+submetido)\b',
     re.IGNORECASE,
 )
 

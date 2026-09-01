@@ -8,6 +8,61 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ---
 
+## 🔴 INVESTIGAR — Mensagens de saída sem CC ao suporte@finaud.com.br não são capturadas (identificado em 01/09/2026)
+
+### O problema
+
+Quando funcionários da Finaud respondem a clientes **sem incluir suporte@finaud.com.br no To/Cc**, a resposta vai só para a caixa "Enviados" e **não aparece na thread capturada pelo pipeline** — o sistema fica com a conversa incompleta.
+
+**Evidência concreta:** thread `19f3d2aefaf7d2ce` (DRM Trustee 06/26 — "DRM Trustee Jun/26 submetido ao BACEN")
+- Pedro enviou o arquivo DRM para Jessica (BANVOX) às **16:03** — **ausente do pipeline**
+- A mensagem de Pedro às 12:21 (pedindo o COSIF 4111) foi capturada porque ele incluiu suporte@finaud.com.br no To:
+- Jessica respondeu "Arquivo submetido." — aparece, mas sem o envio do Pedro que a precedeu
+
+**Risco:** o status e o motivo de outras threads podem estar errados por falta de mensagens intermediárias.
+
+### O que fazer
+
+1. Estimar quantas threads têm esse problema (verificar threads onde a última mensagem é de cliente confirmando algo que a Finaud teoricamente já enviou)
+2. Avaliar se o pipeline deve coletar também da caixa "Enviados" do Gmail de suporte@finaud.com.br
+3. Decidir com Michel antes de implementar qualquer mudança na coleta
+
+---
+
+## 🔴 DEPLOY — O que falta antes de empurrar Passo A + Passo B para produção (registrado em 31/08/2026)
+
+> **Contexto:** 2 commits locais prontos, mas **não empurrados ao GitHub nem ao VPS**:
+> - `ca52ded` — Passo A: textos dos 18 motivos padronizados (lógica de detecção preservada)
+> - `48fd424` — Passo B: 4 novos motivos detectados + correção de disclaimer de confidencialidade + `matriz_classificacao_motivos.xlsx`
+>
+> **Decisão de Michel (31/08/2026):** os novos motivos só vão a produção depois que **todo o trabalho de motivos estiver concluído** — levantamentos, planilha finalizada e tela de manutenção desenvolvida (Passo C). Não fazer push parcial.
+
+### O que falta antes do push (Passo C — obrigatório antes do deploy)
+
+| # | O que fazer | Por que é pré-requisito |
+|---|---|---|
+| 1 | Criar tabela `regras_classificacao` no SQLite (`data/gestao.db`) | Tela de manutenção persiste as regras no banco, não no código |
+| 2 | Migrar as listas de termos dos 11 motivos detectáveis por palavras-chave do código (`banco_threads.py`) para o banco | Sem isso, Michel não consegue editar regras pela tela — precisa abrir o código |
+| 3 | Desenvolver tela Flask de manutenção de motivos (ver seção "Tela de gerenciamento" abaixo) | Michel precisa gerenciar os termos e motivos sem depender de sessão com a IA |
+| 4 | Validar unicidade de termos entre motivos na tela de manutenção (ver seção abaixo) | Termo duplicado em dois motivos = classificação ambígua |
+| 5 | Rodar `pytest tests/ -q` — zero regressões | Pré-requisito de qualquer commit |
+
+### O que fazer no momento do deploy (após Passo C completo)
+
+1. `git push origin main` — envia `ca52ded` + `48fd424` + commits do Passo C ao GitHub
+2. Deploy na VPS (`gestao-suporte.finaudapps.com.br`) via SSH — ver `documentações/DEPLOY.md`
+3. Rodar `recalcular_status_todos()` no servidor para reclassificar todas as threads com os novos textos e novas detecções do Passo A + B
+
+### Motivos ainda pendentes de aprovação antes de fechar a planilha
+
+Antes de iniciar o Passo C, os motivos abaixo precisam ser finalizados (ver seção "TELAS — Melhorar textos do campo MOTIVO" mais abaixo):
+- ~130 e-mails da "caixa preta" — investigar antes de nomear
+- "Cliente enviou saudação — possível entrega de arquivo" (13x) — aprovar texto final
+- "Fix R: cliente prometeu retornar..." — texto aprovado, aguarda implementação
+- "Finaud enviou arquivo sem linguagem de entrega" — texto aprovado, aguarda implementação
+
+---
+
 ## COLETOR + TELAS — Agrupar threads relacionadas via In-Reply-To/References (identificado em 28/08/2026)
 
 **Prioridade: bug Outlook CORRIGIDO (commit `bce6add`, 29/08). Pode iniciar.**
@@ -107,7 +162,7 @@ O campo **MOTIVO** exibido na tela de e-mails é hoje muito genérico em vários
 |---|---|---|
 | "Cliente escreveu — aguarda resposta da Finaud" — restante | ~130x | **Investigar antes de nomear** — o sistema não identificou o padrão; entender o que são antes de definir o texto (próximo chat) |
 | "Fix R: cliente prometeu retornar..." | ~0x banco | ✅ Texto aprovado: **"Cliente prometeu retornar com informações — aguarda retorno"** — aguarda implementação |
-| "Cliente enviou saudação — possível entrega de arquivo" | 13x | ✅ **Bug Outlook CORRIGIDO** (commit `bce6add`, 29/08). Das 16 threads: 3 mudaram de motivo (conteúdo real recuperado), 13 são genuinamente saudação. **Pendente:** aprovar texto final do motivo para as 13 que ficaram. Ver artefato: https://claude.ai/code/artifact/30448858-e3b1-4a40-a64d-4b989b0b7029 |
+| "Cliente enviou saudação — possível entrega de arquivo" | 13x | ✅ **Concluído.** Bug Outlook corrigido (commit `bce6add`, 29/08). Texto final implementado no Passo A (commit `ca52ded`): **"Mensagem do cliente sem conteúdo para classificar — aguarda verificação"**. |
 | "Finaud enviou arquivo sem linguagem de entrega" | 5x | ✅ Texto aprovado: **"Finaud enviou arquivo — aguarda retorno do cliente"** — aguarda implementação |
 
 ---
