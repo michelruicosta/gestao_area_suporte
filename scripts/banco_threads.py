@@ -576,7 +576,7 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
                     if any(f in corpo_flat_fwd for f in _FRASES_CONCLUSIVAS_FINAUD):
                         return 'Concluída', 'Finaud concluiu a solicitação'
                 # 1b-padrão: sem sinal claro → Aguardando Cliente (erro mais seguro)
-                return 'Aguardando Cliente', 'Finaud escreveu ao cliente — aguarda retorno'
+                return 'Aguardando Cliente', 'Finaud fez pergunta — aguarda resposta'
             # E-mail interno genuíno (Cenário 3)
             # §8.7: assunto informativo → sem ação pendente (strip RES:/ENC: antes)
             assunto_lower = re.sub(r'^(res|enc|fwd|fw)\s*:\s*', '', assunto.strip(), flags=re.IGNORECASE).lower()
@@ -610,17 +610,17 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
             return 'Aguardando Cliente', 'Finaud propôs reunião ou ligação — aguarda confirmação'
         if _eh_cortesia_finaud(texto_novo):
             if len(msgs) == 1:
-                return 'Aguardando Finaud', 'Finaud acusou recibo — aguarda processamento'
+                return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
             if len(msgs) >= 2:
                 ant = msgs[-2]
                 rem_ant = (ant.get('remetente') or '').lower()
                 anexos_ant = ant.get('nomes_anexos') or []
                 if not _eh_finaud_addr(rem_ant) and _tem_arquivo_entregavel(anexos_ant):
-                    return 'Aguardando Finaud', 'Finaud recebeu arquivos do cliente — aguarda processamento'
+                    return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
             return 'Concluída', 'Finaud concluiu a solicitação'
         if len(msgs) >= 2 and para_finaud and all(_eh_finaud_addr((m.get('remetente') or '').lower()) for m in msgs):
             return 'Aguardando Finaud', 'E-mail interno — aguarda ação da Finaud'
-        return 'Aguardando Cliente', 'Finaud escreveu — aguarda retorno do cliente'
+        return 'Aguardando Cliente', 'Finaud fez pergunta — aguarda resposta'
 
     # Remetente externo (cliente)
     # §8.8-BACEN: ENC: BANCO CENTRAL + [undefined] na assinatura (logo BANVOX sem sign-off)
@@ -650,7 +650,7 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     _texto_sem_url_fi = re.sub(r'<https?://[^>]+>|https?://\S+', '', texto_novo)
     if (_ACEITACAO_BACEN.search(texto_lower)
             and '?' not in _texto_sem_url_fi):
-        return 'Concluída', 'Cliente informou aceite do BACEN — assunto encerrado'
+        return 'Concluída', 'Confirmação de entrega no BACEN'
     # §8.8b: "Segue/Seguem/Enviado/Anexo/Arquivo(s) enviado(s)/reenviado(s)" no início de linha
     if re.search(r'(?:^|\r?\n)\s*(?:seguem?|enviados?|arquivos?\s+(?:re)?enviados?|anexo)\b', texto_lower):
         return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
@@ -773,7 +773,7 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     if (re.search(r'\bDDR\b', assunto, re.IGNORECASE)
             and '?' not in _texto_sem_url_q):
         return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
-    return 'Aguardando Finaud', 'Cliente escreveu — aguarda resposta da Finaud'
+    return 'Aguardando Finaud', 'Cliente fez pergunta — aguarda resposta da Finaud'
 
 
 def salvar_thread(thread: dict) -> None:

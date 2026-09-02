@@ -1095,7 +1095,7 @@ def test_cobranca_alguma_atualizacao_e_solicitacao():
     ]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
-    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
+    assert motivo != 'Cliente fez pergunta — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
 
 
 def test_cobranca_conseguiu_verificar_singular_e_solicitacao():
@@ -1105,7 +1105,7 @@ def test_cobranca_conseguiu_verificar_singular_e_solicitacao():
     ]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
-    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
+    assert motivo != 'Cliente fez pergunta — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
 
 
 def test_cobranca_temos_atualizacoes_e_solicitacao():
@@ -1116,7 +1116,7 @@ def test_cobranca_temos_atualizacoes_e_solicitacao():
     )]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
-    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
+    assert motivo != 'Cliente fez pergunta — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
 
 
 def test_cobranca_pode_confirmar_e_solicitacao():
@@ -1127,7 +1127,7 @@ def test_cobranca_pode_confirmar_e_solicitacao():
     )]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
-    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
+    assert motivo != 'Cliente fez pergunta — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
 
 
 def test_cobranca_pode_verificar_e_solicitacao():
@@ -1138,7 +1138,7 @@ def test_cobranca_pode_verificar_e_solicitacao():
     )]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
-    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
+    assert motivo != 'Cliente fez pergunta — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
 
 
 def test_regressao_conseguiram_plural_ainda_funciona():
@@ -1146,7 +1146,7 @@ def test_regressao_conseguiram_plural_ainda_funciona():
     msgs = [_msg(CLIENTE, corpo='Conseguiram regularizar o arquivo? Aguardo retorno.')]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
-    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
+    assert motivo != 'Cliente fez pergunta — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
 
 
 def test_unverified_gentileza_com_pergunta_e_solicitacao():
@@ -1159,7 +1159,7 @@ def test_unverified_gentileza_com_pergunta_e_solicitacao():
     ]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
-    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', (
+    assert motivo != 'Cliente fez pergunta — aguarda resposta da Finaud', (
         f'Esperado motivo de solicitação, got: {motivo}'
     )
 
@@ -1177,7 +1177,7 @@ def test_unverified_usuario_inexistente_e_caixa_preta():
         ),
     )]
     _, motivo = bt._determinar_status(msgs)
-    assert motivo == 'Cliente escreveu — aguarda resposta da Finaud', (
+    assert motivo == 'Cliente fez pergunta — aguarda resposta da Finaud', (
         f'Esperado caixa preta, got: {motivo}'
     )
 
@@ -1213,7 +1213,7 @@ def test_entrega_segue_o_mid_sentence_e_entrega():
     )]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
-    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado entrega, got: {motivo}'
+    assert motivo != 'Cliente fez pergunta — aguarda resposta da Finaud', f'Esperado entrega, got: {motivo}'
 
 
 def test_entrega_anexo_inicio_paragrafo_e_entrega():
@@ -1225,7 +1225,7 @@ def test_entrega_anexo_inicio_paragrafo_e_entrega():
     )]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
-    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado entrega, got: {motivo}'
+    assert motivo != 'Cliente fez pergunta — aguarda resposta da Finaud', f'Esperado entrega, got: {motivo}'
 
 
 def test_entrega_enviado_inicio_paragrafo_e_entrega():
@@ -1237,7 +1237,7 @@ def test_entrega_enviado_inicio_paragrafo_e_entrega():
     )]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
-    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado entrega, got: {motivo}'
+    assert motivo != 'Cliente fez pergunta — aguarda resposta da Finaud', f'Esperado entrega, got: {motivo}'
 
 
 def test_regressao_arquivo_submetido_singular_ainda_concluida():
@@ -1260,7 +1260,7 @@ def test_acesso_negado_seria_possivel_e_solicitacao():
     )]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
-    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', (
+    assert motivo != 'Cliente fez pergunta — aguarda resposta da Finaud', (
         f'Esperado motivo de solicitação, got: {motivo}'
     )
 
@@ -1279,7 +1279,7 @@ def test_acesso_trinus_credencial_com_pergunta_e_caixa_preta():
         ),
     ]
     _, motivo = bt._determinar_status(msgs)
-    assert motivo == 'Cliente escreveu — aguarda resposta da Finaud', (
+    assert motivo == 'Cliente fez pergunta — aguarda resposta da Finaud', (
         f'Esperado caixa preta, got: {motivo}'
     )
 
@@ -1298,7 +1298,7 @@ def test_acesso_senha_nova_sem_pergunta_e_caixa_preta():
         ),
     ]
     _, motivo = bt._determinar_status(msgs)
-    assert motivo == 'Cliente escreveu — aguarda resposta da Finaud', (
+    assert motivo == 'Cliente fez pergunta — aguarda resposta da Finaud', (
         f'Esperado caixa preta, got: {motivo}'
     )
 
@@ -1314,7 +1314,7 @@ def test_unverified_indice_basileia_duvida_e_caixa_preta():
         ),
     )]
     _, motivo = bt._determinar_status(msgs)
-    assert motivo == 'Cliente escreveu — aguarda resposta da Finaud', (
+    assert motivo == 'Cliente fez pergunta — aguarda resposta da Finaud', (
         f'Esperado caixa preta, got: {motivo}'
     )
 
@@ -1333,7 +1333,7 @@ def test_entrega_arquivos_enviados_banvox_e_entrega():
     )]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
-    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado entrega, got: {motivo}'
+    assert motivo != 'Cliente fez pergunta — aguarda resposta da Finaud', f'Esperado entrega, got: {motivo}'
 
 
 def test_entrega_arquivo_reenviado_brazabank_e_entrega():
@@ -1348,7 +1348,7 @@ def test_entrega_arquivo_reenviado_brazabank_e_entrega():
     )]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
-    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado entrega, got: {motivo}'
+    assert motivo != 'Cliente fez pergunta — aguarda resposta da Finaud', f'Esperado entrega, got: {motivo}'
 
 
 def test_homologado_unicred_e_concluida():
@@ -1369,7 +1369,7 @@ def test_me_atualizar_trustee_e_solicitacao():
     ]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
-    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
+    assert motivo != 'Cliente fez pergunta — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
 
 
 # ── Decisão 22 — cobrança de prazo: "reforçar" e "em atraso" ─────────────────
@@ -1386,7 +1386,7 @@ def test_reforcar_prazo_unicred_e_solicitacao():
     )]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
-    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
+    assert motivo != 'Cliente fez pergunta — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
 
 
 def test_em_atraso_arquivo_2061_e_solicitacao():
@@ -1397,7 +1397,7 @@ def test_em_atraso_arquivo_2061_e_solicitacao():
     )]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
-    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
+    assert motivo != 'Cliente fez pergunta — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
 
 
 # ── Decisão 23 — "consegue me confirmar" ─────────────────────────────────────
@@ -1414,7 +1414,7 @@ def test_consegue_me_confirmar_intercam_e_solicitacao():
     )]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
-    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
+    assert motivo != 'Cliente fez pergunta — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
 
 
 # ── Decisão 24 — "entrarei em contato" → Aguardando Cliente ──────────────────

@@ -2,6 +2,32 @@
 
 ---
 
+## 2026-09-01 — Passo 3: planilha e código alinhados à matriz aprovada
+
+**🔎 Em miúdos:** A planilha de motivos e o código agora falam a mesma língua — 18 motivos no código, 19 linhas na planilha (a 19ª é o "Sem retorno" que é gerado separadamente).
+
+**Problema:** O código retornava 6 nomes antigos/errados que não estavam na planilha aprovada, e a planilha não tinha a linha do BANVOX nem os termos novos descobertos nas sessões D.
+
+**Correção em `scripts/banco_threads.py`:**
+- `'Finaud escreveu ao cliente — aguarda retorno'` → `'Finaud fez pergunta — aguarda resposta'`
+- `'Finaud acusou recibo — aguarda processamento'` → `'Cliente enviou informações e extratos — aguarda processamento'`
+- `'Finaud recebeu arquivos do cliente — aguarda processamento'` → `'Cliente enviou informações e extratos — aguarda processamento'`
+- `'Finaud escreveu — aguarda retorno do cliente'` → `'Finaud fez pergunta — aguarda resposta'`
+- `'Cliente informou aceite do BACEN — assunto encerrado'` → `'Confirmação de entrega no BACEN'`
+- `'Cliente escreveu — aguarda resposta da Finaud'` → `'Cliente fez pergunta — aguarda resposta da Finaud'`
+
+**Correção em `documentações/matriz_classificacao_motivos.xlsx`:**
+- Linha nova (AF): `BANVOX encaminhou alerta do BACEN sobre documento — aguarda análise da Finaud`
+- Termos atualizados: Cliente enviou informações (+9), Cliente fez solicitação (+15), Finaud prometeu retornar (+6), Cliente prometeu retornar (+1 "entrarei em contato")
+
+**Decisão de nomenclatura:** Michel definiu que situações com o mesmo resultado (BACEN encerrado) levam o mesmo nome, independente de quem informou (cliente ou Finaud).
+
+**Arquivos:** `scripts/banco_threads.py`, `tests/test_banco_threads.py`, `documentações/matriz_classificacao_motivos.xlsx`
+
+**Validação:** ✅ VALIDADO — `pytest tests/ -q` → 525 passed, 0 failed.
+
+---
+
 ## 2026-09-01 — "entrarei em contato" — 1 thread sai da caixa preta (13 → 12) — Decisão 24
 
 **🔎 Em miúdos:** Thread onde o cliente avisa que vai retornar quando tiver resposta do liquidante passa a aparecer como Aguardando Cliente.
