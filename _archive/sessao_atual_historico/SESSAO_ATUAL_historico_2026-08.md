@@ -1,9 +1,127 @@
-# Histórico de sessões — agosto/2026
+# Histórico de sessões — agosto–setembro/2026
 
-> Diários arquivados do `SESSAO_ATUAL.md`, movidos em 27/08/2026 para manter o arquivo de
-> bordo enxuto — ele é lido inteiro em todo `/iniciar`.
+> Diários arquivados do `SESSAO_ATUAL.md`, movidos para manter o arquivo de bordo enxuto —
+> ele é lido inteiro em todo `/iniciar`.
 > **Índice de todas as sessões** → `SESSAO_ATUAL.md`, seção "Sessões anteriores".
 > Nada foi editado: os textos estão exatamente como foram escritos.
+
+---
+
+## 📓 Diário da sessão (2026-09-01) — Administração: E-mail, Notificações e aviso por e-mail
+
+### O que foi feito
+
+**Frente única: organizar a Administração e o recado quando a busca de e-mail parar**
+
+Michel pediu um mapa claro ao abrir a tela, depois aprovou item a item e pediu para implementar e publicar.
+
+**Decisões aprovadas**
+- Administração só para administrador.
+- Três menus: **E-mail** (abas na mesma pasta), **Notificações**, **Usuários e Perfis**.
+- E-mail: buscar agora, histórico, agendamentos (só e-mails; Fog saiu), regras de Sem Retorno, situação da busca (só luz ligada/parada).
+- Notificações: o que é, ligada/desligada, grupos (Administrador / Gestor / Operador — pode marcar vários).
+- Primeiro recado: **Busca de e-mail parou**. Quem recebe = grupo, não caixa no cadastro.
+- Entrada no dia a dia pelo **portal**, não pela URL direta.
+- Visual do e-mail: envelope Finaud (igual Portal/Auditoria), botão Abrir a Gestão → portal.
+
+**O que subiu em produção** (`a8d7799`)
+- Telas novas da Administração.
+- E-mail no visual aprovado, um recado por episódio de parada (relógio a cada 15 min).
+- Não sobe neste commit: motivos/filtros do outro chat, lista de pendências, rascunhos HTML locais.
+
+### Estado atual
+
+**Produção:** no ar em `gestao-suporte.finaudapps.com.br` (entrar pelo portal).
+**GitHub:** `main` em `a8d7799`.
+**pytest:** `tests/test_servidor_telas.py` + `tests/test_agendador_pipeline.py` → 24 passed.
+**Assunto deste chat:** encerrado.
+
+Último /fechar: 2026-09-01 11:56 — memórias revisadas ✅
+
+---
+
+## 📓 Diário da sessão (2026-08-28/29) — Planilha de classificação + bug Outlook no grupo saudação
+
+### O que foi feito
+
+**Frente principal: projetar a planilha de referência de motivos e investigar o grupo "saudação"**
+
+---
+
+**1. Grupo D — análise concluída**
+
+Thread `1a01b7bb8a4e4c5c` (Caroline Costa de Oliveira, Global Exchange, 19/08 19:24):
+- Mensagem: "Prezados, boa tarde!" — 1 mensagem no banco, sem conteúdo identificável
+- Contexto: Caroline enviou após Flávio (Finaud) entregar os relatórios DLO às 16:00
+- Classificação atual: DLO_2061 / Aguardando Finaud / "Cliente enviou saudação"
+- Conclusão: sem sinal de entrega, pergunta ou solicitação detectável — motivo correto
+  seria "Mensagem sem conteúdo identificado — aguarda verificação"
+
+**Por que 3 threads para a mesma conversa:**
+O Gmail cria Thread IDs separados quando:
+- O filtro `**UNVERIFIED SENDER**` modifica o assunto (remetente externo não verificado)
+- Os destinatários mudam (alguém entra ou sai do CC)
+- Alguém responde num ramo mais antigo da cadeia em vez da última mensagem
+
+Confirmado no Gmail de Michel: 3 threads para "Tratamento prudencial dos Direitos de Uso na
+apuração do DLO" (Caroline + 2 threads do Rodrigo, mesma conversa de negócio).
+
+---
+
+**2. Solução aprovada para agrupamento de threads**
+
+Usar os cabeçalhos `In-Reply-To` e `References` do protocolo de e-mail. Todo e-mail de
+resposta carrega o Message-ID do original — com esses campos o sistema sabe que dois
+Thread IDs diferentes são ramos da mesma conversa.
+
+Contexto completo (o que cobre, o que não cobre, como implementar):
+`documentações/PENDENCIAS.md` → seção "COLETOR + TELAS — Agrupar threads relacionadas".
+Chat dedicado para implementação criado em 28/08/2026.
+
+---
+
+**3. Planilha de referência de motivos — estrutura 100% definida**
+
+Objetivo: o usuário abre a planilha ao lado do sistema para entender por que uma thread
+recebeu determinado Status + Motivo.
+
+**Aba 1 — REGRAS** (uma linha por motivo):
+
+| Status | Motivo | Razão do motivo | Termos que acionaram o motivo | Criado em | Situação |
+
+- **Status:** Aguardando Finaud / Aguardando Cliente / Concluída
+- **Motivo:** texto exato exibido na tela
+- **Razão do motivo:** explicação de negócio em linguagem simples
+- **Termos que acionaram o motivo:** palavras/frases que o sistema detectou na mensagem
+- **Criado em:** data de criação (dd/mm/aaaa)
+- **Situação:** Ativa ou Inativa — nunca apagar linha, só inativar
+
+**Aba 2 — ALTERAÇÕES DE REGRAS** (cresce ao longo do tempo):
+
+| Quando | Motivo | Campo alterado | Antes | Depois |
+
+---
+
+**4. Motivos aprovados por Michel — conteúdo da aba REGRAS**
+
+*Aguardando Finaud:* 1–5 (informações/extratos, pergunta, solicitação, questionou resposta, e-mail interno)
+*Aguardando Cliente:* 6–11 (extrato/planilha, orientação técnica, reunião/ligação, pergunta, prometeu retornar, enviou arquivo)
+*Concluída:* 12–13 (concluiu solicitação, agradeceu)
+*Pendente:* 14 — grupo "saudação" (aguardava correção do bug Outlook)
+
+---
+
+**5–7. Bug Outlook descoberto e corrigido**
+
+`_extrair_texto_novo()` parava na primeira linha `De:` do cabeçalho automático do Outlook e
+descartava o conteúdo real. Corrigido em commit `bce6add`: só interrompe se já houver
+conteúdo real antes do separador. Validação: 403 testes + deploy + recalculate ✅
+
+### Estado atual
+
+**GitHub:** `main` em `a5ecaf0`. **Artefato motivos:** 18 de 18 aprovados ✅
+
+Último /fechar: 2026-08-29 (continuação) — memórias revisadas ✅
 
 ---
 

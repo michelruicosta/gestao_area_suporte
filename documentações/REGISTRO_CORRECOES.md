@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-09-02 — Sem Retorno: filtros por categoria, aba Por Categoria e ordenação
+
+**🔎 Em miúdos:** O modal "Sem Retorno" ganhou duas coisas novas: (1) um filtro de categoria dentro de cada aba para ver só os e-mails de um tipo específico (DDR, DLO etc.), com o número de threads aparecendo ao lado; (2) uma nova aba "Por Categoria" que mostra quantos e-mails de cada tipo estão aguardando a Finaud e quantos aguardam o cliente, com triângulos para ordenar a tabela.
+
+**Problema:** o modal só dividia por quem aguarda (Finaud ou Cliente), sem nenhuma forma de ver a distribuição por categoria.
+
+**Correção:**
+- `scripts/servidor_telas.py` — campo `categoria` adicionado à resposta de `/api/threads/sem-retorno` (estava no banco mas não era enviado ao front)
+- `templates/gestao_email.html` — dropdown de filtro por categoria em cada aba (AF e AC), com contador de threads; nova aba "Por Categoria" com tabela ordenável (colunas: CATEGORIA · AG. FINAUD · AG. CLIENTE · TOTAL); nomes de categoria em caixa alta; sort via `.th-sort`/`.si` igual ao padrão da tela principal
+
+**Validação:** ✅ VALIDADO — 525 passed, 0 failed. Sem teste novo: alterações de front-end puro (HTML/JS template). Commit `2347100`, push e deploy em `gestao-suporte.finaudapps.com.br` ✅
+
+---
+
 ## 2026-09-02 — Motivos 15 e 16: comunicados oficiais do BACEN
 
 **🔎 Em miúdos:** Qualquer comunicado do BACEN (alerta de inconsistência, atraso, problema de qualidade) agora tem dois motivos próprios — um quando o cliente encaminhou e aguarda Finaud, outro quando Finaud respondeu e aguarda o cliente. Antes, os mesmos alertas eram espalhados por 6 motivos diferentes conforme o cliente (BANVOX tinha motivo com o nome da empresa, os demais clientes ficavam em "informações e extratos").
