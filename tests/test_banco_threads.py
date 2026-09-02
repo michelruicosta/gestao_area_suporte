@@ -994,15 +994,15 @@ def test_bc_aviso_credenciamento_realizado_e_concluida():
 
 
 def test_bc_aviso_favor_solucionar_com_pergunta_e_solicitacao():
-    """BC aviso grupo: "Será que esquecemos do 4011?. Favor solucionar com prioridade."
-    "?" bloqueia _PEDIDO_IMPLICITO, mas "favor" em _PEDIDO_FOLLOW_UP dispara → solicitação.
+    """BC aviso grupo: assunto 'BANCO CENTRAL - AVISO DE ATRASO' → comunicado BACEN.
+    Regra BACEN tem prioridade sobre detecção de 'favor solucionar' (consolidado 02/09/2026).
     Reproduz thread 'Fw: BANCO CENTRAL - AVISO - CNPJ 50.286.774' (CV DTVM, 01/09/2026).
     """
     corpo = 'Bom dia .\r\n\r\nSerá que esquecemos do 4011 ?.\r\n\r\nFavor solucionar com prioridade .'
     msgs = [_msg(CLIENTE, assunto='Fw: BANCO CENTRAL - AVISO DE ATRASO EM REMESSA DE DOCUMENTO', corpo=corpo)]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
-    assert 'solicitação' in motivo, f'Esperado solicitação, got: {motivo}'
+    assert motivo == 'Comunicado do BACEN — aguarda análise da Finaud', f'motivo errado: {motivo}'
 
 
 def test_bc_grato_pela_colaboracao_e_concluida():
@@ -2798,7 +2798,7 @@ def test_nao_filtra_qualquer_anexo_disclaimer():
 # ── _determinar_status — §8.8 ENC: BANCO CENTRAL (Decisão 9 — 01/09/2026) ───
 
 def test_status_enc_banco_central_motivo_especifico():
-    """ENC: BANCO CENTRAL + texto só assinatura ([undefined]) → motivo específico BACEN."""
+    """ENC: BANCO CENTRAL + indício de qualidade → motivo genérico BACEN (02/09/2026)."""
     corpo = '[undefined]\r\n\r\nAtenciosamente,\r\nJessica Barros da Silva\r\nBANVOX DTVM'
     msgs = [
         _msg(CLIENTE, corpo='Prezados, segue a comunicação do BACEN.'),
@@ -2806,14 +2806,12 @@ def test_status_enc_banco_central_motivo_especifico():
     ]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud', f'got: {status}'
-    assert 'BACEN' in motivo, f'motivo não menciona BACEN: {motivo}'
-    assert motivo == 'BANVOX encaminhou alerta do BACEN sobre documento — aguarda análise da Finaud'
+    assert motivo == 'Comunicado do BACEN — aguarda análise da Finaud', f'motivo errado: {motivo}'
 
 
 def test_status_enc_banco_central_sem_signoff_motivo_especifico():
-    """ENC: BANCO CENTRAL + [undefined] + bloco de contato sem sign-off → motivo BACEN.
-    Reproduz o padrão real da assinatura BANVOX (Jessica): logo [undefined] + nome/cargo/tel/endereço
-    sem 'Atenciosamente' explícito, fazendo _so_cortesia() retornar False e §8.8 não disparar.
+    """ENC: BANCO CENTRAL + bloco de contato sem sign-off → motivo genérico BACEN (02/09/2026).
+    A detecção pelo assunto (não pelo corpo) garante consistência para qualquer cliente.
     """
     corpo = (
         '\r\n\r\n[undefined]\r\n Jessica Barros da Silva\r\n  Contabilidade de Fundos\r\n'
@@ -2827,8 +2825,7 @@ def test_status_enc_banco_central_sem_signoff_motivo_especifico():
     ]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud', f'got: {status}'
-    assert motivo == 'BANVOX encaminhou alerta do BACEN sobre documento — aguarda análise da Finaud', \
-        f'motivo errado: {motivo}'
+    assert motivo == 'Comunicado do BACEN — aguarda análise da Finaud', f'motivo errado: {motivo}'
 
 
 def test_status_enc_banco_central_nao_afeta_enc_sem_bacen():

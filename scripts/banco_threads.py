@@ -338,6 +338,28 @@ _ACEITACAO_BACEN = re.compile(
     re.IGNORECASE,
 )
 
+# §BACEN-COMUNICADO: palavras que identificam comunicado OFICIAL do BACEN no assunto
+# (o BACEN emitiu um alerta/aviso para o cliente, que repassa à Finaud)
+_BACEN_COMUNICADO_PALAVRAS = (
+    'comunicacao de inconsistencia',
+    'comunicação de inconsistência',
+    'indicio de problema de qualidade',
+    'indício de problema de qualidade',
+    'aviso de atraso',
+    'variação relevante',
+    'variacao relevante',
+    'não preenchimento',
+    'nao preenchimento',
+    'reiteração',
+    'reiteracao',
+)
+
+
+def _eh_comunicado_bacen_assunto(assunto: str) -> bool:
+    """True se o assunto indica comunicado oficial do BACEN (alerta, aviso, inconsistência)."""
+    a = assunto.lower()
+    return 'banco central' in a and any(p in a for p in _BACEN_COMUNICADO_PALAVRAS)
+
 
 def _extrair_texto_novo(corpo: str) -> str:
     """Remove histórico citado do corpo do e-mail; retorna só o texto novo."""
@@ -581,6 +603,8 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
             or any(t in texto_lower for t in _termos_bacen)):
         return 'Concluída', 'Confirmação de entrega no BACEN'
 
+    _assunto_bacen = _eh_comunicado_bacen_assunto(assunto)
+
     if eh_finaud:
         # Finaud → Finaud: verificar se é forward de entrega ao cliente (§8.6 Cenário 1)
         if para_finaud:
@@ -600,7 +624,7 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
                     if any(f in corpo_flat_fwd for f in _fc):
                         return 'Concluída', 'Finaud concluiu a solicitação'
                 # 1b-padrão: sem sinal claro → Aguardando Cliente (erro mais seguro)
-                return 'Aguardando Cliente', 'Finaud fez pergunta — aguarda resposta'
+                return 'Aguardando Cliente', ('Comunicado do BACEN — aguarda retorno do cliente' if _assunto_bacen else 'Finaud fez pergunta — aguarda resposta')
             # E-mail interno genuíno (Cenário 3)
             # §8.7: assunto informativo → sem ação pendente (strip RES:/ENC: antes)
             assunto_lower = re.sub(r'^(res|enc|fwd|fw)\s*:\s*', '', assunto.strip(), flags=re.IGNORECASE).lower()
@@ -609,16 +633,21 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
             return 'Aguardando Finaud', 'E-mail interno — aguarda ação da Finaud'
         # Finaud → Cliente
         tem_arquivo_real = _tem_arquivo_entregavel(ultimo.get('nomes_anexos') or [])
+        # helper: quando thread é comunicado oficial do BACEN, motivo Ag. Cliente é específico
+        _motivo_ag_cli = (
+            'Comunicado do BACEN — aguarda retorno do cliente'
+            if _assunto_bacen else 'Finaud fez pergunta — aguarda resposta'
+        )
         if tem_arquivo_real:
             if _tem_pergunta_acao(texto_novo):
-                return 'Aguardando Cliente', 'Finaud enviou arquivo — aguarda retorno do cliente'
+                return 'Aguardando Cliente', (_motivo_ag_cli if _assunto_bacen else 'Finaud enviou arquivo — aguarda retorno do cliente')
             if any(f in texto_flat for f in _FRASES_ENTREGA + _termos_db('Finaud entregou arquivo ao cliente')):
                 return 'Concluída', 'Finaud entregou arquivo ao cliente'
             if any(f in texto_lower for f in _FRASES_AGUARDANDO_FINAUD_ATIVA + _termos_db('Finaud prometeu retornar')):
                 return 'Aguardando Finaud', 'Finaud prometeu retornar'
             if not texto_novo.strip():
                 return 'Concluída', 'Finaud entregou arquivo ao cliente'
-            return 'Aguardando Cliente', 'Finaud enviou arquivo — aguarda retorno do cliente'
+            return 'Aguardando Cliente', (_motivo_ag_cli if _assunto_bacen else 'Finaud enviou arquivo — aguarda retorno do cliente')
         # Sem arquivo real
         if assunto.strip().upper().startswith('RES:'):
             return 'Concluída', 'Finaud concluiu a solicitação'
@@ -627,11 +656,11 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         if any(f in texto_lower for f in _FRASES_AGUARDANDO_FINAUD_ATIVA + _termos_db('Finaud prometeu retornar')):
             return 'Aguardando Finaud', 'Finaud prometeu retornar'
         if any(f in texto_flat for f in _FRASES_SOLICITA_EXTRATO):
-            return 'Aguardando Cliente', 'Finaud fez pergunta — aguarda resposta'
+            return 'Aguardando Cliente', _motivo_ag_cli
         if any(f in texto_lower for f in _FRASES_ORIENTACAO_TECNICA):
-            return 'Aguardando Cliente', 'Finaud fez pergunta — aguarda resposta'
+            return 'Aguardando Cliente', _motivo_ag_cli
         if any(f in texto_lower for f in _FRASES_REUNIAO):
-            return 'Aguardando Cliente', 'Finaud fez pergunta — aguarda resposta'
+            return 'Aguardando Cliente', _motivo_ag_cli
         if _eh_cortesia_finaud(texto_novo):
             if len(msgs) == 1:
                 return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
@@ -644,15 +673,15 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
             return 'Concluída', 'Finaud concluiu a solicitação'
         if len(msgs) >= 2 and para_finaud and all(_eh_finaud_addr((m.get('remetente') or '').lower()) for m in msgs):
             return 'Aguardando Finaud', 'E-mail interno — aguarda ação da Finaud'
-        return 'Aguardando Cliente', 'Finaud fez pergunta — aguarda resposta'
+        return 'Aguardando Cliente', _motivo_ag_cli
 
     # Remetente externo (cliente)
-    # §8.8-BACEN: ENC: BANCO CENTRAL + [undefined] na assinatura (logo BANVOX sem sign-off)
-    # _so_cortesia() falha porque o bloco de contato é longo; detecção direta pelo assunto+logo.
-    if (_ENC_PREFIX.match(assunto.strip())
-            and 'BANCO CENTRAL' in assunto.upper()
-            and '[undefined]' in texto_lower):
-        return 'Aguardando Finaud', 'BANVOX encaminhou alerta do BACEN sobre documento — aguarda análise da Finaud'
+    # §8.8-BACEN: comunicado oficial do BACEN encaminhado por qualquer cliente → Finaud analisa
+    # Cobre: inconsistência DRM, problema de qualidade, aviso de atraso, variação relevante,
+    # não preenchimento, reiteração — independente do remetente (não só BANVOX).
+    # Exceção: cliente confirmou/agradeceu no mesmo thread → Concluída (deixa cair nas regras abaixo).
+    if _assunto_bacen and not _CONFIRMACAO_EXPLICITA.search(texto_lower):
+        return 'Aguardando Finaud', 'Comunicado do BACEN — aguarda análise da Finaud'
     # §8.8-PCAM: Fair Corretora encaminha relatório PCAM diário (ENC: PCAM DD.MM.YYYY)
     # _so_cortesia() falha: bloco de contato sem "Atenciosamente". Conteúdo real está no histórico.
     if _ENC_PREFIX.match(assunto.strip()) and 'PCAM' in assunto.upper():
@@ -665,8 +694,6 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
     # §8.8: cliente encaminhou algo (ENC:/FWD: ou assunto com EXTRATO) com texto vazio → Finaud precisa processar
     if _so_cortesia(texto_novo) and (_ENC_PREFIX.match(assunto.strip()) or _EXTRATO_RE.search(assunto)):
-        if 'BANCO CENTRAL' in assunto.upper():
-            return 'Aguardando Finaud', 'BANVOX encaminhou alerta do BACEN sobre documento — aguarda análise da Finaud'
         return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
     # Fix I: cliente informa que o BACEN aceitou o arquivo → processo encerrado
     # Roda ANTES de §8.8b para não ser bloqueado por "Segue" no início da frase.

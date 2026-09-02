@@ -1,10 +1,18 @@
 # PENDÊNCIAS — Gestão Área Suporte
 
-**Atualizado:** 2026-09-01 15:00
+**Atualizado:** 2026-09-02 13:30
 **Organização:** por etapa que bloqueia — reorganizado em 03/08/2026 para seguir as fases sem brechas.
 **Regra:** este arquivo lista **só o que ainda falta** (aberto / aguardando decisão / backlog).
 Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada no
 `REGISTRO_CORRECOES.md` — nesta ordem: primeiro grava no REGISTRO, depois remove daqui.
+
+---
+
+## 🟡 MELHORIA — Encerramento automático quando Finaud não faz pergunta (identificado em 02/09/2026)
+
+Hoje, quando a Finaud responde ao cliente sem fazer uma pergunta (ex: entrega de arquivo, informativo, confirmação), o thread fica em "Aguardando Cliente" até o cliente responder — o que nem sempre acontece. Michel definiu a regra: **thread só fica em "Aguardando Cliente" quando a Finaud fez uma pergunta explícita.** Nos demais casos (entrega, informativo, sem pergunta), classificar direto como Concluída sem aguardar o cliente.
+
+Afeta todos os threads (não só BACEN). Requer testes dedicados antes de implementar.
 
 ---
 
