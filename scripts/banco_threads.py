@@ -186,6 +186,20 @@ _SEP_HISTORICO = re.compile(
     re.IGNORECASE,
 )
 
+# Encaminhamento Outlook: cabeçalho "Enviada em:" / "Sent:" aparece junto com "De:/From:"
+# A presença de ambos indica e-mail encaminhado pelo Outlook (não só citação de resposta).
+_OUTLOOK_FWD_ENVIADA = re.compile(
+    r'(?:^|\n)\s*(?:enviada\s+em|sent)\s*:',
+    re.IGNORECASE,
+)
+
+# Encaminhamento Gmail: ao menos 5 traços + "Forwarded message" / "mensagem encaminhada"
+# (Gmail usa 10 traços antes e após, mas toleramos variações para maior robustez)
+_GMAIL_FWD_RE = re.compile(
+    r'-{5,}\s*(?:forwarded\s+message|mensagem\s+encaminhada)',
+    re.IGNORECASE,
+)
+
 _CORTESIA = re.compile(
     r'\b(obrigad[ao]s?|muito\s+obrigad[ao]s?|ok|de\s+acordo|concordo|recebido|'
     r'perfeito|valeu|confirmado|certo|entendido|tudo\s+bem|sem\s+problemas|'
@@ -450,6 +464,68 @@ def _so_cortesia(texto: str) -> bool:
     return len(restante) < 15
 
 
+def _identificar_tipo_estrutura(corpo_raw: str) -> str:
+    """
+    Classifica a estrutura do corpo do e-mail em um de sete tipos.
+
+    A — texto puro, sem histórico citado
+    B — resposta com texto novo (tem separador + conteúdo antes dele)
+    C — encaminhamento Outlook com texto novo
+    D — encaminhamento Outlook sem texto novo (só assinatura antes do bloco)
+    E — resposta sem texto novo (só assinatura antes do separador)
+    F — encaminhamento Gmail (separador de traços longos + "Forwarded message")
+    G — corpo vazio ou quase vazio
+    """
+    if not corpo_raw or not corpo_raw.strip():
+        return 'G'
+
+    if _GMAIL_FWD_RE.search(corpo_raw):
+        return 'F'
+
+    # Outlook forward: precisa ter De:/From: E Enviada em:/Sent: no mesmo corpo
+    eh_outlook_fwd = bool(
+        re.search(r'(?:^|\n)\s*(?:de|from)\s*:', corpo_raw, re.IGNORECASE)
+        and _OUTLOOK_FWD_ENVIADA.search(corpo_raw)
+    )
+
+    # Verificar separador de histórico iterando as linhas (igual a _extrair_texto_novo)
+    tem_sep = False
+    tem_citacao = False
+    for linha in corpo_raw.split('\n'):
+        stripped = linha.strip()
+        if stripped.startswith('>'):
+            tem_citacao = True
+            break
+        if _SEP_HISTORICO.match(stripped):
+            tem_sep = True
+            break
+
+    texto_novo = _extrair_texto_novo(corpo_raw)
+
+    if eh_outlook_fwd:
+        if not texto_novo.strip() or _so_cortesia(texto_novo):
+            return 'D'
+        # _so_cortesia falha para assinaturas corporativas sem sign-off ("Att" / "Atenciosamente").
+        # Verificar se há pelo menos um sinal de conteúdo real: saudação, frase de entrega,
+        # pedido explícito ou pergunta. Se nenhum → é só assinatura → Tipo D.
+        t_clean = re.sub(r'\[cid:[^\]]+\]|\[image:[^\]]*\]|https?://\S+', '', texto_novo)
+        t_lower = re.sub(r'\s+', ' ', t_clean).lower()
+        tem_conteudo = (
+            bool(_SAUDACAO_RE.search(t_clean))
+            or any(f in t_lower for f in _FRASES_ENTREGA)
+            or any(f in t_lower for f in _FRASES_PEDIDO_EXPLICITO)
+            or '?' in t_lower
+        )
+        return 'C' if tem_conteudo else 'D'
+
+    tem_texto_novo = bool(texto_novo.strip()) and not _so_cortesia(texto_novo)
+
+    if tem_sep or tem_citacao:
+        return 'B' if tem_texto_novo else 'E'
+
+    return 'A'
+
+
 def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     """
     Determina o status de workflow com base no §8.3 da spec.
@@ -695,6 +771,21 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     # §8.8: cliente encaminhou algo (ENC:/FWD: ou assunto com EXTRATO) com texto vazio → Finaud precisa processar
     if _so_cortesia(texto_novo) and (_ENC_PREFIX.match(assunto.strip()) or _EXTRATO_RE.search(assunto)):
         return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
+    # §8.8-TIPO-D: encaminhamento Outlook sem texto novo e sem prefixo ENC: no assunto
+    # O conteúdo real está no bloco encaminhado (abaixo do cabeçalho De:/Enviada em:),
+    # não no texto novo — por isso as regras acima (que leem só texto_novo) falham.
+    # Prioridade: (1) anexo real → entrega; (2) frase de entrega no bloco → entrega;
+    # (3) pergunta no corpo completo → pergunta; (4) sem sinal → aguarda verificação.
+    if _identificar_tipo_estrutura(corpo_raw) == 'D':
+        if _tem_arquivo_entregavel(ultimo.get('nomes_anexos') or []):
+            return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
+        corpo_enc_flat = re.sub(r'\s+', ' ', corpo_raw).lower()
+        _frases_enc = _FRASES_ENTREGA + tuple(_termos_db('Cliente enviou informações e extratos — aguarda processamento'))
+        if any(f in corpo_enc_flat for f in _frases_enc):
+            return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
+        if _tem_pergunta_acao(corpo_raw):
+            return 'Aguardando Finaud', 'Cliente fez pergunta — aguarda resposta da Finaud'
+        return 'Aguardando Finaud', 'Mensagem sem conteúdo identificável — aguarda verificação'
     # Fix I: cliente informa que o BACEN aceitou o arquivo → processo encerrado
     # Roda ANTES de §8.8b para não ser bloqueado por "Segue" no início da frase.
     # Ex.: "Segue protocolo de arquivo aceito do COS4111" — aceite do BACEN encerra o caso.

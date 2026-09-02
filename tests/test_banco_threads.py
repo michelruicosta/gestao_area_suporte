@@ -3037,3 +3037,154 @@ def test_status_dlo_teams_invite_e_solicitacao():
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Finaud'
     assert motivo == 'Cliente fez solicitação — aguarda ação da Finaud'
+
+
+# ── _identificar_tipo_estrutura ───────────────────────────────────────────────
+
+_CORPO_OUTLOOK_FWD_SEM_TEXTO = (
+    'Magno L. Lopes da Silva\n'
+    'Supervisor Treasury / Western Union Bank\n'
+    '\n'
+    'De: Magno Leandro Lopes da Silva <Magno.lopesdaSilva@wu.com>\n'
+    'Enviada em: segunda-feira, 1 de setembro de 2026 08:30\n'
+    'Para: suporte@finaud.com.br\n'
+    'Assunto: Relatórios de TVM\n'
+    '\n'
+    'Prezados bom dia! Segue as posições de TVMs.'
+)
+
+_CORPO_OUTLOOK_FWD_COM_TEXTO = (
+    'Segue conforme solicitado.\n'
+    '\n'
+    'De: Joao <joao@bancox.com.br>\n'
+    'Enviada em: terça-feira, 2 de setembro de 2026 10:00\n'
+    'Para: suporte@finaud.com.br\n'
+    'Assunto: DDR\n'
+    '\n'
+    'Prezados, segue o arquivo.'
+)
+
+_CORPO_RESPOSTA_COM_TEXTO = (
+    'Confirmo o recebimento, obrigado.\n'
+    '\n'
+    'On Mon, 1 Sep 2026 at 10:00 Finaud wrote:\n'
+    '> Segue o arquivo DDR.'
+)
+
+_CORPO_RESPOSTA_SEM_TEXTO = (
+    'Atenciosamente,\n'
+    'Magno\n'
+    '\n'
+    'On Mon, 1 Sep 2026 at 10:00 Finaud wrote:\n'
+    '> Segue o arquivo DDR.'
+)
+
+_CORPO_GMAIL_FWD = (
+    '---------- Forwarded message ---------\n'
+    'De: Joao <joao@bancox.com.br>\n'
+    'Para: suporte@finaud.com.br\n'
+    '\n'
+    'Prezados, segue o DDR.'
+)
+
+
+def test_tipo_estrutura_g_corpo_vazio():
+    assert bt._identificar_tipo_estrutura('') == 'G'
+    assert bt._identificar_tipo_estrutura('   ') == 'G'
+
+
+def test_tipo_estrutura_a_texto_puro():
+    assert bt._identificar_tipo_estrutura('Prezados, segue o arquivo DDR em anexo.') == 'A'
+
+
+def test_tipo_estrutura_b_resposta_com_texto():
+    assert bt._identificar_tipo_estrutura(_CORPO_RESPOSTA_COM_TEXTO) == 'B'
+
+
+def test_tipo_estrutura_c_outlook_fwd_com_texto():
+    assert bt._identificar_tipo_estrutura(_CORPO_OUTLOOK_FWD_COM_TEXTO) == 'C'
+
+
+def test_tipo_estrutura_d_outlook_fwd_sem_texto():
+    # Caso real: Western Union Bank — bug do TVM (02/09/2026)
+    assert bt._identificar_tipo_estrutura(_CORPO_OUTLOOK_FWD_SEM_TEXTO) == 'D'
+
+
+def test_tipo_estrutura_e_resposta_sem_texto():
+    assert bt._identificar_tipo_estrutura(_CORPO_RESPOSTA_SEM_TEXTO) == 'E'
+
+
+def test_tipo_estrutura_f_gmail_fwd():
+    assert bt._identificar_tipo_estrutura(_CORPO_GMAIL_FWD) == 'F'
+
+
+# ── _determinar_status — Tipo D (Outlook forward sem texto novo) ──────────────
+
+def test_status_tipo_d_com_anexo_real_entrega():
+    # Tipo D + arquivo real → entrega (caso TVM Western Union)
+    status, motivo = bt._determinar_status([_msg(
+        CLIENTE,
+        corpo=_CORPO_OUTLOOK_FWD_SEM_TEXTO,
+        assunto='Relatórios de TVM e Dep a Vista - 31/08/2026',
+        nomes_anexos=['BANCO COMPROMISSADA 31082026.xls.pdf', 'CORRETORA CDB PRE.xls'],
+    )])
+    assert status == 'Aguardando Finaud'
+    assert motivo == 'Cliente enviou informações e extratos — aguarda processamento'
+
+
+def test_status_tipo_d_sem_anexo_mas_segue_no_bloco_entrega():
+    # Tipo D sem arquivo mas bloco encaminhado tem "Segue" → ainda é entrega
+    corpo = (
+        'Magno L. Lopes da Silva\n'
+        '\n'
+        'De: Magno <Magno.lopesdaSilva@wu.com>\n'
+        'Enviada em: segunda-feira, 1 de setembro de 2026 08:30\n'
+        'Para: suporte@finaud.com.br\n'
+        'Assunto: TVM\n'
+        '\n'
+        'Prezados, seguem as posições de TVMs conforme solicitado.'
+    )
+    status, motivo = bt._determinar_status([_msg(
+        CLIENTE, corpo=corpo, assunto='Relatórios de TVM',
+    )])
+    assert status == 'Aguardando Finaud'
+    assert motivo == 'Cliente enviou informações e extratos — aguarda processamento'
+
+
+def test_status_tipo_d_pergunta_no_bloco_encaminhado():
+    # Tipo D sem arquivo, bloco encaminhado tem "?" → pergunta real
+    corpo = (
+        'Magno L. Lopes da Silva\n'
+        '\n'
+        'De: Magno <Magno.lopesdaSilva@wu.com>\n'
+        'Enviada em: segunda-feira, 1 de setembro de 2026 08:30\n'
+        'Para: suporte@finaud.com.br\n'
+        'Assunto: Dúvida\n'
+        '\n'
+        'Vocês poderiam verificar o prazo do relatório?'
+    )
+    status, motivo = bt._determinar_status([_msg(
+        CLIENTE, corpo=corpo, assunto='Dúvida sobre prazo',
+    )])
+    assert status == 'Aguardando Finaud'
+    assert motivo == 'Cliente fez pergunta — aguarda resposta da Finaud'
+
+
+def test_status_tipo_d_sem_sinal_identificavel():
+    # Tipo D sem arquivo, sem frase de entrega, sem pergunta → aguarda verificação
+    corpo = (
+        'Magno L. Lopes da Silva\n'
+        'Supervisor Treasury\n'
+        '\n'
+        'De: Magno <Magno.lopesdaSilva@wu.com>\n'
+        'Enviada em: segunda-feira, 1 de setembro de 2026 08:30\n'
+        'Para: suporte@finaud.com.br\n'
+        'Assunto: Aviso interno\n'
+        '\n'
+        'Comunicamos que o escritório estará fechado na sexta-feira.'
+    )
+    status, motivo = bt._determinar_status([_msg(
+        CLIENTE, corpo=corpo, assunto='Aviso interno',
+    )])
+    assert status == 'Aguardando Finaud'
+    assert motivo == 'Mensagem sem conteúdo identificável — aguarda verificação'
