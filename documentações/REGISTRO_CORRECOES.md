@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-09-01 — "entrarei em contato" — 1 thread sai da caixa preta (13 → 12) — Decisão 24
+
+**🔎 Em miúdos:** Thread onde o cliente avisa que vai retornar quando tiver resposta do liquidante passa a aparecer como Aguardando Cliente.
+
+**Problema:** `_CLIENTE_VAI_RETORNAR` tinha "retornaremos", "retornarei" etc., mas não reconhecia "entrarei em contato" (Sefer / Doc. 2011-LIM).
+
+**Correção:** adicionado `entrarei\s+em\s+contato` ao `_CLIENTE_VAI_RETORNAR` → vira **Aguardando Cliente**.
+
+**Arquivos:** `scripts/banco_threads.py`, `tests/test_banco_threads.py`
+
+**Validação:** ✅ VALIDADO — `pytest tests/ -q` → 525 passed (1 teste novo).
+
+---
+
 ## 2026-09-01 — "consegue me confirmar" — 1 thread sai da caixa preta (14 → 13) — Decisão 23
 
 **🔎 Em miúdos:** Thread onde cliente pergunta se a Finaud consegue atender nova norma do BACEN passa a aparecer como solicitação.

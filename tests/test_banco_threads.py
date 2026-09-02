@@ -1417,6 +1417,23 @@ def test_consegue_me_confirmar_intercam_e_solicitacao():
     assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
 
 
+# ── Decisão 24 — "entrarei em contato" → Aguardando Cliente ──────────────────
+
+def test_entrarei_em_contato_sefer_e_aguardando_cliente():
+    """Sefer: 'entrarei em contato para te informar' → Aguardando Cliente."""
+    msgs = [_msg(
+        CLIENTE,
+        corpo=(
+            'Olá, Tibério, tudo bem?\r\n'
+            'Como estamos em processo de liquidação, neste momento os arquivos diários ainda não estão sendo necessários. '
+            'Estou aguardando as orientações do liquidante para verificar como proceder nesse caso. '
+            'Assim que eu tiver um retorno, entrarei em contato para te informar.\r\n\r\nAtenc'
+        ),
+    )]
+    status, _ = bt._determinar_status(msgs)
+    assert status == 'Aguardando Cliente', f'Esperado Aguardando Cliente, got: {status}'
+
+
 # ── Snapshots de contadores ───────────────────────────────────────────────────
 
 def test_snapshot_banco_vazio(monkeypatch, tmp_path):

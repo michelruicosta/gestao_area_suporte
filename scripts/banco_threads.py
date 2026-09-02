@@ -705,7 +705,8 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     # Ex.: "Vamos analisar e retornamos." / "Obrigada, retornarei amanhã."
     _CLIENTE_VAI_RETORNAR = re.compile(
         r'\bretornaremos\b|\bretornamos\b|\bretornarei\b|\bvamos\s+analisar\b'
-        r'|\be\s+retorno\b',   # Fix V: "vou confirmar e retorno" — cliente prometeu voltar → AC
+        r'|\be\s+retorno\b'    # Fix V: "vou confirmar e retorno" — cliente prometeu voltar → AC
+        r'|\bentrarei\s+em\s+contato\b',  # Sefer: "entrarei em contato para te informar" (01/09/2026)
         re.IGNORECASE,
     )
     if _CLIENTE_VAI_RETORNAR.search(texto_lower):
