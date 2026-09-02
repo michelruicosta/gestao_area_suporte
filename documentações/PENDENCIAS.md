@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Gestão Área Suporte
 
-**Atualizado:** 2026-08-29 23:30
+**Atualizado:** 2026-09-01 15:00
 **Organização:** por etapa que bloqueia — reorganizado em 03/08/2026 para seguir as fases sem brechas.
 **Regra:** este arquivo lista **só o que ainda falta** (aberto / aguardando decisão / backlog).
 Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada no
@@ -8,9 +8,48 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ---
 
-## 🔴 INVESTIGAR — Mensagens de saída sem CC ao suporte@finaud.com.br não são capturadas (identificado em 01/09/2026)
+## 🔴 INVESTIGAR — Threads irmãs: mesmo caso de negócio dividido em duas conversas pelo Gmail (identificado em 01/09/2026)
 
 ### O problema
+
+Quando alguém responde um e-mail em um ramo antigo da conversa (ou encaminha para outra pessoa), o Gmail cria um `thread_id` novo — o sistema recebe duas conversas separadas sobre o mesmo caso. Uma pode ser encerrada enquanto a outra fica **presa para sempre** como pendente, sem que ninguém saiba que o assunto já foi resolvido.
+
+**Caso real que gerou a análise:**
+Thread `19fc9488b24b5fa4` (Re: 1ª Reiteração DDR 2011 — REMITLY) está como **Aguardando Finaud desde 03/08/2026** — mais de 1 mês. O caso foi resolvido na thread irmã `19fc928a120bc68a`, que está Concluída. O sistema não sabe da relação entre as duas.
+
+📄 **Fluxo completo documentado:** `documentações/fluxo_threads_irmas_mesmo_caso.html`
+
+### O que foi levantado (varredura de 01/09/2026)
+
+| Situação | Qtd |
+|---|---|
+| Threads ativas no sistema | 1.424 |
+| Grupos com mesmo assunto e status diferentes | 14 |
+| **Grupos com ao menos 1 Concluída + 1 pendente (cenário problema)** | **11** |
+| Caso REMITLY 1ª Reiteração (assuntos ligeiramente diferentes — não aparece no agrupamento por assunto) | 1 adicional |
+
+O grupo mais grave é **"BANCO CENTRAL - COMUNICACAO DE INCONSISTENCIA NO DRM - 2060"** com 22 threads e status mistos — assunto recorrente que gera múltiplos episódios ao longo do tempo.
+
+### O que ainda não sabemos
+
+1. Dos 11 grupos detectados, quantos são de fato o mesmo episódio (problema real) vs. episódios diferentes do mesmo tipo de comunicação do BACEN (falso positivo)?
+2. O caso da REMITLY 1ª Reiteração mostra que o agrupamento por assunto normalizado não captura tudo — quais outros casos similares existem com assuntos levemente diferentes?
+3. Como o sistema deveria tratar uma thread irmã: encerrar automaticamente, alertar Michel, ou outro fluxo?
+
+### O que fazer
+
+1. Revisar os 11 grupos um a um com Michel para separar casos reais de falsos positivos
+2. Definir o critério definitivo de detecção (assunto + período + remetentes?)
+3. Decidir o fluxo: quando o sistema identifica duas threads irmãs, o que acontece?
+4. Só depois: implementar
+
+**Quando fazer:** chat dedicado — análise pode ser longa.
+
+---
+
+## 🔴 INVESTIGAR — Monitorar caixas da Andrea e Sarah para captura completa (identificado em 01/09/2026)
+
+### O problema original
 
 Quando funcionários da Finaud respondem a clientes **sem incluir suporte@finaud.com.br no To/Cc**, a resposta vai só para a caixa "Enviados" e **não aparece na thread capturada pelo pipeline** — o sistema fica com a conversa incompleta.
 
@@ -21,11 +60,24 @@ Quando funcionários da Finaud respondem a clientes **sem incluir suporte@finaud
 
 **Risco:** o status e o motivo de outras threads podem estar errados por falta de mensagens intermediárias.
 
-### O que fazer
+### Nova descoberta (01/09/2026) — acesso via service account já existe
 
-1. Estimar quantas threads têm esse problema (verificar threads onde a última mensagem é de cliente confirmando algo que a Finaud teoricamente já enviou)
-2. Avaliar se o pipeline deve coletar também da caixa "Enviados" do Gmail de suporte@finaud.com.br
-3. Decidir com Michel antes de implementar qualquer mudança na coleta
+Durante a análise do Grupo 1 de threads irmãs (ENC: Arquivos 4060 — ACCREDITO), confirmamos que:
+- A **service account** (`config/credenciais_gmail.json`) já tem acesso às caixas de `andrea.inacio@finaud.com.br` e `sarah.sa@finaud.com.br` via domain-wide delegation
+- Foi possível acessar e ler e-mails dessas caixas com um script Python simples
+- Não é necessário nenhum novo token ou autorização — o acesso já está liberado
+
+**Oportunidade:** o pipeline poderia monitorar essas caixas também, capturando tudo que a Andrea e a Sarah enviam — independente de CC. Isso cobriria tanto o gap de mensagens de saída quanto contribuiria para resolver o problema de threads irmãs.
+
+### O que explorar em chat dedicado (sem mexer no sistema atual)
+
+1. **Mapear os gaps cobertos:** quais cenários o monitoramento das caixas da Andrea e Sarah resolveria?
+2. **Ver o que já existe e o que falta:** o pipeline atual tem como receber uma segunda fonte de coleta?
+3. **Estimar o impacto:** quantas threads hoje têm mensagens faltando por causa desse gap?
+4. **Desenhar a solução:** como ficaria a arquitetura — coleta paralela? enriquecimento? nova tabela?
+5. **Só depois:** decidir com Michel se avança para implementação
+
+**Como abrir o chat:** iniciar novo chat e dizer *"Quero explorar o monitoramento das caixas da Andrea e Sarah via service account — apenas para analisar os gaps e o potencial, sem implementar nada"*.
 
 ---
 

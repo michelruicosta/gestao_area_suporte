@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Protótipo — Administração (não é o sistema real)</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --marca: #4338CA; --bg: #f7f8fa; --surface: #fff; --border: #dde2ec;
+  --text: #1c2b4a; --muted: #6b7a9a; --accent: #2463eb;
+  --pos: #16a34a; --pos-bg: #e8f8f0; --ui-lima: #b4d84a;
+  font-family: Outfit, "Segoe UI", system-ui, sans-serif; line-height: 1.5;
+}
+* { box-sizing: border-box; }
+body { margin: 0; display: flex; min-height: 100vh; background: var(--bg); color: var(--text); }
+.aviso-proto {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 30;
+  background: #1e1e72; color: #fff; font-size: 0.8rem; padding: 0.4rem 1rem; text-align: center;
+}
+.aviso-proto strong { color: var(--ui-lima); }
+.sidebar {
+  width: 248px; flex-shrink: 0; margin-top: 2rem;
+  background: linear-gradient(180deg, #eae7ff 0%, #dbd5ff 100%);
+  border-right: 1px solid #c8c0ee; display: flex; flex-direction: column;
+}
+.sidebar-logo {
+  padding: 0 1.1rem; font-weight: 700; font-size: 0.88rem; height: 3.5rem;
+  display: flex; align-items: center; gap: 0.45rem; border-bottom: 1px solid #dde2ec;
+}
+.nav-section-header {
+  padding: 0.85rem 1.25rem 0.35rem; font-size: 0.71rem; text-transform: uppercase;
+  letter-spacing: 0.04em; color: #6b7a9a;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 0.5rem; width: 100%;
+  padding: 0.55rem 1.1rem; border: none; background: none; cursor: pointer;
+  font: inherit; font-size: 0.82rem; text-align: left; color: #334155;
+}
+.nav-item:hover { background: #f3f5f8; }
+.nav-item.ativo { background: rgba(163,209,51,0.12); border-left: 3px solid #a3d133; padding-left: calc(1.1rem - 3px); }
+.tag-nova {
+  margin-left: auto; background: var(--marca); color: #fff; font-size: 0.58rem; font-weight: 700;
+  padding: 0.08rem 0.34rem; border-radius: 4px;
+}
+.main-wrap { flex: 1; margin-top: 2rem; display: flex; flex-direction: column; min-width: 0; }
+.topbar {
+  height: 3.5rem; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 1.5rem; background: #fff; border-bottom: 1px solid var(--border);
+}
+.topbar-titulo { font-weight: 700; font-size: 0.92rem; }
+.content { padding: 1.15rem 1.5rem 2.5rem; max-width: 820px; }
+.page-titulo { margin: 0 0 0.2rem; font-size: 1.25rem; }
+.page-sub { margin: 0 0 1rem; font-size: 0.88rem; color: var(--muted); }
+.email-tabbar { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.15rem; flex-wrap: wrap; }
+.email-tab {
+  padding: 9px 14px; border: none; background: none; color: var(--muted);
+  font: inherit; font-size: 0.84rem; cursor: pointer; border-bottom: 2px solid transparent;
+}
+.email-tab:hover { color: var(--text); }
+.email-tab.ativa { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.admin-card {
+  background: linear-gradient(135deg, #f0eeff 0%, #f5f3ff 100%);
+  border: 1px solid #d4cfee; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1.1rem;
+}
+.admin-card h2 { margin: 0 0 0.5rem; font-size: 0.95rem; font-weight: 700; }
+.muted { color: var(--muted); font-size: 0.82rem; margin: 0 0 0.75rem; }
+.linha { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0; border-bottom: 1px solid #e8e4f8; }
+.linha:last-child { border-bottom: none; }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.dot.ok { background: var(--pos); }
+.dot.ruim { background: #dc2626; }
+.pill { font-size: 0.75rem; font-weight: 700; padding: 0.15rem 0.55rem; border-radius: 999px; }
+.pill.ok { background: var(--pos-bg); color: var(--pos); }
+.pill.ruim { background: #fee2e2; color: #b91c1c; }
+.hidden { display: none !important; }
+.btn-coletar {
+  padding: 0.55rem 1.2rem; background: var(--marca); color: #fff; border: none; border-radius: 8px;
+  font: inherit; cursor: pointer;
+}
+input[type="number"] {
+  width: 90px; padding: 0.4rem 0.55rem; border: 1px solid var(--border); border-radius: 6px; font: inherit;
+}
+.tabela { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+.tabela th {
+  text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.03em;
+  color: var(--muted); padding: 0.5rem 0.6rem; border-bottom: 1px solid #e8e4f8;
+}
+.tabela td { padding: 0.7rem 0.6rem; border-bottom: 1px solid #e8e4f8; vertical-align: top; }
+.tabela tr:last-child td { border-bottom: none; }
+.switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; display: inline-block; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+  position: absolute; inset: 0; background: #cbd5e1; border-radius: 999px; cursor: pointer;
+}
+.slider:before {
+  content: ""; position: absolute; height: 16px; width: 16px; left: 3px; top: 3px;
+  background: #fff; border-radius: 50%;
+}
+.switch input:checked + .slider { background: var(--pos); }
+.switch input:checked + .slider:before { transform: translateX(18px); }
+.chk { display: inline-flex; align-items: center; gap: 0.35rem; margin-right: 1rem; font-size: 0.84rem; }
+.nota {
+  background: #fff; border: 1px dashed #c8c0ee; border-radius: 8px;
+  padding: 0.65rem 0.85rem; font-size: 0.8rem; color: #334155; margin-bottom: 1rem;
+}
+.nota b { color: var(--marca); }
+</style>
+</head>
+<body>
+<div class="aviso-proto">Protótipo — <strong>não grava nada</strong> · menus combinados na conversa</div>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">📧 Gestão Área Suporte</div>
+  <div class="nav-section-header">E-mails</div>
+  <button class="nav-item" type="button" disabled style="opacity:.45">📊 Classificação e Status</button>
+  <div class="nav-section-header">Administração</div>
+  <button class="nav-item" type="button" data-nav="email" onclick="ir('email')">📧 E-mail</button>
+  <button class="nav-item" type="button" data-nav="notificacoes" onclick="ir('notificacoes')">🔔 Notificações <span class="tag-nova">NOVO</span></button>
+  <button class="nav-item" type="button" data-nav="usuarios" onclick="ir('usuarios')">👥 Usuários e Perfis</button>
+</aside>
+
+<div class="main-wrap">
+  <header class="topbar">
+    <span class="topbar-titulo" id="tit">ADMINISTRAÇÃO · E-mail</span>
+    <span style="font-size:0.8rem;color:var(--muted)">Michel Costa ▾</span>
+  </header>
+  <main class="content">
+    <h1 class="page-titulo" id="h1">E-mail</h1>
+    <p class="page-sub" id="sub">Busca, histórico, relógio, regra de dias e situação — tudo dos e-mails, nesta tela.</p>
+
+    <!-- PASTA E-MAIL -->
+    <div id="bloco-email">
+      <div class="email-tabbar" id="tabs-email">
+        <button class="email-tab ativa" type="button" data-aba="buscar" onclick="abaEmail('buscar')">Buscar e-mails agora</button>
+        <button class="email-tab" type="button" data-aba="historico" onclick="abaEmail('historico')">Histórico das buscas de e-mail</button>
+        <button class="email-tab" type="button" data-aba="agendamentos" onclick="abaEmail('agendamentos')">Agendamentos</button>
+        <button class="email-tab" type="button" data-aba="sem-retorno" onclick="abaEmail('sem-retorno')">Regras de Sem Retorno</button>
+        <button class="email-tab" type="button" data-aba="situacao" onclick="abaEmail('situacao')">Situação da busca</button>
+      </div>
+
+      <div id="aba-buscar">
+        <div class="admin-card">
+          <h2>Buscar e-mails agora</h2>
+          <p class="muted">Busca os e-mails da caixa da área neste instante, sem esperar o relógio.</p>
+          <button class="btn-coletar" type="button">▶ Buscar e-mails agora</button>
+          <p class="muted" style="margin-top:0.85rem">● Aguardando… (se está buscando neste instante)</p>
+        </div>
+      </div>
+
+      <div id="aba-historico" class="hidden">
+        <div class="admin-card">
+          <h2>Histórico das buscas de e-mail</h2>
+          <p class="muted">As vezes em que a busca já rodou — não é a lista das conversas. Últimos 7 dias.</p>
+          <table class="tabela">
+            <thead><tr><th>Data / hora</th><th>Coletadas</th><th>Classificadas</th><th>Deu certo?</th></tr></thead>
+            <tbody>
+              <tr><td>01/09 06:00</td><td>12</td><td>12</td><td>Sim</td></tr>
+              <tr><td>31/08 22:40</td><td>8</td><td>8</td><td>Sim</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="aba-agendamentos" class="hidden">
+        <div class="admin-card">
+          <h2>Agendamentos</h2>
+          <p class="muted">Só o relógio dos e-mails. Fog não entra nesta tela.</p>
+          <p style="font-weight:600;margin:0.5rem 0 0.35rem">Busca + classificação de e-mails</p>
+          <input type="number" value="60"> minutos
+          <p class="muted" style="margin-top:0.5rem">0 = desliga o automático.</p>
+        </div>
+      </div>
+
+      <div id="aba-sem-retorno" class="hidden">
+        <div class="admin-card">
+          <h2>Regras de Sem Retorno</h2>
+          <p class="muted">Se a conversa fica X dias sem resposta, marca Sem Retorno.</p>
+          <p style="font-weight:600;margin:0.8rem 0 0.35rem">Aguardando Finaud</p>
+          <input type="number" value="5"> dias
+          <p style="font-weight:600;margin:1rem 0 0.35rem">Aguardando Cliente</p>
+          <input type="number" value="10"> dias
+        </div>
+      </div>
+
+      <div id="aba-situacao" class="hidden">
+        <p class="nota"><b>Só informação.</b> Ligado ou parado. O e-mail de aviso não fica aqui — está em Notificações.</p>
+        <div class="admin-card">
+          <h2>Situação da busca</h2>
+          <div class="linha">
+            <span class="dot ok"></span>
+            <div style="flex:1"><strong>Site</strong></div>
+            <span class="pill ok">Ligado</span>
+          </div>
+          <div class="linha">
+            <span class="dot ruim"></span>
+            <div style="flex:1"><strong>Busca de e-mail</strong></div>
+            <span class="pill ruim">Parada</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTIFICAÇÕES -->
+    <div id="bloco-notificacoes" class="hidden">
+      <p class="nota"><b>Lista que pode crescer.</b> Hoje um recado (busca parou). Depois: relatórios e outros — cada um é mais uma linha. Informação (luz) continua em E-mail → Situação da busca.</p>
+      <div class="admin-card">
+        <h2>Notificações</h2>
+        <p class="muted">Em cada linha: o que é, se está ligada, e quais grupos recebem (pode ser mais de um).</p>
+        <table class="tabela">
+          <thead>
+            <tr>
+              <th>O que é</th>
+              <th>Status</th>
+              <th>Grupos que recebem</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <strong>Busca de e-mail parou</strong>
+                <div class="muted" style="margin:0">A busca automática não rodou no tempo marcado em Agendamentos.</div>
+              </td>
+              <td>
+                <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                <div class="muted" style="margin:0.35rem 0 0">Ligada</div>
+              </td>
+              <td>
+                <label class="chk"><input type="checkbox" checked> Administrador</label><br>
+                <label class="chk"><input type="checkbox"> Gestor</label><br>
+                <label class="chk"><input type="checkbox"> Operador</label>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- USUÁRIOS -->
+    <div id="bloco-usuarios" class="hidden">
+      <p class="nota"><b>Quem entra e o perfil.</b> A senha fica no portal. Quem recebe cada notificação é o <em>grupo</em> marcado em Notificações — não se marca recado por recado nesta tela.</p>
+      <div class="admin-card">
+        <h2>Usuários e Perfis</h2>
+        <table class="tabela">
+          <thead>
+            <tr><th>Pessoa</th><th>Perfil (grupo)</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Michel Costa<div class="muted" style="margin:0">Entrou pelo portal</div></td>
+              <td>Administrador</td>
+            </tr>
+            <tr>
+              <td>Exemplo gestor<div class="muted" style="margin:0">Entrou pelo portal</div></td>
+              <td>Gestor</td>
+            </tr>
+            <tr>
+              <td>Exemplo operador<div class="muted" style="margin:0">Entrou pelo portal</div></td>
+              <td>Operador</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+function abaEmail(id) {
+  ['buscar','historico','agendamentos','sem-retorno','situacao'].forEach(function (a) {
+    document.getElementById('aba-' + a).classList.toggle('hidden', a !== id);
+  });
+  document.querySelectorAll('#tabs-email .email-tab').forEach(function (t) {
+    t.classList.toggle('ativa', t.getAttribute('data-aba') === id);
+  });
+}
+function ir(pag) {
+  document.getElementById('bloco-email').classList.toggle('hidden', pag !== 'email');
+  document.getElementById('bloco-notificacoes').classList.toggle('hidden', pag !== 'notificacoes');
+  document.getElementById('bloco-usuarios').classList.toggle('hidden', pag !== 'usuarios');
+  document.querySelectorAll('.nav-item[data-nav]').forEach(function (b) {
+    b.classList.toggle('ativo', b.getAttribute('data-nav') === pag);
+  });
+  var tit = {
+    email: ['ADMINISTRAÇÃO · E-mail', 'E-mail', 'Busca, histórico, relógio, regra de dias e situação — tudo dos e-mails, nesta tela.'],
+    notificacoes: ['ADMINISTRAÇÃO · Notificações', 'Notificações', 'O que é, ligada ou desligada, e quais grupos recebem (pode ser mais de um).'],
+    usuarios: ['ADMINISTRAÇÃO · Usuários e Perfis', 'Usuários e Perfis', 'Quem entra neste app e o perfil. Senha no portal.']
+  }[pag];
+  document.getElementById('tit').textContent = tit[0];
+  document.getElementById('h1').textContent = tit[1];
+  document.getElementById('sub').textContent = tit[2];
+}
+ir('email');
+</script>
+</body>
+</html>

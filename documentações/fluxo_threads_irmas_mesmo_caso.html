@@ -1,0 +1,459 @@
+<title>Fluxo REMITLY — 1ª Reiteração DDR</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+
+<style>
+  :root {
+    --bg: #F0F4F8;
+    --surface: #FFFFFF;
+    --border: #DDE4ED;
+    --text: #1C2B3A;
+    --text-muted: #5A6A7A;
+    --text-label: #8A9BAD;
+    --blue: #2563EB;
+    --blue-light: #EFF4FF;
+    --blue-mid: #BFCFFE;
+    --amber: #D97706;
+    --amber-light: #FFFBEB;
+    --amber-mid: #FCD97B;
+    --green: #16A34A;
+    --green-light: #F0FDF4;
+    --red: #DC2626;
+    --red-light: #FEF2F2;
+    --line: #CBD5E1;
+    --split-line: #94A3B8;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1923;
+      --surface: #1A2535;
+      --border: #2A3A4D;
+      --text: #E8EFF6;
+      --text-muted: #8A9BAD;
+      --text-label: #5A6A7A;
+      --blue-light: #1A2A4A;
+      --blue-mid: #2A3F6F;
+      --amber-light: #2A2010;
+      --amber-mid: #5A4010;
+      --green-light: #0A1F12;
+      --red-light: #2A0F0F;
+      --line: #2A3A4D;
+      --split-line: #3A5068;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0F1923;
+    --surface: #1A2535;
+    --border: #2A3A4D;
+    --text: #E8EFF6;
+    --text-muted: #8A9BAD;
+    --text-label: #5A6A7A;
+    --blue-light: #1A2A4A;
+    --blue-mid: #2A3F6F;
+    --amber-light: #2A2010;
+    --amber-mid: #5A4010;
+    --green-light: #0A1F12;
+    --red-light: #2A0F0F;
+    --line: #2A3A4D;
+    --split-line: #3A5068;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 40px 24px 64px;
+  }
+
+  .page {
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .header {
+    margin-bottom: 40px;
+  }
+  .header-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--text-label);
+    margin-bottom: 8px;
+  }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+    text-wrap: balance;
+    margin-bottom: 6px;
+  }
+  .header-sub {
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+
+  /* Timeline wrapper */
+  .timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* Single phase (before split) */
+  .phase-single {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  /* Message card */
+  .msg {
+    width: 100%;
+    max-width: 560px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    position: relative;
+  }
+  .msg-time {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    color: var(--text-label);
+    margin-bottom: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+  .msg-sender {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+  .msg-role {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+  }
+  .role-cliente { background: var(--blue-light); color: var(--blue); border: 1px solid var(--blue-mid); }
+  .role-finaud  { background: #F0F7FF; color: #1D4ED8; border: 1px solid #BFDBFE; }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .role-finaud { background: var(--blue-light); color: #93C5FD; border-color: var(--blue-mid); }
+  }
+  :root[data-theme="dark"] .role-finaud { background: var(--blue-light); color: #93C5FD; border-color: var(--blue-mid); }
+
+  .msg-text {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.55;
+  }
+  .msg-text strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* Connector line */
+  .connector {
+    width: 2px;
+    height: 28px;
+    background: var(--line);
+    margin: 0 auto;
+  }
+
+  /* Split section */
+  .split-label {
+    text-align: center;
+    margin: 8px 0 16px;
+  }
+  .split-label-text {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text-label);
+    background: var(--bg);
+    padding: 0 12px;
+    position: relative;
+  }
+
+  .split-divider {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    margin-top: 4px;
+  }
+
+  /* Branch */
+  .branch {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    padding: 0 8px;
+  }
+
+  .branch-header {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .branch-header.blue { background: var(--blue-light); border: 1.5px solid var(--blue-mid); }
+  .branch-header.amber { background: var(--amber-light); border: 1.5px solid var(--amber-mid); }
+
+  .branch-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .branch-dot.blue { background: var(--blue); }
+  .branch-dot.amber { background: var(--amber); }
+
+  .branch-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .branch-title.blue { color: var(--blue); }
+  .branch-title.amber { color: var(--amber); }
+
+  /* Branch message — narrower */
+  .branch .msg {
+    max-width: 100%;
+    border-width: 1.5px;
+  }
+  .branch.left .msg { border-color: var(--blue-mid); }
+  .branch.right .msg { border-color: var(--amber-mid); }
+
+  /* Split line visual */
+  .split-lines {
+    position: relative;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    margin-top: 0;
+    gap: 0;
+  }
+  .split-lines svg {
+    width: 100%;
+    height: 40px;
+    overflow: visible;
+  }
+
+  /* Outcome cards */
+  .outcomes {
+    display: flex;
+    gap: 16px;
+    margin-top: 0;
+  }
+  .outcome {
+    flex: 1;
+    padding: 14px 16px;
+    border-radius: 10px;
+    border: 2px solid;
+  }
+  .outcome.resolved {
+    background: var(--green-light);
+    border-color: var(--green);
+  }
+  .outcome.problem {
+    background: var(--red-light);
+    border-color: var(--red);
+  }
+  .outcome-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .outcome.resolved .outcome-label { color: var(--green); }
+  .outcome.problem .outcome-label { color: var(--red); }
+  .outcome-status {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .outcome-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  /* Problem callout */
+  .callout {
+    margin-top: 36px;
+    background: var(--red-light);
+    border: 1.5px solid var(--red);
+    border-radius: 10px;
+    padding: 18px 22px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .callout-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+    line-height: 1;
+    margin-top: 1px;
+  }
+  .callout-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--red);
+    margin-bottom: 5px;
+  }
+  .callout-body {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+  .callout-body strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* Divider between branch messages */
+  .branch .connector {
+    background: var(--line);
+  }
+</style>
+
+<div class="page">
+
+  <div class="header">
+    <div class="header-eyebrow">03/08/2026 · DDR - 2011</div>
+    <h1>1ª Reiteração BACEN — REMITLY</h1>
+    <div class="header-sub">Como o Gmail dividiu uma conversa em duas e o que isso causou no sistema</div>
+  </div>
+
+  <div class="timeline">
+
+    <!-- MENSAGEM 1 -->
+    <div class="phase-single">
+      <div class="msg">
+        <div class="msg-time">16:44</div>
+        <div class="msg-sender">Lidiane Moreira <span style="font-weight:400;color:var(--text-muted)">(REMITLY)</span></div>
+        <div class="msg-role role-cliente">Cliente</div>
+        <div class="msg-text">Encaminhou o apontamento do BACEN para a Mônica:<br><strong>"Mônica, boa tarde! O Banco Central enviou uma reclamação sobre o DDR de 23/06. Poderia verificar?"</strong></div>
+      </div>
+      <div class="connector"></div>
+    </div>
+
+    <!-- MENSAGEM 2 -->
+    <div class="phase-single">
+      <div class="msg">
+        <div class="msg-time">16:51</div>
+        <div class="msg-sender">Rodrigo Tiberio <span style="font-weight:400;color:var(--text-muted)">(Finaud)</span></div>
+        <div class="msg-role role-finaud">Finaud</div>
+        <div class="msg-text">Respondeu na mesma conversa e chamou a Andrea:<br><strong>"@Andrea, veja por favor."</strong></div>
+      </div>
+      <div class="connector"></div>
+    </div>
+
+    <!-- SPLIT LABEL -->
+    <div class="split-label">
+      <span class="split-label-text">Gmail criou duas conversas separadas aqui</span>
+    </div>
+
+    <!-- SPLIT VISUAL -->
+    <div class="split-lines">
+      <svg viewBox="0 0 860 40" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <line x1="430" y1="0" x2="215" y2="40" stroke="#94A3B8" stroke-width="2" stroke-dasharray="4 3"/>
+        <line x1="430" y1="0" x2="645" y2="40" stroke="#94A3B8" stroke-width="2" stroke-dasharray="4 3"/>
+      </svg>
+    </div>
+
+    <!-- TWO BRANCHES -->
+    <div class="split-divider">
+
+      <!-- BRANCH 1 — Conversa 1 (azul) -->
+      <div class="branch left">
+        <div class="branch-header blue" style="margin-bottom:12px">
+          <div class="branch-dot blue"></div>
+          <div class="branch-title blue">Conversa 1 — seguiu aqui</div>
+        </div>
+
+        <div class="msg">
+          <div class="msg-time">17:56</div>
+          <div class="msg-sender">Mônica Macedo <span style="font-weight:400;color:var(--text-muted)">(Finaud)</span></div>
+          <div class="msg-role role-finaud">Finaud</div>
+          <div class="msg-text">Corrigiu o arquivo e respondeu à Lidiane:<br><strong>"Olá Lidiane, fiz as correções. Segue o protocolo."</strong></div>
+        </div>
+        <div class="connector"></div>
+
+        <div class="outcome resolved">
+          <div class="outcome-label">Sistema registrou</div>
+          <div class="outcome-status">✅ Concluída</div>
+          <div class="outcome-desc">Mônica encerrou a conversa com o cliente — status correto.</div>
+        </div>
+      </div>
+
+      <!-- BRANCH 2 — Conversa 2 (âmbar) -->
+      <div class="branch right">
+        <div class="branch-header amber" style="margin-bottom:12px">
+          <div class="branch-dot amber"></div>
+          <div class="branch-title amber">Conversa 2 — criada pelo Gmail</div>
+        </div>
+
+        <div class="msg">
+          <div class="msg-time">17:19</div>
+          <div class="msg-sender">Andrea Inacio <span style="font-weight:400;color:var(--text-muted)">(Finaud)</span></div>
+          <div class="msg-role role-finaud">Finaud</div>
+          <div class="msg-text">Mandou instrução interna para Rodrigo e Mônica:<br><strong>"O erro está no cosif — valor de 7 milhões precisa ser corrigido para 3,9 milhões. Mônica, acesse o sistema e faça a correção."</strong></div>
+        </div>
+        <div class="connector"></div>
+
+        <div style="font-size:12px;color:var(--text-label);text-align:center;padding:8px 0;font-style:italic">
+          Nenhuma resposta chegou aqui.<br>Mônica corrigiu, mas avisou na Conversa 1.
+        </div>
+        <div class="connector"></div>
+
+        <div class="outcome problem">
+          <div class="outcome-label">Sistema registrou</div>
+          <div class="outcome-status">⚠️ Aguardando Finaud</div>
+          <div class="outcome-desc">Parada assim desde 03/08 — quase 1 mês. O sistema não sabe que o caso foi resolvido.</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- end timeline -->
+
+  <!-- CALLOUT -->
+  <div class="callout">
+    <div class="callout-icon">⚠</div>
+    <div>
+      <div class="callout-title">O problema</div>
+      <div class="callout-body">
+        O caso foi resolvido — Mônica corrigiu o arquivo e fechou com a Lidiane. Mas o sistema enxerga duas conversas independentes. A Conversa 2 ficou sem resposta e <strong>vai acumular dias sem atualização indefinidamente</strong>, aparecendo como pendência que ninguém vai fechar.
+      </div>
+    </div>
+  </div>
+
+</div>

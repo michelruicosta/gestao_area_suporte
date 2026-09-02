@@ -12,9 +12,10 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
+| 01/09 | Motivos / Caixa preta — Decisões 17–24 | abaixo |
 | 01/09 | Fog: dias úteis, feriados e Sem atualização | abaixo |
 | 01/09 | Administração: E-mail, Notificações e aviso por e-mail | abaixo |
-| 28-29/08 | Planilha de classificação de motivos + bug Outlook no grupo saudação | abaixo |
+| 28-29/08 | Planilha de classificação de motivos + bug Outlook no grupo saudação | arquivo |
 | 27/08 | Senha no portal — perfil e login | arquivo |
 | 27/08 | Textos campo MOTIVO — grupo ❌ (noite) | arquivo |
 | 27/08 | Organização dos chats + conserto do `/fechar` | arquivo |
@@ -34,6 +35,52 @@
 >
 > **Regra:** este arquivo guarda as **3 sessões mais recentes**. O `/fechar` acrescenta a
 > linha nova aqui e move a 4ª sessão para o arquivo.
+
+---
+
+## 📓 Diário da sessão (2026-09-01) — Motivos / Caixa preta — Decisões 17–24
+
+### O que foi feito
+
+**Etapa 2 concluída: varredura completa da caixa preta — 66 → 12 threads genuínas**
+
+O trabalho começou vários chats atrás (D1–D16) e neste chat chegou ao fim. Cada decisão reduziu o grupo "Cliente escreveu — aguarda resposta da Finaud" por detecção automática de padrão.
+
+**Decisões aprovadas neste chat (Decisões 21–24):**
+- **D21** — convites de calendário (`.ics`) e reuniões do Teams sem histórico → automático (22→17); fix `UnboundLocalError` em banco_threads.py:677
+- **D22** — "reforçar" e "em atraso" → solicitação (16→14)
+- **D23** — "consegue me confirmar" → solicitação (14→13)
+- **D24** — "entrarei em contato" → Aguardando Cliente (13→12)
+- **D25** — "poderia": decidido deixar como genuína (risco alto de falso positivo)
+
+**12 genuínas confirmadas** — todas são perguntas técnicas complexas, consultas regulatórias, problemas de acesso específicos. Nenhum padrão automático seguro.
+
+**Contexto numérico:** os 18 motivos do artefato foram aprovados em chats anteriores. O artefato está em https://claude.ai/code/artifact/30448858-e3b1-4a40-a64d-4b989b0b7029.
+
+**Arquivos:** `scripts/banco_threads.py`, `scripts/validador_classificacao.py`, `tests/test_banco_threads.py`, `tests/test_validador_filtro.py`, `documentações/REGISTRO_CORRECOES.md`
+
+**Commits desta etapa:** D21 `addbe9b` · D22 `6ba60d5` · D23 `0d87496` · D24 `4036620` (não publicados — push bloquado até Passo C)
+
+### Estado atual
+
+**pytest:** 525 testes passando, zero regressões.
+**Caixa preta:** 12 threads genuínas (sem padrão automático possível).
+**GitHub:** 19+ commits à frente de `origin/main` — push aguarda conclusão do Passo C.
+**Assunto deste chat:** encerrado.
+
+### Próximo passo
+
+🔴 **Passo 3 — PRÓXIMO — Montar o Excel de motivos**
+
+Criar `documentações/matriz_classificacao_motivos.xlsx` com openpyxl (já instalado, v3.1.5).
+
+- **Aba REGRAS:** 18 linhas × 6 colunas: `Status | Motivo | Razão do motivo | Termos que acionaram o motivo | Criado em | Situação`
+- **Aba ALTERAÇÕES DE REGRAS:** 1 linha de criação por motivo: `Quando | Motivo | Campo alterado | Antes | Depois`
+- **Formatação:** cabeçalho colorido por status (azul AF · âmbar AC · verde Concluída · cinza SR), célula Situação = verde "Ativa" / cinza "Inativa", largura automática por coluna
+
+Após o Excel → Passo C (tela de manutenção) → deploy.
+
+Último /fechar: 2026-09-01 15:05 — memórias revisadas ✅
 
 ---
 
