@@ -2429,36 +2429,36 @@ def test_status_fixv_e_retorno_cliente_prometeu_voltar_ac():
 # ── Passo B — 4 motivos novos ─────────────────────────────────────────────────
 
 def test_passo_b_solicita_extrato():
-    """Passo B: Finaud usa 'vou precisar' sem anexo → AC 'Finaud solicitou extrato ou planilha'."""
+    """Passo B: Finaud usa 'vou precisar' sem anexo → AC 'Finaud fez pergunta' (consolidado)."""
     msgs = [
         _msg('cliente@empresa.com', corpo='Bom dia, precisamos de ajuda.', assunto='Balanços'),
         _msg(FINAUD, corpo='Bom dia! Vou precisar dos balanços de 2024 para dar continuidade.', assunto='Re: Balanços'),
     ]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Cliente'
-    assert 'extrato ou planilha' in motivo
+    assert motivo == 'Finaud fez pergunta — aguarda resposta'
 
 
 def test_passo_b_orientacao_tecnica():
-    """Passo B: Finaud usa 'orientamos que' → AC 'Finaud deu orientação técnica'."""
+    """Passo B: Finaud usa 'orientamos que' → AC 'Finaud fez pergunta' (consolidado)."""
     msgs = [
         _msg('cliente@empresa.com', corpo='Como procedo com o COSIF?', assunto='COSIF'),
         _msg(FINAUD, corpo='Orientamos que acesse o portal e faça o upload do arquivo conforme o manual.', assunto='Re: COSIF'),
     ]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Cliente'
-    assert 'orientação técnica' in motivo
+    assert motivo == 'Finaud fez pergunta — aguarda resposta'
 
 
 def test_passo_b_proposta_reuniao():
-    """Passo B: Finaud menciona 'reunião' sem anexo → AC 'Finaud propôs reunião ou ligação'."""
+    """Passo B: Finaud menciona 'reunião' sem anexo → AC 'Finaud fez pergunta' (consolidado)."""
     msgs = [
         _msg('cliente@empresa.com', corpo='Precisamos conversar sobre o relatório.', assunto='Relatório'),
         _msg(FINAUD, corpo='Podemos fazer uma reunião amanhã às 14h para alinharmos?', assunto='Re: Relatório'),
     ]
     status, motivo = bt._determinar_status(msgs)
     assert status == 'Aguardando Cliente'
-    assert 'reunião ou ligação' in motivo
+    assert motivo == 'Finaud fez pergunta — aguarda resposta'
 
 
 def test_passo_b_cliente_fez_solicitacao():

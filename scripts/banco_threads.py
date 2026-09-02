@@ -15,6 +15,27 @@ from datetime import datetime
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BANCO    = os.path.join(BASE_DIR, 'data', 'gestao.db')
 
+# ── Passo C: termos gerenciados via tela de manutenção ───────────────────────
+_REGRAS_CACHE: dict[str, list[str]] = {}
+
+def recarregar_regras_do_banco() -> None:
+    """Recarrega os termos de classificação da tabela regras_classificacao."""
+    global _REGRAS_CACHE
+    try:
+        with _conectar() as conn:
+            rows = conn.execute(
+                "SELECT motivo, termos FROM regras_classificacao WHERE situacao = 'Ativa'"
+            ).fetchall()
+        _REGRAS_CACHE = {r[0]: json.loads(r[1]) for r in rows}
+    except Exception:
+        pass  # banco ainda não tem a tabela ou não está disponível
+
+def _termos_db(motivo: str) -> tuple[str, ...]:
+    """Retorna termos extras do banco para um motivo (vazio se não houver)."""
+    if not _REGRAS_CACHE:
+        recarregar_regras_do_banco()
+    return tuple(_REGRAS_CACHE.get(motivo, []))
+
 # §8.7 — assuntos de e-mails internos informativos (Finaud→Finaud sem ação pendente)
 _ASSUNTOS_INFORMATIVOS = (
     'divulgação',
@@ -552,10 +573,12 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     # re.search com âncora de linha: "Transmitido" pode vir após saudação ("Boa tarde!\n\nTransmitido...")
     _inicio_transmitido = bool(re.search(r'(?:^|\r?\n)\s*transmitid[oa]s?\b', texto_lower))
     _arquivos_transmitidos = bool(re.search(r'\barquivo[s]?\s+transmitid[oa]s?\b', texto_lower))
+    _termos_bacen = _termos_db('Confirmação de entrega no BACEN')
     if ('transmitido no bacen' in texto_lower
             or 'transmitida no bacen' in texto_lower
             or (_inicio_transmitido and '?' not in texto_lower)
-            or (_arquivos_transmitidos and '?' not in texto_lower)):
+            or (_arquivos_transmitidos and '?' not in texto_lower)
+            or any(t in texto_lower for t in _termos_bacen)):
         return 'Concluída', 'Confirmação de entrega no BACEN'
 
     if eh_finaud:
@@ -568,12 +591,13 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
                 # Sub-caso 1b: verificar sinal de conclusão
                 if assunto.strip().upper().startswith('RES:'):
                     return 'Concluída', 'Finaud concluiu a solicitação'
-                if any(f in texto_flat for f in _FRASES_CONCLUSIVAS_FINAUD):
+                _fc = _FRASES_CONCLUSIVAS_FINAUD + _termos_db('Finaud concluiu a solicitação')
+                if any(f in texto_flat for f in _fc):
                     return 'Concluída', 'Finaud concluiu a solicitação'
                 # Fix N: texto_novo vazio = conteúdo dentro do forward; checar corpo completo
                 if not texto_novo.strip():
                     corpo_flat_fwd = re.sub(r'\s+', ' ', corpo_raw).lower()
-                    if any(f in corpo_flat_fwd for f in _FRASES_CONCLUSIVAS_FINAUD):
+                    if any(f in corpo_flat_fwd for f in _fc):
                         return 'Concluída', 'Finaud concluiu a solicitação'
                 # 1b-padrão: sem sinal claro → Aguardando Cliente (erro mais seguro)
                 return 'Aguardando Cliente', 'Finaud fez pergunta — aguarda resposta'
@@ -588,9 +612,9 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         if tem_arquivo_real:
             if _tem_pergunta_acao(texto_novo):
                 return 'Aguardando Cliente', 'Finaud enviou arquivo — aguarda retorno do cliente'
-            if any(f in texto_flat for f in _FRASES_ENTREGA):
+            if any(f in texto_flat for f in _FRASES_ENTREGA + _termos_db('Finaud entregou arquivo ao cliente')):
                 return 'Concluída', 'Finaud entregou arquivo ao cliente'
-            if any(f in texto_lower for f in _FRASES_AGUARDANDO_FINAUD_ATIVA):
+            if any(f in texto_lower for f in _FRASES_AGUARDANDO_FINAUD_ATIVA + _termos_db('Finaud prometeu retornar')):
                 return 'Aguardando Finaud', 'Finaud prometeu retornar'
             if not texto_novo.strip():
                 return 'Concluída', 'Finaud entregou arquivo ao cliente'
@@ -598,16 +622,16 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         # Sem arquivo real
         if assunto.strip().upper().startswith('RES:'):
             return 'Concluída', 'Finaud concluiu a solicitação'
-        if any(f in texto_flat for f in _FRASES_CONCLUSIVAS_FINAUD):
+        if any(f in texto_flat for f in _FRASES_CONCLUSIVAS_FINAUD + _termos_db('Finaud concluiu a solicitação')):
             return 'Concluída', 'Finaud concluiu a solicitação'
-        if any(f in texto_lower for f in _FRASES_AGUARDANDO_FINAUD_ATIVA):
+        if any(f in texto_lower for f in _FRASES_AGUARDANDO_FINAUD_ATIVA + _termos_db('Finaud prometeu retornar')):
             return 'Aguardando Finaud', 'Finaud prometeu retornar'
         if any(f in texto_flat for f in _FRASES_SOLICITA_EXTRATO):
-            return 'Aguardando Cliente', 'Finaud solicitou extrato ou planilha — aguarda envio'
+            return 'Aguardando Cliente', 'Finaud fez pergunta — aguarda resposta'
         if any(f in texto_lower for f in _FRASES_ORIENTACAO_TECNICA):
-            return 'Aguardando Cliente', 'Finaud deu orientação técnica — aguarda execução'
+            return 'Aguardando Cliente', 'Finaud fez pergunta — aguarda resposta'
         if any(f in texto_lower for f in _FRASES_REUNIAO):
-            return 'Aguardando Cliente', 'Finaud propôs reunião ou ligação — aguarda confirmação'
+            return 'Aguardando Cliente', 'Finaud fez pergunta — aguarda resposta'
         if _eh_cortesia_finaud(texto_novo):
             if len(msgs) == 1:
                 return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
@@ -667,7 +691,7 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         'pode seguir',    # Planner SCD: "pode seguir pois naqueles dias não tiveram" (01/09/2026)
         'apenas confirmando', # DTVM: "Apenas confirmando, o aumento de capital foi integralizado" (01/09/2026)
         'fyi',            # Western Union: "FYI" (forward interno, entrega de informação) (01/09/2026)
-    )
+    ) + _termos_db('Cliente enviou informações e extratos — aguarda processamento')
     if any(f in texto_lower for f in _SEGUE_MID):
         return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
     # §8.8b.2: arquivo não-imagem + "segue" no texto + sem "?" = entrega de dados mid-frase
