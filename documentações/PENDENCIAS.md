@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Gestão Área Suporte
 
-**Atualizado:** 2026-09-02 13:30
+**Atualizado:** 2026-09-02 16:00
 **Organização:** por etapa que bloqueia — reorganizado em 03/08/2026 para seguir as fases sem brechas.
 **Regra:** este arquivo lista **só o que ainda falta** (aberto / aguardando decisão / backlog).
 Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada no
@@ -89,37 +89,21 @@ Durante a análise do Grupo 1 de threads irmãs (ENC: Arquivos 4060 — ACCREDIT
 
 ---
 
-## 🔴 DEPLOY — O que falta antes de empurrar Passo A + Passo B para produção (registrado em 31/08/2026)
+## 🟡 PASSO C — Tela de manutenção de regras (em andamento desde 02/09/2026)
 
-> **Contexto:** 2 commits locais prontos, mas **não empurrados ao GitHub nem ao VPS**:
-> - `ca52ded` — Passo A: textos dos 18 motivos padronizados (lógica de detecção preservada)
-> - `48fd424` — Passo B: 4 novos motivos detectados + correção de disclaimer de confidencialidade + `matriz_classificacao_motivos.xlsx`
->
-> **Decisão de Michel (31/08/2026):** os novos motivos só vão a produção depois que **todo o trabalho de motivos estiver concluído** — levantamentos, planilha finalizada e tela de manutenção desenvolvida (Passo C). Não fazer push parcial.
+> **Deploy já feito (02/09/2026):** Passos A + B + BACEN motivos (15 e 16) implantados na VPS.
+> `recalcular_status_todos()` rodou — 933 threads atualizadas. Serviço ativo ✅.
+> **O que falta:** apenas a tela Flask de manutenção (Michel editar regras sem abrir código).
 
-### O que falta antes do push (Passo C — obrigatório antes do deploy)
+### O que ainda falta para o Passo C estar completo
 
-| # | O que fazer | Por que é pré-requisito |
+| # | O que fazer | Situação |
 |---|---|---|
-| 1 | Criar tabela `regras_classificacao` no SQLite (`data/gestao.db`) | Tela de manutenção persiste as regras no banco, não no código |
-| 2 | Migrar as listas de termos dos 11 motivos detectáveis por palavras-chave do código (`banco_threads.py`) para o banco | Sem isso, Michel não consegue editar regras pela tela — precisa abrir o código |
-| 3 | Desenvolver tela Flask de manutenção de motivos (ver seção "Tela de gerenciamento" abaixo) | Michel precisa gerenciar os termos e motivos sem depender de sessão com a IA |
-| 4 | Validar unicidade de termos entre motivos na tela de manutenção (ver seção abaixo) | Termo duplicado em dois motivos = classificação ambígua |
-| 5 | Rodar `pytest tests/ -q` — zero regressões | Pré-requisito de qualquer commit |
-
-### O que fazer no momento do deploy (após Passo C completo)
-
-1. `git push origin main` — envia `ca52ded` + `48fd424` + commits do Passo C ao GitHub
-2. Deploy na VPS (`gestao-suporte.finaudapps.com.br`) via SSH — ver `documentações/DEPLOY.md`
-3. Rodar `recalcular_status_todos()` no servidor para reclassificar todas as threads com os novos textos e novas detecções do Passo A + B
-
-### Motivos ainda pendentes de aprovação antes de fechar a planilha
-
-Antes de iniciar o Passo C, os motivos abaixo precisam ser finalizados (ver seção "TELAS — Melhorar textos do campo MOTIVO" mais abaixo):
-- ~130 e-mails da "caixa preta" — investigar antes de nomear
-- "Cliente enviou saudação — possível entrega de arquivo" (13x) — aprovar texto final
-- "Fix R: cliente prometeu retornar..." — texto aprovado, aguarda implementação
-- "Finaud enviou arquivo sem linguagem de entrega" — texto aprovado, aguarda implementação
+| 1 | Criar tabela `regras_classificacao` | ✅ Feito — commit `9d6387a` |
+| 2 | Migrar listas de termos dos motivos detectáveis do código para o banco | ⬜ Pendente |
+| 3 | Desenvolver tela Flask de manutenção de motivos | ⬜ Pendente — próximo chat |
+| 4 | Validar unicidade de termos na tela (bloquear salvamento se duplicado) | ⬜ Pendente |
+| 5 | Ao salvar regra: recalcular todas as threads automaticamente | ⬜ Pendente |
 
 ---
 

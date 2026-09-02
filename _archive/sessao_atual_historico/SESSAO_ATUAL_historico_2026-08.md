@@ -542,6 +542,33 @@ Michel identificou 5 threads que deveriam ter sido descartadas automaticamente m
 
 ---
 
+## 📓 Diário da sessão (2026-09-01) — Fog: dias úteis, feriados e Sem atualização
+
+### O que foi feito
+
+**Frente única: a coluna Sem atualização do Fog passou a contar dia útil**
+
+Michel viu que o número incluía sábado e domingo. Só desenvolvedor trabalha fora do útil; misturar relógio por pessoa bagunçaria a tela. Decisão: **uma conta só, para todo mundo, em dias úteis**.
+
+**Decisões aprovadas**
+- Função `contar_dias_uteis` — segunda a sexta, sem o dia inicial.
+- Cores alinhadas à conta nova: verde &lt; 6 · âmbar 6–10 · vermelho ≥ 11 (equivalente ao peso de 8 e 15 corridos).
+- Na tela o número leva **du**; a legenda continua com a palavra "dias".
+- Feriados: só oficiais do Brasil (calendário de banco, inclusive Carnaval e Corpus Christi). Sem feriado de cidade e sem folga só da Finaud. Datas móveis saem da Páscoa — sem lista anual.
+- O número mede **o caso parado no Fog** (qualquer mexida zera). Caso fechado: célula em branco (—); "duração do caso" saiu. Não criamos coluna de duração.
+
+**Arquivos:** `scripts/servidor_telas.py`, `templates/gestao_email.html`, `tests/test_servidor_telas.py`, `documentações/REGISTRO_CORRECOES.md`
+
+### Estado atual
+
+**Produção:** no ar em `gestao-suporte.finaudapps.com.br`.
+**pytest:** `tests/test_servidor_telas.py` — 24 passed (inclui feriado, cortes 6/11, fechado sem número).
+**Assunto deste chat:** encerrado.
+
+Último /fechar: 2026-09-01 13:36 — memórias revisadas ✅
+
+---
+
 ## 📓 Diário da sessão (2026-08-26) — Sair volta ao portal
 
 ### O que foi feito

@@ -12,9 +12,10 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
+| 02/09 | BACEN motivos 15 e 16 + validação pré-deploy + deploy | abaixo |
 | 02/09 | Sem Retorno — filtros por categoria e aba Por Categoria | abaixo |
 | 01/09 | Motivos / Caixa preta — Decisões 17–24 | abaixo |
-| 01/09 | Fog: dias úteis, feriados e Sem atualização | abaixo |
+| 01/09 | Fog: dias úteis, feriados e Sem atualização | arquivo |
 | 01/09 | Administração: E-mail, Notificações e aviso por e-mail | arquivo |
 | 28-29/08 | Planilha de classificação de motivos + bug Outlook no grupo saudação | arquivo |
 | 27/08 | Senha no portal — perfil e login | arquivo |
@@ -36,6 +37,66 @@
 >
 > **Regra:** este arquivo guarda as **3 sessões mais recentes**. O `/fechar` acrescenta a
 > linha nova aqui e move a 4ª sessão para o arquivo.
+
+---
+
+## 📓 Diário da sessão (2026-09-02) — BACEN motivos 15 e 16: validação pré-deploy + deploy
+
+### O que foi feito
+
+**Frente única: finalizar e validar os dois novos motivos BACEN antes de subir para produção**
+
+A sessão retomou o trabalho de implementação dos motivos BACEN (feita na sessão anterior) e executou a sequência completa de validação e deploy.
+
+**O que foi concluído:**
+
+1. **Commit dos motivos BACEN** (`3778b38`)
+   - Motivo 15 — `'Comunicado do BACEN — aguarda análise da Finaud'`: cliente encaminhou alerta do BACEN (inconsistência DRM, qualidade, atraso, não preenchimento) e Finaud ainda não respondeu
+   - Motivo 16 — `'Comunicado do BACEN — aguarda retorno do cliente'`: Finaud respondeu ao comunicado, cliente precisa agir
+   - Regra baseada em palavras-chave do assunto (`_eh_comunicado_bacen_assunto`) — sem nome de cliente
+   - Exceção: confirmação explícita do cliente (`_CONFIRMACAO_EXPLICITA`) → deixa cair nas regras de Concluída
+   - Removidas 2 regras BANVOX-específicas que continham nome de cliente no motivo
+   - Registrada em PENDENCIAS a futura regra de encerramento automático (aprovada por Michel)
+
+2. **Validação pré-deploy com banco fresco da VPS**
+   - Pulled DB fresco da VPS (1441 threads — 1 nova desde sessão anterior)
+   - Novo snapshot dos valores armazenados + validação completa
+   - 409 divergências — todas analisadas:
+     - 345x Decisões 17-24 (melhorias esperadas)
+     - 44x Novos motivos BACEN aplicados corretamente
+     - 10x "agradeceu" identificado onde antes era "escreveu"
+     - 10x casos menores (2 HTML-only pré-existentes + 8 isolados)
+   - **525 testes passando, 0 falhas**
+
+3. **Deploy**
+   - `git push origin main` → GitHub atualizado
+   - SSH VPS: `git pull` + `systemctl restart gestao-suporte` → `active` ✅
+   - `recalcular_status_todos()` → **933 threads atualizadas** na VPS
+   - Confirmado no banco de produção: 15 threads com motivo 15 + 12 com motivo 16
+
+**Arquivos:** `scripts/banco_threads.py`, `tests/test_banco_threads.py`, `documentações/PENDENCIAS.md`, `documentações/REGISTRO_CORRECOES.md`
+
+### Estado atual
+
+**Commit:** `3778b38` (feat: BACEN motivos 15 e 16) — já no GitHub e na VPS.
+**Produção:** `gestao-suporte.finaudapps.com.br` — serviço ativo ✅, 933 threads recalculadas.
+**pytest:** 525 testes passando, zero regressões.
+
+### Próximo passo
+
+🔴 **Passo C — tela de manutenção de regras (prioridade)**
+
+Infraestrutura DB-driven criada em commit `9d6387a`. O que falta é construir a tela Flask:
+- Nova rota em `scripts/servidor_telas.py`
+- Template em `templates/`
+- Michel vê e mantém Status / Motivo / Razão / Termos sem abrir código
+- Ao salvar: sistema valida unicidade de termos + recalcula todas as threads
+
+**Investigações em chat dedicado (não bloqueiam o Passo C):**
+- 🔴 Threads irmãs: 11+ grupos com mesmo caso dividido em conversas separadas pelo Gmail
+- 🔴 Monitorar caixas da Andrea e Sarah via service account (acesso já existe)
+
+Último /fechar: 2026-09-02 16:00 — memórias revisadas ✅
 
 ---
 
@@ -74,18 +135,6 @@ Michel pediu uma forma de ver as threads Sem Retorno por categoria (DDR, DLO, DL
 **pytest:** 525 testes passando, zero regressões.
 **Sem teste novo:** mudanças são de template (HTML/JS front-end) — sem lógica testável em pytest.
 
-### Próximo passo
-
-🔴 **Passo C — tela de manutenção de regras (em andamento)**
-
-Infraestrutura DB-driven iniciada em commit `9d6387a`. O Passo C consiste em criar a tela
-dentro do sistema onde Michel vê e mantém Status/Motivo/Razão/Termos sem precisar abrir código.
-Passo 3 (planilha Excel) foi concluído em `eb61306`.
-
-**Investigações com chat dedicado (não bloqueiam Passo C):**
-- 🔴 Threads irmãs: 11+ grupos com mesmo caso dividido em conversas separadas pelo Gmail
-- 🔴 Monitorar caixas da Andrea e Sarah via service account (acesso já existe)
-
 Último /fechar: 2026-09-02 — memórias revisadas ✅
 
 ---
@@ -121,31 +170,4 @@ O trabalho começou vários chats atrás (D1–D16) e neste chat chegou ao fim. 
 
 Último /fechar: 2026-09-01 15:05 — memórias revisadas ✅
 
----
 
-## 📓 Diário da sessão (2026-09-01) — Fog: dias úteis, feriados e Sem atualização
-
-### O que foi feito
-
-**Frente única: a coluna Sem atualização do Fog passou a contar dia útil**
-
-Michel viu que o número incluía sábado e domingo. Só desenvolvedor trabalha fora do útil; misturar relógio por pessoa bagunçaria a tela. Decisão: **uma conta só, para todo mundo, em dias úteis**.
-
-**Decisões aprovadas**
-- Função `contar_dias_uteis` — segunda a sexta, sem o dia inicial.
-- Cores alinhadas à conta nova: verde &lt; 6 · âmbar 6–10 · vermelho ≥ 11 (equivalente ao peso de 8 e 15 corridos).
-- Na tela o número leva **du**; a legenda continua com a palavra "dias".
-- Feriados: só oficiais do Brasil (calendário de banco, inclusive Carnaval e Corpus Christi). Sem feriado de cidade e sem folga só da Finaud. Datas móveis saem da Páscoa — sem lista anual.
-- O número mede **o caso parado no Fog** (qualquer mexida zera). Caso fechado: célula em branco (—); "duração do caso" saiu. Não criamos coluna de duração.
-
-**Arquivos:** `scripts/servidor_telas.py`, `templates/gestao_email.html`, `tests/test_servidor_telas.py`, `documentações/REGISTRO_CORRECOES.md`
-
-### Estado atual
-
-**Produção:** no ar em `gestao-suporte.finaudapps.com.br`.
-**pytest:** `tests/test_servidor_telas.py` — 24 passed (inclui feriado, cortes 6/11, fechado sem número).
-**Assunto deste chat:** encerrado.
-
-Último /fechar: 2026-09-01 13:36 — memórias revisadas ✅
-
----
