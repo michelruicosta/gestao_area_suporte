@@ -4557,7 +4557,7 @@ function _vgFiltrar() {
     tbody.innerHTML = '<tr><td colspan="6" class="vazio">Nenhuma thread encontrada.</td></tr>';
     return;
   }
-  tbody.innerHTML = rows.map(t => `<tr>
+  tbody.innerHTML = rows.map(t => `<tr onclick="abrirThread('${esc(t.thread_id)}')" style="cursor:pointer">
     <td style="font-weight:500;line-height:1.35">${esc(t.assunto)}</td>
     <td style="font-size:12px;font-weight:600;color:var(--muted)">${esc(t.categoria)}</td>
     <td><span class="${_VG_CHIP[t.status] || 'chip'}">${esc(t.status)}</span></td>
