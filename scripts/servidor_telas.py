@@ -841,6 +841,7 @@ def api_threads_sem_retorno():
             'data':          _formatar_data(t.get('data_ultima_msg')),
             'qtd_mensagens': t.get('qtd_mensagens', 0),
             'status_workflow': t.get('status_workflow') or 'Aguardando Finaud',
+            'categoria': t.get('categoria') or '',
             'inativa_desde': t.get('inativa_desde'),
         }
         for t in threads

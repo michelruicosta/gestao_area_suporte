@@ -661,6 +661,9 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
 }
 .busca-input:focus { border-color: var(--marca); box-shadow: 0 0 0 2px rgba(51,51,168,0.12); }
 .busca-sem-resultado { display: none; text-align: center; color: var(--muted); padding: 1.5rem 1rem; font-size: 0.88rem; }
+.sr-filtro-cat-wrap { padding: 0.5rem 1.25rem; border-bottom: 1px solid var(--border); background: var(--bg); display: flex; align-items: center; gap: 0.75rem; }
+.sr-filtro-cat-wrap select { padding: 0.35rem 0.6rem; border: 1px solid var(--border); border-radius: 6px; font: inherit; font-size: 0.83rem; background: var(--surface); color: var(--text); cursor: pointer; }
+.sr-filtro-count { font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
 
 /* ─── Admin ─────────────────────────────────────────────────── */
 .admin-card {
@@ -2096,6 +2099,9 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
       <button class="tab-btn" data-tab="sr-ac" onclick="trocarAbaSr(this)">
         Aguardando Cliente <span class="tab-count" id="sr-ct-ac">—</span>
       </button>
+      <button class="tab-btn" data-tab="sr-cat" onclick="trocarAbaSr(this)">
+        Por Categoria <span class="tab-count" id="sr-ct-cat">—</span>
+      </button>
     </div>
     <div class="busca-wrap">
       <input class="busca-input" id="busca-sr" type="search"
@@ -2103,6 +2109,12 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
     </div>
     <div class="modal-body">
       <div class="tab-panel ativo" id="tab-panel-sr-af">
+        <div class="sr-filtro-cat-wrap">
+          <select id="sr-filtro-cat-af" onchange="_renderThreadsSr()">
+            <option value="">Todas as categorias</option>
+          </select>
+          <span class="sr-filtro-count" id="sr-filtro-count-af"></span>
+        </div>
         <div class="tabela-wrap">
           <table class="tabela">
             <thead><tr><th>Assunto</th><th>De</th><th>Para</th><th>Última msg</th><th class="num">Msgs</th></tr></thead>
@@ -2111,10 +2123,29 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
         </div>
       </div>
       <div class="tab-panel" id="tab-panel-sr-ac">
+        <div class="sr-filtro-cat-wrap">
+          <select id="sr-filtro-cat-ac" onchange="_renderThreadsSr()">
+            <option value="">Todas as categorias</option>
+          </select>
+          <span class="sr-filtro-count" id="sr-filtro-count-ac"></span>
+        </div>
         <div class="tabela-wrap">
           <table class="tabela">
             <thead><tr><th>Assunto</th><th>De</th><th>Para</th><th>Última msg</th><th class="num">Msgs</th></tr></thead>
             <tbody id="tbody-sr-ac"><tr><td colspan="5" class="vazio">Carregando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tab-panel" id="tab-panel-sr-cat">
+        <div class="tabela-wrap">
+          <table class="tabela">
+            <thead><tr>
+              <th class="th-sort" data-s="n" onclick="srCatSort('n')">CATEGORIA<span class="si" id="scsi-n"></span></th>
+              <th class="num th-sort" data-s="af" onclick="srCatSort('af')" style="color:var(--af-c)">AG. FINAUD<span class="si" id="scsi-af"></span></th>
+              <th class="num th-sort" data-s="ac" onclick="srCatSort('ac')" style="color:var(--ac-c)">AG. CLIENTE<span class="si" id="scsi-ac"></span></th>
+              <th class="num th-sort" data-s="tot" onclick="srCatSort('tot')">TOTAL<span class="si" id="scsi-tot"></span></th>
+            </tr></thead>
+            <tbody id="tbody-sr-cat"><tr><td colspan="4" class="vazio">Carregando…</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -3081,31 +3112,45 @@ async function abrirSemRetorno() {
       '<tr><td colspan="5" class="vazio">Carregando…</td></tr>';
     document.getElementById('sr-ct-' + s).textContent = '—';
   });
+  document.getElementById('tbody-sr-cat').innerHTML =
+    '<tr><td colspan="4" class="vazio">Carregando…</td></tr>';
+  document.getElementById('sr-ct-cat').textContent = '—';
   document.getElementById('modal-sr-tabs').querySelector('.tab-btn').click();
   abrirModal('modal-sr');
   try {
     const d = await _get('/api/threads/sem-retorno');
     _srThreads = d.threads || [];
+    _popularFiltrosCat();
     _renderThreadsSr();
   } catch (e) {
     ['sr-af','sr-ac'].forEach(s => {
       document.getElementById('tbody-sr-' + s).innerHTML =
         '<tr><td colspan="5" class="vazio">Erro ao carregar.</td></tr>';
     });
+    document.getElementById('tbody-sr-cat').innerHTML =
+      '<tr><td colspan="4" class="vazio">Erro ao carregar.</td></tr>';
   }
 }
 
 function _renderThreadsSr() {
   const q = (document.getElementById('busca-sr')?.value || '').toLowerCase().trim();
+  const catAf = document.getElementById('sr-filtro-cat-af')?.value || '';
+  const catAc = document.getElementById('sr-filtro-cat-ac')?.value || '';
   const grupos = {af: [], ac: []};
   _srThreads.forEach(t => {
     if (q && !((t.assunto || '').toLowerCase().includes(q))) return;
-    if      (t.status_workflow === 'Aguardando Finaud')   grupos.af.push(t);
-    else if (t.status_workflow === 'Aguardando Cliente')  grupos.ac.push(t);
+    if (t.status_workflow === 'Aguardando Finaud') {
+      if (!catAf || t.categoria === catAf) grupos.af.push(t);
+    } else if (t.status_workflow === 'Aguardando Cliente') {
+      if (!catAc || t.categoria === catAc) grupos.ac.push(t);
+    }
   });
+  _renderCatSr(q);
   ['af','ac'].forEach(s => {
     const lista = grupos[s];
     document.getElementById('sr-ct-' + s).textContent = lista.length;
+    const ct = document.getElementById('sr-filtro-count-' + s);
+    if (ct) ct.textContent = lista.length + (lista.length === 1 ? ' thread' : ' threads');
     document.getElementById('tbody-sr-' + s).innerHTML = lista.length
       ? lista.map(t => {
           // Conta dias desde a última mensagem (DD/MM/YYYY), não desde o arquivamento
@@ -3148,6 +3193,66 @@ function trocarAbaSr(btn) {
 }
 
 function filtrarThreadsSr() { _renderThreadsSr(); }
+
+const _srCatMap = Object.fromEntries(_CATS);
+function _srNomeCat(id) { return (_srCatMap[id] || id).toUpperCase(); }
+let _srCatSortKey = 'tot', _srCatSortDir = -1;
+
+function _popularFiltrosCat() {
+  ['af','ac'].forEach(s => {
+    const sel = document.getElementById('sr-filtro-cat-' + s);
+    if (!sel) return;
+    const status = s === 'af' ? 'Aguardando Finaud' : 'Aguardando Cliente';
+    const cats = [...new Set(
+      _srThreads.filter(t => t.status_workflow === status && t.categoria).map(t => t.categoria)
+    )].sort((a, b) => _srNomeCat(a).localeCompare(_srNomeCat(b)));
+    sel.innerHTML = '<option value="">Todas as categorias</option>' +
+      cats.map(id => `<option value="${escHtml(id)}">${escHtml(_srNomeCat(id))}</option>`).join('');
+  });
+}
+
+function _renderCatSr(q) {
+  const catMap = {};
+  _srThreads.forEach(t => {
+    if (q && !((t.assunto || '').toLowerCase().includes(q))) return;
+    const cat = t.categoria || '__sem_cat__';
+    if (!catMap[cat]) catMap[cat] = {af: 0, ac: 0};
+    if      (t.status_workflow === 'Aguardando Finaud')  catMap[cat].af++;
+    else if (t.status_workflow === 'Aguardando Cliente') catMap[cat].ac++;
+  });
+  let cats = Object.entries(catMap);
+  cats.sort((a, b) => {
+    if (_srCatSortKey === 'n') {
+      return _srCatSortDir * _srNomeCat(a[0]).localeCompare(_srNomeCat(b[0]));
+    }
+    const va = _srCatSortKey === 'af' ? a[1].af : _srCatSortKey === 'ac' ? a[1].ac : a[1].af + a[1].ac;
+    const vb = _srCatSortKey === 'af' ? b[1].af : _srCatSortKey === 'ac' ? b[1].ac : b[1].af + b[1].ac;
+    return _srCatSortDir * (vb - va);
+  });
+  document.getElementById('sr-ct-cat').textContent = cats.length;
+  document.querySelectorAll('#tab-panel-sr-cat th[data-s]').forEach(th => {
+    th.classList.toggle('sort-active', th.dataset.s === _srCatSortKey);
+    const si = th.querySelector('.si');
+    if (si) si.textContent = th.dataset.s === _srCatSortKey ? (_srCatSortDir === 1 ? ' ▲' : ' ▼') : '';
+  });
+  const tbody = document.getElementById('tbody-sr-cat');
+  if (!cats.length) {
+    tbody.innerHTML = '<tr><td colspan="4" class="vazio">Nenhuma thread.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = cats.map(([catId, c]) => {
+    const nome = catId === '__sem_cat__' ? '(SEM CATEGORIA)' : escHtml(_srNomeCat(catId));
+    const af  = c.af ? `<span class="n-af">${c.af}</span>`  : '<span class="n-zero">—</span>';
+    const ac  = c.ac ? `<span class="n-ac">${c.ac}</span>`  : '<span class="n-zero">—</span>';
+    return `<tr><td>${nome}</td><td class="num">${af}</td><td class="num">${ac}</td><td class="num"><strong>${c.af + c.ac}</strong></td></tr>`;
+  }).join('');
+}
+
+function srCatSort(key) {
+  if (_srCatSortKey === key) _srCatSortDir *= -1; else { _srCatSortKey = key; _srCatSortDir = -1; }
+  const q = (document.getElementById('busca-sr')?.value || '').toLowerCase().trim();
+  _renderCatSr(q);
+}
 
 // ── Ordenação da tabela principal ─────────────────────────────────────
 let _dadosResumo = null, mainSortKey = null, mainSortDir = -1;

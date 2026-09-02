@@ -2,6 +2,27 @@
 
 ---
 
+## 2026-09-02 — Motivos 15 e 16: comunicados oficiais do BACEN
+
+**🔎 Em miúdos:** Qualquer comunicado do BACEN (alerta de inconsistência, atraso, problema de qualidade) agora tem dois motivos próprios — um quando o cliente encaminhou e aguarda Finaud, outro quando Finaud respondeu e aguarda o cliente. Antes, os mesmos alertas eram espalhados por 6 motivos diferentes conforme o cliente (BANVOX tinha motivo com o nome da empresa, os demais clientes ficavam em "informações e extratos").
+
+**Problema:** BANVOX tinha regra específica baseada em artefato da assinatura (`[undefined]`), não no conteúdo do assunto. Outros clientes com os mesmos alertas do BACEN eram classificados genericamente. Regra com nome de cliente violava princípio aprovado.
+
+**Correção em `scripts/banco_threads.py`:**
+- Adicionada constante `_BACEN_COMUNICADO_PALAVRAS` (palavras-chave do assunto de comunicado oficial)
+- Adicionada função `_eh_comunicado_bacen_assunto(assunto)` — detecta alertas do BACEN pelo assunto
+- Flag `_assunto_bacen` calculada uma vez por thread, reutilizada nas duas seções de retorno
+- Motivo 15 (Ag. Finaud): `'Comunicado do BACEN — aguarda análise da Finaud'`
+- Motivo 16 (Ag. Cliente): `'Comunicado do BACEN — aguarda retorno do cliente'`
+- Exceção: confirmação explícita do cliente (`_CONFIRMACAO_EXPLICITA`) → regra BACEN não ativa
+- Removidas 2 regras BANVOX-específicas (incluindo nome de cliente)
+
+**Registrado em `documentações/PENDENCIAS.md`:** encerramento automático quando Finaud não faz pergunta (aprovado por Michel — implementação futura).
+
+**Validação:** ✅ VALIDADO — `pytest tests/ -q` → 525 passed, 0 failed. Pré-produção: 412 divergências analisadas — 345 esperadas (Decisões 17-24), 43 novas classificações BACEN corretas, 2 casos HTML-only pré-existentes. Commit: `3778b38`.
+
+---
+
 ## 2026-09-01 — Passo 3: planilha e código alinhados à matriz aprovada
 
 **🔎 Em miúdos:** A planilha de motivos e o código agora falam a mesma língua — 18 motivos no código, 19 linhas na planilha (a 19ª é o "Sem retorno" que é gerado separadamente).
