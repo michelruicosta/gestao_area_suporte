@@ -1400,6 +1400,23 @@ def test_em_atraso_arquivo_2061_e_solicitacao():
     assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
 
 
+# ── Decisão 23 — "consegue me confirmar" ─────────────────────────────────────
+
+def test_consegue_me_confirmar_intercam_e_solicitacao():
+    """Intercam/IN BCB 757: 'Consegue me confirmar se aplica a FINAUD?' → solicitação."""
+    msgs = [_msg(
+        CLIENTE,
+        corpo=(
+            'Boa tarde Andrea, tudo bem?\r\n\r\n'
+            'Sabe me informar se a FINAUD consegue gerar esse arquivo para envio ao Bacen pelo RISK DRIVER? '
+            'Consegue me confirmar se aplica a FINAUD e se pode ajudar?\r\n\r\nObrigada'
+        ),
+    )]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status}'
+    assert motivo != 'Cliente escreveu — aguarda resposta da Finaud', f'Esperado solicitação, got: {motivo}'
+
+
 # ── Snapshots de contadores ───────────────────────────────────────────────────
 
 def test_snapshot_banco_vazio(monkeypatch, tmp_path):

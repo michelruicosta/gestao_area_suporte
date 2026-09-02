@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-09-01 — "consegue me confirmar" — 1 thread sai da caixa preta (14 → 13) — Decisão 23
+
+**🔎 Em miúdos:** Thread onde cliente pergunta se a Finaud consegue atender nova norma do BACEN passa a aparecer como solicitação.
+
+**Problema:** `_PEDIDO_FOLLOW_UP` já tinha `pode confirmar`, mas não reconhecia a variante `consegue me confirmar` (Intercam / IN BCB Nº 757).
+
+**Correção:** adicionado `consegue\s+me\s+confirmar` ao `_PEDIDO_FOLLOW_UP` → vira **solicitação**.
+
+**Arquivos:** `scripts/banco_threads.py`, `tests/test_banco_threads.py`
+
+**Validação:** ✅ VALIDADO — `pytest tests/ -q` → 524 passed (1 teste novo).
+
+---
+
 ## 2026-09-01 — Cobrança de prazo — 2 threads saem da caixa preta (16 → 14) — Decisão 22
 
 **🔎 Em miúdos:** Threads onde o cliente avisa que o prazo venceu ou está vencendo passam a aparecer como solicitação.
