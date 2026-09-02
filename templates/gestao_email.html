@@ -634,6 +634,7 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
 }
 .msg-head strong { color: var(--text); }
 .msg-body { padding: 0.85rem; font-size: 0.88rem; white-space: pre-wrap; line-height: 1.6; max-height: 14rem; overflow-y: auto; }
+.msg-enc-label { padding: 0.3rem 0.85rem; font-size: 0.75rem; color: var(--muted); font-style: italic; border-bottom: 1px solid var(--border); }
 .msg-anexos { padding: 0.35rem 0.85rem 0.65rem; font-size: 0.8rem; color: var(--muted); }
 .msg-anexos span { background: var(--bg); padding: 0.18rem 0.5rem; border-radius: 4px; margin-right: 0.35rem; }
 
@@ -1027,6 +1028,10 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
           <span class="nav-ico">📈</span>
           <span class="nav-txt">Evolução</span>
         </button>
+        <button class="nav-item" data-pagina="visao-geral" onclick="navegar(this)">
+          <span class="nav-ico">🔎</span>
+          <span class="nav-txt">Visão Geral</span>
+        </button>
         <button class="nav-item" data-pagina="nao-classificados" onclick="navegar(this)">
           <span class="nav-ico">📥</span>
           <span class="nav-txt">Não Classificadas</span>
@@ -1122,6 +1127,7 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
       <div class="email-tabbar">
         <button class="email-tab ativa" data-pagina="classificados" onclick="navegar(this)">Classificação e Status</button>
         <button class="email-tab" data-pagina="historico" onclick="navegar(this)">Evolução</button>
+        <button class="email-tab" data-pagina="visao-geral" onclick="navegar(this)">Visão Geral</button>
         <button class="email-tab" data-pagina="nao-classificados" onclick="navegar(this)">Não Classificadas<span class="tab-badge tab-badge-nao-class" hidden></span></button>
         <button class="email-tab" data-pagina="bloqueados" onclick="navegar(this)">Bloqueadas por Regras<span class="tab-badge tab-badge-bloqueados" hidden></span></button>
       </div>
@@ -1176,6 +1182,7 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
       <div class="email-tabbar">
         <button class="email-tab" data-pagina="classificados" onclick="navegar(this)">Classificação e Status</button>
         <button class="email-tab ativa" data-pagina="historico" onclick="navegar(this)">Evolução</button>
+        <button class="email-tab" data-pagina="visao-geral" onclick="navegar(this)">Visão Geral</button>
         <button class="email-tab" data-pagina="nao-classificados" onclick="navegar(this)">Não Classificadas<span class="tab-badge tab-badge-nao-class" hidden></span></button>
         <button class="email-tab" data-pagina="bloqueados" onclick="navegar(this)">Bloqueadas por Regras<span class="tab-badge tab-badge-bloqueados" hidden></span></button>
       </div>
@@ -1255,11 +1262,65 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
       </div>
     </section>
 
+    <!-- ── Visão Geral ─────────────────────────────────────────────── -->
+    <section class="page" id="pag-visao-geral">
+      <div class="email-tabbar">
+        <button class="email-tab" data-pagina="classificados" onclick="navegar(this)">Classificação e Status</button>
+        <button class="email-tab" data-pagina="historico" onclick="navegar(this)">Evolução</button>
+        <button class="email-tab ativa" data-pagina="visao-geral" onclick="navegar(this)">Visão Geral</button>
+        <button class="email-tab" data-pagina="nao-classificados" onclick="navegar(this)">Não Classificadas<span class="tab-badge tab-badge-nao-class" hidden></span></button>
+        <button class="email-tab" data-pagina="bloqueados" onclick="navegar(this)">Bloqueadas por Regras<span class="tab-badge tab-badge-bloqueados" hidden></span></button>
+      </div>
+      <div class="page-header" style="margin-bottom:0.75rem">
+        <div class="page-header-left">
+          <h1 class="page-titulo">Visão Geral</h1>
+          <p class="page-sub">Todas as conversas — busque por assunto e filtre por status ou categoria</p>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;flex-wrap:wrap;">
+        <div style="position:relative;flex:1;min-width:200px;max-width:360px;">
+          <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;font-size:13px;">🔍</span>
+          <input id="vg-q" type="search" placeholder="Buscar por assunto…" autocomplete="off" oninput="_vgFiltrar()"
+                 style="width:100%;padding:7px 10px 7px 30px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text);font:inherit;font-size:13px;outline:none;">
+        </div>
+        <select id="vg-status" onchange="_vgFiltrar()"
+                style="padding:7px 10px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text);font:inherit;font-size:13px;">
+          <option value="">Todos os status</option>
+          <option>Aguardando Finaud</option>
+          <option>Aguardando Cliente</option>
+          <option>Concluída</option>
+        </select>
+        <select id="vg-cat" onchange="_vgFiltrar()"
+                style="padding:7px 10px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text);font:inherit;font-size:13px;">
+          <option value="">Todas as categorias</option>
+        </select>
+        <span id="vg-count" style="font-size:12px;color:var(--muted);margin-left:auto;font-variant-numeric:tabular-nums;"></span>
+      </div>
+      <div class="tabela-wrap" style="overflow-x:auto;">
+        <table class="tabela" style="font-size:13px;min-width:900px;">
+          <thead>
+            <tr>
+              <th style="min-width:260px;">ASSUNTO</th>
+              <th style="min-width:110px;">CATEGORIA</th>
+              <th style="min-width:140px;">STATUS</th>
+              <th style="min-width:200px;">MOTIVO</th>
+              <th style="min-width:100px;">ÚLTIMA MSG</th>
+              <th style="min-width:180px;">RESPONSÁVEL</th>
+            </tr>
+          </thead>
+          <tbody id="vg-tbody">
+            <tr><td colspan="6" class="vazio">Carregando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
     <!-- ── Página 3: Não Classificados ────────────────────────────── -->
     <section class="page" id="pag-nao-classificados">
       <div class="email-tabbar">
         <button class="email-tab" data-pagina="classificados" onclick="navegar(this)">Classificação e Status</button>
         <button class="email-tab" data-pagina="historico" onclick="navegar(this)">Evolução</button>
+        <button class="email-tab" data-pagina="visao-geral" onclick="navegar(this)">Visão Geral</button>
         <button class="email-tab ativa" data-pagina="nao-classificados" onclick="navegar(this)">Não Classificadas<span class="tab-badge tab-badge-nao-class" hidden></span></button>
         <button class="email-tab" data-pagina="bloqueados" onclick="navegar(this)">Bloqueadas por Regras<span class="tab-badge tab-badge-bloqueados" hidden></span></button>
       </div>
@@ -1644,6 +1705,7 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
       <div class="email-tabbar">
         <button class="email-tab" data-pagina="classificados" onclick="navegar(this)">Classificação e Status</button>
         <button class="email-tab" data-pagina="historico" onclick="navegar(this)">Evolução</button>
+        <button class="email-tab" data-pagina="visao-geral" onclick="navegar(this)">Visão Geral</button>
         <button class="email-tab" data-pagina="nao-classificados" onclick="navegar(this)">Não Classificadas<span class="tab-badge tab-badge-nao-class" hidden></span></button>
         <button class="email-tab ativa" data-pagina="bloqueados" onclick="navegar(this)">Bloqueadas por Regras<span class="tab-badge tab-badge-bloqueados" hidden></span></button>
       </div>
@@ -2261,6 +2323,7 @@ function navegar(btn) {
   const titulos = {
     'classificados':     'E-MAILS · Classificação e Status',
     'historico':         'E-MAILS · Evolução',
+    'visao-geral':       'E-MAILS · Visão Geral',
     'nao-classificados': 'E-MAILS · Não Classificadas',
     'bloqueados':        'E-MAILS · Bloqueadas por Regras',
     'admin-detalhe':     'Administração · E-mail · Detalhe',
@@ -2280,6 +2343,7 @@ function navegar(btn) {
   document.getElementById('topbar-titulo').textContent =
     pag === 'admin' ? (titulosAdmin[aba] || 'Administração · E-mail') : (titulos[pag] || '');
   if (pag === 'historico') { if (!evoHistorico.length) carregarHistorico(); else renderEvo(); }
+  if (pag === 'visao-geral') carregarVisaoGeral();
   if (pag === 'nao-classificados') carregarNaoClassificados();
   if (pag === 'bloqueados') carregarBloqueados();
   if (pag === 'admin') {
@@ -2494,8 +2558,20 @@ async function abrirThread(threadId) {
 
     document.getElementById('modal-thread-body').innerHTML =
       t.mensagens.map(m => {
-        const anexos = m.anexos.length
-          ? `<div class="msg-anexos">📎 ${m.anexos.map(a => `<span>${escHtml(a)}</span>`).join('')}</div>`
+        // Tipo D/C/F: mostrar conteúdo do bloco encaminhado; esconder imagens de assinatura
+        const isEncaminhamento = m.tipo_estrutura === 'D' || m.tipo_estrutura === 'C' || m.tipo_estrutura === 'F';
+        const textoBase = isEncaminhamento && m.corpo_encaminhado
+          ? m.corpo_encaminhado
+          : (m.corpo || '(sem conteúdo)');
+        // Remover referências de imagens inline do Outlook ([cid:...]) — são ícones de assinatura
+        const corpoExibir = textoBase.replace(/\[cid:[^\]]+\]/gi, '').trim() || '(sem conteúdo)';
+        const labelEnc = isEncaminhamento && m.corpo_encaminhado
+          ? `<div class="msg-enc-label">Encaminhamento — conteúdo original abaixo</div>`
+          : '';
+        // Sempre usar só arquivos reais (sem imagens de assinatura) na lista de anexos
+        const listaAnexos = (m.anexos_reais && m.anexos_reais.length) ? m.anexos_reais : m.anexos;
+        const anexos = listaAnexos.length
+          ? `<div class="msg-anexos">📎 ${listaAnexos.map(a => `<span>${escHtml(a)}</span>`).join('')}</div>`
           : '';
         return `<div class="msg-card">
           <div class="msg-head">
@@ -2503,7 +2579,7 @@ async function abrirThread(threadId) {
             <span><strong>Para:</strong> ${escHtml(m.para)}</span>
             <span>${escHtml(m.data)}</span>
           </div>
-          <div class="msg-body">${escHtml(m.corpo || '(sem conteúdo)')}</div>
+          ${labelEnc}<div class="msg-body">${escHtml(corpoExibir)}</div>
           ${anexos}
         </div>`;
       }).join('');
@@ -4427,6 +4503,69 @@ function _renderFogParados(ativos) {
   _sincDispCal('evo-dt-inicio');
   _sincDispCal('evo-dt-fim');
 })();
+
+// ── Visão Geral ──────────────────────────────────────────────────────────
+let _vgDados = [];
+
+async function carregarVisaoGeral() {
+  if (_vgDados.length) { _vgFiltrar(); return; }
+  document.getElementById('vg-tbody').innerHTML =
+    '<tr><td colspan="6" class="vazio">Carregando…</td></tr>';
+  try {
+    const r = await fetch('/api/threads/todas');
+    const d = await r.json();
+    _vgDados = d.threads || [];
+    const cats = [...new Set(_vgDados.map(t => t.categoria).filter(Boolean))].sort();
+    const sel = document.getElementById('vg-cat');
+    sel.innerHTML = '<option value="">Todas as categorias</option>';
+    cats.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c; o.textContent = c; sel.appendChild(o);
+    });
+    if (_vgDados.some(t => t.sem_retorno)) {
+      const o = document.createElement('option');
+      o.value = '__SEM_RETORNO__'; o.textContent = 'SEM RETORNO'; sel.appendChild(o);
+    }
+    _vgFiltrar();
+  } catch (e) {
+    document.getElementById('vg-tbody').innerHTML =
+      '<tr><td colspan="6" class="vazio">Erro ao carregar os dados.</td></tr>';
+  }
+}
+
+const _VG_CHIP = {
+  'Aguardando Finaud':   'chip chip-af',
+  'Aguardando Cliente':  'chip chip-ac',
+  'Concluída':           'chip chip-co',
+};
+
+function _vgFiltrar() {
+  const q  = (document.getElementById('vg-q').value || '').toLowerCase().trim();
+  const st = document.getElementById('vg-status').value;
+  const ct = document.getElementById('vg-cat').value;
+  const rows = _vgDados.filter(t =>
+    (!q  || (t.assunto || '').toLowerCase().includes(q)) &&
+    (!st || t.status    === st) &&
+    (!ct || (ct === '__SEM_RETORNO__' ? t.sem_retorno : t.categoria === ct))
+  );
+  const esc = s => (s || '').replace(/[&<>"']/g,
+    c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  document.getElementById('vg-count').textContent =
+    `${rows.length} de ${_vgDados.length} threads`;
+  const tbody = document.getElementById('vg-tbody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="vazio">Nenhuma thread encontrada.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(t => `<tr>
+    <td style="font-weight:500;line-height:1.35">${esc(t.assunto)}</td>
+    <td style="font-size:12px;font-weight:600;color:var(--muted)">${esc(t.categoria)}</td>
+    <td><span class="${_VG_CHIP[t.status] || 'chip'}">${esc(t.status)}</span></td>
+    <td style="font-size:12px;color:var(--muted);font-style:italic">${esc(t.motivo)}</td>
+    <td style="font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums">${esc(t.data)}</td>
+    <td style="font-size:12px;color:var(--muted)">${esc(t.responsavel)}</td>
+  </tr>`).join('');
+}
 </script>
 </body>
 </html>

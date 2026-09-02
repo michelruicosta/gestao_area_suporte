@@ -682,17 +682,23 @@ def api_thread(thread_id: str):
     t = bt.buscar_thread_completa(thread_id)
     if not t:
         abort(404)
-    mensagens = [
-        {
-            'de':     _resolver_de(m),
-            'para':   _resolver_para(m),
-            'data':   _formatar_data(m.get('data')),
-            'assunto': m.get('assunto') or '',
-            'corpo':  m.get('corpo_texto') or '',
-            'anexos': m.get('nomes_anexos') or [],
-        }
-        for m in reversed(t.get('mensagens', []))
-    ]
+    mensagens = []
+    for m in reversed(t.get('mensagens', [])):
+        corpo_raw = m.get('corpo_texto') or ''
+        tipo = bt._identificar_tipo_estrutura(corpo_raw)
+        reais, assinatura = bt._separar_anexos(m.get('nomes_anexos') or [])
+        mensagens.append({
+            'de':                _resolver_de(m),
+            'para':              _resolver_para(m),
+            'data':              _formatar_data(m.get('data')),
+            'assunto':           m.get('assunto') or '',
+            'corpo':             corpo_raw,
+            'tipo_estrutura':    tipo,
+            'corpo_encaminhado': bt._extrair_bloco_encaminhado(corpo_raw) if tipo in ('C', 'D', 'F') else '',
+            'anexos':            m.get('nomes_anexos') or [],
+            'anexos_reais':      reais,
+            'anexos_assinatura': assinatura,
+        })
     return jsonify({
         'thread_id':            t['thread_id'],
         'assunto':              t.get('assunto') or '(sem assunto)',
@@ -847,6 +853,36 @@ def api_threads_sem_retorno():
         for t in threads
     ]
     return jsonify({'threads': resultado})
+
+
+@app.route('/api/threads/todas')
+@_requer_login
+def api_threads_todas():
+    def _responsavel(t: dict) -> str:
+        rem  = t.get('remetente_ultima_msg') or ''
+        dest = t.get('destinatario_ultima_msg') or ''
+        if _eh_finaud_addr(rem) and not _eh_suporte(rem):
+            return _extrair_email(rem)
+        return _primeiro_finaud_ou_primeiro(dest) or _extrair_email(rem)
+
+    ativas  = [(t, False) for t in bt.buscar_por_destino('principal')]
+    sem_ret = [(t, True)  for t in bt.buscar_threads_sem_retorno()]
+    todos   = sorted(ativas + sem_ret, key=lambda x: _chave_data(x[0]), reverse=True)
+
+    resultado = [
+        {
+            'thread_id':   t['thread_id'],
+            'assunto':     t.get('assunto') or '(sem assunto)',
+            'categoria':   t.get('categoria') or '',
+            'status':      t.get('status_workflow') or 'Aguardando Finaud',
+            'motivo':      t.get('motivo_status') or '',
+            'data':        _formatar_data(t.get('data_ultima_msg')),
+            'responsavel': _responsavel(t),
+            'sem_retorno': sr,
+        }
+        for t, sr in todos
+    ]
+    return jsonify({'threads': resultado, 'total': len(resultado)})
 
 
 @app.route('/api/admin/log-coletas')
