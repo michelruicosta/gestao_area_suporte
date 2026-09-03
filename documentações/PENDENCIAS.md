@@ -1,10 +1,29 @@
 # PENDÊNCIAS — Gestão Área Suporte
 
-**Atualizado:** 2026-09-02 16:00
+**Atualizado:** 2026-09-02 22:00
 **Organização:** por etapa que bloqueia — reorganizado em 03/08/2026 para seguir as fases sem brechas.
 **Regra:** este arquivo lista **só o que ainda falta** (aberto / aguardando decisão / backlog).
 Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada no
 `REGISTRO_CORRECOES.md` — nesta ordem: primeiro grava no REGISTRO, depois remove daqui.
+
+---
+
+## 🔴 INVESTIGAR + CORRIGIR — Status mal calculado em threads (identificado em 02/09/2026)
+
+### O problema
+
+O código de classificação (`_determinar_status` em `scripts/banco_threads.py`) evoluiu ao longo do tempo, mas threads classificadas por versões mais antigas do código podem ter ficado com status desatualizado. O `recalcular_status_todos()` só processa threads ativas (`inativa_desde IS NULL`) — threads arquivadas ficam com status "congelado".
+
+**Exemplo confirmado:** thread `19fb991b1633268e` (SALDOS_CONTABEIS_DIARIOS_4111) — última mensagem da Finaud (Flávio via suporte@finaud.com.br) enviando dados ao cliente, mas status salvo é "Aguardando Finaud". Status correto: "Aguardando Cliente".
+
+**Escopo:** pode afetar todas as threads, em todas as categorias, não só as arquivadas.
+
+### O que fazer
+
+Chat dedicado já preparado ("02/09 — Correção status threads") — texto completo disponível no histórico desta sessão. O chat deve:
+1. Varrer todas as threads e recalcular o status com o código atual
+2. Mostrar distribuição das divergências para aprovação do Michel
+3. Corrigir no banco após aprovação (com backup antes)
 
 ---
 
@@ -995,13 +1014,11 @@ A tela de manutenção das regras de motivo precisa garantir que o mesmo termo c
 
 ---
 
-### 🟡 TELA — Gerencial de busca por assunto (identificado 29/08/2026, futuro)
+### ✅ TELA — Gerencial de busca por assunto — CONCLUÍDO (02/09/2026)
 
-Michel pesquisa um assunto e a tela traz todas as informações da thread (status, motivo,
-razão, histórico) sem precisar navegar pela tela de status atual. Pensado para buscar casos
-específicos durante manutenções ou investigações.
-
-**Quando fazer:** após a tela de regras estar funcionando (Passo 4 do próximo chat).
+A tela **Visão Geral** cobre este requisito: busca ao digitar por assunto, filtros por
+status e categoria (incluindo "Sem Retorno"), tabela plana com todas as informações
+inline e clique na linha para abrir o detalhe completo. Ver REGISTRO_CORRECOES.md.
 
 ---
 

@@ -12,9 +12,10 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
+| 02/09 | Validação coletor colaboradores + problema status threads arquivadas | abaixo |
 | 02/09 | BACEN motivos 15 e 16 + validação pré-deploy + deploy | abaixo |
 | 02/09 | Sem Retorno — filtros por categoria e aba Por Categoria | abaixo |
-| 01/09 | Motivos / Caixa preta — Decisões 17–24 | abaixo |
+| 01/09 | Motivos / Caixa preta — Decisões 17–24 | arquivo |
 | 01/09 | Fog: dias úteis, feriados e Sem atualização | arquivo |
 | 01/09 | Administração: E-mail, Notificações e aviso por e-mail | arquivo |
 | 28-29/08 | Planilha de classificação de motivos + bug Outlook no grupo saudação | arquivo |
@@ -37,6 +38,75 @@
 >
 > **Regra:** este arquivo guarda as **3 sessões mais recentes**. O `/fechar` acrescenta a
 > linha nova aqui e move a 4ª sessão para o arquivo.
+
+---
+
+## 📓 Diário da sessão (2026-09-02) — Validação coletor colaboradores + problema status threads arquivadas
+
+### O que foi feito
+
+**Frente única: validar se alguma thread em Sem Retorno tem resposta de colaborador faltando no banco**
+
+Michel identificou que threads em "Sem Retorno" poderiam ter respostas que o sistema não capturava. O coletor de caixas de colaboradores foi implementado em sessão anterior. Nesta sessão, fizemos a validação completa categoria por categoria.
+
+**O que foi concluído:**
+
+1. **Validação das 10 categorias de Sem Retorno (482 threads, 65 dias de janela)**
+   - Script `validar_categoria_sem_retorno.py` (scratchpad) — aceita categoria via `sys.argv[1]`
+   - Rodadas em sequência e em paralelo: DDR_2011, SALDOS, DLO, RETORNO_BACEN, SUPORTE, DRM_2060, DRL_2160, S5, INTERNO, DLI_2062
+   - **Resultado: 0 respostas faltando em todas as categorias** — o coletor está funcionando corretamente
+
+2. **Descoberta: suporte@finaud.com.br é caixa compartilhada**
+   - O validador encontrava mensagens nos enviados do Flávio que já estavam no banco (SALDOS e DLO)
+   - Motivo: quando qualquer colaborador envia via `suporte@finaud.com.br`, a mensagem aparece nos enviados de todos que têm acesso à caixa compartilhada
+   - Limitação do validador: não distingue "mensagem nova" de "mensagem já registrada via suporte"
+   - Os "achados" de SALDOS e DLO não eram casos reais de mensagem faltando
+
+3. **Identificado: problema de status mal calculado em threads arquivadas**
+   - Thread `19fb991b1633268e` (SALDOS) — última mensagem da Finaud (Flávio via suporte), mas status salvo é "Aguardando Finaud"
+   - Causa: `recalcular_status_todos()` só processa threads com `inativa_desde IS NULL` — threads arquivadas ficam com status "congelado" da versão de código que estava ativa quando foram arquivadas
+   - O problema pode existir em **todas as categorias**, não só arquivadas
+   - Chat dedicado preparado: "02/09 — Correção status threads" — texto completo pronto para copiar
+
+**Resultado final da validação:**
+
+| Categoria | Threads | Resposta faltando |
+|---|---|---|
+| DDR_2011 | 277 | 0 |
+| SALDOS_CONTABEIS_DIARIOS_4111 | 67 | 0 |
+| DLO_2061 | 52 | 0 |
+| RETORNO_BACEN | 28 | 0 |
+| SUPORTE | 22 | 0 |
+| DRM_2060 | 15 | 0 |
+| DRL_2160 | 13 | 0 |
+| DLI_2062 | 3 | 0 |
+| INTERNO | 3 | 0 |
+| S5 | 2 | 0 |
+| **Total** | **482** | **0** |
+
+### Estado atual
+
+**Coletor:** funcionando corretamente — nenhuma resposta de colaborador faltando no banco.
+**Problema identificado:** status mal calculado em threads arquivadas — chat dedicado preparado.
+**pytest:** 549 testes passando (524 anteriores + 24 do coletor + 1 correção), zero regressões.
+**Nenhum arquivo de produção alterado nesta sessão.**
+
+### Próximo passo
+
+🔴 **Chat dedicado: correção de status de todas as threads**
+
+Texto completo preparado nesta sessão. Abrir chat "02/09 — Correção status threads" e colar o texto. O chat deve:
+1. Varrer todas as threads (não só arquivadas) e recalcular o status com o código atual
+2. Mostrar distribuição das divergências para aprovação do Michel
+3. Corrigir no banco após aprovação
+4. Fazer backup antes de alterar
+
+**Pendências anteriores que continuam:**
+- 🔴 Passo C — tela de manutenção de regras (não foi tocado nesta sessão)
+- 🔴 Threads irmãs — investigação em chat dedicado
+- 🔴 Monitorar caixas da Andrea e Sarah
+
+Último /fechar: 2026-09-02 — memórias revisadas ✅
 
 ---
 
@@ -136,38 +206,5 @@ Michel pediu uma forma de ver as threads Sem Retorno por categoria (DDR, DLO, DL
 **Sem teste novo:** mudanças são de template (HTML/JS front-end) — sem lógica testável em pytest.
 
 Último /fechar: 2026-09-02 — memórias revisadas ✅
-
----
-
-## 📓 Diário da sessão (2026-09-01) — Motivos / Caixa preta — Decisões 17–24
-
-### O que foi feito
-
-**Etapa 2 concluída: varredura completa da caixa preta — 66 → 12 threads genuínas**
-
-O trabalho começou vários chats atrás (D1–D16) e neste chat chegou ao fim. Cada decisão reduziu o grupo "Cliente escreveu — aguarda resposta da Finaud" por detecção automática de padrão.
-
-**Decisões aprovadas neste chat (Decisões 21–24):**
-- **D21** — convites de calendário (`.ics`) e reuniões do Teams sem histórico → automático (22→17); fix `UnboundLocalError` em banco_threads.py:677
-- **D22** — "reforçar" e "em atraso" → solicitação (16→14)
-- **D23** — "consegue me confirmar" → solicitação (14→13)
-- **D24** — "entrarei em contato" → Aguardando Cliente (13→12)
-- **D25** — "poderia": decidido deixar como genuína (risco alto de falso positivo)
-
-**12 genuínas confirmadas** — todas são perguntas técnicas complexas, consultas regulatórias, problemas de acesso específicos. Nenhum padrão automático seguro.
-
-**Contexto numérico:** os 18 motivos do artefato foram aprovados em chats anteriores. O artefato está em https://claude.ai/code/artifact/30448858-e3b1-4a40-a64d-4b989b0b7029.
-
-**Arquivos:** `scripts/banco_threads.py`, `scripts/validador_classificacao.py`, `tests/test_banco_threads.py`, `tests/test_validador_filtro.py`, `documentações/REGISTRO_CORRECOES.md`
-
-**Commits desta etapa:** D21 `addbe9b` · D22 `6ba60d5` · D23 `0d87496` · D24 `4036620`
-
-### Estado atual
-
-**pytest:** 525 testes passando, zero regressões.
-**Caixa preta:** 12 threads genuínas (sem padrão automático possível).
-**Assunto deste chat:** encerrado.
-
-Último /fechar: 2026-09-01 15:05 — memórias revisadas ✅
 
 

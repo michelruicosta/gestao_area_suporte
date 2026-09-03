@@ -2,6 +2,32 @@
 
 ---
 
+## 2026-09-02 — Tela Visão Geral: busca, filtros, "Sem Retorno" e clique nas linhas
+
+**🔎 Em miúdos:** Ganhou uma tela nova chamada "Visão Geral" — ela mostra todas as conversas de e-mail numa tabela plana, com busca ao digitar no assunto e filtros por status e por categoria (incluindo o grupo "Sem Retorno"). Ao clicar numa linha, abre o detalhamento completo da conversa (mesmo painel das outras telas). A tela aparece tanto no menu lateral quanto na guia de abas, posicionada depois de "Evolução".
+
+**Problema:** não havia uma forma de ver todas as threads ao mesmo tempo, cruzar status, categoria e buscar por assunto sem abrir cada uma individualmente.
+
+**Correção:**
+
+`scripts/servidor_telas.py` — novo endpoint `/api/threads/todas`:
+- Combina threads ativas (`buscar_por_destino('principal')`, `inativa_desde IS NULL`) com threads Sem Retorno (`buscar_threads_sem_retorno()`, `inativa_desde IS NOT NULL`)
+- Mescla as duas listas ordenando por `_chave_data()` (mais recente primeiro)
+- Cada item retorna os campos: `thread_id`, `assunto`, `categoria`, `status`, `motivo`, `data`, `responsavel`, `sem_retorno` (bool)
+- `responsavel` é calculado pela mesma lógica do restante do sistema: se última msg foi de Finaud não-suporte → retorna esse email; caso contrário, busca em destinatario
+
+`templates/gestao_email.html`:
+- Nova seção `#pag-visao-geral` com tabela plana (Assunto | Categoria | Status | Motivo | Última Msg | Responsável)
+- Barra de ferramentas: busca por assunto (filtro ao digitar), dropdown de status, dropdown de categoria
+- Dropdown de categoria: populado automaticamente com as categorias presentes + opção especial "SEM RETORNO" (filtro via `t.sem_retorno === true`, não por `t.categoria`)
+- `onclick="abrirThread()"` em cada `<tr>` + `cursor:pointer` — reutiliza o modal de detalhe existente
+- Botão "Visão Geral" inserido após "Evolução" nas 4 tabbars existentes e no menu lateral
+- Cacheamento em `_vgDados[]` — recarrega apenas na primeira visita
+
+**Validação:** ✅ VALIDADO — `pytest tests/ -q` → 560 passed, 0 failed. Sem teste novo: rota Flask + HTML/JS front-end sem lógica isolável. Commits: `98b3e2c` (tela completa) + `d1c640e` (clique nas linhas). Push e deploy em `gestao-suporte.finaudapps.com.br` ✅
+
+---
+
 ## 2026-09-02 — Sem Retorno: filtros por categoria, aba Por Categoria e ordenação
 
 **🔎 Em miúdos:** O modal "Sem Retorno" ganhou duas coisas novas: (1) um filtro de categoria dentro de cada aba para ver só os e-mails de um tipo específico (DDR, DLO etc.), com o número de threads aparecendo ao lado; (2) uma nova aba "Por Categoria" que mostra quantos e-mails de cada tipo estão aguardando a Finaud e quantos aguardam o cliente, com triângulos para ordenar a tabela.

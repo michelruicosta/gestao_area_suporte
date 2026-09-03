@@ -7,6 +7,72 @@
 
 ---
 
+## 📓 Diário da sessão (2026-09-01) — Motivos / Caixa preta — Decisões 17–24
+
+### O que foi feito
+
+**Etapa 2 concluída: varredura completa da caixa preta — 66 → 12 threads genuínas**
+
+O trabalho começou vários chats atrás (D1–D16) e neste chat chegou ao fim. Cada decisão reduziu o grupo "Cliente escreveu — aguarda resposta da Finaud" por detecção automática de padrão.
+
+**Decisões aprovadas neste chat (Decisões 21–24):**
+- **D21** — convites de calendário (`.ics`) e reuniões do Teams sem histórico → automático (22→17); fix `UnboundLocalError` em banco_threads.py:677
+- **D22** — "reforçar" e "em atraso" → solicitação (16→14)
+- **D23** — "consegue me confirmar" → solicitação (14→13)
+- **D24** — "entrarei em contato" → Aguardando Cliente (13→12)
+- **D25** — "poderia": decidido deixar como genuína (risco alto de falso positivo)
+
+**12 genuínas confirmadas** — todas são perguntas técnicas complexas, consultas regulatórias, problemas de acesso específicos. Nenhum padrão automático seguro.
+
+**Contexto numérico:** os 18 motivos do artefato foram aprovados em chats anteriores. O artefato está em https://claude.ai/code/artifact/30448858-e3b1-4a40-a64d-4b989b0b7029.
+
+**Arquivos:** `scripts/banco_threads.py`, `scripts/validador_classificacao.py`, `tests/test_banco_threads.py`, `tests/test_validador_filtro.py`, `documentações/REGISTRO_CORRECOES.md`
+
+**Commits desta etapa:** D21 `addbe9b` · D22 `6ba60d5` · D23 `0d87496` · D24 `4036620`
+
+### Estado atual
+
+**pytest:** 525 testes passando, zero regressões.
+**Caixa preta:** 12 threads genuínas (sem padrão automático possível).
+**Assunto deste chat:** encerrado.
+
+Último /fechar: 2026-09-01 15:05 — memórias revisadas ✅
+
+---
+
+## 📓 Diário da sessão (2026-09-01) — Motivos / Caixa preta — Decisões 17–24
+
+### O que foi feito
+
+**Etapa 2 concluída: varredura completa da caixa preta — 66 → 12 threads genuínas**
+
+O trabalho começou vários chats atrás (D1–D16) e neste chat chegou ao fim. Cada decisão reduziu o grupo "Cliente escreveu — aguarda resposta da Finaud" por detecção automática de padrão.
+
+**Decisões aprovadas neste chat (Decisões 21–24):**
+- **D21** — convites de calendário (`.ics`) e reuniões do Teams sem histórico → automático (22→17); fix `UnboundLocalError` em banco_threads.py:677
+- **D22** — "reforçar" e "em atraso" → solicitação (16→14)
+- **D23** — "consegue me confirmar" → solicitação (14→13)
+- **D24** — "entrarei em contato" → Aguardando Cliente (13→12)
+- **D25** — "poderia": decidido deixar como genuína (risco alto de falso positivo)
+
+**12 genuínas confirmadas** — todas são perguntas técnicas complexas, consultas regulatórias, problemas de acesso específicos. Nenhum padrão automático seguro.
+
+**Contexto numérico:** os 18 motivos do artefato foram aprovados em chats anteriores. O artefato está em https://claude.ai/code/artifact/30448858-e3b1-4a40-a64d-4b989b0b7029.
+
+**Arquivos:** `scripts/banco_threads.py`, `scripts/validador_classificacao.py`, `tests/test_banco_threads.py`, `tests/test_validador_filtro.py`, `documentações/REGISTRO_CORRECOES.md`
+
+**Commits desta etapa:** D21 `addbe9b` · D22 `6ba60d5` · D23 `0d87496` · D24 `4036620`
+
+### Estado atual
+
+**pytest:** 525 testes passando, zero regressões.
+**Caixa preta:** 12 threads genuínas (sem padrão automático possível).
+**Assunto deste chat:** encerrado.
+
+Último /fechar: 2026-09-01 15:05 — memórias revisadas ✅
+
+---
+
 ## 📓 Diário da sessão (2026-09-01) — Administração: E-mail, Notificações e aviso por e-mail
 
 ### O que foi feito

@@ -526,6 +526,71 @@ def _identificar_tipo_estrutura(corpo_raw: str) -> str:
     return 'A'
 
 
+_CAB_FWD = re.compile(
+    r'^\s*(?:de|from|enviada\s+em|sent|para|to|cc|assunto|subject|data|date)\s*:',
+    re.IGNORECASE,
+)
+
+
+def _extrair_bloco_encaminhado(corpo_raw: str) -> str:
+    """
+    Para e-mails do Tipo C/D/F (encaminhamentos), extrai o conteúdo real
+    do interior do bloco encaminhado — tudo depois dos cabeçalhos De:/Enviada em:/Para:.
+    Retorna string vazia se não encontrar bloco encaminhado.
+    """
+    if not corpo_raw:
+        return ''
+    linhas = corpo_raw.split('\n')
+
+    # Localizar início do bloco encaminhado
+    idx_bloco = None
+    for i, linha in enumerate(linhas):
+        stripped = linha.strip()
+        if _GMAIL_FWD_RE.search(stripped):
+            idx_bloco = i
+            break
+        if re.match(r'^\s*(?:de|from)\s*:', stripped, re.IGNORECASE):
+            trecho = '\n'.join(linhas[i:min(i + 8, len(linhas))])
+            if _OUTLOOK_FWD_ENVIADA.search(trecho):
+                idx_bloco = i
+                break
+
+    if idx_bloco is None:
+        return ''
+
+    # Pular cabeçalhos do forward e linha separadora do Gmail
+    i = idx_bloco
+    while i < len(linhas):
+        stripped = linhas[i].strip()
+        if _GMAIL_FWD_RE.search(stripped) or _CAB_FWD.match(stripped):
+            i += 1
+        else:
+            break
+
+    # Pular linhas em branco entre cabeçalhos e conteúdo
+    while i < len(linhas) and not linhas[i].strip():
+        i += 1
+
+    return '\n'.join(linhas[i:]).strip()
+
+
+def _separar_anexos(nomes_anexos: list) -> tuple[list, list]:
+    """
+    Separa anexos em (reais, assinatura).
+    Imagens inline (PNG/JPG típicos de assinatura corporativa) vão para assinatura.
+    Todos os outros — planilhas, PDFs, ZIPs — vão para reais.
+    """
+    reais: list = []
+    assinatura: list = []
+    for nome in (nomes_anexos or []):
+        ext = ('.' + nome.rsplit('.', 1)[-1].lower()) if '.' in nome else ''
+        if ext in _IMAGENS_INLINE:
+            assinatura.append(nome)
+        else:
+            reais.append(nome)
+    return reais, assinatura
+
+
 def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     """
     Determina o status de workflow com base no §8.3 da spec.
