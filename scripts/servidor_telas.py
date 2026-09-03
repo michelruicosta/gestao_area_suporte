@@ -82,23 +82,24 @@ def _exigir_secret_key() -> str:
 app.secret_key = _exigir_secret_key()
 
 # ── Gmail service (imagens inline) ────────────────────────────────────────────
+# Usa threading.local() para que cada thread Flask tenha sua própria conexão
+# (httplib2 não é thread-safe — compartilhar provoca erros SSL sob carga).
 
-_gmail_svc: object | None = None
-_gmail_svc_lock = threading.Lock()
+_gmail_local = threading.local()
 
 
 def _get_gmail_service():
-    global _gmail_svc
-    if _gmail_svc is not None:
-        return _gmail_svc
-    with _gmail_svc_lock:
-        if _gmail_svc is None:
-            try:
-                from coletor_gmail import _conectar_gmail
-                _gmail_svc = _conectar_gmail()
-            except Exception as exc:
-                _log.warning('Gmail service indisponível: %s', exc)
-    return _gmail_svc
+    svc = getattr(_gmail_local, 'svc', None)
+    if svc is not None:
+        return svc
+    try:
+        from coletor_gmail import _conectar_gmail
+        svc = _conectar_gmail()
+        _gmail_local.svc = svc
+        return svc
+    except Exception as exc:
+        _log.warning('Gmail service indisponível: %s', exc)
+        return None
 
 
 def _extrair_cids_payload(payload: dict) -> dict:
