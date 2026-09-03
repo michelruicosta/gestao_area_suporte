@@ -7,11 +7,13 @@ O que faz: conecta na caixa de coleta do Gestão Área Suporte via Gmail API (se
 from __future__ import annotations
 
 import os
+import re
 import sys
 import base64
 import time
 from email.utils import parsedate_to_datetime
 from email.header import decode_header as _decode_header
+from html.parser import HTMLParser
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from banco_threads import (criar_banco, salvar_thread, get_controle_sync,
@@ -61,6 +63,57 @@ def _decodificar(valor: str) -> str:
 
 # ── Extração de corpo texto ────────────────────────────────────────────────────
 
+class _HTMLParaTexto(HTMLParser):
+    """Converte HTML em texto plano simples, preservando quebras de linha."""
+
+    _TAGS_BLOCO = {'p', 'div', 'tr', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+                   'blockquote', 'table', 'thead', 'tbody', 'tfoot'}
+    _TAGS_SKIP  = {'script', 'style', 'head'}
+
+    def __init__(self):
+        super().__init__()
+        self._parts: list[str] = []
+        self._skip_depth = 0
+
+    def handle_starttag(self, tag, attrs):
+        tag = tag.lower()
+        if tag in self._TAGS_SKIP:
+            self._skip_depth += 1
+        elif not self._skip_depth:
+            if tag == 'br':
+                self._parts.append('\n')
+            elif tag in self._TAGS_BLOCO:
+                self._parts.append('\n')
+
+    def handle_endtag(self, tag):
+        tag = tag.lower()
+        if tag in self._TAGS_SKIP:
+            self._skip_depth = max(0, self._skip_depth - 1)
+        elif not self._skip_depth and tag in self._TAGS_BLOCO:
+            self._parts.append('\n')
+
+    def handle_data(self, data):
+        if not self._skip_depth:
+            self._parts.append(data)
+
+    def resultado(self) -> str:
+        texto = ''.join(self._parts)
+        texto = texto.replace('\xa0', ' ')          # &nbsp; → espaço normal
+        texto = re.sub(r'[ \t]+', ' ', texto)
+        texto = re.sub(r'\n{3,}', '\n\n', texto)
+        return texto.strip()
+
+
+def _html_para_texto(data_b64: str) -> str:
+    try:
+        html = base64.urlsafe_b64decode(data_b64).decode('utf-8', errors='replace')
+        parser = _HTMLParaTexto()
+        parser.feed(html)
+        return parser.resultado() or ''
+    except Exception:
+        return ''
+
+
 def _extrair_texto(payload: dict) -> str:
     mime = payload.get('mimeType', '')
 
@@ -72,7 +125,7 @@ def _extrair_texto(payload: dict) -> str:
 
     if mime == 'text/html':
         data = payload.get('body', {}).get('data', '')
-        return '[somente HTML]' if data else ''
+        return _html_para_texto(data) if data else ''
 
     texto_plain = ''
     texto_html  = ''
@@ -85,13 +138,11 @@ def _extrair_texto(payload: dict) -> str:
         elif sub_mime == 'text/html':
             data = part.get('body', {}).get('data', '')
             if data and not texto_plain:
-                texto_html = '[somente HTML]'
+                texto_html = _html_para_texto(data)
         elif sub_mime.startswith('multipart/'):
             sub = _extrair_texto(part)
-            if sub and sub != '[somente HTML]':
+            if sub:
                 texto_plain += sub
-            elif sub and not texto_plain:
-                texto_html = sub
 
     return texto_plain or texto_html or ''
 
