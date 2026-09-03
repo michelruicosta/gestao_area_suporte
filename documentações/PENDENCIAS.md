@@ -1,10 +1,28 @@
 # PENDÊNCIAS — Gestão Área Suporte
 
-**Atualizado:** 2026-09-02 22:00
+**Atualizado:** 2026-09-03 00:30
 **Organização:** por etapa que bloqueia — reorganizado em 03/08/2026 para seguir as fases sem brechas.
 **Regra:** este arquivo lista **só o que ainda falta** (aberto / aguardando decisão / backlog).
 Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada no
 `REGISTRO_CORRECOES.md` — nesta ordem: primeiro grava no REGISTRO, depois remove daqui.
+
+---
+
+## 🟡 DISPLAY MODAL — Spec por tipo de e-mail A–G (identificado em 03/09/2026)
+
+Antes de qualquer nova alteração no modal de e-mails, mapear o comportamento atual e o desejado para cada tipo (A–G), com exemplos reais de thread com 1 mensagem e com múltiplas mensagens. Michel define o que quer ver em cada cenário. Resultado vira `documentações/spec_display_modal.md`.
+
+### Como retomar
+
+1. Buscar no banco 1 exemplo por tipo × thread com 1 msg e × thread com N msgs (script já sabe fazer isso)
+2. Michel abre cada thread na tela e descreve o que vê
+3. Michel define o comportamento desejado para cada tipo/cenário
+4. Documentar em `documentações/spec_display_modal.md` (nome aprovado por Michel em 03/09)
+5. Só depois implementar — tudo de uma vez, com cobertura completa
+
+### Contexto
+
+A correção do Tipo D (Passo 2, commit `4581095`) causou regressão no display porque os cenários não foram mapeados antes da implementação. O fix parcial foi commitado em `d59ef44` (03/09), mas o mapeamento completo ainda falta. Não implementar mais nada no modal sem esta spec concluída.
 
 ---
 

@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-09-03 — Fix: modal C/D/F exibia conteúdo de quem enviou o e-mail original como corpo do remetente
+
+**🔎 Em miúdos:** O modal de e-mail mostrava o texto DA PESSOA ANTERIOR (ex: Andrea) com o nome de quem encaminhou (ex: William) no cabeçalho — como se William tivesse escrito o texto da Andrea. Agora mostra primeiro o que William escreveu, depois o e-mail original com etiqueta "Encaminhamento — conteúdo original abaixo".
+
+**Problema:** Para tipos C, D e F (encaminhamentos), o JS do modal usava `corpo_encaminhado` (texto da pessoa original) como se fosse o corpo da mensagem — sem separação visual.
+
+**Causa raiz:** Correção do Passo 2 (commit `4581095`) assumiu que encaminhamentos nunca têm texto novo antes do bloco encaminhado. Correto na maioria dos casos, mas visualmente sempre errado: o conteúdo encaminhado pertence a outra pessoa.
+
+**Correção:**
+- `scripts/servidor_telas.py`: campo `texto_novo` adicionado à resposta da API para tipos C, D, F — resultado de `_extrair_texto_novo(corpo_raw)` que remove linhas com `>` e retorna o que o remetente escreveu de novo.
+- `templates/gestao_email.html`: renderização do modal reescrita — para tipos C/D/F: (1) `texto_novo` do remetente, ou "(encaminhou sem adicionar texto)" se vazio; (2) etiqueta "Encaminhamento — conteúdo original abaixo"; (3) `corpo_encaminhado`.
+
+**Validação:** ✅ Testado no local e na VPS. Commit `d59ef44` · Deploy ✅
+Sem teste unitário novo: extração de `texto_novo` e `corpo_encaminhado` já coberta pelos testes existentes. Mudança foi no template (sem o que testar com pytest). Registrado em REGISTRO: "sem teste: mudança de template".
+
+---
+
 ## 2026-09-02 — Fix: bloco Tipo D buscava em corpo_raw em vez de bloco encaminhado
 
 **🔎 Em miúdos:** E-mails do tipo "encaminhamento Outlook sem texto novo" estavam recebendo status errado — apareciam como "Aguardando Finaud" mesmo sendo respostas do cliente confirmando algo ou fechando o caso.

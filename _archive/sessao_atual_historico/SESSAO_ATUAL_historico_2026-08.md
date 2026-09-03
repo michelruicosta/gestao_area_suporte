@@ -7,6 +7,94 @@
 
 ---
 
+## 📓 Diário da sessão (2026-09-02) — Validação coletor colaboradores + problema status threads arquivadas
+
+### O que foi feito
+
+**Frente única: validar se alguma thread em Sem Retorno tem resposta de colaborador faltando no banco**
+
+Michel identificou que threads em "Sem Retorno" poderiam ter respostas que o sistema não capturava. O coletor de caixas de colaboradores foi implementado em sessão anterior. Nesta sessão, fizemos a validação completa categoria por categoria.
+
+**O que foi concluído:**
+
+1. **Validação das 10 categorias de Sem Retorno (482 threads, 65 dias de janela)**
+   - Script `validar_categoria_sem_retorno.py` (scratchpad) — aceita categoria via `sys.argv[1]`
+   - Rodadas em sequência e em paralelo: DDR_2011, SALDOS, DLO, RETORNO_BACEN, SUPORTE, DRM_2060, DRL_2160, S5, INTERNO, DLI_2062
+   - **Resultado: 0 respostas faltando em todas as categorias** — o coletor está funcionando corretamente
+
+2. **Descoberta: suporte@finaud.com.br é caixa compartilhada**
+   - O validador encontrava mensagens nos enviados do Flávio que já estavam no banco (SALDOS e DLO)
+   - Motivo: quando qualquer colaborador envia via `suporte@finaud.com.br`, a mensagem aparece nos enviados de todos que têm acesso à caixa compartilhada
+   - Limitação do validador: não distingue "mensagem nova" de "mensagem já registrada via suporte"
+   - Os "achados" de SALDOS e DLO não eram casos reais de mensagem faltando
+
+3. **Identificado: problema de status mal calculado em threads arquivadas**
+   - Thread `19fb991b1633268e` (SALDOS) — última mensagem da Finaud (Flávio via suporte), mas status salvo é "Aguardando Finaud"
+   - Causa: `recalcular_status_todos()` só processa threads com `inativa_desde IS NULL` — threads arquivadas ficam com status "congelado" da versão de código que estava ativa quando foram arquivadas
+   - O problema pode existir em **todas as categorias**, não só arquivadas
+   - Chat dedicado preparado: "02/09 — Correção status threads"
+
+**Resultado final da validação:**
+
+| Categoria | Threads | Resposta faltando |
+|---|---|---|
+| DDR_2011 | 277 | 0 |
+| SALDOS_CONTABEIS_DIARIOS_4111 | 67 | 0 |
+| DLO_2061 | 52 | 0 |
+| RETORNO_BACEN | 28 | 0 |
+| SUPORTE | 22 | 0 |
+| DRM_2060 | 15 | 0 |
+| DRL_2160 | 13 | 0 |
+| DLI_2062 | 3 | 0 |
+| INTERNO | 3 | 0 |
+| S5 | 2 | 0 |
+| **Total** | **482** | **0** |
+
+### Estado atual
+
+**Coletor:** funcionando corretamente — nenhuma resposta de colaborador faltando no banco.
+**Problema identificado:** status mal calculado em threads arquivadas — chat dedicado preparado.
+**pytest:** 549 testes passando, zero regressões.
+**Nenhum arquivo de produção alterado nesta sessão.**
+
+---
+
+## 📓 Diário da sessão (2026-09-02) — BACEN motivos 15 e 16: validação pré-deploy + deploy
+
+### O que foi feito
+
+**Frente única: finalizar e validar os dois novos motivos BACEN antes de subir para produção**
+
+A sessão retomou o trabalho de implementação dos motivos BACEN (feita na sessão anterior) e executou a sequência completa de validação e deploy.
+
+**O que foi concluído:**
+
+1. **Commit dos motivos BACEN** (`3778b38`)
+   - Motivo 15 — `'Comunicado do BACEN — aguarda análise da Finaud'`: cliente encaminhou alerta do BACEN e Finaud ainda não respondeu
+   - Motivo 16 — `'Comunicado do BACEN — aguarda retorno do cliente'`: Finaud respondeu ao comunicado, cliente precisa agir
+   - Regra baseada em palavras-chave do assunto (`_eh_comunicado_bacen_assunto`) — sem nome de cliente
+   - Exceção: confirmação explícita do cliente (`_CONFIRMACAO_EXPLICITA`) → deixa cair nas regras de Concluída
+   - Removidas 2 regras BANVOX-específicas que continham nome de cliente no motivo
+   - Registrada em PENDENCIAS a futura regra de encerramento automático
+
+2. **Validação pré-deploy com banco fresco da VPS**
+   - Pulled DB fresco da VPS (1441 threads — 1 nova desde sessão anterior)
+   - 409 divergências — todas analisadas: 345x Decisões 17-24 (melhorias esperadas), 44x Novos motivos BACEN corretos, 10x "agradeceu" → "escreveu", 10x casos menores
+   - **525 testes passando, 0 falhas**
+
+3. **Deploy**
+   - SSH VPS: `git pull` + `systemctl restart gestao-suporte` → `active` ✅
+   - `recalcular_status_todos()` → **933 threads atualizadas** na VPS
+   - Confirmado: 15 threads com motivo 15 + 12 com motivo 16
+
+**Arquivos:** `scripts/banco_threads.py`, `tests/test_banco_threads.py`, `documentações/PENDENCIAS.md`, `documentações/REGISTRO_CORRECOES.md`
+
+### Estado atual
+
+**Commit:** `3778b38` — já no GitHub e na VPS. **pytest:** 525 testes passando, zero regressões.
+
+---
+
 ## 📓 Diário da sessão (2026-09-02) — Sem Retorno: filtros por categoria e aba Por Categoria
 
 ### O que foi feito
