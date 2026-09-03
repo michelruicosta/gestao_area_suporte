@@ -4048,6 +4048,10 @@ function _usrExcluir(id) {
     const cfg = await _get('/api/admin/config');
     if (cfg.intervalo_fog_min)    _fogIntervalSecs = cfg.intervalo_fog_min * 60;
     if (cfg.intervalo_coleta_min) _aplicarIntervaloColeta(cfg.intervalo_coleta_min);
+    if (cfg.ultimo_refresh_ts) {
+      const elapsed = Math.floor(Date.now() / 1000 - cfg.ultimo_refresh_ts);
+      _proxRefresh = Math.max(1, _REFRESH_INTERVAL - elapsed);
+    }
   } catch (e) { /* usa os padrões */ }
 })();
 carregarResumo();

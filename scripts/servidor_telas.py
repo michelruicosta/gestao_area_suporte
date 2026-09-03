@@ -17,6 +17,7 @@ import smtplib
 import string
 import sys
 import threading
+import time
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -88,6 +89,7 @@ def sem_cache(response):
 
 _coleta_em_andamento = False
 _ultimo_erro_coleta: str | None = None
+_ultimo_refresh_ts: float = 0.0
 
 # ── Configurações persistentes ─────────────────────────────────────────────────
 
@@ -129,11 +131,12 @@ def _deve_ligar_agendador_na_tela() -> bool:
 
 
 def _job_coleta_automatica():
-    global _coleta_em_andamento, _ultimo_erro_coleta
+    global _coleta_em_andamento, _ultimo_erro_coleta, _ultimo_refresh_ts
     if _coleta_em_andamento:
         return
     _coleta_em_andamento = True
     _ultimo_erro_coleta = None
+    _ultimo_refresh_ts = time.time()
     _log.info('Coleta automática disparada pelo agendador.')
     try:
         from executar_pipeline import rodar_coleta_ciclo
@@ -790,8 +793,9 @@ def api_admin_coletar():
         return jsonify({'erro': 'Coleta já em andamento. Aguarde o término.'}), 409
 
     def _rodar():
-        global _coleta_em_andamento, _ultimo_erro_coleta
+        global _coleta_em_andamento, _ultimo_erro_coleta, _ultimo_refresh_ts
         _ultimo_erro_coleta = None
+        _ultimo_refresh_ts = time.time()
         try:
             sys.path.insert(0, _SCRIPTS_DIR)
             from coletor_gmail import coletar
@@ -898,6 +902,15 @@ def api_admin_config_get():
     cfg = dict(_ler_config())
     cfg.pop('senha_hash', None)
     cfg['notificacoes'] = normalizar_notificacoes(cfg.get('notificacoes'))
+    ultimo_ts = _ultimo_refresh_ts  # fallback: agendador interno
+    logs = bt.ler_log_coletas(limite=1)
+    if logs:
+        try:
+            dt = datetime.strptime(logs[0]['data_hora'], '%Y-%m-%d %H:%M:%S')
+            ultimo_ts = time.mktime(dt.timetuple())
+        except Exception:
+            pass
+    cfg['ultimo_refresh_ts'] = ultimo_ts
     return jsonify(cfg)
 
 
