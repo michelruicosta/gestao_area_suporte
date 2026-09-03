@@ -12,9 +12,10 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
+| 02/09 | Visão Geral — busca, filtros, Sem Retorno no dropdown e clique nas linhas | abaixo |
 | 02/09 | Validação coletor colaboradores + problema status threads arquivadas | abaixo |
 | 02/09 | BACEN motivos 15 e 16 + validação pré-deploy + deploy | abaixo |
-| 02/09 | Sem Retorno — filtros por categoria e aba Por Categoria | abaixo |
+| 02/09 | Sem Retorno — filtros por categoria e aba Por Categoria | arquivo |
 | 01/09 | Motivos / Caixa preta — Decisões 17–24 | arquivo |
 | 01/09 | Fog: dias úteis, feriados e Sem atualização | arquivo |
 | 01/09 | Administração: E-mail, Notificações e aviso por e-mail | arquivo |
@@ -38,6 +39,52 @@
 >
 > **Regra:** este arquivo guarda as **3 sessões mais recentes**. O `/fechar` acrescenta a
 > linha nova aqui e move a 4ª sessão para o arquivo.
+
+---
+
+## 📓 Diário da sessão (2026-09-02) — Visão Geral: Sem Retorno no filtro e clique nas linhas
+
+### O que foi feito
+
+**Frente única: finalizar a tela Visão Geral — Sem Retorno no dropdown de categoria e clique nas linhas**
+
+A sessão retomou o contexto anterior e entregou dois pontos que faltavam para a Visão Geral estar completa.
+
+**O que foi concluído:**
+
+1. **Correção: "Sem Retorno" faltando no filtro de categoria**
+   - Problema: `/api/threads/todas` chamava só `buscar_por_destino('principal')` (`WHERE inativa_desde IS NULL`) — excluindo as threads arquivadas (Sem Retorno)
+   - Correção em `scripts/servidor_telas.py`: endpoint combina threads ativas + `buscar_threads_sem_retorno()`, mescla ordenando por `_chave_data()`, adiciona campo `sem_retorno: True/False` em cada item
+   - Correção em `templates/gestao_email.html`: dropdown adiciona opção "SEM RETORNO" se `_vgDados.some(t => t.sem_retorno)`; o filtro usa `t.sem_retorno === true` (não `t.categoria === 'SEM RETORNO'`)
+
+2. **Clique nas linhas abre a thread**
+   - `onclick="abrirThread()"` + `cursor:pointer` em cada `<tr>` da tabela
+   - Reutiliza o modal existente das outras telas — sem código novo
+
+3. **Push e deploy**
+   - 4 commits chegaram ao servidor (2 desta sessão + 2 de sessões anteriores ainda pendentes)
+   - SSH VPS: `git pull` + `systemctl restart gestao-suporte` → `active` ✅
+
+**Arquivos:** `scripts/servidor_telas.py`, `templates/gestao_email.html`
+
+### Estado atual
+
+**Commits:** `98b3e2c` (tela Visão Geral) + `d1c640e` (clique nas linhas) — no GitHub e na VPS.
+**Produção:** `gestao-suporte.finaudapps.com.br` — serviço ativo ✅.
+**pytest:** 560 testes passando, zero regressões.
+
+### Próximo passo
+
+🔴 **Chat dedicado: correção de status de todas as threads**
+
+Identificado em sessão anterior: `recalcular_status_todos()` só processa threads com `inativa_desde IS NULL` — threads arquivadas ficam com status "congelado". Abrir chat dedicado com o texto preparado.
+
+**Pendências que continuam:**
+- 🟡 Passo C — tela de manutenção de regras
+- 🔴 Threads irmãs — investigação em chat dedicado
+- 🔴 Monitorar caixas da Andrea e Sarah
+
+Último /fechar: 2026-09-02 22:00 — memórias revisadas ✅
 
 ---
 
@@ -167,44 +214,5 @@ Infraestrutura DB-driven criada em commit `9d6387a`. O que falta é construir a 
 - 🔴 Monitorar caixas da Andrea e Sarah via service account (acesso já existe)
 
 Último /fechar: 2026-09-02 16:00 — memórias revisadas ✅
-
----
-
-## 📓 Diário da sessão (2026-09-02) — Sem Retorno: filtros por categoria e aba Por Categoria
-
-### O que foi feito
-
-**Frente única: nova camada de análise no modal Sem Retorno**
-
-Michel pediu uma forma de ver as threads Sem Retorno por categoria (DDR, DLO, DLI…), além da divisão por quem aguarda. O recurso foi implementado em duas partes que se complementam.
-
-**O que foi adicionado:**
-
-1. **Filtro de categoria nas abas Aguardando Finaud e Aguardando Cliente**
-   - Dropdown no topo de cada aba, populado automaticamente com as categorias presentes naquele status
-   - Ao selecionar, a lista filtra; ao lado do dropdown aparece o contador de threads (ex: "12 threads")
-   - "Todas as categorias" restaura a lista completa
-
-2. **Nova aba "Por Categoria"**
-   - Tabela com 4 colunas: CATEGORIA · AG. FINAUD · AG. CLIENT · TOTAL
-   - Todas as colunas têm triângulo de ordenação (igual à tela principal) — padrão: TOTAL decrescente
-   - Nomes de categoria em caixa alta em todo o modal
-   - O badge da aba mostra quantas categorias distintas têm threads em Sem Retorno
-
-3. **A busca por assunto** (já existente) continua funcionando — ao digitar, o filtro atualiza as três abas e o contador
-
-**Mudança técnica:** a API `/api/threads/sem-retorno` passou a incluir o campo `categoria` (estava no banco mas não era enviado ao front-end).
-
-**Arquivos alterados:** `templates/gestao_email.html`, `scripts/servidor_telas.py`
-
-### Estado atual
-
-**Commit:** `2347100` (feat: sem-retorno: filtro por categoria, aba Por Categoria e ordenação)
-**GitHub:** `main` em `2347100` — sincronizado com origin.
-**Produção:** `gestao-suporte.finaudapps.com.br` — serviço ativo ✅, deploy concluído.
-**pytest:** 525 testes passando, zero regressões.
-**Sem teste novo:** mudanças são de template (HTML/JS front-end) — sem lógica testável em pytest.
-
-Último /fechar: 2026-09-02 — memórias revisadas ✅
 
 
