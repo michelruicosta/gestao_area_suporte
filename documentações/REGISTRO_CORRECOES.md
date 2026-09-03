@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-09-03 — Feat: imagens inline Gmail [image:] aparecem no modal
+
+**🔎 Em miúdos:** E-mails enviados pelo Gmail usam `[image: arquivo.png]` (e às vezes só `[arquivo.png]`) para marcar onde ficam as imagens. O modal agora reconhece esses formatos e exibe as imagens, igual ao que já fazia para e-mails Outlook (`[cid:xxx]`). Varredura do banco confirmou que são os únicos dois formatos reais de imagem inline.
+
+**Problema:** `_extrair_cids_payload` só coletava imagens com `Content-ID` (formato Outlook). E-mails Gmail listavam imagens como `[image: image.png]` no corpo, mas o sistema não sabia mapeá-las ao arquivo.
+
+**Correção:**
+- `scripts/servidor_telas.py`:
+  - Nova função `_extrair_gmail_images_payload(payload)`: coleta imagens inline em ordem de aparição no MIME (sem exigir Content-ID), com `filename` para matching
+  - `_RE_IMAGEM_INLINE`: regex que detecta os 3 formatos (`[cid:]`, `[image:]`, `[arquivo.ext]`) — usado no gatilho de chamada ao Gmail
+  - `api_thread`: retorna `gmail_images` (lista posicional) por mensagem, além do `cids` já existente
+- `templates/gestao_email.html`: `renderImagens()` expandida com 3 ramos — Outlook (`[cid:]` → busca por content-id), Gmail ([image:] / [arquivo.ext] → busca por nome de arquivo, primeiro disponível não usado)
+
+**Lógica do matching Gmail:** `[image: image.png]` busca no `gmail_images` a primeira entrada não usada com `filename == 'image.png'`. Se houver 2 imagens com o mesmo nome, o 1º `[image:]` pega a 1ª e o 2º pega a 2ª — em ordem de aparição no MIME, que coincide com a ordem no corpo. Imagens de assinatura (`image001.png`, logo) não referenciadas no corpo não aparecem inline.
+
+**Validação:** ✅ 5 novos testes em `tests/test_extrair_cids.py` · 583 testes passando, zero regressões
+
+---
+
 ## 2026-09-03 — Feat: imagens inline [cid:] aparecem no modal em vez de sumir
 
 **🔎 Em miúdos:** Antes, qualquer imagem embutida no e-mail ([cid:...]) desaparecia silenciosamente no modal. Agora as imagens são buscadas direto no Gmail e exibidas no modal — sem precisar abrir o Gmail separadamente.

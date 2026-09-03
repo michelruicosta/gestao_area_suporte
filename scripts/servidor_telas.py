@@ -103,7 +103,7 @@ def _get_gmail_service():
 
 
 def _extrair_cids_payload(payload: dict) -> dict:
-    """Mapeia content-id → {attachment_id, mime} para imagens inline de uma mensagem."""
+    """Mapeia content-id → {attachment_id, mime} para imagens [cid:xxx] (formato Outlook)."""
     resultado: dict = {}
     for part in payload.get('parts', []):
         mime = part.get('mimeType', '')
@@ -116,6 +116,32 @@ def _extrair_cids_payload(payload: dict) -> dict:
         elif mime.startswith('multipart/'):
             resultado.update(_extrair_cids_payload(part))
     return resultado
+
+
+def _extrair_gmail_images_payload(payload: dict) -> list:
+    """Lista imagens inline em ordem para substituir [image: arquivo.ext] (formato Gmail)."""
+    resultado: list = []
+    for part in payload.get('parts', []):
+        mime = part.get('mimeType', '')
+        if mime.startswith('image/'):
+            att_id = part.get('body', {}).get('attachmentId', '')
+            if att_id:
+                resultado.append({
+                    'attachment_id': att_id,
+                    'mime': mime,
+                    'filename': part.get('filename', ''),
+                })
+        elif mime.startswith('multipart/'):
+            resultado.extend(_extrair_gmail_images_payload(part))
+    return resultado
+
+
+_RE_IMAGEM_INLINE = re.compile(
+    r'\[cid:'                                    # Outlook [cid:xxx]
+    r'|\[image:'                                 # Gmail   [image: xxx]
+    r'|\[\w[^\]]*\.(png|jpg|jpeg|gif|bmp|webp)\]',  # Bare    [arquivo.ext]
+    re.I,
+)
 
 
 @app.after_request
@@ -727,12 +753,15 @@ def api_thread(thread_id: str):
     stored_msgs = t.get('mensagens', [])
     n = len(stored_msgs)
 
-    # Só vai ao Gmail se pelo menos uma mensagem tiver referência [cid:] inline.
+    # Só vai ao Gmail se houver referência de imagem inline (qualquer formato).
     # A maioria das threads não tem imagens — evita latência desnecessária.
-    tem_cid = any('[cid:' in (m.get('corpo_texto') or '') for m in stored_msgs)
+    tem_imagem = any(
+        _RE_IMAGEM_INLINE.search(m.get('corpo_texto') or '')
+        for m in stored_msgs
+    )
 
     gmail_cid_maps: list[dict] = [{}] * n
-    if tem_cid:
+    if tem_imagem:
         try:
             service = _get_gmail_service()
             if service:
@@ -741,12 +770,14 @@ def api_thread(thread_id: str):
                 ).execute()
                 for idx, gm in enumerate(gmail_thread.get('messages', [])):
                     if idx < n:
+                        payload = gm.get('payload', {})
                         gmail_cid_maps[idx] = {
                             'message_id': gm['id'],
-                            'cids': _extrair_cids_payload(gm.get('payload', {})),
+                            'cids': _extrair_cids_payload(payload),
+                            'gmail_images': _extrair_gmail_images_payload(payload),
                         }
         except Exception as exc:
-            _log.warning('Gmail CID fetch falhou para %s: %s', thread_id, exc)
+            _log.warning('Gmail image fetch falhou para %s: %s', thread_id, exc)
 
     mensagens = []
     for i, m in enumerate(reversed(stored_msgs)):
@@ -767,6 +798,7 @@ def api_thread(thread_id: str):
             'anexos_reais':      reais,
             'anexos_assinatura': assinatura,
             'message_id':        gmail_info.get('message_id', ''),
+            'gmail_images':      gmail_info.get('gmail_images', []),
             'cids':              gmail_info.get('cids', {}),
         })
     return jsonify({

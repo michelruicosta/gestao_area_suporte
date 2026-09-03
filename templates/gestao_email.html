@@ -2561,20 +2561,49 @@ async function abrirThread(threadId) {
       t.mensagens.map(m => {
         // Tipo C/D/F: mostrar texto_novo primeiro, depois bloco encaminhado
         const isEncaminhamento = m.tipo_estrutura === 'D' || m.tipo_estrutura === 'C' || m.tipo_estrutura === 'F';
-        // Substitui [cid:xxx] por <img> quando há mapa de attachment; caso contrário remove
+        // Substitui marcadores de imagem por <img> — 3 formatos:
+        //   [cid:xxx@yyy]         → Outlook (mapa por content-id)
+        //   [image: arquivo.ext]  → Gmail   (busca por nome de arquivo)
+        //   [arquivo.ext]         → Gmail variante sem prefixo
+        const IMG_EXT = /\.(png|jpg|jpeg|gif|bmp|webp)$/i;
+        const gmailImgs = m.gmail_images || [];
+        const gmailUsados = new Set();
+        const buscarGmail = (nome) => {
+          for (let i = 0; i < gmailImgs.length; i++) {
+            if (!gmailUsados.has(i) && gmailImgs[i].filename === nome) {
+              gmailUsados.add(i);
+              return gmailImgs[i];
+            }
+          }
+          return null;
+        };
         const renderImagens = (texto) => {
           if (!texto) return '';
           const txt = texto.trim();
           if (!txt) return '';
-          const re = /\[cid:([^\]]+)\]/gi;
+          const re = /\[cid:([^\]]+)\]|\[image:\s*([^\]]+)\]|\[(\w[^\]]*\.(png|jpg|jpeg|gif|bmp|webp))\]/gi;
           const parts = []; let lastIdx = 0; let mo;
           re.lastIndex = 0;
           while ((mo = re.exec(txt)) !== null) {
             parts.push(escHtml(txt.slice(lastIdx, mo.index)));
-            const info = m.cids && m.cids[mo[1]];
-            if (info) {
-              const url = `/api/imagem/${encodeURIComponent(threadId)}/${encodeURIComponent(m.message_id)}/${encodeURIComponent(info.attachment_id)}`;
-              parts.push(`<img src="${url}" alt="imagem" style="max-width:100%;display:block;margin:4px 0;">`);
+            if (mo[1] !== undefined) {
+              // [cid:xxx] — Outlook
+              const info = m.cids && m.cids[mo[1]];
+              if (info) {
+                const url = `/api/imagem/${encodeURIComponent(threadId)}/${encodeURIComponent(m.message_id)}/${encodeURIComponent(info.attachment_id)}`;
+                parts.push(`<img src="${url}" alt="imagem" style="max-width:100%;display:block;margin:4px 0;">`);
+              }
+            } else {
+              // [image: xxx] ou [arquivo.ext] — Gmail (busca por nome)
+              const candidato = (mo[2] !== undefined ? mo[2] : mo[3]).trim();
+              if (IMG_EXT.test(candidato)) {
+                const info = buscarGmail(candidato);
+                if (info) {
+                  const url = `/api/imagem/${encodeURIComponent(threadId)}/${encodeURIComponent(m.message_id)}/${encodeURIComponent(info.attachment_id)}`;
+                  parts.push(`<img src="${url}" alt="${escHtml(candidato)}" style="max-width:100%;display:block;margin:4px 0;">`);
+                }
+              }
+              // candidato sem extensão de imagem (URL, texto) → remove silenciosamente
             }
             lastIdx = mo.index + mo[0].length;
           }
