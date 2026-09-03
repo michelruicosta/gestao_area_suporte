@@ -635,6 +635,7 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
 .msg-head strong { color: var(--text); }
 .msg-body { padding: 0.85rem; font-size: 0.88rem; white-space: pre-wrap; line-height: 1.6; max-height: 14rem; overflow-y: auto; }
 .msg-enc-label { padding: 0.3rem 0.85rem; font-size: 0.75rem; color: var(--muted); font-style: italic; border-bottom: 1px solid var(--border); }
+.msg-sem-texto { color: var(--muted); font-size: 0.83rem; }
 .msg-anexos { padding: 0.35rem 0.85rem 0.65rem; font-size: 0.8rem; color: var(--muted); }
 .msg-anexos span { background: var(--bg); padding: 0.18rem 0.5rem; border-radius: 4px; margin-right: 0.35rem; }
 
@@ -2558,28 +2559,36 @@ async function abrirThread(threadId) {
 
     document.getElementById('modal-thread-body').innerHTML =
       t.mensagens.map(m => {
-        // Tipo D/C/F: mostrar conteúdo do bloco encaminhado; esconder imagens de assinatura
+        // Tipo C/D/F: mostrar texto_novo primeiro, depois bloco encaminhado
         const isEncaminhamento = m.tipo_estrutura === 'D' || m.tipo_estrutura === 'C' || m.tipo_estrutura === 'F';
-        const textoBase = isEncaminhamento && m.corpo_encaminhado
-          ? m.corpo_encaminhado
-          : (m.corpo || '(sem conteúdo)');
-        // Remover referências de imagens inline do Outlook ([cid:...]) — são ícones de assinatura
-        const corpoExibir = textoBase.replace(/\[cid:[^\]]+\]/gi, '').trim() || '(sem conteúdo)';
-        const labelEnc = isEncaminhamento && m.corpo_encaminhado
-          ? `<div class="msg-enc-label">Encaminhamento — conteúdo original abaixo</div>`
-          : '';
+        const limpar = s => (s || '').replace(/\[cid:[^\]]+\]/gi, '').trim();
         // Sempre usar só arquivos reais (sem imagens de assinatura) na lista de anexos
         const listaAnexos = (m.anexos_reais && m.anexos_reais.length) ? m.anexos_reais : m.anexos;
         const anexos = listaAnexos.length
           ? `<div class="msg-anexos">📎 ${listaAnexos.map(a => `<span>${escHtml(a)}</span>`).join('')}</div>`
           : '';
+        let corpoHtml;
+        if (isEncaminhamento) {
+          const textoNovo = limpar(m.texto_novo);
+          const parteNova = textoNovo
+            ? `<div class="msg-body">${escHtml(textoNovo)}</div>`
+            : `<div class="msg-body msg-sem-texto"><em>(encaminhou sem adicionar texto)</em></div>`;
+          const corpoEnc = limpar(m.corpo_encaminhado);
+          const parteEnc = corpoEnc
+            ? `<div class="msg-enc-label">Encaminhamento — conteúdo original abaixo</div><div class="msg-body">${escHtml(corpoEnc)}</div>`
+            : '';
+          corpoHtml = parteNova + parteEnc;
+        } else {
+          const corpo = limpar(m.corpo) || '(sem conteúdo)';
+          corpoHtml = `<div class="msg-body">${escHtml(corpo)}</div>`;
+        }
         return `<div class="msg-card">
           <div class="msg-head">
             <span><strong>De:</strong> ${escHtml(m.de)}</span>
             <span><strong>Para:</strong> ${escHtml(m.para)}</span>
             <span>${escHtml(m.data)}</span>
           </div>
-          ${labelEnc}<div class="msg-body">${escHtml(corpoExibir)}</div>
+          ${corpoHtml}
           ${anexos}
         </div>`;
       }).join('');

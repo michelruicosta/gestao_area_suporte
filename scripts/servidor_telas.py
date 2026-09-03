@@ -697,6 +697,7 @@ def api_thread(thread_id: str):
             'assunto':           m.get('assunto') or '',
             'corpo':             corpo_raw,
             'tipo_estrutura':    tipo,
+            'texto_novo':        bt._extrair_texto_novo(corpo_raw) if tipo in ('C', 'D', 'F') else '',
             'corpo_encaminhado': bt._extrair_bloco_encaminhado(corpo_raw) if tipo in ('C', 'D', 'F') else '',
             'anexos':            m.get('nomes_anexos') or [],
             'anexos_reais':      reais,
