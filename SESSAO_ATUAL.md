@@ -42,6 +42,46 @@
 
 ---
 
+## 📓 Diário da sessão (2026-09-02) — Fix: cronômetro de atualização
+
+### O que foi feito
+
+**Frente única: cronômetro da tela que voltava a 59 minutos ao abrir a página**
+
+**Problema identificado pelo Michel:** ao abrir a tela, o contador "Próxima atualização em" sempre reiniciava do zero (ex: 59:59), independente de quando a última coleta tinha rodado no servidor.
+
+**Causa raiz:** o cronômetro era puro JavaScript — cada vez que a página carregava, `_proxRefresh = _REFRESH_INTERVAL` resetava o valor. O servidor (APScheduler) rodava independente e o browser não sabia em que ponto do ciclo estava.
+
+**Por que a primeira tentativa falhou:** foi adicionado um global `_ultimo_refresh_ts` em `servidor_telas.py`, mas na VPS o agendador é externo (`GESTAO_AGENDADOR_EXTERNO=1`) — o job `_job_coleta_automatica()` do servidor nunca é chamado em produção. O global ficava em zero para sempre.
+
+**Correção final:**
+- `scripts/servidor_telas.py`: `import time` + global `_ultimo_refresh_ts` (fallback local) + `api_admin_config_get()` lê `log_coletas(limite=1)` e converte `data_hora` para Unix timestamp → expõe como `ultimo_refresh_ts` na resposta
+- `templates/gestao_email.html`: init do JS calcula `elapsed = now - ultimo_refresh_ts` e posiciona `_proxRefresh = max(1, REFRESH_INTERVAL - elapsed)`
+- `log_coletas` é preenchido pelos dois processos (agendador interno e externo) — fonte confiável para ambos os ambientes
+
+**Validação:** ✅ 560 testes passando · Confirmado funcionando na VPS e no local · Commit `88e40d7` · Deploy ✅
+
+### Estado atual
+
+**Commits:** `88e40d7` — no GitHub e na VPS.
+**Produção:** `gestao-suporte.finaudapps.com.br` — serviço ativo ✅.
+**pytest:** 560 testes passando, zero regressões.
+
+### Próximo passo
+
+🔴 **Chat dedicado: correção de status de todas as threads**
+
+Identificado em sessão anterior: `recalcular_status_todos()` só processa threads com `inativa_desde IS NULL` — threads arquivadas ficam com status "congelado". Chat dedicado já preparado — abrir e colar o texto.
+
+**Pendências que continuam:**
+- 🟡 Passo C — tela de manutenção de regras
+- 🔴 Threads irmãs — investigação em chat dedicado
+- 🔴 Monitorar caixas da Andrea e Sarah
+
+Último /fechar: 2026-09-02 — memórias revisadas ✅
+
+---
+
 ## 📓 Diário da sessão (2026-09-02) — Visão Geral: Sem Retorno no filtro e clique nas linhas
 
 ### O que foi feito

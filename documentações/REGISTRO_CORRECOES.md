@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-09-02 — Fix: cronômetro de atualização parte do tempo real da última coleta
+
+**🔎 Em miúdos:** O contador "Próxima atualização em" na barra da tela agora mostra o tempo real restante ao abrir a página. Antes, sempre reiniciava do zero (ex: 59:59) ao entrar na tela, mesmo que a coleta tivesse rodado há 50 minutos. Agora mostra o que falta de verdade (ex: 10:00).
+
+**Problema:** cronômetro era puro JavaScript — cada página carregada resetava `_proxRefresh = _REFRESH_INTERVAL`. O APScheduler do servidor rodava independente e o browser não tinha como saber em que ponto do ciclo estava.
+
+**Causa raiz adicional (VPS):** primeira tentativa usou global `_ultimo_refresh_ts` em `servidor_telas.py`. Na VPS, `GESTAO_AGENDADOR_EXTERNO=1` está ativo — `_job_coleta_automatica()` nunca é chamado, o global ficava 0 para sempre.
+
+**Correção:**
+- `scripts/servidor_telas.py`: `import time` · global `_ultimo_refresh_ts = 0.0` (fallback local) · `api_admin_config_get()` lê última entrada de `bt.ler_log_coletas(limite=1)`, converte `data_hora` (`%Y-%m-%d %H:%M:%S`) para Unix timestamp via `time.mktime()`, expõe como `ultimo_refresh_ts`
+- `templates/gestao_email.html`: bloco de init do JS — após `_aplicarIntervaloColeta()`, calcula `elapsed = floor(Date.now()/1000 - cfg.ultimo_refresh_ts)` e seta `_proxRefresh = max(1, _REFRESH_INTERVAL - elapsed)`
+- `log_coletas` é gravado pelos dois processos (interno e externo) — fonte confiável para ambos os ambientes
+
+**Validação:** ✅ 560 testes passando, 0 regressões. Confirmado na VPS e no local após reinício do servidor. Commit `88e40d7` · Deploy ✅
+
+---
+
 ## 2026-09-02 — Tela Visão Geral: busca, filtros, "Sem Retorno" e clique nas linhas
 
 **🔎 Em miúdos:** Ganhou uma tela nova chamada "Visão Geral" — ela mostra todas as conversas de e-mail numa tabela plana, com busca ao digitar no assunto e filtros por status e por categoria (incluindo o grupo "Sem Retorno"). Ao clicar numa linha, abre o detalhamento completo da conversa (mesmo painel das outras telas). A tela aparece tanto no menu lateral quanto na guia de abas, posicionada depois de "Evolução".
