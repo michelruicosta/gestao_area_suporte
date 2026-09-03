@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-09-03 — Feat: imagens inline [cid:] aparecem no modal em vez de sumir
+
+**🔎 Em miúdos:** Antes, qualquer imagem embutida no e-mail ([cid:...]) desaparecia silenciosamente no modal. Agora as imagens são buscadas direto no Gmail e exibidas no modal — sem precisar abrir o Gmail separadamente.
+
+**Problema:** O corpo dos e-mails armazenados no banco contém referências `[cid:xxx@yyy]` (formato Outlook) para imagens anexadas inline. O modal removia essas referências (`replace(/\[cid:...\]/gi, '')`) sem exibir a imagem.
+
+**Correção:**
+- `scripts/servidor_telas.py`:
+  - Adicionadas funções `_get_gmail_service()` (cached) e `_extrair_cids_payload()` (mapeia content-id → attachment_id recursivamente no payload MIME)
+  - `api_thread` agora chama `service.users().threads().get(format='full')` para obter o mapa CID → attachment_id de cada mensagem, adicionando os campos `message_id` e `cids` na resposta (falha graciosamente — se Gmail indisponível, campos ficam vazios e imagens somem como antes)
+  - Novo endpoint `/api/imagem/<thread_id>/<message_id>/<attachment_id>` busca o binário do anexo e devolve com content-type detectado automaticamente (PNG, JPEG, GIF, WebP)
+- `templates/gestao_email.html`: função `renderImagens()` substitui `[cid:xxx]` por `<img src="/api/imagem/...">` usando o mapa retornado pela API; texto ao redor do CID é escapado normalmente
+
+**Validação:** ✅ 6 novos testes em `tests/test_extrair_cids.py` · 578 testes passando, zero regressões · `pytest tests/ -q`
+
+---
+
 ## 2026-09-03 — Fix: modal C/D/F exibia conteúdo de quem enviou o e-mail original como corpo do remetente
 
 **🔎 Em miúdos:** O modal de e-mail mostrava o texto DA PESSOA ANTERIOR (ex: Andrea) com o nome de quem encaminhou (ex: William) no cabeçalho — como se William tivesse escrito o texto da Andrea. Agora mostra primeiro o que William escreveu, depois o e-mail original com etiqueta "Encaminhamento — conteúdo original abaixo".

@@ -7,6 +7,7 @@ Porta: 5000   Rodar: python scripts/servidor_telas.py
 
 from __future__ import annotations
 
+import base64
 import html as html_lib
 import io
 import json
@@ -37,7 +38,7 @@ from functools import wraps
 
 from dateutil.easter import easter
 
-from flask import Flask, abort, jsonify, redirect, render_template, request, session, url_for
+from flask import Flask, Response, abort, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
@@ -79,6 +80,42 @@ def _exigir_secret_key() -> str:
 
 
 app.secret_key = _exigir_secret_key()
+
+# ── Gmail service (imagens inline) ────────────────────────────────────────────
+
+_gmail_svc: object | None = None
+_gmail_svc_lock = threading.Lock()
+
+
+def _get_gmail_service():
+    global _gmail_svc
+    if _gmail_svc is not None:
+        return _gmail_svc
+    with _gmail_svc_lock:
+        if _gmail_svc is None:
+            try:
+                from coletor_gmail import _conectar_gmail
+                _gmail_svc = _conectar_gmail()
+            except Exception as exc:
+                _log.warning('Gmail service indisponível: %s', exc)
+    return _gmail_svc
+
+
+def _extrair_cids_payload(payload: dict) -> dict:
+    """Mapeia content-id → {attachment_id, mime} para imagens inline de uma mensagem."""
+    resultado: dict = {}
+    for part in payload.get('parts', []):
+        mime = part.get('mimeType', '')
+        if mime.startswith('image/'):
+            hdrs = {h['name'].lower(): h['value'] for h in part.get('headers', [])}
+            cid = hdrs.get('content-id', '').strip('<>')
+            att_id = part.get('body', {}).get('attachmentId', '')
+            if cid and att_id:
+                resultado[cid] = {'attachment_id': att_id, 'mime': mime}
+        elif mime.startswith('multipart/'):
+            resultado.update(_extrair_cids_payload(part))
+    return resultado
+
 
 @app.after_request
 def sem_cache(response):
@@ -685,8 +722,30 @@ def api_thread(thread_id: str):
     t = bt.buscar_thread_completa(thread_id)
     if not t:
         abort(404)
+
+    stored_msgs = t.get('mensagens', [])
+    n = len(stored_msgs)
+
+    # Busca mapa CID → attachment por mensagem via Gmail API (falha graciosamente)
+    gmail_cid_maps: list[dict] = [{}] * n
+    try:
+        service = _get_gmail_service()
+        if service:
+            gmail_thread = service.users().threads().get(
+                userId='me', id=thread_id, format='full'
+            ).execute()
+            for idx, gm in enumerate(gmail_thread.get('messages', [])):
+                if idx < n:
+                    gmail_cid_maps[idx] = {
+                        'message_id': gm['id'],
+                        'cids': _extrair_cids_payload(gm.get('payload', {})),
+                    }
+    except Exception as exc:
+        _log.warning('Gmail CID fetch falhou para %s: %s', thread_id, exc)
+
     mensagens = []
-    for m in reversed(t.get('mensagens', [])):
+    for i, m in enumerate(reversed(stored_msgs)):
+        gmail_info = gmail_cid_maps[n - 1 - i]
         corpo_raw = m.get('corpo_texto') or ''
         tipo = bt._identificar_tipo_estrutura(corpo_raw)
         reais, assinatura = bt._separar_anexos(m.get('nomes_anexos') or [])
@@ -702,6 +761,8 @@ def api_thread(thread_id: str):
             'anexos':            m.get('nomes_anexos') or [],
             'anexos_reais':      reais,
             'anexos_assinatura': assinatura,
+            'message_id':        gmail_info.get('message_id', ''),
+            'cids':              gmail_info.get('cids', {}),
         })
     return jsonify({
         'thread_id':            t['thread_id'],
@@ -712,6 +773,33 @@ def api_thread(thread_id: str):
         'motivo_classificacao': t.get('motivo_classificacao') or '',
         'mensagens':            mensagens,
     })
+
+
+@app.route('/api/imagem/<thread_id>/<message_id>/<attachment_id>')
+@_requer_login
+def api_imagem(thread_id, message_id, attachment_id):
+    service = _get_gmail_service()
+    if not service:
+        abort(503)
+    try:
+        att = service.users().messages().attachments().get(
+            userId='me', messageId=message_id, id=attachment_id
+        ).execute()
+        data = base64.urlsafe_b64decode(att['data'])
+        if data[:8] == b'\x89PNG\r\n\x1a\n':
+            ct = 'image/png'
+        elif data[:2] == b'\xff\xd8':
+            ct = 'image/jpeg'
+        elif data[:6] in (b'GIF87a', b'GIF89a'):
+            ct = 'image/gif'
+        elif len(data) >= 12 and data[:4] == b'RIFF' and data[8:12] == b'WEBP':
+            ct = 'image/webp'
+        else:
+            ct = 'application/octet-stream'
+        return Response(data, content_type=ct)
+    except Exception as exc:
+        _log.warning('Imagem não encontrada msg=%s att=%s: %s', message_id, attachment_id, exc)
+        abort(404)
 
 
 # ── API: Não classificados ─────────────────────────────────────────────────────

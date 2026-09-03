@@ -2561,7 +2561,26 @@ async function abrirThread(threadId) {
       t.mensagens.map(m => {
         // Tipo C/D/F: mostrar texto_novo primeiro, depois bloco encaminhado
         const isEncaminhamento = m.tipo_estrutura === 'D' || m.tipo_estrutura === 'C' || m.tipo_estrutura === 'F';
-        const limpar = s => (s || '').replace(/\[cid:[^\]]+\]/gi, '').trim();
+        // Substitui [cid:xxx] por <img> quando há mapa de attachment; caso contrário remove
+        const renderImagens = (texto) => {
+          if (!texto) return '';
+          const txt = texto.trim();
+          if (!txt) return '';
+          const re = /\[cid:([^\]]+)\]/gi;
+          const parts = []; let lastIdx = 0; let mo;
+          re.lastIndex = 0;
+          while ((mo = re.exec(txt)) !== null) {
+            parts.push(escHtml(txt.slice(lastIdx, mo.index)));
+            const info = m.cids && m.cids[mo[1]];
+            if (info) {
+              const url = `/api/imagem/${encodeURIComponent(threadId)}/${encodeURIComponent(m.message_id)}/${encodeURIComponent(info.attachment_id)}`;
+              parts.push(`<img src="${url}" alt="imagem" style="max-width:100%;display:block;margin:4px 0;">`);
+            }
+            lastIdx = mo.index + mo[0].length;
+          }
+          parts.push(escHtml(txt.slice(lastIdx)));
+          return parts.join('').trim();
+        };
         // Sempre usar só arquivos reais (sem imagens de assinatura) na lista de anexos
         const listaAnexos = (m.anexos_reais && m.anexos_reais.length) ? m.anexos_reais : m.anexos;
         const anexos = listaAnexos.length
@@ -2569,18 +2588,18 @@ async function abrirThread(threadId) {
           : '';
         let corpoHtml;
         if (isEncaminhamento) {
-          const textoNovo = limpar(m.texto_novo);
+          const textoNovo = renderImagens(m.texto_novo);
           const parteNova = textoNovo
-            ? `<div class="msg-body">${escHtml(textoNovo)}</div>`
+            ? `<div class="msg-body">${textoNovo}</div>`
             : `<div class="msg-body msg-sem-texto"><em>(encaminhou sem adicionar texto)</em></div>`;
-          const corpoEnc = limpar(m.corpo_encaminhado);
+          const corpoEnc = renderImagens(m.corpo_encaminhado);
           const parteEnc = corpoEnc
-            ? `<div class="msg-enc-label">Encaminhamento — conteúdo original abaixo</div><div class="msg-body">${escHtml(corpoEnc)}</div>`
+            ? `<div class="msg-enc-label">Encaminhamento — conteúdo original abaixo</div><div class="msg-body">${corpoEnc}</div>`
             : '';
           corpoHtml = parteNova + parteEnc;
         } else {
-          const corpo = limpar(m.corpo) || '(sem conteúdo)';
-          corpoHtml = `<div class="msg-body">${escHtml(corpo)}</div>`;
+          const corpo = renderImagens(m.corpo) || escHtml('(sem conteúdo)');
+          corpoHtml = `<div class="msg-body">${corpo}</div>`;
         }
         return `<div class="msg-card">
           <div class="msg-head">
