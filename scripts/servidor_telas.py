@@ -727,22 +727,26 @@ def api_thread(thread_id: str):
     stored_msgs = t.get('mensagens', [])
     n = len(stored_msgs)
 
-    # Busca mapa CID → attachment por mensagem via Gmail API (falha graciosamente)
+    # Só vai ao Gmail se pelo menos uma mensagem tiver referência [cid:] inline.
+    # A maioria das threads não tem imagens — evita latência desnecessária.
+    tem_cid = any('[cid:' in (m.get('corpo_texto') or '') for m in stored_msgs)
+
     gmail_cid_maps: list[dict] = [{}] * n
-    try:
-        service = _get_gmail_service()
-        if service:
-            gmail_thread = service.users().threads().get(
-                userId='me', id=thread_id, format='full'
-            ).execute()
-            for idx, gm in enumerate(gmail_thread.get('messages', [])):
-                if idx < n:
-                    gmail_cid_maps[idx] = {
-                        'message_id': gm['id'],
-                        'cids': _extrair_cids_payload(gm.get('payload', {})),
-                    }
-    except Exception as exc:
-        _log.warning('Gmail CID fetch falhou para %s: %s', thread_id, exc)
+    if tem_cid:
+        try:
+            service = _get_gmail_service()
+            if service:
+                gmail_thread = service.users().threads().get(
+                    userId='me', id=thread_id, format='full'
+                ).execute()
+                for idx, gm in enumerate(gmail_thread.get('messages', [])):
+                    if idx < n:
+                        gmail_cid_maps[idx] = {
+                            'message_id': gm['id'],
+                            'cids': _extrair_cids_payload(gm.get('payload', {})),
+                        }
+        except Exception as exc:
+            _log.warning('Gmail CID fetch falhou para %s: %s', thread_id, exc)
 
     mensagens = []
     for i, m in enumerate(reversed(stored_msgs)):
