@@ -2,6 +2,34 @@
 
 ---
 
+## 2026-09-02 — Fix: bloco Tipo D buscava em corpo_raw em vez de bloco encaminhado
+
+**🔎 Em miúdos:** E-mails do tipo "encaminhamento Outlook sem texto novo" estavam recebendo status errado — apareciam como "Aguardando Finaud" mesmo sendo respostas do cliente confirmando algo ou fechando o caso.
+
+**Problema (regressão — commit `4581095`, 02/09/2026 ~18h):** o bloco Tipo D adicionado em `_determinar_status` buscava frases de entrega e `?` em `corpo_raw` (e-mail completo, incluindo o e-mail encaminhado da Finaud dentro da mensagem). Isso fazia o código encontrar sinais do e-mail da Finaud — e não do cliente — e devolver status errado.
+
+**Exemplos afetados:**
+- 43 threads ativas (VPS) com banco=AF viraram código=Concluída corretamente após o fix
+- Thread S5 `1a04366828691095`: texto_novo tinha "Desde já, Obrigado" — `_CONFIRMACAO_EXPLICITA` disparava, mas era valedição de pedido de ajuda ("Preciso de ajuda"), não confirmação real
+
+**Correção em `scripts/banco_threads.py` — bloco `if _identificar_tipo_estrutura(corpo_raw) == 'D':` (linha ~839):**
+1. `_bloco_enc = _extrair_bloco_encaminhado(corpo_raw)` — usa só o bloco encaminhado (sem o e-mail da Finaud)
+2. `_pedido_ajuda_d` — guarda contra falso positivo do `_CONFIRMACAO_EXPLICITA` quando há "preciso/precisamos/não sei qual/não consigo" no texto
+3. Confirmação explícita no texto_novo → `Concluída` (prioridade 0)
+4. Busca de frases de entrega e `?` restritas ao `_bloco_enc`
+
+**Diagnóstico VPS pós-fix:** 51 divergências → 14 (1 ativa AF→Concluída correta + 13 arquivadas frozen)
+**Diagnóstico LOCAL pós-fix:** 16 divergências (1 ativa + 15 arquivadas frozen)
+
+**Validação:** ✅ VALIDADO — 572 testes passando (12 novos testes Tipo D). Commit: a seguir.
+
+**Próximos passos pendentes:**
+- Corrigir 15 threads arquivadas no banco LOCAL (AF frozen → status correto)
+- Corrigir 13 threads arquivadas no banco VPS
+- Deploy VPS + `recalcular_status_todos()` para 1 thread ativa
+
+---
+
 ## 2026-09-02 — Fix: cronômetro de atualização parte do tempo real da última coleta
 
 **🔎 Em miúdos:** O contador "Próxima atualização em" na barra da tela agora mostra o tempo real restante ao abrir a página. Antes, sempre reiniciava do zero (ex: 59:59) ao entrar na tela, mesmo que a coleta tivesse rodado há 50 minutos. Agora mostra o que falta de verdade (ex: 10:00).

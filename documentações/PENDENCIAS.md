@@ -74,7 +74,7 @@ O grupo mais grave é **"BANCO CENTRAL - COMUNICACAO DE INCONSISTENCIA NO DRM - 
 
 ---
 
-## 🔴 INVESTIGAR — Monitorar caixas da Andrea e Sarah para captura completa (identificado em 01/09/2026)
+## 🟡 Monitorar caixas dos colaboradores para captura completa (identificado em 01/09/2026)
 
 ### O problema original
 
@@ -87,24 +87,23 @@ Quando funcionários da Finaud respondem a clientes **sem incluir suporte@finaud
 
 **Risco:** o status e o motivo de outras threads podem estar errados por falta de mensagens intermediárias.
 
-### Nova descoberta (01/09/2026) — acesso via service account já existe
+### Implementado (02/09/2026) — Gap 1 e Gap 2 cobertos
 
-Durante a análise do Grupo 1 de threads irmãs (ENC: Arquivos 4060 — ACCREDITO), confirmamos que:
-- A **service account** (`config/credenciais_gmail.json`) já tem acesso às caixas de `andrea.inacio@finaud.com.br` e `sarah.sa@finaud.com.br` via domain-wide delegation
-- Foi possível acessar e ler e-mails dessas caixas com um script Python simples
-- Não é necessário nenhum novo token ou autorização — o acesso já está liberado
+`scripts/coletor_enviados_colaboradores.py` — lê Enviados e Recebidos dos 6 colaboradores do `config.json` (Andrea, Monica, Pedro, Flávio, Sarah, Rodrigo) e adiciona mensagens novas às threads **já existentes** no banco. Roda às 6h dentro do pipeline. Nunca cria threads novas.
 
-**Oportunidade:** o pipeline poderia monitorar essas caixas também, capturando tudo que a Andrea e a Sarah enviam — independente de CC. Isso cobriria tanto o gap de mensagens de saída quanto contribuiria para resolver o problema de threads irmãs.
+### Pendente — Gap 3: conversas completamente paralelas
 
-### O que explorar em chat dedicado (sem mexer no sistema atual)
+Análise de 02/09/2026 identificou **345 threads** nas caixas Enviados dos 6 colaboradores que **nunca passaram pelo suporte@** e não existem no banco. Entre elas:
+- ~49 **AF** — clientes aguardando resposta da Finaud
+- ~212 **AC** — Finaud aguardando o cliente
+- ~84 **Concluídas** — conversas já encerradas
 
-1. **Mapear os gaps cobertos:** quais cenários o monitoramento das caixas da Andrea e Sarah resolveria?
-2. **Ver o que já existe e o que falta:** o pipeline atual tem como receber uma segunda fonte de coleta?
-3. **Estimar o impacto:** quantas threads hoje têm mensagens faltando por causa desse gap?
-4. **Desenhar a solução:** como ficaria a arquitetura — coleta paralela? enriquecimento? nova tabela?
-5. **Só depois:** decidir com Michel se avança para implementação
+Ainda não implementado. Exigiria criar threads novas no banco com filtros para:
+- Bounces de mailer-daemon
+- E-mails de teste internos
+- Conversas de consultoria (ex.: Rodrigo × Number One — elaboração de modelo de negócios, 51 msgs)
 
-**Como abrir o chat:** iniciar novo chat e dizer *"Quero explorar o monitoramento das caixas da Andrea e Sarah via service account — apenas para analisar os gaps e o potencial, sem implementar nada"*.
+**Quando fazer:** chat dedicado — decisão de Michel sobre se e como trazer essas threads para o sistema.
 
 ---
 

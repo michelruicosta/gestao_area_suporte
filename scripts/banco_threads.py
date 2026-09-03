@@ -836,19 +836,27 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     # §8.8: cliente encaminhou algo (ENC:/FWD: ou assunto com EXTRATO) com texto vazio → Finaud precisa processar
     if _so_cortesia(texto_novo) and (_ENC_PREFIX.match(assunto.strip()) or _EXTRATO_RE.search(assunto)):
         return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
-    # §8.8-TIPO-D: encaminhamento Outlook sem texto novo e sem prefixo ENC: no assunto
-    # O conteúdo real está no bloco encaminhado (abaixo do cabeçalho De:/Enviada em:),
-    # não no texto novo — por isso as regras acima (que leem só texto_novo) falham.
-    # Prioridade: (1) anexo real → entrega; (2) frase de entrega no bloco → entrega;
-    # (3) pergunta no corpo completo → pergunta; (4) sem sinal → aguarda verificação.
+    # §8.8-TIPO-D: encaminhamento Outlook sem texto novo (só assinatura antes do bloco).
+    # O conteúdo real está no bloco encaminhado — as regras acima (que leem texto_novo) falham.
+    # Prioridade: (0) confirmação explícita no texto_novo → Concluída (evita capturar sinais
+    # do e-mail da Finaud no bloco); (1) anexo real → entrega; (2) frase de entrega no bloco
+    # encaminhado → entrega; (3) pergunta no bloco encaminhado → pergunta;
+    # (4) sem sinal → aguarda verificação.
+    # Busca restrita ao bloco encaminhado para não capturar sinais do e-mail da Finaud.
     if _identificar_tipo_estrutura(corpo_raw) == 'D':
+        _pedido_ajuda_d = re.search(r'\b(preciso|precisamos|n[aã]o\s+sei\s+qual|n[aã]o\s+consigo)\b', texto_lower)
+        if (_CONFIRMACAO_EXPLICITA.search(texto_lower)
+                and not _tem_pergunta_acao(texto_novo)
+                and not _pedido_ajuda_d):
+            return 'Concluída', 'Cliente agradeceu — problema resolvido'
         if _tem_arquivo_entregavel(ultimo.get('nomes_anexos') or []):
             return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
-        corpo_enc_flat = re.sub(r'\s+', ' ', corpo_raw).lower()
+        _bloco_enc = _extrair_bloco_encaminhado(corpo_raw)
+        corpo_enc_flat = re.sub(r'\s+', ' ', _bloco_enc).lower()
         _frases_enc = _FRASES_ENTREGA + tuple(_termos_db('Cliente enviou informações e extratos — aguarda processamento'))
         if any(f in corpo_enc_flat for f in _frases_enc):
             return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
-        if _tem_pergunta_acao(corpo_raw):
+        if _tem_pergunta_acao(_bloco_enc):
             return 'Aguardando Finaud', 'Cliente fez pergunta — aguarda resposta da Finaud'
         return 'Aguardando Finaud', 'Mensagem sem conteúdo identificável — aguarda verificação'
     # Fix I: cliente informa que o BACEN aceitou o arquivo → processo encerrado
