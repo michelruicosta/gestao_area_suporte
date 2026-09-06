@@ -2,6 +2,41 @@
 
 ---
 
+## 2026-09-06 — Fix: filtro de data da Visão Geral não filtrava nada
+
+**🔎 Em miúdos:** O campo de data recém-adicionado não funcionava — escolher qualquer data na tela não reduzia a lista. Corrigido substituindo o calendário nativo do browser por um campo de texto no mesmo estilo dos outros filtros.
+
+**Problema:** `<input type="date">` devolve datas no formato ISO (`2026-08-31`), mas o banco guarda as datas no formato brasileiro (`31/08/2026`). A comparação `t.data_iso === dt` nunca batia — todos os threads sempre apareciam, sem filtrar.
+
+**Causa raiz:** Formato do campo nativo do browser é YYYY-MM-DD; formato do banco é DD/MM/YYYY. Incompatibilidade silenciosa.
+
+**Correção:** (`templates/gestao_email.html`)
+- Substituído `<input type="date">` por `<input type="text" placeholder="DD/MM/AAAA">`
+- Nova função `_vgDataInput(el)`: auto-formata à medida que o usuário digita (barras inseridas automaticamente nos caracteres 3 e 6). Filtro dispara ao completar 10 chars ou ao limpar o campo.
+- Estilo idêntico aos demais filtros da barra (mesmos `var(--surface)`, `var(--border)`, `var(--text)`)
+
+**Validação:** ✅ sem teste novo (HTML/JS client-side sem lógica isolável) · 583 testes passando, zero regressões · Commit `5fc03ce` · Deploy VPS ✅
+
+---
+
+## 2026-09-06 — Feat: Visão Geral — dados frescos a cada visita + filtro de data
+
+**🔎 Em miúdos:** A tela Visão Geral só mostrava e-mails novos se o usuário recarregasse a página. E não tinha como filtrar por data de chegada do e-mail. Os dois problemas foram corrigidos juntos.
+
+**Problema 1 — Cache stale:** `if (_vgDados.length) { _vgFiltrar(); return; }` impedia nova busca ao navegar de volta para a tela. E-mails chegados depois da primeira carga ficavam invisíveis.
+
+**Problema 2 — Sem filtro de data:** com 1.450 threads, localizar e-mails de um dia específico exigia rolar a lista manualmente.
+
+**Correção:** (`scripts/servidor_telas.py` + `templates/gestao_email.html`)
+- Cache removido: `_vgDados = []` força nova busca a `/api/threads/todas` em cada visita à tela
+- API adiciona campo `data_iso` (`DD/MM/AAAA` — primeiros 10 chars de `data_ultima_msg`) na resposta
+- Novo `<input type="date" id="vg-data">` na barra de filtros (substituído por `type=text` no commit seguinte)
+- `_vgFiltrar()` inclui condição `(!dt || t.data_iso === dt)`
+
+**Validação:** ✅ sem teste novo (HTML/JS client-side + campo JSON sem lógica isolável) · 583 testes passando, zero regressões · Commit `efcba4a` · Deploy VPS ✅
+
+---
+
 ## 2026-09-06 — Feat: e-mail de alerta mostra origem do problema (local vs produção)
 
 **🔎 Em miúdos:** O e-mail "Busca de e-mail parou" agora diz de onde veio o alerta — "PC local (seu computador)" ou "Servidor (produção)" — para Michel saber na hora se precisa agir com urgência.

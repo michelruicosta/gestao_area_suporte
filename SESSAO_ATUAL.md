@@ -12,9 +12,10 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
+| 06/09 | Visão Geral — filtro de data + dados sempre frescos | abaixo |
 | 06/09 | Alerta "busca parada": origem do alerta (local vs produção) | abaixo |
 | 03/09 | Migração HTML na VPS + fix modal C/D/F | abaixo |
-| 02/09 | Fix: cronômetro de atualização | abaixo |
+| 02/09 | Fix: cronômetro de atualização | arquivo |
 | 02/09 | Visão Geral — busca, filtros, Sem Retorno no dropdown e clique nas linhas | arquivo |
 | 02/09 | Validação coletor colaboradores + problema status threads arquivadas | arquivo |
 | 02/09 | BACEN motivos 15 e 16 + validação pré-deploy + deploy | arquivo |
@@ -42,6 +43,50 @@
 >
 > **Regra:** este arquivo guarda as **3 sessões mais recentes**. O `/fechar` acrescenta a
 > linha nova aqui e move a 4ª sessão para o arquivo.
+
+---
+
+## 📓 Diário da sessão (2026-09-06) — Visão Geral: filtro de data + dados sempre frescos
+
+### O que foi feito
+
+**Dois ajustes na tela Visão Geral — commit + deploy pendentes desde sessão anterior**
+
+**Ajuste 1 — Dados sempre frescos (commit `efcba4a`)**
+
+A tela reutilizava dados em cache ao ser revisitada — e-mails novos não apareciam sem recarregar. Causa: `if (_vgDados.length) { _vgFiltrar(); return; }` bloqueava nova busca. Correção: `_vgDados = []` antes do fetch garante que a tela sempre busca `/api/threads/todas`.
+
+**Ajuste 2 — Filtro de data (commits `efcba4a` e `5fc03ce`)**
+
+Novo campo de data na barra de filtros. Após o deploy, Michel reportou duas falhas:
+1. Filtro não funcionava — ao selecionar qualquer data, todas as 1.450 threads apareciam
+2. Calendário nativo do browser com estilo diferente do sistema
+
+**Causa:** `<input type="date">` devolve `2026-08-31` (ISO), mas `data_iso` no banco é `31/08/2026` (formato BR). A comparação `t.data_iso === dt` nunca batia.
+
+**Correção:** substituído por `<input type="text" placeholder="DD/MM/AAAA">` com auto-formatação (barras inseridas automaticamente). Estilo idêntico aos demais filtros. Filtro dispara ao completar 10 chars ou ao limpar.
+
+### Estado atual
+
+**Commits:** `efcba4a` e `5fc03ce` — no GitHub e na VPS.
+**Produção:** `gestao-suporte.finaudapps.com.br` — serviço ativo ✅.
+**pytest:** 583 testes passando, zero regressões.
+
+### Próximo passo
+
+🔴 **Chat dedicado: correção de status de todas as threads**
+
+`recalcular_status_todos()` só processa threads ativas (`inativa_desde IS NULL`) — threads arquivadas ficam com status congelado. Chat dedicado já preparado.
+
+**Antes de qualquer mudança no modal:**
+🟡 **Spec display modal A–G** — mapear comportamento atual e desejado com exemplos reais (ver PENDENCIAS.md).
+
+**Pendências que continuam:**
+- 🟡 Passo C — tela de manutenção de regras
+- 🔴 Threads irmãs — investigação em chat dedicado
+- 🔴 Monitorar caixas da Andrea e Sarah
+
+Último /fechar: 2026-09-06 — memórias revisadas ✅
 
 ---
 
@@ -132,46 +177,6 @@ A regressão aconteceu porque os cenários de display não foram mapeados antes 
 - 🔴 Monitorar caixas da Andrea e Sarah
 
 Último /fechar: 2026-09-03 00:30 — memórias revisadas ✅
-
----
-
-## 📓 Diário da sessão (2026-09-02) — Fix: cronômetro de atualização
-
-### O que foi feito
-
-**Frente única: cronômetro da tela que voltava a 59 minutos ao abrir a página**
-
-**Problema identificado pelo Michel:** ao abrir a tela, o contador "Próxima atualização em" sempre reiniciava do zero (ex: 59:59), independente de quando a última coleta tinha rodado no servidor.
-
-**Causa raiz:** o cronômetro era puro JavaScript — cada vez que a página carregava, `_proxRefresh = _REFRESH_INTERVAL` resetava o valor. O servidor (APScheduler) rodava independente e o browser não sabia em que ponto do ciclo estava.
-
-**Por que a primeira tentativa falhou:** foi adicionado um global `_ultimo_refresh_ts` em `servidor_telas.py`, mas na VPS o agendador é externo (`GESTAO_AGENDADOR_EXTERNO=1`) — o job `_job_coleta_automatica()` do servidor nunca é chamado em produção. O global ficava em zero para sempre.
-
-**Correção final:**
-- `scripts/servidor_telas.py`: `import time` + global `_ultimo_refresh_ts` (fallback local) + `api_admin_config_get()` lê `log_coletas(limite=1)` e converte `data_hora` para Unix timestamp → expõe como `ultimo_refresh_ts` na resposta
-- `templates/gestao_email.html`: init do JS calcula `elapsed = now - ultimo_refresh_ts` e posiciona `_proxRefresh = max(1, REFRESH_INTERVAL - elapsed)`
-- `log_coletas` é preenchido pelos dois processos (agendador interno e externo) — fonte confiável para ambos os ambientes
-
-**Validação:** ✅ 560 testes passando · Confirmado funcionando na VPS e no local · Commit `88e40d7` · Deploy ✅
-
-### Estado atual
-
-**Commits:** `88e40d7` — no GitHub e na VPS.
-**Produção:** `gestao-suporte.finaudapps.com.br` — serviço ativo ✅.
-**pytest:** 560 testes passando, zero regressões.
-
-### Próximo passo
-
-🔴 **Chat dedicado: correção de status de todas as threads**
-
-Identificado em sessão anterior: `recalcular_status_todos()` só processa threads com `inativa_desde IS NULL` — threads arquivadas ficam com status "congelado". Chat dedicado já preparado — abrir e colar o texto.
-
-**Pendências que continuam:**
-- 🟡 Passo C — tela de manutenção de regras
-- 🔴 Threads irmãs — investigação em chat dedicado
-- 🔴 Monitorar caixas da Andrea e Sarah
-
-Último /fechar: 2026-09-02 — memórias revisadas ✅
 
 ---
 

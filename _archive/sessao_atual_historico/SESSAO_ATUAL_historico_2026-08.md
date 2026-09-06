@@ -7,6 +7,27 @@
 
 ---
 
+## 📓 Diário da sessão (2026-09-02) — Fix: cronômetro de atualização
+
+### O que foi feito
+
+**Frente única: cronômetro da tela que voltava a 59 minutos ao abrir a página**
+
+Problema: ao abrir a tela, o contador "Próxima atualização em" sempre reiniciava do zero, independente de quando a última coleta tinha rodado no servidor.
+
+Causa raiz: o cronômetro era puro JavaScript — cada vez que a página carregava, `_proxRefresh = _REFRESH_INTERVAL` resetava o valor. O servidor (APScheduler) rodava independente e o browser não sabia em que ponto do ciclo estava.
+
+Por que a primeira tentativa falhou: foi adicionado um global `_ultimo_refresh_ts` em `servidor_telas.py`, mas na VPS o agendador é externo (`GESTAO_AGENDADOR_EXTERNO=1`) — o job `_job_coleta_automatica()` do servidor nunca é chamado em produção. O global ficava em zero para sempre.
+
+Correção final:
+- `scripts/servidor_telas.py`: `import time` + global `_ultimo_refresh_ts` (fallback local) + `api_admin_config_get()` lê `log_coletas(limite=1)` e converte `data_hora` para Unix timestamp → expõe como `ultimo_refresh_ts` na resposta
+- `templates/gestao_email.html`: init do JS calcula `elapsed = now - ultimo_refresh_ts` e posiciona `_proxRefresh = max(1, REFRESH_INTERVAL - elapsed)`
+- `log_coletas` é preenchido pelos dois processos (agendador interno e externo) — fonte confiável para ambos os ambientes
+
+Validação: ✅ 560 testes passando · Confirmado funcionando na VPS e no local · Commit `88e40d7` · Deploy ✅
+
+---
+
 ## 📓 Diário da sessão (2026-09-02) — Validação coletor colaboradores + problema status threads arquivadas
 
 ### O que foi feito
