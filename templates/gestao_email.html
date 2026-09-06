@@ -2581,11 +2581,23 @@ async function abrirThread(threadId) {
           }
           return null;
         };
+        // I7: Gmail substituiu imagem por descrição de IA — busca posicional (próxima disponível)
+        const buscarGmailPositional = () => {
+          for (let i = 0; i < gmailImgs.length; i++) {
+            if (!gmailUsados.has(i)) {
+              gmailUsados.add(i);
+              return gmailImgs[i];
+            }
+          }
+          return null;
+        };
+        const RE_I7 = /O\s+conte[uú]do\s+gerado\s+por\s+IA/i;
         const renderImagens = (texto) => {
           if (!texto) return '';
           const txt = texto.trim();
           if (!txt) return '';
-          const re = /\[cid:([^\]]+)\]|\[image:\s*([^\]]+)\]|\[(\w[^\]]*\.(png|jpg|jpeg|gif|bmp|webp))\]/gi;
+          // grupo 4 captura I7 antes do [image:] genérico para não cair no ramo de nome
+          const re = /\[cid:([^\]]+)\]|\[([^\]]*O\s+conte[uú]do\s+gerado\s+por\s+IA[^\]]*)\]|\[image:\s*([^\]]+)\]|\[(\w[^\]]*\.(png|jpg|jpeg|gif|bmp|webp))\]/gi;
           const parts = []; let lastIdx = 0; let mo;
           re.lastIndex = 0;
           while ((mo = re.exec(txt)) !== null) {
@@ -2597,9 +2609,16 @@ async function abrirThread(threadId) {
                 const url = `/api/imagem/${encodeURIComponent(threadId)}/${encodeURIComponent(m.message_id)}/${encodeURIComponent(info.attachment_id)}`;
                 parts.push(`<img src="${url}" alt="imagem" style="max-width:100%;display:block;margin:4px 0;">`);
               }
+            } else if (mo[2] !== undefined) {
+              // I7 — descrição de IA do Gmail → busca posicional
+              const info = buscarGmailPositional();
+              if (info) {
+                const url = `/api/imagem/${encodeURIComponent(threadId)}/${encodeURIComponent(m.message_id)}/${encodeURIComponent(info.attachment_id)}`;
+                parts.push(`<img src="${url}" alt="imagem" style="max-width:100%;display:block;margin:4px 0;">`);
+              }
             } else {
               // [image: xxx] ou [arquivo.ext] — Gmail (busca por nome)
-              const candidato = (mo[2] !== undefined ? mo[2] : mo[3]).trim();
+              const candidato = (mo[3] !== undefined ? mo[3] : mo[4]).trim();
               if (IMG_EXT.test(candidato)) {
                 const info = buscarGmail(candidato);
                 if (info) {

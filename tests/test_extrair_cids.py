@@ -162,3 +162,26 @@ def test_gmail_images_ordem_preservada():
     }
     result = _extrair_gmail_images_payload(payload)
     assert [r['attachment_id'] for r in result] == ['att_logo', 'att_s1', 'att_s2']
+
+
+# ── Testes _RE_IMAGEM_INLINE — detecção do padrão I7 ─────────────────────────
+
+def test_re_imagem_inline_detecta_i7_sem_prefixo():
+    """[Texto O conteúdo gerado por IA...] (sem [image:]) deve acionar o fetch do Gmail."""
+    from servidor_telas import _RE_IMAGEM_INLINE
+    corpo = 'Prezada,\n\n[Texto   O conteúdo gerado por IA pode estar incorreto.]\n\nAtt'
+    assert _RE_IMAGEM_INLINE.search(corpo) is not None
+
+
+def test_re_imagem_inline_detecta_i7_com_image():
+    """[image: Texto O conteúdo gerado por IA...] deve acionar o fetch do Gmail."""
+    from servidor_telas import _RE_IMAGEM_INLINE
+    corpo = '[image: Texto O conteúdo gerado por IA pode estar incorreto.]'
+    assert _RE_IMAGEM_INLINE.search(corpo) is not None
+
+
+def test_re_imagem_inline_detecta_i7_logotipo():
+    """[Uma imagem contendo Logotipo O conteúdo gerado por IA...] também deve ser detectado."""
+    from servidor_telas import _RE_IMAGEM_INLINE
+    corpo = '[Uma imagem contendo Logotipo   O conteúdo gerado por IA pode estar incorreto.]'
+    assert _RE_IMAGEM_INLINE.search(corpo) is not None

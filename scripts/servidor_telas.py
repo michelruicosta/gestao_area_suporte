@@ -137,9 +137,10 @@ def _extrair_gmail_images_payload(payload: dict) -> list:
 
 
 _RE_IMAGEM_INLINE = re.compile(
-    r'\[cid:'                                    # Outlook [cid:xxx]
-    r'|\[image:'                                 # Gmail   [image: xxx]
-    r'|\[\w[^\]]*\.(png|jpg|jpeg|gif|bmp|webp)\]',  # Bare    [arquivo.ext]
+    r'\[cid:'                                        # Outlook [cid:xxx]
+    r'|\[image:'                                     # Gmail   [image: xxx]
+    r'|\[\w[^\]]*\.(png|jpg|jpeg|gif|bmp|webp)\]'   # Bare    [arquivo.ext]
+    r'|\[[^\]]*O\s+conteúdo\s+gerado\s+por\s+IA',   # I7      [Texto O conteúdo gerado por IA...]
     re.I,
 )
 
@@ -1307,6 +1308,121 @@ def api_fog_evolucao():
         return jsonify(_buscar_fog(inicio=inicio, fim=fim))
     periodo = request.args.get('periodo', 'desde2025')
     return jsonify(_buscar_fog(periodo))
+
+
+_fog_colab_cache: dict = {}
+
+
+def _buscar_fog_colaboradores(inicio: str, fim: str) -> list[dict]:
+    """Busca histórico de atribuições por colaborador no período (data de abertura do caso)."""
+    import time, re as _re
+    cache_key = f'colab|{inicio}|{fim}'
+    cache_entry = _fog_colab_cache.get(cache_key)
+    if cache_entry and (time.time() - cache_entry[0]) < _FOG_CACHE_TTL:
+        return cache_entry[1]
+
+    token = os.environ.get('FOGBUGZ_TOKEN', '')
+    if not token:
+        return []
+
+    q_str = f'opened:"{inicio.replace("-","/")}..{fim.replace("-","/")}' + '"'
+    url = 'https://finaud.fogbugz.com/api.asp'
+    try:
+        requests.get(url, params={'token': token, 'cmd': 'setCurrentFilter', 'sFilter': '218'}, timeout=10)
+        resp = requests.get(url, params={
+            'token': token,
+            'cmd': 'search',
+            'q': q_str,
+            'cols': 'ixBug,sTitle,fOpen,dtOpened,dtClosed,events',
+        }, timeout=120)
+        resp.raise_for_status()
+        root = _ET.fromstring(resp.text)
+        hoje = datetime.now(timezone.utc).date()
+        colaboradores: dict[str, dict] = {}
+
+        for case in root.findall('.//case'):
+            fog_id  = (case.findtext('ixBug')   or '').strip()
+            titulo  = (case.findtext('sTitle')   or '').strip()
+            is_open = (case.findtext('fOpen')    or '').strip() == 'true'
+            status  = 'Ativo' if is_open else 'Fechado'
+            dt_closed_str = (case.findtext('dtClosed') or '').strip()
+            try:
+                dt_closed = datetime.fromisoformat(dt_closed_str.replace('Z', '+00:00')).date() if dt_closed_str else hoje
+            except Exception:
+                dt_closed = hoje
+            data_fim_caso = hoje if is_open else dt_closed
+
+            assigned = []
+            for ev in case.findall('.//event'):
+                if (ev.findtext('sVerb') or '').strip() != 'Assigned':
+                    continue
+                dt_str = (ev.findtext('dt') or '').strip()
+                desc   = (ev.findtext('s')  or '').strip()
+                try:
+                    dt_ev = datetime.fromisoformat(dt_str.replace('Z', '+00:00')).date()
+                except Exception:
+                    continue
+                m = _re.search(r'Designado para (.+?) por ', desc)
+                if not m:
+                    continue
+                assigned.append({'dt': dt_ev, 'nome': m.group(1).strip()})
+
+            if not assigned:
+                continue
+            assigned.sort(key=lambda e: e['dt'])
+
+            for i, ev in enumerate(assigned):
+                nome        = ev['nome']
+                inicio_resp = ev['dt']
+                proximo     = assigned[i + 1]['dt'] if i + 1 < len(assigned) else data_fim_caso
+                dias        = max(0, (proximo - inicio_resp).days)
+                em_aberto   = is_open and i + 1 >= len(assigned)
+
+                if nome not in colaboradores:
+                    colaboradores[nome] = {}
+                if fog_id not in colaboradores[nome]:
+                    colaboradores[nome][fog_id] = {
+                        'id': fog_id, 'titulo': titulo, 'status': status,
+                        'atribuicoes': [], 'total_dias': 0,
+                    }
+                fog_entry = colaboradores[nome][fog_id]
+                fog_entry['atribuicoes'].append({
+                    'seq':       len(fog_entry['atribuicoes']) + 1,
+                    'inicio':    inicio_resp.isoformat(),
+                    'fim':       None if em_aberto else proximo.isoformat(),
+                    'em_aberto': em_aberto,
+                    'dias':      dias,
+                })
+                fog_entry['total_dias'] += dias
+
+        resultado = []
+        for nome, fogs_dict in colaboradores.items():
+            fogs_list = sorted(fogs_dict.values(), key=lambda f: f['total_dias'], reverse=True)
+            for fog in fogs_list:
+                fog['total_atribuicoes'] = len(fog['atribuicoes'])
+            resultado.append({
+                'nome':               nome,
+                'total_fogs':         len(fogs_list),
+                'total_atribuicoes':  sum(f['total_atribuicoes'] for f in fogs_list),
+                'total_dias':         sum(f['total_dias'] for f in fogs_list),
+                'fogs':               fogs_list,
+            })
+        resultado.sort(key=lambda c: c['total_dias'], reverse=True)
+        _fog_colab_cache[cache_key] = (time.time(), resultado)
+        return resultado
+
+    except Exception as e:
+        _log.warning('Erro ao buscar FOG colaboradores (%s/%s): %s', inicio, fim, e)
+        return []
+
+
+@app.route('/api/fog-colaboradores')
+@_requer_login
+def api_fog_colaboradores():
+    hoje = datetime.now(timezone.utc).date()
+    inicio = request.args.get('inicio', hoje.replace(month=1, day=1).isoformat())
+    fim    = request.args.get('fim',    hoje.isoformat())
+    return jsonify(_buscar_fog_colaboradores(inicio, fim))
 
 
 # ── Inicialização ─────────────────────────────────────────────────────────────
