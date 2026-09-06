@@ -1295,6 +1295,9 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
                 style="padding:7px 10px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text);font:inherit;font-size:13px;">
           <option value="">Todas as categorias</option>
         </select>
+        <input id="vg-data" type="date" onchange="_vgFiltrar()"
+               title="Filtrar por data da última mensagem"
+               style="padding:7px 10px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text);font:inherit;font-size:13px;">
         <span id="vg-count" style="font-size:12px;color:var(--muted);margin-left:auto;font-variant-numeric:tabular-nums;"></span>
       </div>
       <div class="tabela-wrap" style="overflow-x:auto;">
@@ -4569,7 +4572,7 @@ function _renderFogParados(ativos) {
 let _vgDados = [];
 
 async function carregarVisaoGeral() {
-  if (_vgDados.length) { _vgFiltrar(); return; }
+  _vgDados = [];
   document.getElementById('vg-tbody').innerHTML =
     '<tr><td colspan="6" class="vazio">Carregando…</td></tr>';
   try {
@@ -4604,10 +4607,12 @@ function _vgFiltrar() {
   const q  = (document.getElementById('vg-q').value || '').toLowerCase().trim();
   const st = document.getElementById('vg-status').value;
   const ct = document.getElementById('vg-cat').value;
+  const dt = document.getElementById('vg-data').value;
   const rows = _vgDados.filter(t =>
     (!q  || (t.assunto || '').toLowerCase().includes(q)) &&
     (!st || t.status    === st) &&
-    (!ct || (ct === '__SEM_RETORNO__' ? t.sem_retorno : t.categoria === ct))
+    (!ct || (ct === '__SEM_RETORNO__' ? t.sem_retorno : t.categoria === ct)) &&
+    (!dt || t.data_iso  === dt)
   );
   const esc = s => (s || '').replace(/[&<>"']/g,
     c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

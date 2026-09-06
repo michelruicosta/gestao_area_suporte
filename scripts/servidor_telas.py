@@ -1007,6 +1007,7 @@ def api_threads_todas():
             'status':      t.get('status_workflow') or 'Aguardando Finaud',
             'motivo':      t.get('motivo_status') or '',
             'data':        _formatar_data(t.get('data_ultima_msg')),
+            'data_iso':    (t.get('data_ultima_msg') or '')[:10],
             'responsavel': _responsavel(t),
             'sem_retorno': sr,
         }
