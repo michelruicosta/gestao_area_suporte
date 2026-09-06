@@ -214,11 +214,20 @@ def destinatarios_aviso_busca(grupos, admin_email: str, usuarios=None) -> list:
     return unicos
 
 
+def origem_do_alerta(portal_url: str) -> str:
+    """'PC local' se veio do localhost; 'Servidor (produção)' nos demais casos."""
+    host = (portal_url or '').lower()
+    if 'localhost' in host or '127.0.0.1' in host:
+        return 'PC local (seu computador)'
+    return 'Servidor (produção)'
+
+
 def montar_html_aviso_busca_parou(
     nome: str,
     ultima_busca: str,
     intervalo_min: int,
     url_portal: str,
+    origem: str = '',
 ) -> str:
     """HTML do recado — mesmo envelope do Portal / Auditoria (rascunho aprovado)."""
     nome_seg = html_lib.escape((nome or '').strip())
@@ -228,6 +237,7 @@ def montar_html_aviso_busca_parou(
     ultima_seg = html_lib.escape(ultima_busca)
     intervalo_seg = html_lib.escape(f'{int(intervalo_min)} minutos')
     portal_seg = html_lib.escape(url_portal_no_email(url_portal))
+    origem_seg = html_lib.escape((origem or origem_do_alerta(url_portal)).strip())
     return f"""<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -282,6 +292,15 @@ def montar_html_aviso_busca_parou(
               </td>
               <td style="padding:14px 18px;font-size:14px;color:#3333A8;border-top:1px solid #c8c8e8;">
                 {intervalo_seg}
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:14px 18px;font-size:12px;font-weight:700;color:#1e1e72;
+                         text-transform:uppercase;letter-spacing:.5px;border-top:1px solid #c8c8e8;">
+                Origem do alerta
+              </td>
+              <td style="padding:14px 18px;font-size:14px;color:#3333A8;border-top:1px solid #c8c8e8;">
+                {origem_seg}
               </td>
             </tr>
           </table>
@@ -403,6 +422,7 @@ def verificar_e_avisar_busca_parada(
     intervalo = int(cfg.get('intervalo_coleta_min') or 0)
     ultima = texto_ultima_busca(logs)
     portal = url_portal_no_email(portal_url)
+    origem = origem_do_alerta(portal_url)
     fn_enviar = enviar or enviar_aviso_busca_parou
     algum = False
     for destino in destinos:
@@ -411,6 +431,7 @@ def verificar_e_avisar_busca_parada(
             ultima,
             intervalo,
             portal,
+            origem,
         )
         if fn_enviar(destino, html):
             algum = True

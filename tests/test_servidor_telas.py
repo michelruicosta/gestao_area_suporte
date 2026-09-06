@@ -257,6 +257,13 @@ def test_html_aviso_busca_parou_segue_rascunho_aprovado():
     assert 'Abrir a Gestão' in html
     assert 'https://finaudapps.com.br' in html
     assert 'Se a busca já tiver voltado a rodar' in html
+    assert 'Origem do alerta' in html
+    assert 'Servidor (produção)' in html
+
+    html_local = montar_html_aviso_busca_parou(
+        'Michel', '01/09/2026 às 09:00', 60, 'http://localhost:8004',
+    )
+    assert 'PC local (seu computador)' in html_local
 
 
 def test_aviso_busca_nao_repete_no_mesmo_episodio():
