@@ -12,9 +12,10 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
+| 06/09 | Alerta "busca parada": origem do alerta (local vs produção) | abaixo |
 | 03/09 | Migração HTML na VPS + fix modal C/D/F | abaixo |
 | 02/09 | Fix: cronômetro de atualização | abaixo |
-| 02/09 | Visão Geral — busca, filtros, Sem Retorno no dropdown e clique nas linhas | abaixo |
+| 02/09 | Visão Geral — busca, filtros, Sem Retorno no dropdown e clique nas linhas | arquivo |
 | 02/09 | Validação coletor colaboradores + problema status threads arquivadas | arquivo |
 | 02/09 | BACEN motivos 15 e 16 + validação pré-deploy + deploy | arquivo |
 | 02/09 | Sem Retorno — filtros por categoria e aba Por Categoria | arquivo |
@@ -41,6 +42,45 @@
 >
 > **Regra:** este arquivo guarda as **3 sessões mais recentes**. O `/fechar` acrescenta a
 > linha nova aqui e move a 4ª sessão para o arquivo.
+
+---
+
+## 📓 Diário da sessão (2026-09-06) — Alerta "busca parada": origem do alerta
+
+### O que foi feito
+
+**Diagnóstico de alerta + melhoria no e-mail de notificação**
+
+Michel recebeu o e-mail "Busca de e-mail parou" e não sabia se o problema era no PC dele ou no servidor de produção. Investigamos o log do dia e confirmamos: foi um `WinError 10060` (timeout de rede do Windows) no PC local às 00:41 do dia 05/09 — a busca voltou sozinha na hora seguinte (01:41).
+
+**Melhoria implementada (commit `efcba4a`):**
+
+- Nova linha "Origem do alerta" no quadro do e-mail: "PC local (seu computador)" ou "Servidor (produção)"
+- Nova função `origem_do_alerta(portal_url)` em `scripts/aviso_busca_parou.py`
+- 2 asserções novas no teste existente (cenário servidor e cenário local)
+- Deploy na VPS ✅
+
+### Estado atual
+
+**Commits:** `efcba4a` — no GitHub e na VPS.
+**Produção:** `gestao-suporte.finaudapps.com.br` — serviço ativo ✅.
+**pytest:** 583 testes passando, zero regressões.
+
+### Próximo passo
+
+🔴 **Chat dedicado: correção de status de todas as threads**
+
+`recalcular_status_todos()` só processa threads ativas (`inativa_desde IS NULL`) — threads arquivadas ficam com status congelado. Chat dedicado já preparado.
+
+**Antes de qualquer mudança no modal:**
+🟡 **Spec display modal A–G** — mapear comportamento atual e desejado com exemplos reais (ver PENDENCIAS.md).
+
+**Pendências que continuam:**
+- 🟡 Passo C — tela de manutenção de regras
+- 🔴 Threads irmãs — investigação em chat dedicado
+- 🔴 Monitorar caixas da Andrea e Sarah
+
+Último /fechar: 2026-09-06 — memórias revisadas ✅
 
 ---
 
@@ -134,50 +174,6 @@ Identificado em sessão anterior: `recalcular_status_todos()` só processa threa
 Último /fechar: 2026-09-02 — memórias revisadas ✅
 
 ---
-
-## 📓 Diário da sessão (2026-09-02) — Visão Geral: Sem Retorno no filtro e clique nas linhas
-
-### O que foi feito
-
-**Frente única: finalizar a tela Visão Geral — Sem Retorno no dropdown de categoria e clique nas linhas**
-
-A sessão retomou o contexto anterior e entregou dois pontos que faltavam para a Visão Geral estar completa.
-
-**O que foi concluído:**
-
-1. **Correção: "Sem Retorno" faltando no filtro de categoria**
-   - Problema: `/api/threads/todas` chamava só `buscar_por_destino('principal')` (`WHERE inativa_desde IS NULL`) — excluindo as threads arquivadas (Sem Retorno)
-   - Correção em `scripts/servidor_telas.py`: endpoint combina threads ativas + `buscar_threads_sem_retorno()`, mescla ordenando por `_chave_data()`, adiciona campo `sem_retorno: True/False` em cada item
-   - Correção em `templates/gestao_email.html`: dropdown adiciona opção "SEM RETORNO" se `_vgDados.some(t => t.sem_retorno)`; o filtro usa `t.sem_retorno === true` (não `t.categoria === 'SEM RETORNO'`)
-
-2. **Clique nas linhas abre a thread**
-   - `onclick="abrirThread()"` + `cursor:pointer` em cada `<tr>` da tabela
-   - Reutiliza o modal existente das outras telas — sem código novo
-
-3. **Push e deploy**
-   - 4 commits chegaram ao servidor (2 desta sessão + 2 de sessões anteriores ainda pendentes)
-   - SSH VPS: `git pull` + `systemctl restart gestao-suporte` → `active` ✅
-
-**Arquivos:** `scripts/servidor_telas.py`, `templates/gestao_email.html`
-
-### Estado atual
-
-**Commits:** `98b3e2c` (tela Visão Geral) + `d1c640e` (clique nas linhas) — no GitHub e na VPS.
-**Produção:** `gestao-suporte.finaudapps.com.br` — serviço ativo ✅.
-**pytest:** 560 testes passando, zero regressões.
-
-### Próximo passo
-
-🔴 **Chat dedicado: correção de status de todas as threads**
-
-Identificado em sessão anterior: `recalcular_status_todos()` só processa threads com `inativa_desde IS NULL` — threads arquivadas ficam com status "congelado". Abrir chat dedicado com o texto preparado.
-
-**Pendências que continuam:**
-- 🟡 Passo C — tela de manutenção de regras
-- 🔴 Threads irmãs — investigação em chat dedicado
-- 🔴 Monitorar caixas da Andrea e Sarah
-
-Último /fechar: 2026-09-02 22:00 — memórias revisadas ✅
 
 ---
 <!-- fim das 3 sessões recentes -->

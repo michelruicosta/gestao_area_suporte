@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-09-06 — Feat: e-mail de alerta mostra origem do problema (local vs produção)
+
+**🔎 Em miúdos:** O e-mail "Busca de e-mail parou" agora diz de onde veio o alerta — "PC local (seu computador)" ou "Servidor (produção)" — para Michel saber na hora se precisa agir com urgência.
+
+**Problema:** O e-mail de alerta não distinguia onde o erro ocorreu. Um corte momentâneo de rede no PC local (pode ignorar) parecia idêntico a uma falha no servidor de produção (urgente — clientes param de ser atendidos).
+
+**Causa raiz:** A função `montar_html_aviso_busca_parou` não recebia nem exibia a informação de origem.
+
+**Correção:** (`scripts/aviso_busca_parou.py`)
+- Nova função `origem_do_alerta(portal_url)`: retorna "PC local (seu computador)" se a URL for `localhost`/`127.0.0.1`; caso contrário "Servidor (produção)"
+- Parâmetro `origem` adicionado a `montar_html_aviso_busca_parou` (opcional, com fallback para `origem_do_alerta`)
+- Nova linha "Origem do alerta" no quadro do e-mail (terceira linha, abaixo de "Deveria rodar a cada")
+- `verificar_e_avisar_busca_parada` calcula e passa a origem automaticamente
+
+**Validação:** ✅ 2 asserções novas em `test_html_aviso_busca_parou_segue_rascunho_aprovado` (servidor e local) · 583 testes passando, zero regressões · Commit `efcba4a` · Deploy VPS ✅
+
+---
+
 ## 2026-09-03 — Feat: imagens inline Gmail [image:] aparecem no modal
 
 **🔎 Em miúdos:** E-mails enviados pelo Gmail usam `[image: arquivo.png]` (e às vezes só `[arquivo.png]`) para marcar onde ficam as imagens. O modal agora reconhece esses formatos e exibe as imagens, igual ao que já fazia para e-mails Outlook (`[cid:xxx]`). Varredura do banco confirmou que são os únicos dois formatos reais de imagem inline.

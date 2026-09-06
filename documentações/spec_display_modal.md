@@ -62,16 +62,39 @@ regra automática erra nos casos onde o remetente mistura texto real com o
 fechamento ("Seguem os arquivos. Qualquer dúvida, ligue. Att, Jair"). O telefone
 do contato, presente na assinatura, não está salvo em nenhum outro lugar no sistema.
 
-### Sub-cenário A2 — Texto com imagens inline
+### Sub-cenário A2 — Texto com imagens inline (642 mensagens — 40%)
 
-Mensagem com imagens embutidas no corpo (`[cid:...]`, `[image: nome.ext]` ou `[nome.ext]`).
+Mensagem com imagens embutidas diretamente no corpo. As imagens aparecem no
+texto como referências do tipo `[cid:...]` (formato Outlook) ou `[image: nome.ext]`
+(formato Gmail). Podem ou não ter anexos adicionais.
 
-**Decisão:** ver seção **Imagens inline** abaixo — as regras de imagem se aplicam
-a todos os tipos, incluindo A2.
+Exemplo real: *"Prezados, bom dia! Seguem as posições de TVM´s e o relatório do
+Depósito a Vista."* — com logo da empresa embutido no início e arquivos PDF/CSV
+como anexos separados.
 
-### Sub-cenários A3+ — Pendente
+**Decisão:** pendente — aguarda mapeamento completo de todos os tipos.
 
-Outros sub-cenários do Tipo A (se existirem) serão mapeados com Michel.
+### Sub-cenário A3 — Só anexo, texto mínimo (106 mensagens — 6%)
+
+Mensagem cuja única função é entregar arquivos. O corpo tem no máximo uma frase
+de cortesia ("Seguem os arquivos") seguida de assinatura. O conteúdo real está
+nos anexos (Excel, PDF, etc.).
+
+Exemplo real: *"Prezada, Seguem os arquivos para composição do DDR2011 de
+14/08/2026. Atenciosamente,"* — com 4 planilhas Excel como anexos.
+
+**Decisão:** pendente — aguarda mapeamento completo de todos os tipos.
+
+### Sub-cenário A4 — Texto real + anexo (455 mensagens — 28%)
+
+Mensagem com conteúdo escrito real que explica ou contextualiza os arquivos
+enviados. O corpo tem pelo menos um parágrafo com informação — não é só cortesia.
+
+Exemplo real: *"Prezada Juliana, Seguem em anexo as projeções de capital
+referentes aos cenários Otimista e de Stress. No cenário Otimista, avaliamos
+o crescimento..."* — com relatórios PDF e planilhas Excel.
+
+**Decisão:** pendente — aguarda mapeamento completo de todos os tipos.
 
 ---
 
