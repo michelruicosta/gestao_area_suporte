@@ -55,6 +55,25 @@
 
 ---
 
+## 2026-09-06 — Fix: imagens I7 (descrições de IA do Gmail) aparecem no modal
+
+**🔎 Em miúdos:** E-mails cujas imagens o Gmail descrevia com "O conteúdo gerado por IA pode estar incorreto" passaram a mostrar a imagem real — como a screenshot ou o logo que estava no e-mail original.
+
+**Problema:** O Gmail converte e-mails HTML para texto simples e, quando uma imagem não tem um identificador interno (Content-ID), substitui por uma descrição automática gerada por IA. Esse texto (`[Texto O conteúdo gerado por IA pode estar incorreto.]`) aparecia literalmente na tela, sem imagem.
+
+**Causa raiz — dois problemas:**
+1. O regex `_RE_IMAGEM_INLINE` não reconhecia o padrão I7, então threads com *apenas* esse tipo de imagem nunca acionavam a busca na API do Gmail.
+2. O JavaScript do modal não sabia processar o padrão I7 — sem nome de arquivo nem Content-ID, não havia como identificar a imagem pelo método convencional.
+
+**Correção:**
+- `scripts/servidor_telas.py`: padrão I7 adicionado ao `_RE_IMAGEM_INLINE`
+- `templates/gestao_email.html`: nova função `buscarGmailPositional()` — quando o padrão I7 é encontrado, usa a próxima imagem ainda não usada da lista `gmail_images` (busca posicional, pois não há nome de arquivo disponível)
+- `tests/test_extrair_cids.py`: 3 testes novos validando detecção de I7 no regex
+
+**Validação:** ✅ API do Gmail retorna 28.387 bytes (image/png) para a thread DDR 2011 (`1a010d0321a2f8a9`) · 586 testes passando, zero regressões · Commits `0782317` e `0b630f0`
+
+---
+
 ## 2026-09-03 — Feat: imagens inline Gmail [image:] aparecem no modal
 
 **🔎 Em miúdos:** E-mails enviados pelo Gmail usam `[image: arquivo.png]` (e às vezes só `[arquivo.png]`) para marcar onde ficam as imagens. O modal agora reconhece esses formatos e exibe as imagens, igual ao que já fazia para e-mails Outlook (`[cid:xxx]`). Varredura do banco confirmou que são os únicos dois formatos reais de imagem inline.
