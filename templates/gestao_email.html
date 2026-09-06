@@ -1295,9 +1295,10 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
                 style="padding:7px 10px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text);font:inherit;font-size:13px;">
           <option value="">Todas as categorias</option>
         </select>
-        <input id="vg-data" type="date" onchange="_vgFiltrar()"
-               title="Filtrar por data da última mensagem"
-               style="padding:7px 10px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text);font:inherit;font-size:13px;">
+        <input id="vg-data" type="text" placeholder="DD/MM/AAAA" maxlength="10"
+               title="Filtrar por data da última mensagem" autocomplete="off"
+               oninput="_vgDataInput(this)"
+               style="padding:7px 10px;width:110px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text);font:inherit;font-size:13px;">
         <span id="vg-count" style="font-size:12px;color:var(--muted);margin-left:auto;font-variant-numeric:tabular-nums;"></span>
       </div>
       <div class="tabela-wrap" style="overflow-x:auto;">
@@ -4603,11 +4604,19 @@ const _VG_CHIP = {
   'Concluída':           'chip chip-co',
 };
 
+function _vgDataInput(el) {
+  let v = el.value.replace(/\D/g, '');
+  if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2);
+  if (v.length > 5) v = v.slice(0, 5) + '/' + v.slice(5, 9);
+  el.value = v;
+  if (v.length === 10 || v.length === 0) _vgFiltrar();
+}
+
 function _vgFiltrar() {
   const q  = (document.getElementById('vg-q').value || '').toLowerCase().trim();
   const st = document.getElementById('vg-status').value;
   const ct = document.getElementById('vg-cat').value;
-  const dt = document.getElementById('vg-data').value;
+  const dt = (document.getElementById('vg-data').value || '').trim();
   const rows = _vgDados.filter(t =>
     (!q  || (t.assunto || '').toLowerCase().includes(q)) &&
     (!st || t.status    === st) &&
