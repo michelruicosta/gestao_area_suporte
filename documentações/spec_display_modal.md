@@ -125,6 +125,7 @@ como referências entre colchetes.
 | I4 | URL externa em colchetes | `[https://terra.com/logo.png]` | 1.360 | Removido silenciosamente — logo externo, inacessível |
 | I5 | Texto decorativo ou URL sem extensão | `[image: espaço.png]` | 2.480 | Removido silenciosamente |
 | I6 | Mensagem do Gmail | `[Imagem removida pelo remetente.]` | 288 | Mantido como texto — o Gmail já removeu antes |
+| I7 | Descrição de IA do Gmail | `[Texto O conteúdo gerado por IA pode estar incorreto.]` | 104 | Substituído pela imagem real via busca posicional no payload |
 
 **Resultado da varredura:** nenhum caso ficou sem tratamento.
 
@@ -159,4 +160,5 @@ posição no corpo, nome do arquivo e recorrência por remetente existem, mas ne
 | Correção de bug SSL (thread-safety do Gmail service) | ✅ Implementado e commitado (c7024b5) |
 | Correção de performance (Gmail API só chamado quando há imagem) | ✅ Implementado e commitado (a3082d5) |
 | Ocultar imagens da parte encadeada | 🔴 Pendente — decisão aprovada em 04/09/2026 |
-| Push dos 4 commits para a VPS | 🔴 Pendente — aguarda OK do Michel |
+| Exibir imagens I7 (descrições de IA do Gmail) | ✅ Implementado e commitado (0782317) |
+| Push dos commits para a VPS | 🔴 Pendente — aguarda OK do Michel |
