@@ -1062,6 +1062,10 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
           <span class="nav-ico">📊</span>
           <span class="nav-txt">Evolução</span>
         </button>
+        <button class="nav-item" data-pagina="fog-colaboradores" onclick="navegar(this)">
+          <span class="nav-ico">👤</span>
+          <span class="nav-txt">Por Colaborador</span>
+        </button>
       </div>
     </div>
 
@@ -1751,6 +1755,7 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
         <button class="email-tab" data-pagina="fog-kpis" onclick="navegar(this)">Visão Consolidada</button>
         <button class="email-tab ativa" data-pagina="fog-casos" onclick="navegar(this)">Lista de Casos</button>
         <button class="email-tab" data-pagina="fog-evolucao" onclick="navegar(this)">Evolução</button>
+        <button class="email-tab" data-pagina="fog-colaboradores" onclick="navegar(this)">Por Colaborador</button>
       </div>
 
       <div class="page-header" style="margin-bottom:0.75rem">
@@ -1924,6 +1929,7 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
         <button class="email-tab ativa" data-pagina="fog-kpis" onclick="navegar(this)">Visão Consolidada</button>
         <button class="email-tab" data-pagina="fog-casos" onclick="navegar(this)">Lista de Casos</button>
         <button class="email-tab" data-pagina="fog-evolucao" onclick="navegar(this)">Evolução</button>
+        <button class="email-tab" data-pagina="fog-colaboradores" onclick="navegar(this)">Por Colaborador</button>
       </div>
 
       <div class="page-header" style="margin-bottom:0.75rem">
@@ -2026,6 +2032,7 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
         <button class="email-tab" data-pagina="fog-kpis" onclick="navegar(this)">Visão Consolidada</button>
         <button class="email-tab" data-pagina="fog-casos" onclick="navegar(this)">Lista de Casos</button>
         <button class="email-tab ativa" data-pagina="fog-evolucao" onclick="navegar(this)">Evolução</button>
+        <button class="email-tab" data-pagina="fog-colaboradores" onclick="navegar(this)">Por Colaborador</button>
       </div>
 
       <div class="page-header" style="margin-bottom:0.75rem">
@@ -2080,6 +2087,48 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
       <!-- Conteúdo dinâmico -->
       <div id="fog-evo-corpo">
         <div class="fevo-loading">Carregando dados…</div>
+      </div>
+
+    </section>
+
+    <!-- ── Página FOG: Por Colaborador ──────────────────────────────── -->
+    <section class="page" id="pag-fog-colaboradores">
+
+      <div class="email-tabbar">
+        <button class="email-tab" data-pagina="fog-kpis" onclick="navegar(this)">Visão Consolidada</button>
+        <button class="email-tab" data-pagina="fog-casos" onclick="navegar(this)">Lista de Casos</button>
+        <button class="email-tab" data-pagina="fog-evolucao" onclick="navegar(this)">Evolução</button>
+        <button class="email-tab ativa" data-pagina="fog-colaboradores" onclick="navegar(this)">Por Colaborador</button>
+      </div>
+
+      <div class="page-header" style="margin-bottom:0.75rem">
+        <div class="page-header-left">
+          <h1 class="page-titulo">FOGs por Colaborador</h1>
+          <p class="page-subtitulo">Quantos casos passaram pela mão de cada colaborador e por quanto tempo</p>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap">
+        <span style="font-size:0.82rem;color:var(--muted)">Período de abertura do caso</span>
+        <label class="dt-field" onclick="_abrirCal('fogcolab-dt-inicio',event)">
+          <span class="dt-ico">📅</span>
+          <span class="dt-disp" id="fogcolab-dt-inicio-disp">01/01/2026</span>
+          <input type="hidden" id="fogcolab-dt-inicio" class="dt-inp" value="">
+        </label>
+        <span class="dt-sep">→</span>
+        <label class="dt-field" onclick="_abrirCal('fogcolab-dt-fim',event)">
+          <span class="dt-ico">📅</span>
+          <span class="dt-disp" id="fogcolab-dt-fim-disp">hoje</span>
+          <input type="hidden" id="fogcolab-dt-fim" class="dt-inp" value="">
+        </label>
+        <button class="btn-aplicar-dt" onclick="fogColabBuscar()">Buscar</button>
+      </div>
+
+      <!-- Corpo dinâmico -->
+      <div id="fogcolab-corpo">
+        <div class="fevo-loading" style="display:none" id="fogcolab-loading">Buscando dados do FogBugz…</div>
+        <div id="fogcolab-lista"></div>
       </div>
 
     </section>
@@ -2334,9 +2383,10 @@ function navegar(btn) {
     'admin-detalhe':     'Administração · E-mail · Detalhe',
     'usuarios':          'Administração · Usuários e Perfis',
     'notificacoes':      'Administração · Notificações',
-    'fog-casos':         'FOGBUGZ · Lista de Casos',
-    'fog-kpis':          'FOGBUGZ · Visão Consolidada',
-    'fog-evolucao':      'FOGBUGZ · Evolução',
+    'fog-casos':          'FOGBUGZ · Lista de Casos',
+    'fog-kpis':           'FOGBUGZ · Visão Consolidada',
+    'fog-evolucao':       'FOGBUGZ · Evolução',
+    'fog-colaboradores':  'FOGBUGZ · Por Colaborador',
   };
   const titulosAdmin = {
     'coletor':      'Administração · E-mail · Buscar e-mails agora',
@@ -2362,6 +2412,7 @@ function navegar(btn) {
   if (pag === 'notificacoes') { _notifCarregar(); }
   if (pag !== 'admin') { _pararAutoRefreshLog(); }
   if (pag === 'fog-evolucao') { carregarFogEvo(); }
+  if (pag === 'fog-colaboradores') { fogColabIniciar(); }
   if (pag === 'fog-casos') {
     if (!_keepFogFiltros) {
       _fogUrgenciaFiltro = '';
@@ -4659,6 +4710,122 @@ function _vgFiltrar() {
     <td style="font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums">${esc(t.data)}</td>
     <td style="font-size:12px;color:var(--muted)">${esc(t.responsavel)}</td>
   </tr>`).join('');
+}
+
+// ── FOG Por Colaborador ───────────────────────────────────────────────────────
+let _fogColabDados = [];
+let _fogColabCarregado = false;
+
+function fogColabIniciar() {
+  if (_fogColabCarregado) return;
+  const hoje = new Date().toISOString().slice(0, 10);
+  const iniEl = document.getElementById('fogcolab-dt-inicio');
+  const fimEl = document.getElementById('fogcolab-dt-fim');
+  if (iniEl && !iniEl.value) {
+    iniEl.value = hoje.slice(0, 4) + '-01-01';
+    document.getElementById('fogcolab-dt-inicio-disp').textContent = '01/01/' + hoje.slice(0, 4);
+  }
+  if (fimEl && !fimEl.value) {
+    fimEl.value = hoje;
+    document.getElementById('fogcolab-dt-fim-disp').textContent = _fogColabFmtDt(hoje);
+  }
+  fogColabBuscar();
+}
+
+function _fogColabFmtDt(iso) {
+  if (!iso) return '—';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+async function fogColabBuscar() {
+  const ini = document.getElementById('fogcolab-dt-inicio').value;
+  const fim = document.getElementById('fogcolab-dt-fim').value;
+  if (!ini || !fim) return;
+  const load = document.getElementById('fogcolab-loading');
+  const lista = document.getElementById('fogcolab-lista');
+  load.style.display = 'block';
+  lista.innerHTML = '';
+  try {
+    const r = await fetch(`/api/fog-colaboradores?inicio=${ini}&fim=${fim}`);
+    _fogColabDados = await r.json();
+    _fogColabCarregado = true;
+    fogColabRender();
+  } catch(e) {
+    lista.innerHTML = '<p style="color:var(--muted);padding:1rem">Erro ao buscar dados do FogBugz.</p>';
+  } finally {
+    load.style.display = 'none';
+  }
+}
+
+function fogColabRender() {
+  const lista = document.getElementById('fogcolab-lista');
+  if (!_fogColabDados.length) {
+    lista.innerHTML = '<p style="color:var(--muted);padding:1rem">Nenhum dado encontrado para o período.</p>';
+    return;
+  }
+  const esc = s => (s || '').replace(/[&<>"']/g,
+    c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  function corDias(d) {
+    if (d <= 7)  return 'background:#EAF3DE;color:#3B6D11';
+    if (d <= 20) return 'background:#FAEEDA;color:#854F0B';
+    return 'background:#FCEBEB;color:#A32D2D';
+  }
+
+  function initiais(nome) {
+    return nome.split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase();
+  }
+
+  lista.innerHTML = _fogColabDados.map((c, ci) => {
+    const fogsHtml = c.fogs.map((fog, fi) => {
+      const atribHtml = fog.atribuicoes.map(a => {
+        const fimTxt = a.em_aberto ? 'hoje (atual)' : _fogColabFmtDt(a.fim);
+        return `<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;
+            background:var(--bg);border-radius:6px;font-size:12px">
+          <span style="color:var(--muted);min-width:24px">${a.seq}ª</span>
+          <span style="flex:1;color:var(--muted)">${_fogColabFmtDt(a.inicio)} → ${fimTxt}</span>
+          <span style="padding:2px 8px;border-radius:9px;font-size:11px;font-weight:500;${corDias(a.dias)}">${a.dias} dia${a.dias !== 1 ? 's' : ''}</span>
+        </div>`;
+      }).join('');
+
+      return `<div style="border-bottom:0.5px solid var(--border);padding:8px 0 6px">
+        <div style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:0 0 6px"
+          onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'flex':'none';
+                   this.querySelector('.fc-chev').textContent=this.nextElementSibling.style.display==='none'?'▶':'▼'">
+          <span style="font-size:11px;color:var(--accent);font-weight:500;min-width:52px">#${esc(fog.id)}</span>
+          <span style="flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(fog.titulo)}</span>
+          <span style="font-size:11px;color:var(--muted)">${fog.total_atribuicoes}x</span>
+          <span style="padding:2px 8px;border-radius:9px;font-size:11px;font-weight:500;${corDias(fog.total_dias)}">${fog.total_dias} dias</span>
+          <span class="fc-chev" style="font-size:10px;color:var(--muted)">▶</span>
+        </div>
+        <div style="display:none;flex-direction:column;gap:4px;padding-left:60px">${atribHtml}</div>
+      </div>`;
+    }).join('');
+
+    return `<div style="background:var(--card-bg);border:0.5px solid var(--border);border-radius:12px;
+        padding:1rem 1.25rem;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:0"
+        onclick="const b=document.getElementById('fcb-${ci}');
+                 b.style.display=b.style.display==='none'?'block':'none';
+                 this.querySelector('.fc-arr').textContent=b.style.display==='none'?'▼':'▲'">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--marca);color:#fff;
+          display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">
+          ${esc(initiais(c.nome))}
+        </div>
+        <div style="flex:1">
+          <div style="font-weight:500;font-size:14px">${esc(c.nome)}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">
+            ${c.total_fogs} FOGs · ${c.total_atribuicoes} atribuições · ${c.total_dias} dias acumulados
+          </div>
+        </div>
+        <span class="fc-arr" style="font-size:11px;color:var(--muted)">▼</span>
+      </div>
+      <div id="fcb-${ci}" style="display:none;border-top:0.5px solid var(--border);margin-top:.75rem;padding-top:.75rem">
+        ${fogsHtml}
+      </div>
+    </div>`;
+  }).join('');
 }
 </script>
 </body>

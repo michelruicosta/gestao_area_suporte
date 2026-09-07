@@ -421,3 +421,26 @@ def test_tela_fog_legenda_e_cortes_em_dias_uteis(monkeypatch):
     assert '11d</div>' not in html
     assert 'duração do caso' not in html
     assert '99 du' not in html
+
+
+def test_fog_colaboradores_rota_existe():
+    client = app.test_client()
+    resp = client.get('/api/fog-colaboradores', follow_redirects=False)
+    assert resp.status_code in (302, 200), 'rota /api/fog-colaboradores não existe'
+
+
+def test_fog_colaboradores_funcao_definida():
+    import inspect
+    assert hasattr(st, '_buscar_fog_colaboradores')
+    fonte = inspect.getsource(st._buscar_fog_colaboradores)
+    assert 'evtDescription' in fonte
+    assert 'Designado para' in fonte
+
+
+def test_fog_colaboradores_pagina_no_html():
+    caminho = os.path.join(RAIZ, 'templates', 'gestao_email.html')
+    with open(caminho, encoding='utf-8') as f:
+        html = f.read()
+    assert 'id="pag-fog-colaboradores"' in html
+    assert 'fog-colaboradores' in html
+    assert 'Por Colaborador' in html

@@ -1357,7 +1357,7 @@ def _buscar_fog_colaboradores(inicio: str, fim: str) -> list[dict]:
                 if (ev.findtext('sVerb') or '').strip() != 'Assigned':
                     continue
                 dt_str = (ev.findtext('dt') or '').strip()
-                desc   = (ev.findtext('s')  or '').strip()
+                desc   = (ev.findtext('evtDescription') or '').strip()
                 try:
                     dt_ev = datetime.fromisoformat(dt_str.replace('Z', '+00:00')).date()
                 except Exception:
