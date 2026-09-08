@@ -182,7 +182,7 @@ def _agora() -> str:
 # ── Helpers de detecção de status (§8.1, §8.2, §8.3 da spec) ─────────────────
 
 _SEP_HISTORICO = re.compile(
-    r'^(-{3,}|_{3,}|\*?from:\*?|\*?de:\*?|on\s.{3,120}wrote:|em\s.{3,120}escreveu:)',
+    r'^(-{3,}|_{3,}|\*?from:\*?|\*?de:\*?|on\s.{3,200}wrote:|em\s.{3,200}escreveu:)',
     re.IGNORECASE,
 )
 
