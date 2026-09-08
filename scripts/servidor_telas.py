@@ -59,8 +59,11 @@ from aviso_busca_parou import (
 )
 from paths import criar_log
 from portal_sso import COOKIE_AUDITORIA, COOKIE_PORTAL, usuario_pelos_cookies
+import monitor_erros
 
 _log = criar_log('servidor')
+
+monitor_erros.iniciar(modo='flask')
 
 app = Flask(
     __name__,

@@ -16,6 +16,12 @@ from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.env'))
+
+import monitor_erros
+monitor_erros.iniciar()
+
 import banco_threads as bt
 from paths import criar_log
 from coletor_gmail import coletar
