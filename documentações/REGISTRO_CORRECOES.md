@@ -2,6 +2,48 @@
 
 ---
 
+## 2026-09-08 — Mapeamento e implementação display modal A–G
+
+**🔎 Em miúdos:** O modal de e-mails agora exibe cada mensagem de forma inteligente: texto repetido fica escondido com um botão "clique para expandir", e a parte nova do e-mail aparece sempre visível. Também passa a identificar se um encaminhamento é de alguém que já está na conversa (interno) ou de alguém novo (externo), mostrando ou escondendo o bloco de acordo.
+
+**Problema:** o modal exibia cada mensagem de forma idêntica, independente do tipo de estrutura (resposta com histórico, encaminhamento, etc.), o que causava repetição de conteúdo e dificultava a leitura da thread.
+
+**Correção — 5 mudanças em conjunto (commit `913e12f`):**
+
+1. **`_SEP_HISTORICO` (banco_threads.py):** limite de 120 → 200 chars. Linhas separadoras longas com `<mailto:…>` embutido chegavam a 181 chars e não eram reconhecidas. Validado com 9.004 separadores reais; max = 181.
+
+2. **`_remover_disclaimers_por_bloco` (banco_threads.py):** nova função que remove avisos de confidencialidade de cada bloco de mensagem separadamente, sem apagar conteúdo de outras mensagens. Antes, o corte no primeiro aviso eliminava todo o texto que viesse depois (incluindo mensagens inteiras de outros participantes).
+
+3. **`_e_encaminhamento_interno` (banco_threads.py):** nova função que detecta se o remetente de um e-mail encaminhado já participou da thread — cascata V1 (e-mail em De:) → V2 (nome cruzado) → V3 (assunto igual) → V4 (externo por padrão). Resultado em produção: V4 cobre apenas 0,9 % dos encaminhamentos.
+
+4. **`servidor_telas.py`:** campo `enc_interno` adicionado a cada mensagem dos tipos C, D e F.
+
+5. **`gestao_email.html`:** toggle colapsável implementado — B/E: histórico citado sempre oculto com toggle; C/D/F interno: bloco oculto com toggle; C/D/F externo: sempre visível.
+
+**Testes:** 11 novos (4 para `_remover_disclaimers_por_bloco`, 7 para `_e_encaminhamento_interno`). Total: 608 passando ✅
+
+**Validação:** `pytest tests/ -q` → 608 passed ✅. Deploy na VPS ativo.
+
+---
+
+## 2026-09-08 — Spec display modal: mapeamento A–G concluído + Decisão A1–A4
+
+**🔎 Em miúdos:** Terminamos de mapear como o modal deve exibir cada tipo de e-mail (A até G). Para o Tipo A, mantemos os 4 sub-cenários como documentação — mesmo que hoje todos mostrem tudo, a IA assistente (futura) poderá tratar imagens e texto de forma diferente.
+
+**Documentos atualizados:**
+- `documentações/spec_display_modal.md`: tipos B, C, D, E, F revisados com a nova lógica de toggle e detecção interno/externo
+- Artifact "Matriz de Padrões de E-mail": sub-cenários C/D/F (interno/externo/sem-id) adicionados; decisões B/E/C/D/F atualizadas; contador de sub-cenários: 10 → 13
+
+**Decisão — Tipo A (Michel, 08/09/2026):** manter os sub-cenários A1–A4 na spec. Hoje todos têm a mesma decisão ("mostrar tudo"), mas a granularidade será necessária quando a IA assistente tratar imagens, texto e anexos de forma diferente. Simplificar agora descartaria informação útil para o futuro.
+
+**Pendências encerradas:**
+- "DISPLAY MODAL — Spec por tipo de e-mail A–G" — concluída
+- "DISPLAY MODAL — Revisar sub-classificação do Tipo A" — decidida (manter A1–A4)
+
+**Validação:** sem código alterado — sem teste necessário.
+
+---
+
 ## 2026-09-08 — Limpeza de configuração + nova regra de comunicação técnica (CLAUDE.md §2.6)
 
 **🔎 Em miúdos:** Arrumamos 4 problemas de "configuração desatualizada" — gatilhos e arquivos que ainda apontavam para o projeto antigo ou contrariavam decisões já tomadas. Também registramos em regra oficial o jeito certo de explicar coisas técnicas para Michel: âncora simples primeiro, depois o conceito técnico.

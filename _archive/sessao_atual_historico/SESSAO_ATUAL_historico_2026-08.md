@@ -965,3 +965,24 @@ Spec completa → `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md`
 Último /fechar: 2026-08-24 — memórias revisadas ✅
 
 ---
+
+---
+
+## 📓 Diário da sessão (2026-09-08) — Consulta pontual: e-mail DRL 07 2026 rejeitado
+
+### O que foi feito
+
+**Sessão consultiva — nenhum código ou arquivo de projeto foi alterado.**
+
+Michel perguntou se o e-mail com assunto **"DRL 07 2026 rejeitado"** havia sido respondido na caixa da Andrea. Busca feita via Gmail MCP nas duas caixas relevantes.
+
+**Resultado da busca:**
+
+- Thread encontrada: `19ff7486cc830e8c`
+- Enviada em 12/08/2026 às 18h42 por `suporte@finaud.com.br` para `andrea.inacio@finaud.com.br`
+- Conteúdo: *"Boa tarde. Poderia me ajudar fazendo favor, sobre o DRL que foi rejeitado, referente 07/2026."*
+- **Andrea não respondeu** — thread tem apenas 1 mensagem, sem resposta em nenhuma das duas caixas verificadas.
+
+### Estado atual
+
+Sem alterações de código. Produção estável. Último /fechar: 2026-09-08.

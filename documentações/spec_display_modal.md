@@ -42,11 +42,11 @@ Tipo A não tem parte encadeada — é tudo parte nova.
 | Tipo | Status |
 |---|---|
 | A | ✅ Concluído — A1, A2, A3 e A4 decididos em 08/09/2026 |
-| B | ✅ Decidido 08/09/2026 — mostrar tudo; revisão ao final do mapeamento completo |
-| C | ✅ Decidido 08/09/2026 — mostrar tudo; revisão ao final do mapeamento completo |
-| D | ✅ Decidido 08/09/2026 — mostrar tudo; revisão ao final do mapeamento completo |
-| E | ✅ Decidido 08/09/2026 — mostrar tudo; revisão ao final do mapeamento completo |
-| F | ✅ Decidido 08/09/2026 — mostrar tudo; revisão ao final do mapeamento completo |
+| B | ✅ Revisado 08/09/2026 — parte nova visível; histórico oculto com toggle |
+| C | ✅ Revisado 08/09/2026 — parte nova visível; bloco interno oculto / externo visível |
+| D | ✅ Revisado 08/09/2026 — bloco interno oculto / externo visível |
+| E | ✅ Revisado 08/09/2026 — parte encadeada ocultada com toggle |
+| F | ✅ Revisado 08/09/2026 — bloco interno oculto / externo visível |
 | G | ✅ Decidido 08/09/2026 — mostrar só metadados e anexos (sem corpo de texto) |
 
 ---
@@ -134,9 +134,11 @@ distinguir visualmente uma resposta Gmail de uma resposta Outlook.
 (Coluna DTVM) com o relatório DLO solicitado. A parte nova tem texto explicativo + arquivo
 ZIP. A parte encadeada repete o e-mail original da Carol já visível na mensagem anterior.
 
-**Decisão (08/09/2026):** mostrar tudo — parte nova e parte encadeada exibidas integralmente.  
-**Revisão:** ao concluir o mapeamento de todos os tipos, reavaliar se a parte encadeada
-deve ser ocultada (é sempre repetição de e-mail já visível acima no modal).
+**Decisão (08/09/2026 — revisão 08/09/2026):**
+- Parte nova: exibida integralmente.
+- Parte encadeada: **ocultada por padrão** com botão "Histórico da conversa — já visível
+  acima (clique para expandir)". O conteúdo expande ao clicar. Motivo: é sempre repetição
+  de mensagem já visível acima no modal — exibir por padrão aumenta o ruído sem acrescentar informação.
 
 ---
 
@@ -150,9 +152,26 @@ encaminhado. Identificado pelos cabeçalhos "De: / Enviada em: / Para: / Assunto
 `De: / Enviada em: / Para: / Assunto:` — visível na tela. É por isso que Outlook e Gmail
 estão em tipos separados neste documento, ao contrário das respostas (B e E).
 
-**Decisão (08/09/2026):** mostrar tudo — parte nova e bloco encaminhado exibidos integralmente.  
-**Revisão:** ao concluir o mapeamento, avaliar se o bloco encaminhado deve ser ocultado
-(mesma questão do Tipo B — é repetição de conteúdo já visível em outra mensagem do modal).
+**Sub-cenários do bloco encaminhado:**
+
+| Sub-cenário | O que é | Como o sistema detecta | Decisão |
+|---|---|---|---|
+| C-interno | O e-mail encaminhado já é uma mensagem desta thread | Remetente ou assunto do bloco batem com participantes/assuntos da thread | Ocultar com toggle |
+| C-externo | O e-mail encaminhado veio de fora da thread | Remetente não encontrado na thread | Mostrar sempre |
+| C-sem-id | Não foi possível identificar (0,9% dos casos) | Nenhuma verificação resolveu | Tratar como externo — mostrar |
+
+**Lógica de detecção (08/09/2026):** cascata de 4 verificações aplicadas ao cabeçalho do bloco:
+1. E-mail no `De:`/`From:` → compara com participantes da thread
+2. Nome no `De:`/`From:` → cruza com nomes dos participantes
+3. Assunto do bloco → compara com assuntos das mensagens da thread
+4. Não resolvido → trata como externo (seguro)
+Cobertura: 99,1% do banco classificado (validado em 08/09/2026).
+
+**Decisão (08/09/2026 — revisão 08/09/2026):**
+- Parte nova: exibida integralmente.
+- Bloco encaminhado interno: **oculto por padrão** com botão "Encaminhamento — conteúdo já
+  visível neste chat (clique para expandir)".
+- Bloco encaminhado externo: **sempre visível** — contém informação que não aparece em outro lugar.
 
 ---
 
@@ -166,8 +185,12 @@ assinatura ou campo vazio antes dos cabeçalhos "De: / Enviada em:".
 `De: / Enviada em: / Para: / Assunto:` — visível na tela. É por isso que Outlook e Gmail
 estão em tipos separados neste documento, ao contrário das respostas (B e E).
 
-**Decisão (08/09/2026):** mostrar tudo — bloco encaminhado exibido integralmente.  
-**Revisão:** ao concluir o mapeamento, avaliar o que fazer com o bloco encaminhado.
+**Sub-cenários e lógica de detecção:** idênticos ao Tipo C — ver tabela e cascata acima.
+
+**Decisão (08/09/2026 — revisão 08/09/2026):**
+- Parte nova: "(encaminhou sem adicionar texto)" — sempre visível.
+- Bloco encaminhado interno: **oculto por padrão** com toggle.
+- Bloco encaminhado externo: **sempre visível**.
 
 ---
 
@@ -181,8 +204,10 @@ ou campo vazio. O remetente respondeu mas não escreveu nada de novo.
 formato do arquivo é diferente, mas na tela o resultado é o mesmo. Não é possível
 distinguir visualmente uma resposta Gmail de uma resposta Outlook.
 
-**Decisão (08/09/2026):** mostrar tudo — bloco citado exibido integralmente.  
-**Revisão:** ao concluir o mapeamento, avaliar o que fazer com o bloco citado.
+**Decisão (08/09/2026 — revisão 08/09/2026):**
+- Parte nova: "(respondeu sem adicionar texto)" — sempre visível.
+- Parte encadeada: **ocultada por padrão** com toggle. Mesma lógica do Tipo B — é sempre
+  repetição de mensagem já visível acima no modal.
 
 ---
 
@@ -197,8 +222,14 @@ message ---------" seguido dos cabeçalhos Gmail (From: / Date: / Subject: / To:
 Subject / To) — visível na tela. É por isso que Outlook e Gmail estão em tipos separados
 neste documento, ao contrário das respostas (B e E).
 
-**Decisão (08/09/2026):** mostrar tudo — bloco encaminhado exibido integralmente.  
-**Revisão:** ao concluir o mapeamento, avaliar o que fazer com o bloco encaminhado.
+**Sub-cenários e lógica de detecção:** idênticos ao Tipo C — ver tabela e cascata acima.
+Observação: encaminhamentos Gmail aparecem frequentemente com cabeçalho prefixado por `>`
+(linhas citadas). O sistema limpa esses prefixos antes de analisar.
+
+**Decisão (08/09/2026 — revisão 08/09/2026):**
+- Parte nova: exibida integralmente (ou "(encaminhou sem adicionar texto)" se vazia).
+- Bloco encaminhado interno: **oculto por padrão** com toggle.
+- Bloco encaminhado externo: **sempre visível**.
 
 ---
 

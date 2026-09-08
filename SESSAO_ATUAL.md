@@ -12,9 +12,10 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
+| 08/09 | Display modal A–G: mapeamento, implementação, spec e artifact | abaixo |
 | 08/09 | Skills/MCPs — limpeza de config + regra de comunicação técnica | abaixo |
 | 08/09 | Fix: mensagens duplicadas (coletor colaboradores + message_id) | abaixo |
-| 08/09 | Consulta pontual — e-mail DRL 07 2026 rejeitado | abaixo |
+| 08/09 | Consulta pontual — e-mail DRL 07 2026 rejeitado | arquivo |
 | 06/09 | Alerta "busca parada": origem do alerta (local vs produção) | arquivo |
 | 06/09 | Visão Geral — filtro de data + dados sempre frescos | arquivo |
 | 03/09 | Migração HTML na VPS + fix modal C/D/F | arquivo |
@@ -46,6 +47,50 @@
 >
 > **Regra:** este arquivo guarda as **3 sessões mais recentes**. O `/fechar` acrescenta a
 > linha nova aqui e move a 4ª sessão para o arquivo.
+
+---
+
+## 📓 Diário da sessão (2026-09-08) — Display modal A–G: mapeamento, implementação e documentação
+
+### O que foi feito
+
+**Spec completa + implementação do display modal para todos os tipos de e-mail (A–G).**
+
+1. **`_SEP_HISTORICO` limite 120 → 200 chars** — separadores com `<mailto:…>` embutido chegavam a 181 chars; diagnóstico com 9.004 separadores reais confirmou o novo limite seguro.
+
+2. **`_remover_disclaimers_por_bloco` (banco_threads.py)** — nova função que remove avisos de confidencialidade bloco a bloco (por separador de histórico), sem apagar mensagens de outros participantes.
+
+3. **Detecção interno/externo para encaminhamentos C/D/F (banco_threads.py):**
+   - `_e_encaminhamento_interno()`: cascata V1 (e-mail) → V2 (nome) → V3 (assunto) → V4 (externo padrão)
+   - `_cabecalho_bloco_encaminhado()`, `_limpar_linha_cab()`, `_emails_e_nomes_participantes()`
+   - `_limpar_linha_cab()` remove prefixos `>` e negrito Markdown antes da análise
+   - V4 em produção: apenas 0,9 % dos encaminhamentos
+
+4. **`servidor_telas.py`:** campo `enc_interno` calculado e adicionado a cada mensagem C/D/F.
+
+5. **`gestao_email.html`:** toggle colapsável — B/E: histórico oculto; C/D/F-interno: bloco oculto; C/D/F-externo: sempre visível.
+
+6. **Documentação:** `spec_display_modal.md` atualizado para B, C, D, E, F. Artifact "Matriz de Padrões de E-mail" atualizado com sub-cenários C/D/F e contador 10 → 13.
+
+7. **Decisão A1–A4 (Michel):** manter os 4 sub-cenários — úteis para a IA assistente futura que poderá tratar imagens, texto e anexos diferentemente.
+
+8. **11 novos testes.** Total: 608 passando. Commit `913e12f`. Deploy VPS ativo.
+
+### Estado atual
+
+**pytest:** 608 passed ✅
+**Produção:** `gestao-suporte.finaudapps.com.br` — serviço ativo ✅.
+**PENDENCIAS.md:** itens "Spec display modal A–G" e "Revisar sub-classificação A1–A4" removidos (encerrados).
+
+### Próximo passo
+
+🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
+
+**Pendências que continuam:**
+- 🟡 Passo C — tela de manutenção de regras
+- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
+
+Último /fechar: 2026-09-08 — memórias revisadas ✅
 
 ---
 
@@ -128,45 +173,6 @@
 - 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
 
 Último /fechar: 2026-09-08 — memórias revisadas ✅
-
----
-
-## 📓 Diário da sessão (2026-09-08) — Consulta pontual: e-mail DRL 07 2026 rejeitado
-
-### O que foi feito
-
-**Sessão consultiva — nenhum código ou arquivo de projeto foi alterado.**
-
-Michel perguntou se o e-mail com assunto **"DRL 07 2026 rejeitado"** havia sido respondido na caixa da Andrea. Busca feita via Gmail MCP nas duas caixas relevantes.
-
-**Resultado da busca:**
-
-- Thread encontrada: `19ff7486cc830e8c`
-- Enviada em 12/08/2026 às 18h42 por `suporte@finaud.com.br` para `andrea.inacio@finaud.com.br`
-- Conteúdo: *"Boa tarde. Poderia me ajudar fazendo favor, sobre o DRL que foi rejeitado, referente 07/2026."*
-- **Andrea não respondeu** — thread tem apenas 1 mensagem, sem resposta em nenhuma das duas caixas verificadas (andrea.inacio@ e suporte@finaud.com.br).
-
-### Estado atual
-
-Sem alterações de código. Produção estável: `gestao-suporte.finaudapps.com.br` ✅.
-
-### Próximo passo
-
-🔴 **Chat dedicado: correção de status de todas as threads**
-
-`recalcular_status_todos()` só processa threads ativas (`inativa_desde IS NULL`) — threads arquivadas ficam com status congelado. Chat dedicado já preparado.
-
-**Antes de qualquer mudança no modal:**
-🟡 **Spec display modal A–G** — mapear comportamento atual e desejado com exemplos reais (ver PENDENCIAS.md).
-
-**Pendências que continuam:**
-- 🟡 Passo C — tela de manutenção de regras
-- 🔴 Threads irmãs — investigação em chat dedicado
-- 🔴 Monitorar caixas da Andrea e Sarah
-
-Último /fechar: 2026-09-08 — memórias revisadas ✅
-
----
 
 ---
 <!-- fim das 3 sessões recentes -->
