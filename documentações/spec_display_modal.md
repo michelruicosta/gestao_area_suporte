@@ -121,6 +121,10 @@ contém informação que não está nos próprios anexos (premissas, resultados 
 e-mail anterior citado abaixo (separado por uma linha como "Em seg., 31 de ago. escreveu:").  
 **Volume:** 293 threads (15% do total).
 
+**Origem:** respostas via Gmail e via Outlook. A diferença entre os dois é técnica — o
+formato do arquivo é diferente, mas na tela o resultado é o mesmo. Não é possível
+distinguir visualmente uma resposta Gmail de uma resposta Outlook.
+
 **Estrutura:**
 - **Parte nova** — o que o remetente escreveu agora (antes do separador)
 - **Parte encadeada** — o e-mail anterior citado abaixo (após o separador) — é sempre
@@ -164,6 +168,10 @@ assinatura ou campo vazio antes dos cabeçalhos "De: / Enviada em:".
 **O que é:** e-mail de resposta onde não há conteúdo real antes do separador — só assinatura
 ou campo vazio. O remetente respondeu mas não escreveu nada de novo.  
 **Volume:** 21 threads (1% do total).
+
+**Origem:** respostas via Gmail e via Outlook. A diferença entre os dois é técnica — o
+formato do arquivo é diferente, mas na tela o resultado é o mesmo. Não é possível
+distinguir visualmente uma resposta Gmail de uma resposta Outlook.
 
 **Decisão (08/09/2026):** mostrar tudo — bloco citado exibido integralmente.  
 **Revisão:** ao concluir o mapeamento, avaliar o que fazer com o bloco citado.
