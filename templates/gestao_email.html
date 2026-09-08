@@ -424,6 +424,9 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
 .evo-p-note { font-size: 12px; color: var(--muted); padding: 7px 18px 0; }
 #evo-comp-bar strong { color: var(--text, var(--fg)); font-weight: 600; }
 .evo-comp-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--pos); flex-shrink: 0; }
+.evo-legenda-row { display: flex; align-items: center; border-bottom: 1px solid var(--border); padding-right: 10px; }
+.evo-legenda-row .card-legenda { border-bottom: none; flex: 1; }
+#evo-filtros-wrap { margin: 0; align-items: stretch; }
 .evo-ft { padding: 10px 18px; border-top: 1px solid var(--border); font-size: 11px;
   color: var(--muted); display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 
@@ -1217,12 +1220,21 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
       <div class="evo open" id="evo">
         <div class="evo-body">
           <div class="filtros-wrap collapsed" id="evo-filtros-wrap">
-            <button class="filtros-toggle" onclick="toggleFiltros('evo')">
-              <span class="filtros-lbl">Filtros</span>
-              <span class="filtros-resumo" id="evo-filtros-resumo">Semana · Todas as categorias</span>
-              <span class="filtros-note" id="evo-p-note"></span>
-              <span class="filtros-chev">▼</span>
-            </button>
+            <div class="evo-legenda-row">
+              <div class="card-legenda">
+                <span id="evo-comp-bar"></span>&nbsp;·&nbsp;
+                <span class="delta-ruim">▲</span>&nbsp;AF/AC cresceu &nbsp;·&nbsp;
+                <span class="delta-bom">▼</span>&nbsp;AF/AC caiu &nbsp;·&nbsp;
+                <span class="delta-bom">▲</span>&nbsp;Concluídas cresceu &nbsp;·&nbsp;
+                <span class="n-zero">—</span>&nbsp;sem variação
+              </div>
+              <button class="filtros-toggle" onclick="toggleFiltros('evo')">
+                <span class="filtros-lbl">Filtros</span>
+                <span class="filtros-resumo" id="evo-filtros-resumo">Semana · Todas as categorias</span>
+                <span class="filtros-note" id="evo-p-note"></span>
+                <span class="filtros-chev">▼</span>
+              </button>
+            </div>
             <div class="filtros-body">
               <div class="p-bar">
                 <span class="p-lbl">Período</span>
@@ -1256,13 +1268,6 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
                 <button class="btn-salvar-filtro" onclick="salvarFiltrosEvo()">Salvar filtro</button>
               </div>
             </div>
-          </div>
-          <div class="card-legenda">
-            <span id="evo-comp-bar"></span>&nbsp;·&nbsp;
-            <span class="delta-ruim">▲</span>&nbsp;AF/AC cresceu &nbsp;·&nbsp;
-            <span class="delta-bom">▼</span>&nbsp;AF/AC caiu &nbsp;·&nbsp;
-            <span class="delta-bom">▲</span>&nbsp;Concluídas cresceu &nbsp;·&nbsp;
-            <span class="n-zero">—</span>&nbsp;sem variação
           </div>
           <div class="evo-tw"><table class="evo-table">
             <thead><tr>
