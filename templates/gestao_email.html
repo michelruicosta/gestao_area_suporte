@@ -2631,7 +2631,9 @@ let _thrHistAberto = false;
 let _thrData = null; // { threadId, t }
 
 // Detecta lista de campos financeiros no texto bruto e retorna HTML de tabela, ou null.
-// Padrão: linhas alternando rótulo (curto, financeiro) → valor, repetido para N itens.
+// Suporta dois padrões:
+//   Bloco: [Código, Tipo, Vencimento, ...] → [val1, val2, val3, ...] → [val1, val2, val3, ...]
+//   Alternado: Código → BOVAL68 → Tipo → Call → Vencimento → ...
 function _tabelaCampos(texto) {
   if (!texto || texto.length < 40) return null;
   const ROTULOS = new Set([
@@ -2644,33 +2646,55 @@ function _tabelaCampos(texto) {
     return s.length > 0 && s.length <= 40 && !s.includes(':') && ROTULOS.has(s.toLowerCase());
   }
   const linhas = texto.split('\n').map(l => l.trim()).filter(l => l);
-  // Localizar início do bloco: primeiro rótulo cujo sucessor não é também rótulo
+
+  // ── Padrão 1: bloco de N rótulos consecutivos seguido de linhas de dados ──
+  for (let start = 0; start < linhas.length - 2; start++) {
+    if (!ehRotulo(linhas[start])) continue;
+    let fim = start;
+    while (fim < linhas.length && ehRotulo(linhas[fim])) fim++;
+    const nCols = fim - start;
+    if (nCols < 3) continue;
+    const rotulos = linhas.slice(start, fim);
+    const itens = [];
+    let j = fim;
+    while (j + nCols <= linhas.length) {
+      const grupo = linhas.slice(j, j + nCols);
+      if (grupo.some(ehRotulo)) break;
+      itens.push(grupo); j += nCols;
+    }
+    if (itens.length < 2) continue;
+    return _montarTabelaHtml(linhas, start, j, rotulos, itens);
+  }
+
+  // ── Padrão 2: rótulo e valor alternados ──────────────────────────────────
   let inicio = -1;
   for (let i = 0; i < linhas.length - 1; i++) {
     if (ehRotulo(linhas[i]) && !ehRotulo(linhas[i + 1])) { inicio = i; break; }
   }
   if (inicio === -1) return null;
-  // Coletar colunas (rótulos) e valores do primeiro item
-  const rotulos = [], vals0 = [];
-  let j = inicio;
-  while (j < linhas.length - 1 && ehRotulo(linhas[j]) && !ehRotulo(linhas[j + 1])) {
-    rotulos.push(linhas[j]); vals0.push(linhas[j + 1]); j += 2;
+  const rotulos2 = [], vals0 = [];
+  let j2 = inicio;
+  while (j2 < linhas.length - 1 && ehRotulo(linhas[j2]) && !ehRotulo(linhas[j2 + 1])) {
+    rotulos2.push(linhas[j2]); vals0.push(linhas[j2 + 1]); j2 += 2;
   }
-  if (rotulos.length < 3) return null;
-  // Itens adicionais: grupos de rotulos.length valores sem rótulos intercalados
-  const nCols = rotulos.length;
-  const itens = [vals0];
-  while (j + nCols <= linhas.length) {
-    const grupo = linhas.slice(j, j + nCols);
+  if (rotulos2.length < 3) return null;
+  const nCols2 = rotulos2.length;
+  const itens2 = [vals0];
+  while (j2 + nCols2 <= linhas.length) {
+    const grupo = linhas.slice(j2, j2 + nCols2);
     if (grupo.some(ehRotulo)) break;
-    itens.push(grupo); j += nCols;
+    itens2.push(grupo); j2 += nCols2;
   }
-  if (itens.length < 2) return null;
-  // Montar HTML
+  if (itens2.length < 2) return null;
+  return _montarTabelaHtml(linhas, inicio, j2, rotulos2, itens2);
+}
+
+function _montarTabelaHtml(linhas, inicio, fimDados, rotulos, itens) {
   const uid = 'tc' + Math.random().toString(36).slice(2, 8);
+  const nCols = rotulos.length;
   const ths = rotulos.map(r => `<th>${escHtml(r)}</th>`).join('');
   const trs = itens.map(vs => `<tr>${vs.map(v => `<td>${escHtml(v)}</td>`).join('')}</tr>`).join('');
-  const rawBloco = escHtml(linhas.slice(inicio, j).join('\n'));
+  const rawBloco = escHtml(linhas.slice(inicio, fimDados).join('\n'));
   let html = '';
   const antes = linhas.slice(0, inicio).join('\n');
   if (antes) html += `<div class="msg-body">${escHtml(antes)}</div>`;
@@ -2686,7 +2710,7 @@ function _tabelaCampos(texto) {
     <table class="msg-tcampos-tbl"><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>
   </div>
   <div id="${uid}-r" class="msg-body" hidden>${rawBloco}</div>`;
-  const depois = linhas.slice(j).join('\n');
+  const depois = linhas.slice(fimDados).join('\n');
   if (depois) html += `<div class="msg-body">${escHtml(depois)}</div>`;
   return html;
 }
