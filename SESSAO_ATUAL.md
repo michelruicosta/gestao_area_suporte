@@ -12,9 +12,10 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
-| 08/09 | UX modal thread: histórico sob demanda, fim do scroll duplo | abaixo |
+| 08/09 | Fix: campo data vazio — retomada /fechar | abaixo |
 | 08/09 | Fix: filtro de período Lista de Casos + campo data vazio | abaixo |
 | 08/09 | Display modal A–G: mapeamento, implementação, spec e artifact | abaixo |
+| 08/09 | UX modal thread: histórico sob demanda, fim do scroll duplo | arquivo |
 | 08/09 | Skills/MCPs — limpeza de config + regra de comunicação técnica | arquivo |
 | 08/09 | Fix: mensagens duplicadas (coletor colaboradores + message_id) | arquivo |
 | 08/09 | Consulta pontual — e-mail DRL 07 2026 rejeitado | arquivo |
@@ -52,28 +53,19 @@
 
 ---
 
-## 📓 Diário da sessão (2026-09-08) — UX modal thread: histórico sob demanda
+## 📓 Diário da sessão (2026-09-08) — Fix: campo data vazio — retomada /fechar
 
 ### O que foi feito
 
-**Melhoria de UX no modal de visualização de threads** — design aprovado por Michel após protótipo interativo.
+Sessão curta de retomada após limite de contexto na sessão anterior.
 
-1. **Problema:** modal com dois scrolls simultâneos — externo (modal) e interno por mensagem (`max-height: 14rem`). Em threads longas era necessário scrollar em dois níveis ao mesmo tempo.
-
-2. **Design aprovado:** Michel aprovou o protótipo (artifact publicado na sessão). Modal abre direto nas 2 mensagens mais recentes; histórico oculto atrás de um botão; borda colorida por remetente.
-
-3. **`gestao_email.html` (commits `d585ddc` + `a528a1f`):**
-   - CSS: removido `max-height: 14rem; overflow-y: auto` do `.msg-body` — scroll único
-   - CSS: `.msg-card-cliente` (borda azul), `.msg-card-finaud` (borda verde), `.msg-ver-historico` (botão pílula), `.msg-historico-colapsado`
-   - JS: `_renderMsgHtml()` extrai HTML por mensagem; `_renderThreadBody()` divide em `recentes` (2 primeiros = 2 mais recentes) e `historico`
-   - JS: `_togHist()` expande/oculta seção de histórico; `_togHistMsg(idx)` recolhe mensagem individual via DOM (preserva inner toggles B/E/C/D/F)
-   - **Bug corrigido:** API retorna newest no índice 0 (`reversed(stored_msgs)` em `servidor_telas.py:789`); slicing inicial estava invertido
-
-4. **Deploy VPS:** serviço ativo ✅.
+- **Fix confirmado em produção:** `.dt-disp.vazio { display:none }` — campos de data vazios mostram só 📅 em vez de "dd/m..." cortado (commit `22f8959`, sessão anterior). Michel verificou e confirmou "Corrigido".
+- **VPS:** já estava atualizada (commit publicado pela sessão paralela); nenhuma ação de deploy necessária.
+- **/fechar:** ritual concluído (havia sido interrompido pelo limite de contexto).
 
 ### Estado atual
 
-**pytest:** 608 passed ✅ (zero regressões — mudança de UI pura, sem teste dedicado).
+**pytest:** 608 passed ✅ (zero regressões).
 **Produção:** `gestao-suporte.finaudapps.com.br` — serviço ativo ✅.
 
 ### Próximo passo

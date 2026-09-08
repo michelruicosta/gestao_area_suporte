@@ -81,3 +81,39 @@ Michel recebeu o e-mail "Busca de e-mail parou" e não sabia se o problema era n
 Último /fechar: 2026-09-06 — memórias revisadas ✅
 
 ---
+
+## 📓 Diário da sessão (2026-09-08) — UX modal thread: histórico sob demanda
+
+### O que foi feito
+
+**Melhoria de UX no modal de visualização de threads** — design aprovado por Michel após protótipo interativo.
+
+1. **Problema:** modal com dois scrolls simultâneos — externo (modal) e interno por mensagem (`max-height: 14rem`). Em threads longas era necessário scrollar em dois níveis ao mesmo tempo.
+
+2. **Design aprovado:** Michel aprovou o protótipo (artifact publicado na sessão). Modal abre direto nas 2 mensagens mais recentes; histórico oculto atrás de um botão; borda colorida por remetente.
+
+3. **`gestao_email.html` (commits `d585ddc` + `a528a1f`):**
+   - CSS: removido `max-height: 14rem; overflow-y: auto` do `.msg-body` — scroll único
+   - CSS: `.msg-card-cliente` (borda azul), `.msg-card-finaud` (borda verde), `.msg-ver-historico` (botão pílula), `.msg-historico-colapsado`
+   - JS: `_renderMsgHtml()` extrai HTML por mensagem; `_renderThreadBody()` divide em `recentes` (2 primeiros = 2 mais recentes) e `historico`
+   - JS: `_togHist()` expande/oculta seção de histórico; `_togHistMsg(idx)` recolhe mensagem individual via DOM (preserva inner toggles B/E/C/D/F)
+   - **Bug corrigido:** API retorna newest no índice 0 (`reversed(stored_msgs)` em `servidor_telas.py:789`); slicing inicial estava invertido
+
+4. **Deploy VPS:** serviço ativo ✅.
+
+### Estado atual
+
+**pytest:** 608 passed ✅ (zero regressões — mudança de UI pura, sem teste dedicado).
+**Produção:** `gestao-suporte.finaudapps.com.br` — serviço ativo ✅.
+
+### Próximo passo
+
+🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
+
+**Pendências que continuam:**
+- 🟡 Passo C — tela de manutenção de regras
+- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
+
+Último /fechar: 2026-09-08 — memórias revisadas ✅
+
+---
