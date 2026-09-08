@@ -224,6 +224,12 @@
   }
   .td-desc { max-width: 280px; }
   .td-muted { color: var(--text-3); }
+  .td-example {
+    font-size: 0.75rem;
+    color: var(--text-2);
+    font-style: italic;
+    max-width: 220px;
+  }
 
   /* badges */
   .badge {
@@ -311,7 +317,7 @@
       <div class="section-line"></div>
       <span class="section-toggle">▼</span>
     </div>
-    <div class="section-body" style="max-height:600px">
+    <div class="section-body" style="max-height:1200px">
       <div class="tbl-wrap">
         <table>
           <thead>
@@ -320,6 +326,7 @@
               <th>O que é</th>
               <th>Threads</th>
               <th>Decisão — o que o modal mostra</th>
+              <th>Exemplo (pesquise no Gmail)</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -329,6 +336,7 @@
               <td class="td-desc">Mensagem simples — sem histórico citado. Subdivide em A1–A4.</td>
               <td class="td-vol"><div class="vol-bar"><div class="vol-bar-track"><div class="vol-bar-fill" style="width:67%"></div></div>1.241 · 67%</div></td>
               <td>Mostrar tudo — texto, imagens e anexos (ver sub-cenários A1–A4)</td>
+              <td class="td-example">DRM - 2060 PLANNER CORRETORA</td>
               <td><span class="badge badge-ok">✓ Decidido 08/09</span></td>
             </tr>
             <tr data-status="decidido">
@@ -336,6 +344,7 @@
               <td class="td-desc">Resposta com texto novo + histórico citado abaixo</td>
               <td class="td-vol"><div class="vol-bar"><div class="vol-bar-track"><div class="vol-bar-fill" style="width:15%"></div></div>293 · 15%</div></td>
               <td>Mostrar tudo — parte nova e parte encadeada integralmente</td>
+              <td class="td-example">PATRIMÔNIO DE REFERÊNCIA - RISK</td>
               <td><span class="badge badge-ok">✓ Decidido 08/09</span></td>
             </tr>
             <tr data-status="decidido">
@@ -343,6 +352,7 @@
               <td class="td-desc">Encaminhamento Outlook com texto novo antes do bloco</td>
               <td class="td-vol"><div class="vol-bar"><div class="vol-bar-track"><div class="vol-bar-fill" style="width:5%"></div></div>96 · 5%</div></td>
               <td>Mostrar tudo — parte nova e bloco encaminhado integralmente</td>
+              <td class="td-example">RES: DLO - 06/2026 - Encaminhar a composição do fundo</td>
               <td><span class="badge badge-ok">✓ Decidido 08/09</span></td>
             </tr>
             <tr data-status="decidido">
@@ -350,6 +360,7 @@
               <td class="td-desc">Encaminhamento Outlook sem texto novo (só assinatura antes)</td>
               <td class="td-vol"><div class="vol-bar"><div class="vol-bar-track"><div class="vol-bar-fill" style="width:6%"></div></div>128 · 6%</div></td>
               <td>Mostrar tudo — bloco encaminhado integralmente</td>
+              <td class="td-example">ENC: EXTRATOS COMPROMISSADAS/CUSTODIA (TRUSTEE) - 28/08/2026</td>
               <td><span class="badge badge-ok">✓ Decidido 08/09</span></td>
             </tr>
             <tr data-status="decidido">
@@ -357,6 +368,7 @@
               <td class="td-desc">Resposta sem texto novo — só assinatura antes do separador</td>
               <td class="td-vol"><div class="vol-bar"><div class="vol-bar-track"><div class="vol-bar-fill" style="width:1%"></div></div>21 · 1%</div></td>
               <td>Mostrar tudo — bloco citado integralmente</td>
+              <td class="td-example">CADOC 4111 DIA 29/07</td>
               <td><span class="badge badge-ok">✓ Decidido 08/09</span></td>
             </tr>
             <tr data-status="decidido">
@@ -364,6 +376,7 @@
               <td class="td-desc">Encaminhamento Gmail</td>
               <td class="td-vol"><div class="vol-bar"><div class="vol-bar-track"><div class="vol-bar-fill" style="width:2%"></div></div>51 · 2%</div></td>
               <td>Mostrar tudo — parte nova e bloco encaminhado integralmente</td>
+              <td class="td-example">Fwd: Encaminhar a planilha LEC 06 2026 - MIRAE</td>
               <td><span class="badge badge-ok">✓ Decidido 08/09</span></td>
             </tr>
             <tr data-status="decidido">
@@ -371,6 +384,7 @@
               <td class="td-desc">Corpo vazio ou quase vazio</td>
               <td class="td-vol"><div class="vol-bar"><div class="vol-bar-track"><div class="vol-bar-fill" style="width:1%"></div></div>2 · 0%</div></td>
               <td>Mostrar metadados e anexos — não há corpo de texto para exibir</td>
+              <td class="td-example">Aceita: Risk S5</td>
               <td><span class="badge badge-ok">✓ Decidido 08/09</span></td>
             </tr>
           </tbody>
