@@ -146,6 +146,10 @@ deve ser ocultada (é sempre repetição de e-mail já visível acima no modal).
 encaminhado. Identificado pelos cabeçalhos "De: / Enviada em: / Para: / Assunto:" do Outlook.  
 **Volume:** 96 threads (5% do total).
 
+**Origem:** encaminhamentos via Outlook. O bloco encaminhado começa com os cabeçalhos
+`De: / Enviada em: / Para: / Assunto:` — visível na tela. É por isso que Outlook e Gmail
+estão em tipos separados neste documento, ao contrário das respostas (B e E).
+
 **Decisão (08/09/2026):** mostrar tudo — parte nova e bloco encaminhado exibidos integralmente.  
 **Revisão:** ao concluir o mapeamento, avaliar se o bloco encaminhado deve ser ocultado
 (mesma questão do Tipo B — é repetição de conteúdo já visível em outra mensagem do modal).
@@ -157,6 +161,10 @@ encaminhado. Identificado pelos cabeçalhos "De: / Enviada em: / Para: / Assunto
 **O que é:** e-mail encaminhado via Outlook onde não há texto novo antes do bloco — só
 assinatura ou campo vazio antes dos cabeçalhos "De: / Enviada em:".  
 **Volume:** 128 threads (6% do total).
+
+**Origem:** encaminhamentos via Outlook. O bloco encaminhado começa com os cabeçalhos
+`De: / Enviada em: / Para: / Assunto:` — visível na tela. É por isso que Outlook e Gmail
+estão em tipos separados neste documento, ao contrário das respostas (B e E).
 
 **Decisão (08/09/2026):** mostrar tudo — bloco encaminhado exibido integralmente.  
 **Revisão:** ao concluir o mapeamento, avaliar o que fazer com o bloco encaminhado.
@@ -183,6 +191,11 @@ distinguir visualmente uma resposta Gmail de uma resposta Outlook.
 **O que é:** e-mail encaminhado via Gmail, identificado pelo separador "---------- Forwarded
 message ---------" seguido dos cabeçalhos Gmail (From: / Date: / Subject: / To:).  
 **Volume:** 51 threads (2% do total).
+
+**Origem:** encaminhamentos via Gmail. O bloco começa com o separador
+`---------- Forwarded message ---------` seguido dos cabeçalhos Gmail (From / Date /
+Subject / To) — visível na tela. É por isso que Outlook e Gmail estão em tipos separados
+neste documento, ao contrário das respostas (B e E).
 
 **Decisão (08/09/2026):** mostrar tudo — bloco encaminhado exibido integralmente.  
 **Revisão:** ao concluir o mapeamento, avaliar o que fazer com o bloco encaminhado.
