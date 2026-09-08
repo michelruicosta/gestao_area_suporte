@@ -603,6 +603,116 @@ _CAB_FWD = re.compile(
     re.IGNORECASE,
 )
 
+# ── Detecção de encaminhamento interno vs externo ─────────────────────────────
+
+_DE_EMAIL_CAB = re.compile(
+    r'^\s*(?:de|from)\s*:\s*.*?([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})',
+    re.IGNORECASE,
+)
+_DE_NOME_CAB = re.compile(
+    r'^\s*(?:de|from)\s*:\s*([^<\n@]{3,60}?)(?:\s*<|\s*$)',
+    re.IGNORECASE,
+)
+_ASSUNTO_CAB = re.compile(
+    r'^\s*(?:assunto|subject)\s*:\s*(.+)',
+    re.IGNORECASE,
+)
+_EMAIL_QUALQUER = re.compile(
+    r'[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}'
+)
+
+
+def _limpar_linha_cab(linha: str) -> str:
+    """Remove prefixos '>' de citação e formatação *markdown* antes de analisar."""
+    s = linha.strip()
+    while s.startswith('>'):
+        s = s[1:].lstrip()
+    return re.sub(r'\*([^*]+)\*', r'\1', s)
+
+
+def _cabecalho_bloco_encaminhado(corpo_raw: str) -> list[str]:
+    """Retorna as primeiras linhas do cabeçalho do bloco encaminhado (limpas), ou []."""
+    linhas = corpo_raw.split('\n')
+    idx = None
+    for i, linha in enumerate(linhas):
+        s = _limpar_linha_cab(linha)
+        if _GMAIL_FWD_RE.search(s):
+            idx = i
+            break
+        if re.match(r'^\s*(?:de|from)\s*:', s, re.IGNORECASE):
+            trecho = '\n'.join(_limpar_linha_cab(l) for l in linhas[i:min(i + 8, len(linhas))])
+            if _OUTLOOK_FWD_ENVIADA.search(trecho):
+                idx = i
+                break
+    if idx is None:
+        return []
+    return [_limpar_linha_cab(l) for l in linhas[idx:idx + 12]]
+
+
+def _e_encaminhamento_interno(
+    corpo_raw: str,
+    emails_participantes: set[str],
+    nomes_participantes: dict[str, str],
+    assuntos_thread: set[str],
+) -> bool:
+    """True se o bloco encaminhado veio de alguém/algo já presente na thread.
+
+    Verificações em cascata — para no primeiro que resolve:
+      V1: e-mail no De:/From: → compara com participantes
+      V2: nome no De:/From:  → cruza com nomes dos participantes
+      V3: assunto do bloco   → compara com assuntos das mensagens da thread
+      V4: não resolvido      → False (externo por padrão — seguro)
+    """
+    cab = _cabecalho_bloco_encaminhado(corpo_raw)
+    if not cab:
+        return False
+
+    # V1 — e-mail diretamente no cabeçalho
+    for linha in cab[:6]:
+        m = _DE_EMAIL_CAB.match(linha)
+        if m:
+            return m.group(1).lower() in emails_participantes
+
+    # V2 — nome no cabeçalho, cruzado com participantes conhecidos
+    for linha in cab[:4]:
+        m = _DE_NOME_CAB.match(linha)
+        if m:
+            nome = m.group(1).strip().lower()
+            if len(nome) >= 3 and nome in nomes_participantes:
+                return nomes_participantes[nome] in emails_participantes
+
+    # V3 — assunto do bloco igual ao assunto de outra mensagem da thread
+    for linha in cab:
+        m = _ASSUNTO_CAB.match(linha)
+        if m:
+            return m.group(1).strip().lower() in assuntos_thread
+
+    # V4 — não classificado → externo por padrão
+    return False
+
+
+def _emails_e_nomes_participantes(
+    msgs: list[dict],
+) -> tuple[set[str], dict[str, str]]:
+    """Extrai (emails, nomes→email) de todos os participantes das mensagens da thread."""
+    emails: set[str] = set()
+    nomes: dict[str, str] = {}
+    for msg in msgs:
+        for campo in ('remetente', 'reply_to', 'destinatarios', 'cc'):
+            val = msg.get(campo) or ''
+            for match in re.finditer(
+                r'([^<,;\n]+?)\s*<([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})>',
+                val,
+            ):
+                nome = match.group(1).strip().lower()
+                email = match.group(2).lower()
+                emails.add(email)
+                if nome:
+                    nomes[nome] = email
+            for m in _EMAIL_QUALQUER.finditer(val):
+                emails.add(m.group(0).lower())
+    return emails, nomes
+
 
 def _extrair_bloco_encaminhado(corpo_raw: str) -> str:
     """

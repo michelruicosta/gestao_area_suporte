@@ -780,12 +780,21 @@ def api_thread(thread_id: str):
         except Exception as exc:
             _log.warning('Gmail image fetch falhou para %s: %s', thread_id, exc)
 
+    # Dados de participantes e assuntos da thread — usados para detectar
+    # se encaminhamentos (C/D/F) são internos (repetição) ou externos (conteúdo novo)
+    emails_part, nomes_part = bt._emails_e_nomes_participantes(stored_msgs)
+    assuntos_thread = {(m.get('assunto') or '').strip().lower() for m in stored_msgs if m.get('assunto')}
+
     mensagens = []
     for i, m in enumerate(reversed(stored_msgs)):
         gmail_info = gmail_cid_maps[n - 1 - i]
         corpo_raw = m.get('corpo_texto') or ''
         tipo = bt._identificar_tipo_estrutura(corpo_raw)
         reais, assinatura = bt._separar_anexos(m.get('nomes_anexos') or [])
+        enc_interno = (
+            bt._e_encaminhamento_interno(corpo_raw, emails_part, nomes_part, assuntos_thread)
+            if tipo in ('C', 'D', 'F') else False
+        )
         mensagens.append({
             'de':                _resolver_de(m),
             'para':              _resolver_para(m),
@@ -796,6 +805,7 @@ def api_thread(thread_id: str):
             'texto_novo':        bt._truncar_no_disclaimer(bt._extrair_texto_novo(corpo_raw)) if tipo in ('B', 'C', 'D', 'E', 'F') else '',
             'corpo_encaminhado': bt._remover_disclaimers_por_bloco(bt._extrair_bloco_encaminhado(corpo_raw)) if tipo in ('C', 'D', 'F') else '',
             'historico_citado':  bt._remover_disclaimers_por_bloco(bt._extrair_historico_citado(corpo_raw)) if tipo in ('B', 'E') else '',
+            'enc_interno':       enc_interno,
             'anexos':            m.get('nomes_anexos') or [],
             'anexos_reais':      reais,
             'anexos_assinatura': assinatura,

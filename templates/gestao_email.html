@@ -635,6 +635,10 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
 .msg-head strong { color: var(--text); }
 .msg-body { padding: 0.85rem; font-size: 0.88rem; white-space: pre-wrap; line-height: 1.6; max-height: 14rem; overflow-y: auto; }
 .msg-enc-label { padding: 0.3rem 0.85rem; font-size: 0.75rem; color: var(--muted); font-style: italic; border-bottom: 1px solid var(--border); }
+.msg-enc-toggle { display: flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.85rem; font-size: 0.75rem; color: var(--muted); font-style: italic; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
+.msg-enc-toggle:hover { color: var(--text); }
+.msg-enc-toggle .toggle-icon { font-style: normal; font-size: 0.65rem; }
+.msg-enc-colapsado { display: none; }
 .msg-sem-texto { color: var(--muted); font-size: 0.83rem; }
 .msg-anexos { padding: 0.35rem 0.85rem 0.65rem; font-size: 0.8rem; color: var(--muted); }
 .msg-anexos span { background: var(--bg); padding: 0.18rem 0.5rem; border-radius: 4px; margin-right: 0.35rem; }
@@ -2690,6 +2694,18 @@ async function abrirThread(threadId) {
         const anexos = listaAnexos.length
           ? `<div class="msg-anexos">📎 ${listaAnexos.map(a => `<span>${escHtml(a)}</span>`).join('')}</div>`
           : '';
+        // Gera bloco colapsável (oculto por padrão) com botão de expandir
+        function blocoColapsavel(label, conteudoHtml) {
+          const uid = Math.random().toString(36).slice(2);
+          return `<div class="msg-enc-toggle" onclick="
+            var b=this.nextElementSibling;
+            var i=this.querySelector('.toggle-icon');
+            if(b.style.display===''){b.style.display='block';i.textContent='▼';}
+            else{b.style.display='';i.textContent='▶';}
+          "><span class="toggle-icon">▶</span>${escHtml(label)}</div>
+          <div class="msg-enc-colapsado"><div class="msg-body">${conteudoHtml}</div></div>`;
+        }
+
         let corpoHtml;
         if (isEncaminhamento) {
           const textoNovo = renderImagens(m.texto_novo);
@@ -2697,9 +2713,16 @@ async function abrirThread(threadId) {
             ? `<div class="msg-body">${textoNovo}</div>`
             : `<div class="msg-body msg-sem-texto"><em>(encaminhou sem adicionar texto)</em></div>`;
           const corpoEnc = renderImagens(m.corpo_encaminhado);
-          const parteEnc = corpoEnc
-            ? `<div class="msg-enc-label">Encaminhamento — conteúdo original abaixo</div><div class="msg-body">${corpoEnc}</div>`
-            : '';
+          let parteEnc = '';
+          if (corpoEnc) {
+            // Interno (repetição): oculto por padrão com toggle
+            // Externo (conteúdo novo): sempre visível
+            if (m.enc_interno) {
+              parteEnc = blocoColapsavel('Encaminhamento — conteúdo já visível neste chat (clique para expandir)', corpoEnc);
+            } else {
+              parteEnc = `<div class="msg-enc-label">Encaminhamento — conteúdo original abaixo</div><div class="msg-body">${corpoEnc}</div>`;
+            }
+          }
           corpoHtml = parteNova + parteEnc;
         } else if (isResposta) {
           const textoNovo = renderImagens(m.texto_novo);
@@ -2707,8 +2730,9 @@ async function abrirThread(threadId) {
             ? `<div class="msg-body">${textoNovo}</div>`
             : `<div class="msg-body msg-sem-texto"><em>(respondeu sem adicionar texto)</em></div>`;
           const historico = renderImagens(m.historico_citado);
+          // Histórico de respostas é sempre repetição — oculto por padrão com toggle
           const parteHistorico = historico
-            ? `<div class="msg-enc-label">Histórico da conversa</div><div class="msg-body">${historico}</div>`
+            ? blocoColapsavel('Histórico da conversa — já visível acima (clique para expandir)', historico)
             : '';
           corpoHtml = parteNova + parteHistorico;
         } else {

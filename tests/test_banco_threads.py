@@ -189,6 +189,91 @@ def test_remover_disclaimers_bloco_vazio():
     assert bt._remover_disclaimers_por_bloco('') == ''
 
 
+# ── _e_encaminhamento_interno ─────────────────────────────────────────────────
+
+def _part(emails=None, nomes=None):
+    return set(emails or []), dict(nomes or {})
+
+def test_enc_interno_v1_email_no_cabecalho():
+    """V1: e-mail do bloco está entre os participantes da thread → interno."""
+    corpo = (
+        'Texto novo.\n'
+        'De: Ana Silva <ana@finaud.com.br>\n'
+        'Enviada em: seg., 1 de set. de 2026 08:00\n'
+        'Para: suporte@finaud.com.br\n'
+        'Assunto: RES: Teste\n\nCorpo do bloco.'
+    )
+    emails, nomes = _part(emails=['ana@finaud.com.br', 'suporte@finaud.com.br'])
+    assert bt._e_encaminhamento_interno(corpo, emails, nomes, set()) is True
+
+def test_enc_externo_v1_email_nao_na_thread():
+    """V1: e-mail do bloco NÃO está nos participantes → externo."""
+    corpo = (
+        'Texto novo.\n'
+        'De: Terceiro <terceiro@externo.com.br>\n'
+        'Enviada em: seg., 1 de set. de 2026 08:00\n'
+        'Para: suporte@finaud.com.br\n'
+        'Assunto: RES: Teste\n\nCorpo do bloco.'
+    )
+    emails, nomes = _part(emails=['suporte@finaud.com.br'])
+    assert bt._e_encaminhamento_interno(corpo, emails, nomes, set()) is False
+
+def test_enc_interno_v2_nome_cruzado():
+    """V2: De: sem e-mail, mas nome encontrado nos participantes → interno."""
+    corpo = (
+        'Texto novo.\n'
+        'De: Jair Bonetti\n'
+        'Enviada em: seg., 1 de set. de 2026 08:00\n'
+        'Para: suporte@finaud.com.br\n'
+        'Assunto: RES: Teste\n\nCorpo do bloco.'
+    )
+    emails = {'jair.bonetti@wu.com', 'suporte@finaud.com.br'}
+    nomes = {'jair bonetti': 'jair.bonetti@wu.com'}
+    assert bt._e_encaminhamento_interno(corpo, emails, nomes, set()) is True
+
+def test_enc_interno_v3_assunto_cruzado():
+    """V3: assunto do bloco bate com assunto de mensagem da thread → interno."""
+    corpo = (
+        'Texto novo.\n'
+        'De: Pessoa Desconhecida\n'
+        'Enviada em: seg., 1 de set. de 2026 08:00\n'
+        'Para: suporte@finaud.com.br\n'
+        'Assunto: DDR 2011 - 27/08/2026\n\nCorpo do bloco.'
+    )
+    emails, nomes = _part(emails=['suporte@finaud.com.br'])
+    assuntos = {'ddr 2011 - 27/08/2026'}
+    assert bt._e_encaminhamento_interno(corpo, emails, nomes, assuntos) is True
+
+def test_enc_externo_v4_nao_resolvido():
+    """V4: nenhuma verificação resolve → False (externo por padrão)."""
+    corpo = (
+        'Texto novo.\n'
+        'De: Ivan Cândido\n'
+        'Enviada em: seg., 1 de set. de 2026 08:00\n'
+        'Para: suporte@finaud.com.br\n'
+        'Assunto: Assunto Diferente\n\nCorpo do bloco.'
+    )
+    emails, nomes = _part(emails=['suporte@finaud.com.br'])
+    assert bt._e_encaminhamento_interno(corpo, emails, nomes, set()) is False
+
+def test_enc_sem_bloco_retorna_falso():
+    """Sem bloco encaminhado detectável → False."""
+    assert bt._e_encaminhamento_interno('Texto simples.', set(), {}, set()) is False
+
+def test_enc_interno_prefixo_citacao():
+    """V1 com linhas prefixadas por '>' (Gmail citado) → ainda classifica."""
+    corpo = (
+        'Texto novo.\n'
+        '> ---------- Forwarded message ---------\n'
+        '> De: Ana Silva <ana@finaud.com.br>\n'
+        '> Date: seg., 1 de set. de 2026\n'
+        '> Subject: Teste\n'
+        '> To: suporte@finaud.com.br\n'
+    )
+    emails, nomes = _part(emails=['ana@finaud.com.br', 'suporte@finaud.com.br'])
+    assert bt._e_encaminhamento_interno(corpo, emails, nomes, set()) is True
+
+
 # ── _determinar_status — lista vazia ─────────────────────────────────────────
 
 def test_status_sem_mensagens():
