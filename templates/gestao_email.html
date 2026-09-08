@@ -354,7 +354,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .dt-ico{font-size:0.85rem;line-height:1;opacity:.75}
 .dt-inp{position:absolute;opacity:0;pointer-events:none;width:0;height:0}
 .dt-disp{font-size:0.75rem;color:var(--text);width:82px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;user-select:none}
-.dt-disp.vazio{color:var(--muted);width:0;overflow:hidden}
+.dt-disp.vazio{display:none}
 .dt-cal-popup{position:fixed;z-index:9500;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.28);padding:14px;width:236px;animation:calIn .12s ease}
 @keyframes calIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
 .dt-cal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
@@ -2728,21 +2728,39 @@ function _renderMsgHtml(m, threadId) {
   return { corpoHtml, anexos };
 }
 
-// Renderiza o modal-thread-body conforme o estado atual
+// Renderiza o modal-thread-body conforme o estado atual.
+// A API retorna mensagens com a mais recente no índice 0 (newest-first).
+// Exibimos as 2 primeiras (mais recentes) sempre; o restante é histórico sob demanda.
 function _renderThreadBody() {
   if (!_thrData) return;
   const { threadId, t } = _thrData;
-  const msgs = t.mensagens;
-  const corte = Math.max(0, msgs.length - 2);
-  const historico = msgs.slice(0, corte);
-  const recentes = msgs.slice(corte);
+  const msgs = t.mensagens; // índice 0 = mais recente
+  const recentes = msgs.slice(0, 2);
+  const historico = msgs.slice(2); // mais antigas; índice 0 = 3ª mais recente
   const partes = [];
 
+  // Recentes sempre no topo
+  const recentesHtml = recentes.map(m => {
+    const { corpoHtml, anexos } = _renderMsgHtml(m, threadId);
+    const borderCls = /finaud/i.test(m.de) ? 'msg-card-finaud' : 'msg-card-cliente';
+    return `<div class="msg-card ${borderCls}">
+      <div class="msg-head">
+        <span><strong>De:</strong> ${escHtml(m.de)}</span>
+        <span><strong>Para:</strong> ${escHtml(m.para)}</span>
+        <span>${escHtml(m.data)}</span>
+      </div>
+      ${corpoHtml}${anexos}
+    </div>`;
+  }).join('');
+  partes.push(recentesHtml);
+
+  // Histórico se expande abaixo das recentes
   if (historico.length > 0) {
     if (!_thrHistAberto) {
       const n = historico.length;
       partes.push(`<div class="msg-ver-historico-wrap"><button class="msg-ver-historico" onclick="_togHist()">▾ Ver ${n} mensage${n > 1 ? 'ns anteriores' : 'm anterior'}</button></div>`);
     } else {
+      partes.push('<div class="msg-sep-recentes">— Mensagens anteriores —</div>');
       const histHtml = historico.map((m, idx) => {
         const { corpoHtml, anexos } = _renderMsgHtml(m, threadId);
         const borderCls = /finaud/i.test(m.de) ? 'msg-card-finaud' : 'msg-card-cliente';
@@ -2759,22 +2777,7 @@ function _renderThreadBody() {
       partes.push(histHtml);
       partes.push(`<div class="msg-ver-historico-wrap"><button class="msg-ver-historico" onclick="_togHist()">▴ Ocultar histórico</button></div>`);
     }
-    if (recentes.length > 0) partes.push('<div class="msg-sep-recentes">— Mensagens recentes —</div>');
   }
-
-  const recentesHtml = recentes.map(m => {
-    const { corpoHtml, anexos } = _renderMsgHtml(m, threadId);
-    const borderCls = /finaud/i.test(m.de) ? 'msg-card-finaud' : 'msg-card-cliente';
-    return `<div class="msg-card ${borderCls}">
-      <div class="msg-head">
-        <span><strong>De:</strong> ${escHtml(m.de)}</span>
-        <span><strong>Para:</strong> ${escHtml(m.para)}</span>
-        <span>${escHtml(m.data)}</span>
-      </div>
-      ${corpoHtml}${anexos}
-    </div>`;
-  }).join('');
-  partes.push(recentesHtml);
 
   document.getElementById('modal-thread-body').innerHTML = partes.join('');
 }
