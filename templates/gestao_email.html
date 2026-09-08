@@ -1174,7 +1174,7 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
           <span class="delta-bom">▼</span>&nbsp;AF/AC caiu &nbsp;·&nbsp;
           <span class="delta-bom">▲</span>&nbsp;Concluídas cresceu &nbsp;·&nbsp;
           <span class="n-zero">—</span>&nbsp;sem variação &nbsp;·&nbsp;
-          Variação desde ontem
+          Variação desde a última atualização
         </div>
         <table class="tabela" id="tbl-resumo">
           <thead>
@@ -1182,17 +1182,13 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
               <th class="th-sort" data-s="n" onclick="mainSort('n')">CATEGORIA<span class="si" id="msi-n"></span></th>
               <th class="num th-sort" data-s="pct" onclick="mainSort('pct')">%<span class="si" id="msi-pct"></span></th>
               <th class="num th-sort" data-s="af" onclick="mainSort('af')" style="color:var(--af-c)">AG.FINAUD<span class="si" id="msi-af"></span></th>
-              <th class="num th-var">VAR</th>
               <th class="num th-sort" data-s="ac" onclick="mainSort('ac')" style="color:var(--ac-c)">AG.CLIENTE<span class="si" id="msi-ac"></span></th>
-              <th class="num th-var">VAR</th>
               <th class="num th-sort" data-s="co" onclick="mainSort('co')" style="color:var(--co-c)">CONCLUÍDAS<span class="si" id="msi-co"></span></th>
-              <th class="num th-var">VAR</th>
               <th class="num th-sort" data-s="tot" onclick="mainSort('tot')">TOTAL<span class="si" id="msi-tot"></span></th>
-              <th class="num th-var">VAR</th>
             </tr>
           </thead>
           <tbody id="tbody-resumo">
-            <tr><td colspan="10" class="vazio">Carregando…</td></tr>
+            <tr><td colspan="6" class="vazio">Carregando…</td></tr>
           </tbody>
           <tfoot id="tfoot-resumo"></tfoot>
         </table>
@@ -1263,15 +1259,11 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
             <thead><tr>
               <th class="sortable" data-s="n" onclick="evoSort('n')">CATEGORIA<span class="si" id="esi-n"></span></th>
               <th class="sortable" style="color:var(--af-c)" data-s="af" onclick="evoSort('af')">AG.FINAUD<span class="si" id="esi-af"></span></th>
-              <th class="sortable" style="color:var(--af-c);font-weight:400" data-s="daf" onclick="evoSort('daf')">variação<span class="si" id="esi-daf"></span></th>
               <th class="sortable" style="color:var(--ac-c)" data-s="ac" onclick="evoSort('ac')">AG.CLIENTE<span class="si" id="esi-ac"></span></th>
-              <th class="sortable" style="color:var(--ac-c);font-weight:400" data-s="dac" onclick="evoSort('dac')">variação<span class="si" id="esi-dac"></span></th>
               <th class="sortable" style="color:var(--co-c)" data-s="co" onclick="evoSort('co')">CONCLUÍDAS<span class="si" id="esi-co"></span></th>
-              <th class="sortable" style="color:var(--co-c);font-weight:400" data-s="dco" onclick="evoSort('dco')">variação<span class="si" id="esi-dco"></span></th>
               <th class="sortable" data-s="tot" onclick="evoSort('tot')">TOTAL<span class="si" id="esi-tot"></span></th>
-              <th style="font-weight:400;color:var(--muted)">variação</th>
             </tr></thead>
-            <tbody id="evo-tbody"><tr><td colspan="9" style="text-align:center;color:var(--muted);padding:20px">Carregando histórico…</td></tr></tbody>
+            <tbody id="evo-tbody"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">Carregando histórico…</td></tr></tbody>
             <tfoot id="evo-tfoot"></tfoot>
           </table></div>
           <div class="evo-ft">
@@ -2513,14 +2505,10 @@ async function carregarResumo() {
     document.getElementById('tfoot-resumo').innerHTML =
       `<tr class="tfoot">
         <td>Total</td><td class="num">100%</td>
-        <td class="num">${afT}</td>
-        <td class="num td-var">${_chipVar(dafT, false)}</td>
-        <td class="num">${acT}</td>
-        <td class="num td-var">${_chipVar(dacT, false)}</td>
-        <td class="num">${coT}</td>
-        <td class="num td-var">${_chipVar(dcoT, true)}</td>
-        <td class="num">${grandTot}</td>
-        <td class="num td-var">${_chipVar(dtotT, false)}</td>
+        <td class="num">${_numDelta(grandAf, 'n-af', dafT,  false)}</td>
+        <td class="num">${_numDelta(grandAc, 'n-ac', dacT,  false)}</td>
+        <td class="num">${_numDelta(t.co,    'n-co', dcoT,  true)}</td>
+        <td class="num"><strong>${grandTot}</strong></td>
       </tr>`;
     _renderSrRow(sr, d.totais);
 
@@ -3391,11 +3379,9 @@ function _renderSrRow(sr, totais) {
   if (!sr || sr.total === 0) return;
   const grandTot = (totais && totais.total > 0) ? totais.total + sr.total : sr.total;
   const pct = (sr.total / grandTot * 100).toFixed(1);
-  const af  = sr.af  ? `<span class="n-af">${sr.af}</span>`  : '<span class="n-zero">—</span>';
-  const ac  = sr.ac  ? `<span class="n-ac">${sr.ac}</span>`  : '<span class="n-zero">—</span>';
-  const vaf = _chipVar(sr.delta_af,  false);
-  const vac = _chipVar(sr.delta_ac,  false);
-  const vto = _chipVar(sr.delta_tot, false);
+  const afD = _numDelta(sr.af,    'n-af', sr.delta_af,  false);
+  const acD = _numDelta(sr.ac,    'n-ac', sr.delta_ac,  false);
+  const totD = _numDelta(sr.total, '',    sr.delta_tot, false);
   const tr = document.createElement('tr');
   tr.id = 'tr-sr';
   tr.className = 'tr-sr';
@@ -3403,14 +3389,10 @@ function _renderSrRow(sr, totais) {
   tr.innerHTML = `
     <td>SEM RETORNO</td>
     <td class="num pct">${pct}%</td>
-    <td class="num">${af}</td>
-    <td class="num td-var">${vaf}</td>
-    <td class="num">${ac}</td>
-    <td class="num td-var">${vac}</td>
+    <td class="num">${afD}</td>
+    <td class="num">${acD}</td>
     <td class="num"><span class="n-zero">—</span></td>
-    <td class="num td-var"><span class="n-zero">—</span></td>
-    <td class="num"><strong>${sr.total}</strong></td>
-    <td class="num td-var">${vto}</td>
+    <td class="num"><strong>${totD}</strong></td>
   `;
   tbody.appendChild(tr);
 }
@@ -3581,6 +3563,14 @@ function _chipVar(delta, invertido) {
   return `<span class="${cor}">${tri}${Math.abs(delta)}</span>`;
 }
 
+function _numDelta(n, cls, delta, invertido) {
+  const num = n ? `<span class="${cls}">${n}</span>` : '<span class="n-zero">—</span>';
+  if (!delta) return num;
+  const tri = delta > 0 ? '▲' : '▼';
+  const cor = (delta > 0) === invertido ? 'delta-bom' : 'delta-ruim';
+  return `${num}<span class="${cor}"> ${tri}${Math.abs(delta)}</span>`;
+}
+
 function renderResumo() {
   if (!_dadosResumo) return;
   const {categorias, totais, srTotal} = _dadosResumo;
@@ -3603,24 +3593,17 @@ function renderResumo() {
   } else {
     tbody.innerHTML = cats.map(c => {
       const pct = tot > 0 ? ((c.total / tot) * 100).toFixed(1) : '0.0';
-      const af  = c.af ? `<span class="n-af">${c.af}</span>` : '<span class="n-zero">—</span>';
-      const ac  = c.ac ? `<span class="n-ac">${c.ac}</span>` : '<span class="n-zero">—</span>';
-      const co  = c.co ? `<span class="n-co">${c.co}</span>` : '<span class="n-zero">—</span>';
-      const vaf = _chipVar(c.delta_af, false);
-      const vac = _chipVar(c.delta_ac, false);
-      const vco = _chipVar(c.delta_co, true);
-      const vto = _chipVar(c.delta_tot, false);
+      const af  = _numDelta(c.af,    'n-af', c.delta_af,  false);
+      const ac  = _numDelta(c.ac,    'n-ac', c.delta_ac,  false);
+      const co  = _numDelta(c.co,    'n-co', c.delta_co,  true);
+      const tot2 = _numDelta(c.total, '',    c.delta_tot, false);
       return `<tr onclick="abrirCategoria('${c.id}','${escHtml(c.nome)}')">
         <td>${escHtml(c.nome)}</td>
         <td class="num pct">${pct}%</td>
         <td class="num">${af}</td>
-        <td class="num td-var">${vaf}</td>
         <td class="num">${ac}</td>
-        <td class="num td-var">${vac}</td>
         <td class="num">${co}</td>
-        <td class="num td-var">${vco}</td>
-        <td class="num"><strong>${c.total}</strong></td>
-        <td class="num td-var">${vto}</td>
+        <td class="num"><strong>${tot2}</strong></td>
       </tr>`;
     }).join('');
   }
@@ -3726,6 +3709,13 @@ function evoBdg(delta, tipo) {
   return `<span class="evo-badge ${bom?'evo-bpos':'evo-bneg'}">${delta>0?'▲':'▼'}${Math.abs(delta)}</span>`;
 }
 
+function evoCelNum(n, cls, delta, tipo) {
+  const num = n ? `<span class="${cls}">${n}</span>` : '<span class="n-zero">—</span>';
+  if (!delta) return num;
+  const bom = (tipo==='co'||tipo==='tot') ? delta>0 : delta<0;
+  return `${num} <span class="evo-badge ${bom?'evo-bpos':'evo-bneg'}">${delta>0?'▲':'▼'}${Math.abs(delta)}</span>`;
+}
+
 function renderEvo() {
   const d = getEvoDelta();
   let vis = evoCats.map((r,i) => ({...r,i})).filter(r => evoSelectedCats.has(r.id));
@@ -3740,19 +3730,19 @@ function renderEvo() {
   document.getElementById('evo-tbody').innerHTML = vis.map(r => {
     const tD2 = d[r.i][0]+d[r.i][1]+d[r.i][2];
     return `<tr><td>${r.n}</td>
-      <td class="evo-caf">${r.af}</td><td>${evoBdg(d[r.i][0],'af')}</td>
-      <td class="evo-cac">${r.ac}</td><td>${evoBdg(d[r.i][1],'ac')}</td>
-      <td class="evo-cco">${r.co}</td><td>${evoBdg(d[r.i][2],'co')}</td>
-      <td style="font-weight:600">${r.tot}</td><td>${evoBdg(tD2,'tot')}</td></tr>`;
+      <td class="evo-caf">${evoCelNum(r.af,'evo-caf',d[r.i][0],'af')}</td>
+      <td class="evo-cac">${evoCelNum(r.ac,'evo-cac',d[r.i][1],'ac')}</td>
+      <td class="evo-cco">${evoCelNum(r.co,'evo-cco',d[r.i][2],'co')}</td>
+      <td style="font-weight:600">${evoCelNum(r.tot,'',tD2,'tot')}</td></tr>`;
   }).join('') || (evoSelectedCats.size===0
-    ? '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:20px">Nenhuma categoria selecionada</td></tr>'
+    ? '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">Nenhuma categoria selecionada</td></tr>'
     : '');
   const totD2 = tD.af+tD.ac+tD.co;
   document.getElementById('evo-tfoot').innerHTML = `<tr><td>Total</td>
-    <td class="evo-caf">${tot.af}</td><td>${evoBdg(tD.af,'af')}</td>
-    <td class="evo-cac">${tot.ac}</td><td>${evoBdg(tD.ac,'ac')}</td>
-    <td class="evo-cco">${tot.co}</td><td>${evoBdg(tD.co,'co')}</td>
-    <td style="font-weight:600">${tot.tot}</td><td>${evoBdg(totD2,'tot')}</td></tr>`;
+    <td class="evo-caf">${evoCelNum(tot.af,'evo-caf',tD.af,'af')}</td>
+    <td class="evo-cac">${evoCelNum(tot.ac,'evo-cac',tD.ac,'ac')}</td>
+    <td class="evo-cco">${evoCelNum(tot.co,'evo-cco',tD.co,'co')}</td>
+    <td style="font-weight:600">${evoCelNum(tot.tot,'',totD2,'tot')}</td></tr>`;
   document.getElementById('evo-p-note').textContent = getEvoNote();
 }
 

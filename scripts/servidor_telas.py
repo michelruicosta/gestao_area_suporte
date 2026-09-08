@@ -692,8 +692,8 @@ def api_resumo():
     total = total_af + total_ac + total_co
     cd    = bt.contar_por_destino()
 
-    # Delta: compara estado atual com o último snapshot de ontem (variação diária)
-    snapshot = bt.ler_snapshot_de_ontem()
+    # Delta: compara estado atual com a rodada anterior (última coleta antes desta)
+    snapshot = bt.ler_penultimo_snapshot()
     for cat in categorias:
         snap = snapshot.get(cat['id'])
         if snap:
