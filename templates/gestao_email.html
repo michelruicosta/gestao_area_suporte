@@ -422,6 +422,10 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
 .evo-bneg { background: var(--neg-bg); color: var(--neg); }
 .evo-bneu { background: var(--border); color: var(--muted); }
 .evo-p-note { font-size: 12px; color: var(--muted); padding: 7px 18px 0; }
+.evo-comp-bar { display: flex; align-items: center; gap: 6px; padding: 8px 18px 12px;
+  font-size: 12px; color: var(--muted); }
+.evo-comp-bar strong { color: var(--text, var(--fg)); font-weight: 600; }
+.evo-comp-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--pos); flex-shrink: 0; }
 .evo-ft { padding: 10px 18px; border-top: 1px solid var(--border); font-size: 11px;
   color: var(--muted); display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 
@@ -1255,6 +1259,7 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
               </div>
             </div>
           </div>
+          <div class="evo-comp-bar" id="evo-comp-bar"></div>
           <div class="evo-tw"><table class="evo-table">
             <thead><tr>
               <th class="sortable" data-s="n" onclick="evoSort('n')">CATEGORIA<span class="si" id="esi-n"></span></th>
@@ -3681,6 +3686,21 @@ function getEvoNote() {
   return `Comparando com ${fmtD(from)} — último snapshot: ${fmtD(latestDate)}`;
 }
 
+function getEvoCompLabel() {
+  const labels = {
+    hoje:     ['hoje',          'ontem'],
+    semana:   ['esta semana',   'semana passada'],
+    quinzena: ['esta quinzena', 'quinzena anterior'],
+    mes:      ['este mês',      'mês passado'],
+    semestre: ['este semestre', 'semestre anterior'],
+  };
+  if (activePeriod === 'custom') return customLabel
+    ? `<span class="evo-comp-dot"></span>${customLabel}`
+    : '<span class="evo-comp-dot"></span>Período personalizado';
+  const [a, b] = labels[activePeriod] || ['este período', 'período anterior'];
+  return `<span class="evo-comp-dot"></span>Comparando <strong>${a}</strong> com <strong>${b}</strong>`;
+}
+
 function evoSort(key) {
   if (evoSortKey === key) evoSortDir *= -1; else {evoSortKey = key; evoSortDir = -1;}
   renderEvo();
@@ -3744,6 +3764,8 @@ function renderEvo() {
     <td class="evo-cco">${evoCelNum(tot.co,'evo-cco',tD.co,'co')}</td>
     <td style="font-weight:600">${evoCelNum(tot.tot,'',totD2,'tot')}</td></tr>`;
   document.getElementById('evo-p-note').textContent = getEvoNote();
+  const compBar = document.getElementById('evo-comp-bar');
+  if (compBar) compBar.innerHTML = getEvoCompLabel();
 }
 
 
