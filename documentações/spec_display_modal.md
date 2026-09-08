@@ -42,7 +42,12 @@ Tipo A não tem parte encadeada — é tudo parte nova.
 | Tipo | Status |
 |---|---|
 | A | ✅ Concluído — A1, A2, A3 e A4 decididos em 08/09/2026 |
-| B–G | Pendente |
+| B | ⏳ Pendente revisão — decisão provisional: mostrar tudo (08/09/2026) |
+| C | ⏳ Pendente revisão — decisão provisional: mostrar tudo (08/09/2026) |
+| D | ⏳ Pendente revisão — decisão provisional: mostrar tudo (08/09/2026) |
+| E | ⏳ Pendente revisão — decisão provisional: mostrar tudo (08/09/2026) |
+| F | ⏳ Pendente revisão — decisão provisional: mostrar tudo (08/09/2026) |
+| G | ⏳ Pendente revisão — decisão provisional: mostrar só metadados e anexos (08/09/2026) |
 
 ---
 
@@ -137,7 +142,9 @@ deve ser ocultada (é sempre repetição de e-mail já visível acima no modal).
 encaminhado. Identificado pelos cabeçalhos "De: / Enviada em: / Para: / Assunto:" do Outlook.  
 **Volume:** 96 threads (5% do total).
 
-**Decisão:** pendente — aguarda mapeamento.
+**Decisão (08/09/2026):** mostrar tudo — parte nova e bloco encaminhado exibidos integralmente.  
+**Revisão:** ao concluir o mapeamento, avaliar se o bloco encaminhado deve ser ocultado
+(mesma questão do Tipo B — é repetição de conteúdo já visível em outra mensagem do modal).
 
 ---
 
@@ -147,7 +154,8 @@ encaminhado. Identificado pelos cabeçalhos "De: / Enviada em: / Para: / Assunto
 assinatura ou campo vazio antes dos cabeçalhos "De: / Enviada em:".  
 **Volume:** 128 threads (6% do total).
 
-**Decisão:** pendente — aguarda mapeamento.
+**Decisão (08/09/2026):** mostrar tudo — bloco encaminhado exibido integralmente.  
+**Revisão:** ao concluir o mapeamento, avaliar o que fazer com o bloco encaminhado.
 
 ---
 
@@ -157,7 +165,8 @@ assinatura ou campo vazio antes dos cabeçalhos "De: / Enviada em:".
 ou campo vazio. O remetente respondeu mas não escreveu nada de novo.  
 **Volume:** 21 threads (1% do total).
 
-**Decisão:** pendente — aguarda mapeamento.
+**Decisão (08/09/2026):** mostrar tudo — bloco citado exibido integralmente.  
+**Revisão:** ao concluir o mapeamento, avaliar o que fazer com o bloco citado.
 
 ---
 
@@ -167,7 +176,8 @@ ou campo vazio. O remetente respondeu mas não escreveu nada de novo.
 message ---------" seguido dos cabeçalhos Gmail (From: / Date: / Subject: / To:).  
 **Volume:** 51 threads (2% do total).
 
-**Decisão:** pendente — aguarda mapeamento.
+**Decisão (08/09/2026):** mostrar tudo — bloco encaminhado exibido integralmente.  
+**Revisão:** ao concluir o mapeamento, avaliar o que fazer com o bloco encaminhado.
 
 ---
 
@@ -176,7 +186,8 @@ message ---------" seguido dos cabeçalhos Gmail (From: / Date: / Subject: / To:
 **O que é:** e-mail sem corpo de texto — só assunto e anexos, ou campo completamente vazio.  
 **Volume:** 2 threads (0% do total).
 
-**Decisão:** pendente — aguarda mapeamento.
+**Decisão (08/09/2026):** não há corpo para exibir — o modal mostra só os anexos e metadados
+(remetente, data, assunto).
 
 ---
 
