@@ -157,6 +157,38 @@ def test_historico_citado_corpo_vazio():
     assert bt._extrair_historico_citado('') == ''
 
 
+# ── _remover_disclaimers_por_bloco ────────────────────────────────────────────
+
+def test_remover_disclaimers_bloco_texto_simples():
+    """Sem separador: disclaimer removido do único bloco."""
+    corpo = 'Segue o arquivo.\nAtt, Ana\nEste e-mail e seus anexos são confidenciais.'
+    resultado = bt._remover_disclaimers_por_bloco(corpo)
+    assert 'confidenciais' not in resultado
+    assert 'Segue o arquivo' in resultado
+
+def test_remover_disclaimers_bloco_multiplos_blocos():
+    """Com separador: disclaimer removido de cada bloco individualmente, mensagens intactas."""
+    corpo = (
+        'Obrigado.\nAtt, Carlos\nEste e-mail e seus anexos são confidenciais.\n'
+        'Em seg., 1 de set. de 2026 escreveu:\n'
+        'Segue o DDR.\nAtt, Ana\nEste e-mail e seus anexos são confidenciais.'
+    )
+    resultado = bt._remover_disclaimers_por_bloco(corpo)
+    assert 'confidenciais' not in resultado
+    assert 'Obrigado' in resultado
+    assert 'Segue o DDR' in resultado
+
+def test_remover_disclaimers_bloco_sem_disclaimer():
+    """Sem disclaimer: texto retornado intacto."""
+    corpo = 'Mensagem limpa.\nEm seg., 1 de set. de 2026 escreveu:\nOutra mensagem.'
+    resultado = bt._remover_disclaimers_por_bloco(corpo)
+    assert 'Mensagem limpa' in resultado
+    assert 'Outra mensagem' in resultado
+
+def test_remover_disclaimers_bloco_vazio():
+    assert bt._remover_disclaimers_por_bloco('') == ''
+
+
 # ── _determinar_status — lista vazia ─────────────────────────────────────────
 
 def test_status_sem_mensagens():

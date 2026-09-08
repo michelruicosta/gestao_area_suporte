@@ -452,6 +452,43 @@ def _truncar_no_disclaimer(texto: str) -> str:
     return texto[:m.start()].rstrip() if m else texto
 
 
+def _remover_disclaimers_por_bloco(texto: str) -> str:
+    """Remove disclaimer de cada mensagem individual num histórico ou bloco encaminhado.
+
+    O texto pode conter várias mensagens concatenadas (histórico citado ou bloco
+    encaminhado), cada uma terminando com seu próprio boilerplate de confidencialidade.
+    Aplicar _truncar_no_disclaimer no texto inteiro cortaria tudo a partir do primeiro
+    disclaimer, perdendo mensagens posteriores. Esta função percorre linha a linha,
+    agrupa por separador, limpa cada bloco individualmente e remonta.
+    """
+    if not texto:
+        return ''
+
+    linhas = texto.split('\n')
+    sep_atual = ''
+    conteudo_atual: list[str] = []
+    blocos: list[tuple[str, list[str]]] = []
+
+    for linha in linhas:
+        if _SEP_HISTORICO.match(linha.strip()):
+            blocos.append((sep_atual, conteudo_atual))
+            sep_atual = linha
+            conteudo_atual = []
+        else:
+            conteudo_atual.append(linha)
+    blocos.append((sep_atual, conteudo_atual))
+
+    resultado: list[str] = []
+    for sep, conteudo in blocos:
+        texto_bloco = _truncar_no_disclaimer('\n'.join(conteudo))
+        if sep:
+            resultado.append(sep)
+        if texto_bloco.strip():
+            resultado.append(texto_bloco)
+
+    return '\n'.join(resultado).strip()
+
+
 def _tem_pergunta_acao(texto: str) -> bool:
     """§8.9: True se o texto tem pergunta real que exige ação do cliente.
     Remove URLs, cabeçalhos XML e saudações com '?' antes de checar."""
