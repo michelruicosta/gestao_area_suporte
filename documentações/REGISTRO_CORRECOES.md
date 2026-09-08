@@ -2,6 +2,31 @@
 
 ---
 
+### 08/09 — Redesign visual: variação embutida no número + legenda unificada (Evolução e Classificação e Status)
+
+**🔎 Em miúdos:** as duas telas principais ficaram mais limpas e fáceis de ler. O número de variação (ex: ▲3) agora aparece junto ao número da coluna, em vez de numa coluna separada. A aba Evolução ganhou uma barra que mostra com qual período está comparando, e o botão de filtros ficou na mesma linha da legenda.
+
+**Problema / motivação:** cada métrica ocupava dois espaços na tabela (número + coluna VAR separada), tornando a leitura truncada em telas menores. Não havia contexto visual de qual período estava sendo comparado na aba Evolução. A comparação da tela principal usava "ontem" em vez da "última rodada".
+
+**Correções:**
+
+1. **Variação embutida no número (commits `2d4191c` e `db70954`):**
+   - Nova função JS `_numDelta()` para tela principal e `evoCelNum()` para Evolução: retornam `<número> <badge ▲/▼>` numa célula só.
+   - Tela principal: 10 → 6 colunas (removidas 4 colunas VAR). Evolução: 9 → 5 colunas.
+   - Comparação da tela principal alterada de `ler_snapshot_de_ontem()` para `ler_penultimo_snapshot()` em `servidor_telas.py`.
+   - Legenda atualizada para "Variação desde a última atualização".
+   - Barra de contexto na Evolução: "Comparando **este mês** com **mês passado**" (atualizada por `getEvoCompLabel()`).
+   - Categorias na Evolução passaram a funcionar como multiselect.
+
+2. **Legenda unificada na barra da Evolução (commits `ccd74f3`, `4b5973d` e `f6f0476`):**
+   - Rodapé `evo-ft` com pílulas substituído pela mesma `card-legenda` compacta da tela principal.
+   - Barra de comparação e legenda fundidas numa única linha: `● Comparando… · ▲ AF/AC cresceu · …`
+   - Botão FILTROS movido para a mesma linha da legenda, eliminando a barra separada acima.
+
+**Validação:** 608 testes ✅ VALIDADO (mudanças de UI pura; sem testes dedicados — registrado). Deploy na VPS ✅.
+
+---
+
 ### 08/09 — CI: pacotes do Google ausentes no requirements-dev.txt
 
 **🔎 Em miúdos:** os testes automáticos no GitHub estavam falhando porque dois arquivos de teste carregam código que depende das bibliotecas do Google — bibliotecas que existiam só no arquivo de produção, não no arquivo de desenvolvimento usado pelo CI.

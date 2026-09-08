@@ -6,6 +6,24 @@
 
 ---
 
+## 📓 Diário da sessão (2026-09-08) — Fix: CI — pacotes Google ausentes no requirements-dev.txt
+
+### O que foi feito
+
+Diagnóstico e correção do CI que estava falhando desde o commit `483720b`.
+
+1. **Causa identificada:** `requirements-dev.txt` não listava os pacotes do Google (`google-api-python-client`, `google-auth` e 4 outros). Esses pacotes são importados a nível de módulo em `coletor_gmail.py` e `coletor_enviados_colaboradores.py` — os testes `test_coletor_html.py` e `test_coletor_colaboradores.py` quebravam com `ImportError` antes de rodar qualquer asserção. Localmente passava porque os pacotes estavam instalados no Python global do usuário.
+
+2. **Correção:** adicionados os 6 pacotes ao `requirements-dev.txt` com as mesmas versões já usadas em produção no `requirements.txt`.
+
+3. **Commit `9f97437`, push feito.** CI vai rodar automaticamente.
+
+### Estado ao fechar
+
+**pytest:** 608 passed ✅. **Produção:** ativa ✅.
+
+---
+
 ## 📓 Diário da sessão (2026-09-08) — Fix: filtro de período Lista de Casos + campo data vazio
 
 ### O que foi feito
