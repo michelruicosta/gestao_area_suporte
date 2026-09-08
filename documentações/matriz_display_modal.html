@@ -1,0 +1,570 @@
+<title>Matriz de E-mails</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+  :root {
+    --bg:        #F5F4F1;
+    --surface:   #FFFFFF;
+    --border:    #DDD9D1;
+    --text:      #1A1A18;
+    --text-2:    #5C5B57;
+    --text-3:    #8C8A84;
+    --accent:    #2B5C8A;
+    --accent-bg: #EAF1F8;
+    --ok:        #166534;
+    --ok-bg:     #DCFCE7;
+    --warn:      #92400E;
+    --warn-bg:   #FEF3C7;
+    --muted:     #374151;
+    --muted-bg:  #F3F4F6;
+    --sep:       #E5E2DA;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:        #15150F;
+      --surface:   #1E1D17;
+      --border:    #2E2C24;
+      --text:      #ECEAE3;
+      --text-2:    #9E9C94;
+      --text-3:    #6B6963;
+      --accent:    #4F8DC0;
+      --accent-bg: #172030;
+      --ok:        #4ADE80;
+      --ok-bg:     #052E14;
+      --warn:      #FCD34D;
+      --warn-bg:   #27180A;
+      --muted:     #9CA3AF;
+      --muted-bg:  #1F2028;
+      --sep:       #252318;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:        #15150F;
+    --surface:   #1E1D17;
+    --border:    #2E2C24;
+    --text:      #ECEAE3;
+    --text-2:    #9E9C94;
+    --text-3:    #6B6963;
+    --accent:    #4F8DC0;
+    --accent-bg: #172030;
+    --ok:        #4ADE80;
+    --ok-bg:     #052E14;
+    --warn:      #FCD34D;
+    --warn-bg:   #27180A;
+    --muted:     #9CA3AF;
+    --muted-bg:  #1F2028;
+    --sep:       #252318;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 0;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .page-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1.5rem 2rem 1.25rem;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .page-header h1 {
+    font-family: 'Sora', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0 0 0.15rem;
+    letter-spacing: -0.01em;
+  }
+  .page-header .sub {
+    font-size: 0.8rem;
+    color: var(--text-3);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .filters {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+  .filter-btn {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.3rem 0.8rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text-2);
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+  }
+  .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .main { padding: 1.5rem 2rem 3rem; max-width: 1100px; }
+
+  /* stat bar */
+  .stat-row {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.75rem;
+    flex-wrap: wrap;
+  }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.75rem 1.1rem;
+    min-width: 110px;
+    flex: 1;
+  }
+  .stat-num {
+    font-family: 'Sora', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    margin-bottom: 0.2rem;
+  }
+  .stat-label {
+    font-size: 0.72rem;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+  }
+
+  /* sections */
+  .section {
+    margin-bottom: 1.75rem;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    user-select: none;
+  }
+  .section-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-2);
+  }
+  .section-line { flex: 1; height: 1px; background: var(--sep); }
+  .section-toggle { color: var(--text-3); font-size: 0.75rem; transition: transform 0.2s; }
+  .section.collapsed .section-toggle { transform: rotate(-90deg); }
+  .section-body { overflow: hidden; transition: max-height 0.25s ease; }
+  .section.collapsed .section-body { max-height: 0 !important; }
+
+  /* table */
+  .tbl-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  thead th {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-3);
+    padding: 0.6rem 1rem;
+    text-align: left;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--sep);
+    transition: background 0.08s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--accent-bg); }
+  tbody td {
+    padding: 0.65rem 1rem;
+    vertical-align: middle;
+    color: var(--text);
+    font-size: 0.82rem;
+  }
+  .td-code {
+    font-family: 'IBM Plex Sans', monospace;
+    font-weight: 600;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  .td-vol {
+    font-variant-numeric: tabular-nums;
+    color: var(--text-2);
+    white-space: nowrap;
+  }
+  .td-desc { max-width: 280px; }
+  .td-muted { color: var(--text-3); }
+
+  /* badges */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+  }
+  .badge-ok      { background: var(--ok-bg);   color: var(--ok);   }
+  .badge-warn    { background: var(--warn-bg);  color: var(--warn); }
+  .badge-muted   { background: var(--muted-bg); color: var(--muted);}
+  .badge-accent  { background: var(--accent-bg);color: var(--accent);}
+
+  /* mini bar */
+  .vol-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .vol-bar-track {
+    width: 60px;
+    height: 4px;
+    background: var(--sep);
+    border-radius: 2px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .vol-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    opacity: 0.6;
+  }
+
+  [data-hide] { display: none; }
+</style>
+
+<div class="page-header">
+  <div>
+    <h1>Matriz de Padrões de E-mail</h1>
+    <div class="sub">Gestão Área Suporte — Spec Display Modal · Atualizado 07/09/2026</div>
+  </div>
+  <div class="filters">
+    <button class="filter-btn active" onclick="filtrar('todos')">Todos</button>
+    <button class="filter-btn" onclick="filtrar('decidido')">✓ Decididos</button>
+    <button class="filter-btn" onclick="filtrar('pendente')">Pendentes</button>
+    <button class="filter-btn" onclick="filtrar('nao-mapeado')">Não mapeados</button>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="stat-row">
+    <div class="stat">
+      <div class="stat-num">1.832</div>
+      <div class="stat-label">Threads total</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">7</div>
+      <div class="stat-label">Tipos estruturais</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">10</div>
+      <div class="stat-label">Sub-cenários</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">7</div>
+      <div class="stat-label">Padrões de imagem</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">12.643</div>
+      <div class="stat-label">Refs de imagem no banco</div>
+    </div>
+  </div>
+
+  <!-- NÍVEL 1 -->
+  <div class="section" id="sec-nivel1">
+    <div class="section-header" onclick="toggleSection('sec-nivel1')">
+      <span class="section-title">Nível 1 — Tipos de estrutura (A–G)</span>
+      <div class="section-line"></div>
+      <span class="section-toggle">▼</span>
+    </div>
+    <div class="section-body" style="max-height:600px">
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Tipo</th>
+              <th>O que é</th>
+              <th>Threads</th>
+              <th>Parte nova</th>
+              <th>Parte encadeada</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-status="pendente">
+              <td class="td-code">A</td>
+              <td class="td-desc">Mensagem simples — sem histórico citado. Subdivide em A1–A4.</td>
+              <td class="td-vol"><div class="vol-bar"><div class="vol-bar-track"><div class="vol-bar-fill" style="width:67%"></div></div>1.241 · 67%</div></td>
+              <td>Sim</td>
+              <td class="td-muted">—</td>
+              <td><span class="badge badge-warn">Pendente decisão</span></td>
+            </tr>
+            <tr data-status="nao-mapeado">
+              <td class="td-code">B</td>
+              <td class="td-desc">Resposta com texto novo + histórico citado abaixo</td>
+              <td class="td-vol"><div class="vol-bar"><div class="vol-bar-track"><div class="vol-bar-fill" style="width:15%"></div></div>293 · 15%</div></td>
+              <td>Sim</td>
+              <td>Sim</td>
+              <td><span class="badge badge-muted">Não mapeado</span></td>
+            </tr>
+            <tr data-status="nao-mapeado">
+              <td class="td-code">C</td>
+              <td class="td-desc">Encaminhamento Outlook com texto novo antes do bloco</td>
+              <td class="td-vol"><div class="vol-bar"><div class="vol-bar-track"><div class="vol-bar-fill" style="width:5%"></div></div>96 · 5%</div></td>
+              <td>Sim</td>
+              <td>Sim</td>
+              <td><span class="badge badge-muted">Não mapeado</span></td>
+            </tr>
+            <tr data-status="nao-mapeado">
+              <td class="td-code">D</td>
+              <td class="td-desc">Encaminhamento Outlook sem texto novo (só assinatura antes)</td>
+              <td class="td-vol"><div class="vol-bar"><div class="vol-bar-track"><div class="vol-bar-fill" style="width:6%"></div></div>128 · 6%</div></td>
+              <td class="td-muted">—</td>
+              <td>Sim</td>
+              <td><span class="badge badge-muted">Não mapeado</span></td>
+            </tr>
+            <tr data-status="nao-mapeado">
+              <td class="td-code">E</td>
+              <td class="td-desc">Resposta sem texto novo — só assinatura antes do separador</td>
+              <td class="td-vol"><div class="vol-bar"><div class="vol-bar-track"><div class="vol-bar-fill" style="width:1%"></div></div>21 · 1%</div></td>
+              <td class="td-muted">—</td>
+              <td>Sim</td>
+              <td><span class="badge badge-muted">Não mapeado</span></td>
+            </tr>
+            <tr data-status="nao-mapeado">
+              <td class="td-code">F</td>
+              <td class="td-desc">Encaminhamento Gmail</td>
+              <td class="td-vol"><div class="vol-bar"><div class="vol-bar-track"><div class="vol-bar-fill" style="width:2%"></div></div>51 · 2%</div></td>
+              <td>Sim</td>
+              <td>Sim</td>
+              <td><span class="badge badge-muted">Não mapeado</span></td>
+            </tr>
+            <tr data-status="nao-mapeado">
+              <td class="td-code">G</td>
+              <td class="td-desc">Corpo vazio ou quase vazio</td>
+              <td class="td-vol"><div class="vol-bar"><div class="vol-bar-track"><div class="vol-bar-fill" style="width:1%"></div></div>2 · 0%</div></td>
+              <td class="td-muted">—</td>
+              <td class="td-muted">—</td>
+              <td><span class="badge badge-muted">Não mapeado</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- NÍVEL 2 -->
+  <div class="section" id="sec-nivel2">
+    <div class="section-header" onclick="toggleSection('sec-nivel2')">
+      <span class="section-title">Nível 2 — Sub-cenários do Tipo A</span>
+      <div class="section-line"></div>
+      <span class="section-toggle">▼</span>
+    </div>
+    <div class="section-body" style="max-height:600px">
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Sub</th>
+              <th>O que é</th>
+              <th>Mensagens</th>
+              <th>Parte nova</th>
+              <th>Imagens</th>
+              <th>Decisão</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-status="decidido">
+              <td class="td-code">A1</td>
+              <td class="td-desc">Texto limpo — sem imagens, sem anexos</td>
+              <td class="td-vol"><div class="vol-bar"><div class="vol-bar-track"><div class="vol-bar-fill" style="width:23%"></div></div>370 · 23%</div></td>
+              <td>Mostrar tudo</td>
+              <td class="td-muted">—</td>
+              <td><span class="badge badge-ok">✓ Decidido 03/09</span></td>
+            </tr>
+            <tr data-status="pendente">
+              <td class="td-code">A2</td>
+              <td class="td-desc">Texto com imagens embutidas — Outlook [cid:] ou Gmail [image:]</td>
+              <td class="td-vol"><div class="vol-bar"><div class="vol-bar-track"><div class="vol-bar-fill" style="width:40%"></div></div>642 · 40%</div></td>
+              <td>Mostrar tudo</td>
+              <td><span class="badge badge-accent">Mostrar parte nova</span></td>
+              <td><span class="badge badge-warn">Pendente decisão</span></td>
+            </tr>
+            <tr data-status="pendente">
+              <td class="td-code">A3</td>
+              <td class="td-desc">Só anexos — texto mínimo de cortesia ("Seguem os arquivos")</td>
+              <td class="td-vol"><div class="vol-bar"><div class="vol-bar-track"><div class="vol-bar-fill" style="width:6%"></div></div>106 · 6%</div></td>
+              <td>Mostrar tudo</td>
+              <td class="td-muted">—</td>
+              <td><span class="badge badge-warn">Pendente decisão</span></td>
+            </tr>
+            <tr data-status="pendente">
+              <td class="td-code">A4</td>
+              <td class="td-desc">Texto explicativo real + anexos — corpo contextualiza os arquivos</td>
+              <td class="td-vol"><div class="vol-bar"><div class="vol-bar-track"><div class="vol-bar-fill" style="width:28%"></div></div>455 · 28%</div></td>
+              <td>Mostrar tudo</td>
+              <td class="td-muted">—</td>
+              <td><span class="badge badge-warn">Pendente decisão</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- NÍVEL 3 -->
+  <div class="section" id="sec-nivel3">
+    <div class="section-header" onclick="toggleSection('sec-nivel3')">
+      <span class="section-title">Nível 3 — Padrões de imagem inline (I1–I7)</span>
+      <div class="section-line"></div>
+      <span class="section-toggle">▼</span>
+    </div>
+    <div class="section-body" style="max-height:700px">
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Formato no texto</th>
+              <th>Exemplo</th>
+              <th>Refs no banco</th>
+              <th>Tratamento</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-status="decidido">
+              <td class="td-code">I1</td>
+              <td>[cid:identificador]</td>
+              <td class="td-muted">[cid:a64ae88@01DD]</td>
+              <td class="td-vol"><div class="vol-bar"><div class="vol-bar-track"><div class="vol-bar-fill" style="width:100%"></div></div>7.519</div></td>
+              <td>Gmail API por Content-ID — formato Outlook</td>
+              <td><span class="badge badge-ok">✓ Implementado</span></td>
+            </tr>
+            <tr data-status="decidido">
+              <td class="td-code">I2</td>
+              <td>[image: nome.ext]</td>
+              <td class="td-muted">[image: image.png]</td>
+              <td class="td-vol"><div class="vol-bar"><div class="vol-bar-track"><div class="vol-bar-fill" style="width:10%"></div></div>790</div></td>
+              <td>Gmail API por nome do arquivo</td>
+              <td><span class="badge badge-ok">✓ Implementado</span></td>
+            </tr>
+            <tr data-status="decidido">
+              <td class="td-code">I3</td>
+              <td>[nome.ext]</td>
+              <td class="td-muted">[image.png]</td>
+              <td class="td-vol"><div class="vol-bar"><div class="vol-bar-track"><div class="vol-bar-fill" style="width:2%"></div></div>102</div></td>
+              <td>Igual I2 — Gmail API por nome</td>
+              <td><span class="badge badge-ok">✓ Implementado</span></td>
+            </tr>
+            <tr data-status="decidido">
+              <td class="td-code">I4</td>
+              <td>URL externa em colchetes</td>
+              <td class="td-muted">[https://…/logo.png]</td>
+              <td class="td-vol"><div class="vol-bar"><div class="vol-bar-track"><div class="vol-bar-fill" style="width:18%"></div></div>1.360</div></td>
+              <td>Removido — logo externo inacessível</td>
+              <td><span class="badge badge-ok">✓ Implementado</span></td>
+            </tr>
+            <tr data-status="decidido">
+              <td class="td-code">I5</td>
+              <td>Texto decorativo / URL sem extensão</td>
+              <td class="td-muted">[image: espaço.png]</td>
+              <td class="td-vol"><div class="vol-bar"><div class="vol-bar-track"><div class="vol-bar-fill" style="width:33%"></div></div>2.480</div></td>
+              <td>Removido silenciosamente</td>
+              <td><span class="badge badge-ok">✓ Implementado</span></td>
+            </tr>
+            <tr data-status="decidido">
+              <td class="td-code">I6</td>
+              <td>[Imagem removida pelo remetente.]</td>
+              <td class="td-muted td-desc">[Imagem removida…]</td>
+              <td class="td-vol"><div class="vol-bar"><div class="vol-bar-track"><div class="vol-bar-fill" style="width:4%"></div></div>288</div></td>
+              <td>Mantido como texto — Gmail já removeu</td>
+              <td><span class="badge badge-ok">✓ Implementado</span></td>
+            </tr>
+            <tr data-status="decidido">
+              <td class="td-code">I7</td>
+              <td>[Texto O conteúdo gerado por IA…]</td>
+              <td class="td-muted td-desc">[Uma imagem contendo Logotipo O conteúdo…]</td>
+              <td class="td-vol"><div class="vol-bar"><div class="vol-bar-track"><div class="vol-bar-fill" style="width:2%"></div></div>104</div></td>
+              <td>Imagem real via busca posicional no payload</td>
+              <td><span class="badge badge-ok">✓ Implementado</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEGENDA -->
+  <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:0.5rem;">
+    <div style="display:flex;align-items:center;gap:0.4rem;font-size:0.72rem;color:var(--text-3);">
+      <span class="badge badge-ok">✓ Decidido</span> Mapeado + decisão aprovada por Michel
+    </div>
+    <div style="display:flex;align-items:center;gap:0.4rem;font-size:0.72rem;color:var(--text-3);">
+      <span class="badge badge-warn">Pendente</span> Visto na tela, aguarda decisão final
+    </div>
+    <div style="display:flex;align-items:center;gap:0.4rem;font-size:0.72rem;color:var(--text-3);">
+      <span class="badge badge-muted">Não mapeado</span> Ainda não revisado com Michel
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function toggleSection(id) {
+    const sec = document.getElementById(id);
+    sec.classList.toggle('collapsed');
+  }
+
+  function filtrar(tipo) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+
+    const rows = document.querySelectorAll('tbody tr[data-status]');
+    rows.forEach(row => {
+      if (tipo === 'todos') {
+        row.removeAttribute('data-hide');
+      } else {
+        if (row.dataset.status === tipo) {
+          row.removeAttribute('data-hide');
+        } else {
+          row.setAttribute('data-hide', '1');
+        }
+      }
+    });
+  }
+</script>
