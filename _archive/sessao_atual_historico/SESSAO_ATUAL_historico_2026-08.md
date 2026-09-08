@@ -986,3 +986,28 @@ Michel perguntou se o e-mail com assunto **"DRL 07 2026 rejeitado"** havia sido 
 ### Estado atual
 
 Sem alterações de código. Produção estável. Último /fechar: 2026-09-08.
+
+---
+
+## 📓 Diário da sessão (2026-09-08) — Skills/MCPs — limpeza de config e regra de comunicação
+
+### O que foi feito
+
+**Sessão educativa + limpeza de configuração.** Nenhum código de produção foi alterado.
+
+1. **Diferença entre skills e MCPs explicada** — Michel aprendeu o que são MCPs (conexões com ferramentas externas, como o Gmail) e skills (roteiros de comportamento que seguimos ao executar comandos como `/iniciar`).
+
+2. **Nova regra registrada (CLAUDE.md §2.6):** ao explicar conceitos técnicos, sempre ancorar em linguagem simples antes de apresentar o nome técnico — âncora simples → conceito técnico → consequência prática. Michel quer aprender o universo técnico, não tê-lo omitido.
+
+3. **Limpeza de 4 problemas de configuração** (não versionados — `.claude/` blindado pelo `.gitignore`):
+   - Hook corrigido: rodava `pytest` do Oráculo 360, agora roda `pytest tests/ -q` deste projeto
+   - `.claude/commands/salvar.md` corrigido: instrução sobre branch `main` alinhada com decisão de 27/08/2026
+   - `launch.json` limpo: removida entrada `oraculo-flask` do projeto antigo
+   - `settings.local.json` limpo: removidas 4 entradas Bash obsoletas do Oráculo 360
+
+### Estado atual
+
+**pytest:** não rodado (sem código de produção alterado).
+**Produção:** sem alterações — `gestao-suporte.finaudapps.com.br` estável ✅.
+
+Último /fechar: 2026-09-08 — memórias revisadas ✅

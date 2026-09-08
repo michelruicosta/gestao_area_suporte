@@ -12,9 +12,10 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
+| 08/09 | UX modal thread: histórico sob demanda, fim do scroll duplo | abaixo |
 | 08/09 | Fix: filtro de período Lista de Casos + campo data vazio | abaixo |
 | 08/09 | Display modal A–G: mapeamento, implementação, spec e artifact | abaixo |
-| 08/09 | Skills/MCPs — limpeza de config + regra de comunicação técnica | abaixo |
+| 08/09 | Skills/MCPs — limpeza de config + regra de comunicação técnica | arquivo |
 | 08/09 | Fix: mensagens duplicadas (coletor colaboradores + message_id) | arquivo |
 | 08/09 | Consulta pontual — e-mail DRL 07 2026 rejeitado | arquivo |
 | 06/09 | Alerta "busca parada": origem do alerta (local vs produção) | arquivo |
@@ -48,6 +49,42 @@
 >
 > **Regra:** este arquivo guarda as **3 sessões mais recentes**. O `/fechar` acrescenta a
 > linha nova aqui e move a 4ª sessão para o arquivo.
+
+---
+
+## 📓 Diário da sessão (2026-09-08) — UX modal thread: histórico sob demanda
+
+### O que foi feito
+
+**Melhoria de UX no modal de visualização de threads** — design aprovado por Michel após protótipo interativo.
+
+1. **Problema:** modal com dois scrolls simultâneos — externo (modal) e interno por mensagem (`max-height: 14rem`). Em threads longas era necessário scrollar em dois níveis ao mesmo tempo.
+
+2. **Design aprovado:** Michel aprovou o protótipo (artifact publicado na sessão). Modal abre direto nas 2 mensagens mais recentes; histórico oculto atrás de um botão; borda colorida por remetente.
+
+3. **`gestao_email.html` (commits `d585ddc` + `a528a1f`):**
+   - CSS: removido `max-height: 14rem; overflow-y: auto` do `.msg-body` — scroll único
+   - CSS: `.msg-card-cliente` (borda azul), `.msg-card-finaud` (borda verde), `.msg-ver-historico` (botão pílula), `.msg-historico-colapsado`
+   - JS: `_renderMsgHtml()` extrai HTML por mensagem; `_renderThreadBody()` divide em `recentes` (2 primeiros = 2 mais recentes) e `historico`
+   - JS: `_togHist()` expande/oculta seção de histórico; `_togHistMsg(idx)` recolhe mensagem individual via DOM (preserva inner toggles B/E/C/D/F)
+   - **Bug corrigido:** API retorna newest no índice 0 (`reversed(stored_msgs)` em `servidor_telas.py:789`); slicing inicial estava invertido
+
+4. **Deploy VPS:** serviço ativo ✅.
+
+### Estado atual
+
+**pytest:** 608 passed ✅ (zero regressões — mudança de UI pura, sem teste dedicado).
+**Produção:** `gestao-suporte.finaudapps.com.br` — serviço ativo ✅.
+
+### Próximo passo
+
+🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
+
+**Pendências que continuam:**
+- 🟡 Passo C — tela de manutenção de regras
+- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
+
+Último /fechar: 2026-09-08 — memórias revisadas ✅
 
 ---
 
@@ -121,42 +158,6 @@
 ### Próximo passo
 
 🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
-
-**Pendências que continuam:**
-- 🟡 Passo C — tela de manutenção de regras
-- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
-
-Último /fechar: 2026-09-08 — memórias revisadas ✅
-
----
-
-## 📓 Diário da sessão (2026-09-08) — Skills/MCPs — limpeza de config e regra de comunicação
-
-### O que foi feito
-
-**Sessão educativa + limpeza de configuração.** Nenhum código de produção foi alterado.
-
-1. **Diferença entre skills e MCPs explicada** — Michel aprendeu o que são MCPs (conexões com ferramentas externas, como o Gmail) e skills (roteiros de comportamento que seguimos ao executar comandos como `/iniciar`).
-
-2. **Nova regra registrada (CLAUDE.md §2.6):** ao explicar conceitos técnicos, sempre ancorar em linguagem simples antes de apresentar o nome técnico — âncora simples → conceito técnico → consequência prática. Michel quer aprender o universo técnico, não tê-lo omitido.
-
-3. **Limpeza de 4 problemas de configuração** (não versionados — `.claude/` blindado pelo `.gitignore`):
-   - Hook corrigido: rodava `pytest` do Oráculo 360, agora roda `pytest tests/ -q` deste projeto
-   - `.claude/commands/salvar.md` corrigido: instrução sobre branch `main` alinhada com decisão de 27/08/2026
-   - `launch.json` limpo: removida entrada `oraculo-flask` do projeto antigo
-   - `settings.local.json` limpo: removidas 4 entradas Bash obsoletas do Oráculo 360
-
-### Estado atual
-
-**pytest:** não rodado (sem código de produção alterado).
-**Produção:** sem alterações — `gestao-suporte.finaudapps.com.br` estável ✅.
-
-### Próximo passo
-
-🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Investigação em chat dedicado.
-
-**Antes de qualquer mudança no modal:**
-🟡 **Spec display modal A–G** — mapear comportamento atual e desejado com exemplos reais (ver PENDENCIAS.md).
 
 **Pendências que continuam:**
 - 🟡 Passo C — tela de manutenção de regras
