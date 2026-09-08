@@ -12,9 +12,11 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
-| 06/09 | Visão Geral — filtro de data + dados sempre frescos | abaixo |
+| 08/09 | Fix: mensagens duplicadas (coletor colaboradores + message_id) | abaixo |
+| 08/09 | Consulta pontual — e-mail DRL 07 2026 rejeitado | abaixo |
 | 06/09 | Alerta "busca parada": origem do alerta (local vs produção) | abaixo |
-| 03/09 | Migração HTML na VPS + fix modal C/D/F | abaixo |
+| 06/09 | Visão Geral — filtro de data + dados sempre frescos | arquivo |
+| 03/09 | Migração HTML na VPS + fix modal C/D/F | arquivo |
 | 02/09 | Fix: cronômetro de atualização | arquivo |
 | 02/09 | Visão Geral — busca, filtros, Sem Retorno no dropdown e clique nas linhas | arquivo |
 | 02/09 | Validação coletor colaboradores + problema status threads arquivadas | arquivo |
@@ -46,31 +48,70 @@
 
 ---
 
-## 📓 Diário da sessão (2026-09-06) — Visão Geral: filtro de data + dados sempre frescos
+## 📓 Diário da sessão (2026-09-08) — Fix: mensagens duplicadas (coletor colaboradores)
 
 ### O que foi feito
 
-**Dois ajustes na tela Visão Geral — commit + deploy pendentes desde sessão anterior**
+**Bug reportado:** thread DRM - 2060 PLANNER CORRETORA exibia 2 mensagens no sistema, mas o Gmail mostrava apenas 1.
 
-**Ajuste 1 — Dados sempre frescos (commit `efcba4a`)**
+**Causa raiz identificada:** o mesmo e-mail físico chegava em dois caminhos — via `suporte@finaud.com.br` (Google Groups mascarando o remetente) e diretamente na caixa da Andrea. O campo `message_id` (RFC 5322, único por e-mail em qualquer caixa) **não estava sendo gravado**, então o filtro anti-duplicata só comparava `(data, remetente)` — que difere entre as duas cópias.
 
-A tela reutilizava dados em cache ao ser revisitada — e-mails novos não apareciam sem recarregar. Causa: `if (_vgDados.length) { _vgFiltrar(); return; }` bloqueava nova busca. Correção: `_vgDados = []` antes do fetch garante que a tela sempre busca `/api/threads/todas`.
+**Correção (commits desta sessão):**
 
-**Ajuste 2 — Filtro de data (commits `efcba4a` e `5fc03ce`)**
+1. **`coletor_gmail.py` — `_processar_mensagem()`:** adicionado `'message_id': h('Message-ID')` ao dict de retorno. Todas as mensagens capturadas por qualquer coletor agora armazenam o Message-ID.
 
-Novo campo de data na barra de filtros. Após o deploy, Michel reportou duas falhas:
-1. Filtro não funcionava — ao selecionar qualquer data, todas as 1.450 threads apareciam
-2. Calendário nativo do browser com estilo diferente do sistema
+2. **`coletor_enviados_colaboradores.py` — `_ja_existe()`:** reescrita completa. Lógica nova:
+   - Ambos com `message_id` → comparação definitiva; se IDs diferentes, **não cai no fallback** (evita falso positivo por `(data, remetente)` coincidente)
+   - Mensagem antiga sem `message_id` → fallback por `(data, remetente)` apenas para aquela mensagem
+   - Nova sem `message_id` → fallback integral
 
-**Causa:** `<input type="date">` devolve `2026-08-31` (ISO), mas `data_iso` no banco é `31/08/2026` (formato BR). A comparação `t.data_iso === dt` nunca batia.
+3. **`tests/test_coletor_colaboradores.py`:** 4 novos testes cobrindo os 4 cenários da lógica nova.
 
-**Correção:** substituído por `<input type="text" placeholder="DD/MM/AAAA">` com auto-formatação (barras inseridas automaticamente). Estilo idêntico aos demais filtros. Filtro dispara ao completar 10 chars ou ao limpar.
+4. **Limpeza do banco:** 244 mensagens duplicadas removidas de 151 threads (backup em `data/backups/20260908_1221_dedup_mensagens/` antes da limpeza).
+
+5. **Verificação de status:** dry-run em todas as 1.541 threads ativas → zero divergências. A recalculação de 02/09/2026 já havia corrigido tudo.
+
+6. **Deploy na VPS:** serviço reiniciado, ativo ✅.
 
 ### Estado atual
 
-**Commits:** `efcba4a` e `5fc03ce` — no GitHub e na VPS.
+**pytest:** testes passando, zero regressões.
 **Produção:** `gestao-suporte.finaudapps.com.br` — serviço ativo ✅.
-**pytest:** 583 testes passando, zero regressões.
+**Banco:** limpo de duplicatas, backup disponível.
+
+### Próximo passo
+
+🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Investigação em chat dedicado.
+
+**Antes de qualquer mudança no modal:**
+🟡 **Spec display modal A–G** — mapear comportamento atual e desejado com exemplos reais (ver PENDENCIAS.md).
+
+**Pendências que continuam:**
+- 🟡 Passo C — tela de manutenção de regras
+- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
+
+Último /fechar: 2026-09-08 — memórias revisadas ✅
+
+---
+
+## 📓 Diário da sessão (2026-09-08) — Consulta pontual: e-mail DRL 07 2026 rejeitado
+
+### O que foi feito
+
+**Sessão consultiva — nenhum código ou arquivo de projeto foi alterado.**
+
+Michel perguntou se o e-mail com assunto **"DRL 07 2026 rejeitado"** havia sido respondido na caixa da Andrea. Busca feita via Gmail MCP nas duas caixas relevantes.
+
+**Resultado da busca:**
+
+- Thread encontrada: `19ff7486cc830e8c`
+- Enviada em 12/08/2026 às 18h42 por `suporte@finaud.com.br` para `andrea.inacio@finaud.com.br`
+- Conteúdo: *"Boa tarde. Poderia me ajudar fazendo favor, sobre o DRL que foi rejeitado, referente 07/2026."*
+- **Andrea não respondeu** — thread tem apenas 1 mensagem, sem resposta em nenhuma das duas caixas verificadas (andrea.inacio@ e suporte@finaud.com.br).
+
+### Estado atual
+
+Sem alterações de código. Produção estável: `gestao-suporte.finaudapps.com.br` ✅.
 
 ### Próximo passo
 
@@ -86,7 +127,7 @@ Novo campo de data na barra de filtros. Após o deploy, Michel reportou duas fal
 - 🔴 Threads irmãs — investigação em chat dedicado
 - 🔴 Monitorar caixas da Andrea e Sarah
 
-Último /fechar: 2026-09-06 — memórias revisadas ✅
+Último /fechar: 2026-09-08 — memórias revisadas ✅
 
 ---
 
@@ -126,57 +167,6 @@ Michel recebeu o e-mail "Busca de e-mail parou" e não sabia se o problema era n
 - 🔴 Monitorar caixas da Andrea e Sarah
 
 Último /fechar: 2026-09-06 — memórias revisadas ✅
-
----
-
-## 📓 Diário da sessão (2026-09-03) — Migração HTML na VPS + fix modal C/D/F
-
-### O que foi feito
-
-**Duas frentes: conversão de e-mails HTML-only na VPS e correção de regressão no modal**
-
-**Frente 1: Migração HTML na VPS**
-
-O script `migrar_html_para_texto.py` foi rodado diretamente na VPS via SSH (aprovado na sessão anterior). Todas as entradas `[somente HTML]` foram substituídas por texto real extraído do HTML original.
-
-- **210/210 threads convertidas, 0 erros**
-- Banco da VPS agora tem texto legível em todos os campos `corpo_texto`
-
-**Frente 2: Regressão no modal C/D/F (commit `d59ef44`)**
-
-Identificada e corrigida uma regressão introduzida no Passo 2 (commit `4581095`).
-
-- **Problema:** para tipos C, D e F (encaminhamentos), o modal exibia `corpo_encaminhado` (texto da pessoa original) com o nome de quem encaminhou no cabeçalho — "De: William / texto da Andrea".
-- **Causa raiz:** Passo 2 assumiu que encaminhamentos nunca têm texto novo antes do bloco — correto na maioria dos casos, mas sempre errado visualmente porque o conteúdo encaminhado pertence a outra pessoa.
-- **Correção:** API passa a incluir `texto_novo` para C/D/F. Modal mostra: (1) texto_novo do remetente, (2) etiqueta "Encaminhamento — conteúdo original abaixo", (3) corpo encaminhado.
-
-**Decisão de processo:**
-
-A regressão aconteceu porque os cenários de display não foram mapeados antes da implementação. Decisão: não alterar mais nada no modal sem antes construir spec completa por tipo (A–G), com exemplos reais e aprovação do Michel por cenário. Registrado no PENDENCIAS.md como 🟡 bloqueador de futuras mudanças no modal.
-
-**Análise Tipo B:** investigado se ocultar o histórico citado seria seguro. Resultado: não — algumas threads têm apenas 1 mensagem no sistema e o histórico citado é o único contexto. Decidido: não alterar Tipo B sem a spec.
-
-### Estado atual
-
-**Commits:** `d59ef44` (modal fix) — no GitHub e na VPS.
-**Produção:** `gestao-suporte.finaudapps.com.br` — serviço ativo ✅.
-**pytest:** 560 testes passando, zero regressões (mudança foi no template — sem novos testes necessários).
-
-### Próximo passo
-
-🔴 **Chat dedicado: correção de status de todas as threads**
-
-`recalcular_status_todos()` só processa threads ativas (`inativa_desde IS NULL`) — threads arquivadas ficam com status congelado. Chat dedicado já preparado.
-
-**Antes de qualquer mudança no modal:**
-🟡 **Spec display modal A–G** — mapear comportamento atual e desejado com exemplos reais (ver PENDENCIAS.md).
-
-**Pendências que continuam:**
-- 🟡 Passo C — tela de manutenção de regras
-- 🔴 Threads irmãs — investigação em chat dedicado
-- 🔴 Monitorar caixas da Andrea e Sarah
-
-Último /fechar: 2026-09-03 00:30 — memórias revisadas ✅
 
 ---
 
