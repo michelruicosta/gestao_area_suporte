@@ -42,12 +42,12 @@ Tipo A não tem parte encadeada — é tudo parte nova.
 | Tipo | Status |
 |---|---|
 | A | ✅ Concluído — A1, A2, A3 e A4 decididos em 08/09/2026 |
-| B | ⏳ Pendente revisão — decisão provisional: mostrar tudo (08/09/2026) |
-| C | ⏳ Pendente revisão — decisão provisional: mostrar tudo (08/09/2026) |
-| D | ⏳ Pendente revisão — decisão provisional: mostrar tudo (08/09/2026) |
-| E | ⏳ Pendente revisão — decisão provisional: mostrar tudo (08/09/2026) |
-| F | ⏳ Pendente revisão — decisão provisional: mostrar tudo (08/09/2026) |
-| G | ⏳ Pendente revisão — decisão provisional: mostrar só metadados e anexos (08/09/2026) |
+| B | ✅ Decidido 08/09/2026 — mostrar tudo; revisão ao final do mapeamento completo |
+| C | ✅ Decidido 08/09/2026 — mostrar tudo; revisão ao final do mapeamento completo |
+| D | ✅ Decidido 08/09/2026 — mostrar tudo; revisão ao final do mapeamento completo |
+| E | ✅ Decidido 08/09/2026 — mostrar tudo; revisão ao final do mapeamento completo |
+| F | ✅ Decidido 08/09/2026 — mostrar tudo; revisão ao final do mapeamento completo |
+| G | ✅ Decidido 08/09/2026 — mostrar só metadados e anexos (sem corpo de texto) |
 
 ---
 
