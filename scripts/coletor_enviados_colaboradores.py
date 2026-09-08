@@ -177,6 +177,22 @@ def _carregar_threads() -> dict[str, dict]:
 
 
 def _ja_existe(msgs: list[dict], nova: dict) -> bool:
+    mid = nova.get('message_id', '').strip()
+    if mid:
+        # Message-ID é idêntico em todas as cópias do mesmo e-mail (RFC 5322).
+        # Cobre o caso em que o mesmo e-mail chega via suporte@ e via caixa direta.
+        for m in msgs:
+            m_mid = m.get('message_id', '').strip()
+            if m_mid:
+                # Ambos têm message_id: comparação definitiva — não cai no fallback.
+                if m_mid == mid:
+                    return True
+            else:
+                # Mensagem antiga sem message_id: fallback por (data, remetente).
+                if (m.get('data', ''), m.get('remetente', '')) == (nova.get('data', ''), nova.get('remetente', '')):
+                    return True
+        return False
+    # Nova sem message_id: fallback integral por (data, remetente).
     chave = (nova.get('data', ''), nova.get('remetente', ''))
     return any((m.get('data', ''), m.get('remetente', '')) == chave for m in msgs)
 

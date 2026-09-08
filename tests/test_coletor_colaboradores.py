@@ -164,3 +164,35 @@ def test_ja_existe_data_diferente():
 
 def test_ja_existe_lista_vazia():
     assert _ja_existe([], {'data': '01/09/2026', 'remetente': 'x@y.com'}) is False
+
+def test_ja_existe_message_id_detecta_remetente_diferente():
+    """Mesmo Message-ID com remetentes distintos (via suporte@ vs. direto) → duplicata."""
+    mid = '<CABxyz123@mail.gmail.com>'
+    msgs = [{'data': '31/08/2026 20:06',
+             'remetente': "'Jacilaine' via Suporte <suporte@finaud.com.br>",
+             'message_id': mid}]
+    nova  = {'data': '31/08/2026 20:06',
+             'remetente': 'Jacilaine das Neves Lima <jnlima@planner.com.br>',
+             'message_id': mid}
+    assert _ja_existe(msgs, nova) is True
+
+def test_ja_existe_message_id_diferente_nao_duplicata():
+    """Message-IDs diferentes com mesma data → não é duplicata."""
+    msgs = [{'data': '31/08/2026 20:06', 'remetente': 'a@b.com',
+             'message_id': '<id1@mail.com>'}]
+    nova  = {'data': '31/08/2026 20:06', 'remetente': 'a@b.com',
+             'message_id': '<id2@mail.com>'}
+    assert _ja_existe(msgs, nova) is False
+
+def test_ja_existe_sem_message_id_usa_fallback():
+    """Sem message_id em nenhum dos dois → fallback por (data, remetente)."""
+    msgs = [{'data': '01/09/2026 10:00', 'remetente': 'a@b.com', 'message_id': ''}]
+    nova  = {'data': '01/09/2026 10:00', 'remetente': 'a@b.com', 'message_id': ''}
+    assert _ja_existe(msgs, nova) is True
+
+def test_ja_existe_nova_sem_message_id_nao_falso_positivo():
+    """Nova mensagem sem message_id e remetente diferente → não é duplicata."""
+    msgs = [{'data': '01/09/2026 10:00', 'remetente': 'a@b.com',
+             'message_id': '<id1@mail.com>'}]
+    nova  = {'data': '01/09/2026 10:00', 'remetente': 'outro@b.com', 'message_id': ''}
+    assert _ja_existe(msgs, nova) is False

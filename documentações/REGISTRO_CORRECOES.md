@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-09-08 — Fix: mensagens duplicadas quando cliente envia para suporte@ e colaborador ao mesmo tempo
+
+**🔎 Em miúdos:** O sistema mostrava 2 mensagens na mesma thread quando na verdade era 1. Acontecia quando o cliente mandava o e-mail para `suporte@finaud.com.br` E para a Andrea (ou outro colaborador) ao mesmo tempo. Os dois coletores capturavam a mesma mensagem de caixas diferentes e não reconheciam que era a mesma.
+
+**Problema:** O e-mail chega com remetente diferente dependendo de onde é lido:
+- Via coletor principal (caixa `coleta.oraculo`, pelo Google Groups): `'Jacilaine' via Suporte <suporte@finaud.com.br>`
+- Via coletor de colaboradores (caixa da Andrea, cópia direta): `Jacilaine das Neves Lima <jnlima@planner.com.br>`
+
+A função `_ja_existe` comparava `(data, remetente)` — como os remetentes são diferentes, entendia como duas mensagens distintas.
+
+**Causa raiz:** `_processar_mensagem` não gravava o campo `Message-ID` (cabeçalho RFC 5322 que identifica unicamente um e-mail em todas as suas cópias). Sem ele, não havia como saber que eram o mesmo e-mail.
+
+**Correção:**
+- `scripts/coletor_gmail.py` → `_processar_mensagem()` passou a incluir `'message_id': h('Message-ID')` no dicionário de retorno
+- `scripts/coletor_enviados_colaboradores.py` → `_ja_existe()` reescrita: compara por `message_id` primeiro (quando ambas as mensagens têm o campo); só usa fallback `(data, remetente)` para mensagens antigas sem `message_id` gravado; quando dois `message_id` diferentes estão presentes, não entra no fallback (evita falso positivo)
+
+**Validação:** ✅ 4 testes novos em `tests/test_coletor_colaboradores.py` · 593 passando, zero regressões
+
+---
+
 ## 2026-09-06 — Fix: filtro de data da Visão Geral não filtrava nada
 
 **🔎 Em miúdos:** O campo de data recém-adicionado não funcionava — escolher qualquer data na tela não reduzia a lista. Corrigido substituindo o calendário nativo do browser por um campo de texto no mesmo estilo dos outros filtros.

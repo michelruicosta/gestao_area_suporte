@@ -184,6 +184,7 @@ def _processar_mensagem(msg: dict) -> dict:
         'assunto'      : h('Subject'),
         'corpo_texto'  : _extrair_texto(msg.get('payload', {})),
         'nomes_anexos' : _extrair_anexos(msg.get('payload', {})),
+        'message_id'   : h('Message-ID'),
     }
 
 
