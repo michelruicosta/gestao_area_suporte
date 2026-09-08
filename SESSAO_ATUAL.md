@@ -12,9 +12,9 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
+| 08/09 | Fix: CI — pacotes Google ausentes no requirements-dev.txt | abaixo |
 | 08/09 | Verificação e-mails do dia + criação serviço agendador VPS | abaixo |
 | 08/09 | Fix: campo data vazio — retomada /fechar | abaixo |
-| 08/09 | Fix: filtro de período Lista de Casos + campo data vazio | abaixo |
 | 08/09 | Display modal A–G: mapeamento, implementação, spec e artifact | arquivo |
 | 08/09 | UX modal thread: histórico sob demanda, fim do scroll duplo | arquivo |
 | 08/09 | Skills/MCPs — limpeza de config + regra de comunicação técnica | arquivo |
@@ -51,6 +51,35 @@
 >
 > **Regra:** este arquivo guarda as **3 sessões mais recentes**. O `/fechar` acrescenta a
 > linha nova aqui e move a 4ª sessão para o arquivo.
+
+---
+
+## 📓 Diário da sessão (2026-09-08) — Fix: CI — pacotes Google ausentes no requirements-dev.txt
+
+### O que foi feito
+
+Diagnóstico e correção do CI que estava falhando desde o commit `483720b`.
+
+1. **Causa identificada:** `requirements-dev.txt` não listava os pacotes do Google (`google-api-python-client`, `google-auth` e 4 outros). Esses pacotes são importados a nível de módulo em `coletor_gmail.py` e `coletor_enviados_colaboradores.py` — os testes `test_coletor_html.py` e `test_coletor_colaboradores.py` quebravam com `ImportError` antes de rodar qualquer asserção. Localmente passava porque os pacotes estavam instalados no Python global do usuário.
+
+2. **Correção:** adicionados os 6 pacotes ao `requirements-dev.txt` com as mesmas versões já usadas em produção no `requirements.txt`.
+
+3. **Commit `9f97437`, push feito.** CI vai rodar automaticamente.
+
+### Estado atual
+
+**pytest:** 608 passed ✅.
+**Produção:** `gestao-suporte.finaudapps.com.br` — serviço ativo ✅.
+
+### Próximo passo
+
+🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
+
+**Pendências que continuam:**
+- 🟡 Passo C — tela de manutenção de regras
+- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
+
+Último /fechar: 2026-09-08 — memórias revisadas ✅
 
 ---
 
@@ -102,41 +131,6 @@ Sessão curta de retomada após limite de contexto na sessão anterior.
 - **Fix confirmado em produção:** `.dt-disp.vazio { display:none }` — campos de data vazios mostram só 📅 em vez de "dd/m..." cortado (commit `22f8959`, sessão anterior). Michel verificou e confirmou "Corrigido".
 - **VPS:** já estava atualizada (commit publicado pela sessão paralela); nenhuma ação de deploy necessária.
 - **/fechar:** ritual concluído (havia sido interrompido pelo limite de contexto).
-
-### Estado atual
-
-**pytest:** 608 passed ✅ (zero regressões).
-**Produção:** `gestao-suporte.finaudapps.com.br` — serviço ativo ✅.
-
-### Próximo passo
-
-🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
-
-**Pendências que continuam:**
-- 🟡 Passo C — tela de manutenção de regras
-- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
-
-Último /fechar: 2026-09-08 — memórias revisadas ✅
-
----
-
-## 📓 Diário da sessão (2026-09-08) — Fix: filtro de período Lista de Casos + campo data vazio
-
-### O que foi feito
-
-**Dois bugs de interface corrigidos na tela FogBugz Lista de Casos.**
-
-1. **Filtro de período não aplicava (commits `28c5004` e `22f8959`):**
-   - `fogFiltrar()` tinha controles de período na tela (Hoje, Semana, Personalizado + Aplicar) mas ignorava completamente os valores — todos os casos apareciam sempre.
-   - Causa: lógica de filtragem por data nunca foi escrita quando os controles foram criados.
-   - Correção: adicionado pré-cálculo de `_dtIni`/`_dtFim` em `fogFiltrar()`, com comparação contra o atributo `data-data` (data de abertura) de cada linha.
-   - Padrão de abertura alterado para sem filtro ativo (opção B aprovada por Michel): ao abrir a página todos os casos aparecem; filtro só age quando selecionado.
-
-2. **Campo de data vazio mostrava "dd" cortado:**
-   - `.dt-disp.vazio` tinha `width:0;overflow:hidden` — o texto "dd/mm/aaaa" vazava como "dd".
-   - Corrigido para `display:none`. Campos vazios mostram só 📅. Afeta todos os 3 seletores de período do sistema (E-mails Evolução, FOG Lista, FOG Evolução).
-
-3. **Deploy VPS:** ambas as correções publicadas. Serviço ativo ✅.
 
 ### Estado atual
 

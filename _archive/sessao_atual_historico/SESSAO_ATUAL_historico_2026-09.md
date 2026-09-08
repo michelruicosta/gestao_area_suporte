@@ -6,6 +6,41 @@
 
 ---
 
+## 📓 Diário da sessão (2026-09-08) — Fix: filtro de período Lista de Casos + campo data vazio
+
+### O que foi feito
+
+**Dois bugs de interface corrigidos na tela FogBugz Lista de Casos.**
+
+1. **Filtro de período não aplicava (commits `28c5004` e `22f8959`):**
+   - `fogFiltrar()` tinha controles de período na tela (Hoje, Semana, Personalizado + Aplicar) mas ignorava completamente os valores — todos os casos apareciam sempre.
+   - Causa: lógica de filtragem por data nunca foi escrita quando os controles foram criados.
+   - Correção: adicionado pré-cálculo de `_dtIni`/`_dtFim` em `fogFiltrar()`, com comparação contra o atributo `data-data` (data de abertura) de cada linha.
+   - Padrão de abertura alterado para sem filtro ativo (opção B aprovada por Michel): ao abrir a página todos os casos aparecem; filtro só age quando selecionado.
+
+2. **Campo de data vazio mostrava "dd" cortado:**
+   - `.dt-disp.vazio` tinha `width:0;overflow:hidden` — o texto "dd/mm/aaaa" vazava como "dd".
+   - Corrigido para `display:none`. Campos vazios mostram só 📅. Afeta todos os 3 seletores de período do sistema (E-mails Evolução, FOG Lista, FOG Evolução).
+
+3. **Deploy VPS:** ambas as correções publicadas. Serviço ativo ✅.
+
+### Estado atual
+
+**pytest:** 608 passed ✅ (zero regressões).
+**Produção:** `gestao-suporte.finaudapps.com.br` — serviço ativo ✅.
+
+### Próximo passo
+
+🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
+
+**Pendências que continuam:**
+- 🟡 Passo C — tela de manutenção de regras
+- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
+
+Último /fechar: 2026-09-08 — memórias revisadas ✅
+
+---
+
 ## 📓 Diário da sessão (2026-09-08) — Fix: mensagens duplicadas (coletor colaboradores)
 
 ### O que foi feito
