@@ -133,6 +133,30 @@ def test_extrair_separador_apos_conteudo_real_ainda_corta():
     assert 'Texto antigo' not in resultado
 
 
+# ── _extrair_historico_citado ────────────────────────────────────────────────
+
+def test_historico_citado_extrai_linhas_com_maior():
+    corpo = 'Obrigado.\n> Segue o arquivo.\n> Att, Carol'
+    resultado = bt._extrair_historico_citado(corpo)
+    assert '>' not in resultado
+    assert 'Segue o arquivo' in resultado
+
+
+def test_historico_citado_extrai_apos_separador_escreveu():
+    corpo = 'Confirmado.\nEm seg., 31 de ago. de 2026 escreveu:\n> mensagem antiga'
+    resultado = bt._extrair_historico_citado(corpo)
+    assert 'mensagem antiga' in resultado
+    assert 'Confirmado' not in resultado
+
+
+def test_historico_citado_corpo_sem_historico():
+    assert bt._extrair_historico_citado('texto simples sem histórico') == ''
+
+
+def test_historico_citado_corpo_vazio():
+    assert bt._extrair_historico_citado('') == ''
+
+
 # ── _determinar_status — lista vazia ─────────────────────────────────────────
 
 def test_status_sem_mensagens():

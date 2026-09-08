@@ -395,6 +395,41 @@ def _extrair_texto_novo(corpo: str) -> str:
     return '\n'.join(resultado).strip()
 
 
+def _extrair_historico_citado(corpo: str) -> str:
+    """Extrai o histórico citado de uma resposta (Tipo B ou E) com prefixos '>' removidos."""
+    if not corpo:
+        return ''
+    linhas = corpo.split('\n')
+    inicio = None
+    tem_real = False
+
+    for i, linha in enumerate(linhas):
+        stripped = linha.strip()
+        if stripped and not stripped.startswith('>') and not _SEP_HISTORICO.match(stripped):
+            tem_real = True
+        if not tem_real:
+            continue
+        if _SEP_HISTORICO.match(stripped) or stripped.startswith('>'):
+            inicio = i
+            break
+
+    if inicio is None:
+        return ''
+
+    resultado = []
+    for linha in linhas[inicio:]:
+        stripped = linha.strip()
+        if _SEP_HISTORICO.match(stripped):
+            resultado.append(stripped)
+        else:
+            clean = linha.lstrip()
+            while clean.startswith('>'):
+                clean = clean[1:].lstrip(' ')
+            resultado.append(clean)
+
+    return '\n'.join(resultado).strip()
+
+
 # Marcadores que indicam início do aviso de confidencialidade corporativo.
 # Texto a partir deste ponto é boilerplate jurídico — não deve influenciar classificação.
 _INICIO_DISCLAIMER = re.compile(
