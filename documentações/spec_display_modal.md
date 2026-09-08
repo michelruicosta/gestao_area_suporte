@@ -1,7 +1,7 @@
 # Spec — Display do Modal de E-mails
 
 **Criado:** 2026-09-03  
-**Atualizado:** 2026-09-04  
+**Atualizado:** 2026-09-08  
 **Status:** em construção — tipo por tipo, com Michel  
 **Regra:** nenhuma alteração no modal sem esta spec concluída (PENDENCIAS.md, 03/09/2026)
 
@@ -41,7 +41,7 @@ Tipo A não tem parte encadeada — é tudo parte nova.
 
 | Tipo | Status |
 |---|---|
-| A | Parcialmente decidido — A1 concluído, A2+ pendente |
+| A | ✅ Concluído — A1, A2, A3 e A4 decididos em 08/09/2026 |
 | B–G | Pendente |
 
 ---
@@ -72,7 +72,11 @@ Exemplo real: *"Prezados, bom dia! Seguem as posições de TVM´s e o relatório
 Depósito a Vista."* — com logo da empresa embutido no início e arquivos PDF/CSV
 como anexos separados.
 
-**Decisão:** pendente — aguarda mapeamento completo de todos os tipos.
+**Decisão (08/09/2026):** exibir o corpo completo incluindo assinatura, e todas as imagens
+da parte nova (não há parte encadeada no Tipo A).
+
+**Motivo:** mesma lógica do A1 — risco de ocultar conteúdo real (screenshot, logo relevante)
+não é aceitável. Regra de imagens da parte nova (decidida em 04/09/2026) já cobre este caso.
 
 ### Sub-cenário A3 — Só anexo, texto mínimo (106 mensagens — 6%)
 
@@ -83,7 +87,11 @@ nos anexos (Excel, PDF, etc.).
 Exemplo real: *"Prezada, Seguem os arquivos para composição do DDR2011 de
 14/08/2026. Atenciosamente,"* — com 4 planilhas Excel como anexos.
 
-**Decisão:** pendente — aguarda mapeamento completo de todos os tipos.
+**Decisão (08/09/2026):** exibir o corpo completo (incluindo a frase de cortesia e a
+assinatura) e os anexos. Nenhum elemento é ocultado.
+
+**Motivo:** o texto mínimo pode conter informação útil (data, referência ao arquivo enviado).
+Ocultar para "limpar" a tela arriscaria suprimir contexto que Michel possa precisar.
 
 ### Sub-cenário A4 — Texto real + anexo (455 mensagens — 28%)
 
@@ -94,7 +102,11 @@ Exemplo real: *"Prezada Juliana, Seguem em anexo as projeções de capital
 referentes aos cenários Otimista e de Stress. No cenário Otimista, avaliamos
 o crescimento..."* — com relatórios PDF e planilhas Excel.
 
-**Decisão:** pendente — aguarda mapeamento completo de todos os tipos.
+**Decisão (08/09/2026):** exibir o corpo completo — texto real, parágrafo explicativo,
+assinatura — e os anexos. Nenhum elemento é ocultado.
+
+**Motivo:** o texto é o conteúdo principal — contextualiza os arquivos e muitas vezes
+contém informação que não está nos próprios anexos (premissas, resultados esperados).
 
 ---
 
@@ -161,4 +173,3 @@ posição no corpo, nome do arquivo e recorrência por remetente existem, mas ne
 | Correção de performance (Gmail API só chamado quando há imagem) | ✅ Implementado e commitado (a3082d5) |
 | Ocultar imagens da parte encadeada | 🔴 Pendente — decisão aprovada em 04/09/2026 |
 | Exibir imagens I7 (descrições de IA do Gmail) | ✅ Implementado e commitado (0782317) |
-| Push dos commits para a VPS | 🔴 Pendente — aguarda OK do Michel |
