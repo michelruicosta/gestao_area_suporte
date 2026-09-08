@@ -633,7 +633,7 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
   font-size: 0.83rem; color: var(--muted);
 }
 .msg-head strong { color: var(--text); }
-.msg-body { padding: 0.85rem; font-size: 0.88rem; white-space: pre-wrap; line-height: 1.6; max-height: 14rem; overflow-y: auto; }
+.msg-body { padding: 0.85rem; font-size: 0.88rem; white-space: pre-wrap; line-height: 1.6; }
 .msg-enc-label { padding: 0.3rem 0.85rem; font-size: 0.75rem; color: var(--muted); font-style: italic; border-bottom: 1px solid var(--border); }
 .msg-enc-toggle { display: flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.85rem; font-size: 0.75rem; color: var(--muted); font-style: italic; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
 .msg-enc-toggle:hover { color: var(--text); }
@@ -642,6 +642,19 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
 .msg-sem-texto { color: var(--muted); font-size: 0.83rem; }
 .msg-anexos { padding: 0.35rem 0.85rem 0.65rem; font-size: 0.8rem; color: var(--muted); }
 .msg-anexos span { background: var(--bg); padding: 0.18rem 0.5rem; border-radius: 4px; margin-right: 0.35rem; }
+.msg-card-cliente { border-left: 3px solid #3b82f6; }
+.msg-card-finaud  { border-left: 3px solid #10b981; }
+.msg-head-clicavel { cursor: pointer; }
+.msg-head-clicavel:hover { background: var(--hover, rgba(0,0,0,.04)); }
+.msg-historico-colapsado .msg-body,
+.msg-historico-colapsado .msg-enc-toggle,
+.msg-historico-colapsado .msg-enc-label,
+.msg-historico-colapsado .msg-enc-colapsado,
+.msg-historico-colapsado .msg-anexos { display: none; }
+.msg-hist-toggle-label { margin-left: auto; font-size: 0.73rem; color: var(--muted); font-style: normal; white-space: nowrap; }
+.msg-ver-historico { display: block; width: 100%; padding: 0.6rem; background: var(--bg); border: 1px dashed var(--border); border-radius: 8px; font-size: 0.83rem; color: var(--muted); cursor: pointer; text-align: center; margin-bottom: 0.75rem; font: inherit; }
+.msg-ver-historico:hover { color: var(--text); border-color: var(--muted); }
+.msg-sep-recentes { text-align: center; font-size: 0.75rem; color: var(--muted); padding: 0.35rem 0; margin: 0.25rem 0 0.6rem; border-top: 1px solid var(--border); }
 
 /* Modal classificar */
 .modal-class { width: min(480px, 100%); }
@@ -2600,9 +2613,191 @@ function filtrarThreads() {
 }
 
 // ── Thread completa ────────────────────────────────────────────────────
+let _thrHistAberto = false;
+let _thrData = null; // { threadId, t }
+
+// Gera o HTML de corpo + anexos para uma única mensagem
+function _renderMsgHtml(m, threadId) {
+  const isEncaminhamento = m.tipo_estrutura === 'C' || m.tipo_estrutura === 'D' || m.tipo_estrutura === 'F';
+  const isResposta = m.tipo_estrutura === 'B' || m.tipo_estrutura === 'E';
+  const IMG_EXT = /\.(png|jpg|jpeg|gif|bmp|webp)$/i;
+  const gmailImgs = m.gmail_images || [];
+  const gmailUsados = new Set();
+  const buscarGmail = (nome) => {
+    for (let i = 0; i < gmailImgs.length; i++) {
+      if (!gmailUsados.has(i) && gmailImgs[i].filename === nome) { gmailUsados.add(i); return gmailImgs[i]; }
+    }
+    return null;
+  };
+  // I7: Gmail substituiu imagem por descrição de IA — busca posicional (próxima disponível)
+  const buscarGmailPositional = () => {
+    for (let i = 0; i < gmailImgs.length; i++) {
+      if (!gmailUsados.has(i)) { gmailUsados.add(i); return gmailImgs[i]; }
+    }
+    return null;
+  };
+  const renderImagens = (texto) => {
+    if (!texto) return '';
+    const txt = texto.trim();
+    if (!txt) return '';
+    // grupo 2 captura I7 antes do [image:] genérico para não cair no ramo de nome
+    const re = /\[cid:([^\]]+)\]|\[([^\]]*O\s+conte[uú]do\s+gerado\s+por\s+IA[^\]]*)\]|\[image:\s*([^\]]+)\]|\[(\w[^\]]*\.(png|jpg|jpeg|gif|bmp|webp))\]/gi;
+    const parts = []; let lastIdx = 0; let mo;
+    re.lastIndex = 0;
+    while ((mo = re.exec(txt)) !== null) {
+      parts.push(escHtml(txt.slice(lastIdx, mo.index)));
+      if (mo[1] !== undefined) {
+        const info = m.cids && m.cids[mo[1]];
+        if (info) {
+          const url = `/api/imagem/${encodeURIComponent(threadId)}/${encodeURIComponent(m.message_id)}/${encodeURIComponent(info.attachment_id)}`;
+          parts.push(`<img src="${url}" alt="imagem" style="max-width:100%;display:block;margin:4px 0;">`);
+        }
+      } else if (mo[2] !== undefined) {
+        const info = buscarGmailPositional();
+        if (info) {
+          const url = `/api/imagem/${encodeURIComponent(threadId)}/${encodeURIComponent(m.message_id)}/${encodeURIComponent(info.attachment_id)}`;
+          parts.push(`<img src="${url}" alt="imagem" style="max-width:100%;display:block;margin:4px 0;">`);
+        }
+      } else {
+        const candidato = (mo[3] !== undefined ? mo[3] : mo[4]).trim();
+        if (IMG_EXT.test(candidato)) {
+          const info = buscarGmail(candidato);
+          if (info) {
+            const url = `/api/imagem/${encodeURIComponent(threadId)}/${encodeURIComponent(m.message_id)}/${encodeURIComponent(info.attachment_id)}`;
+            parts.push(`<img src="${url}" alt="${escHtml(candidato)}" style="max-width:100%;display:block;margin:4px 0;">`);
+          }
+        }
+        // candidato sem extensão de imagem (URL, texto) → remove silenciosamente
+      }
+      lastIdx = mo.index + mo[0].length;
+    }
+    parts.push(escHtml(txt.slice(lastIdx)));
+    return parts.join('').trim();
+  };
+
+  const listaAnexos = (m.anexos_reais && m.anexos_reais.length) ? m.anexos_reais : m.anexos;
+  const anexos = listaAnexos.length
+    ? `<div class="msg-anexos">📎 ${listaAnexos.map(a => `<span>${escHtml(a)}</span>`).join('')}</div>`
+    : '';
+
+  // Gera bloco colapsável (oculto por padrão) com botão de expandir
+  function blocoColapsavel(label, conteudoHtml) {
+    return `<div class="msg-enc-toggle" onclick="
+      var b=this.nextElementSibling;
+      var i=this.querySelector('.toggle-icon');
+      if(b.style.display===''){b.style.display='block';i.textContent='▼';}
+      else{b.style.display='';i.textContent='▶';}
+    "><span class="toggle-icon">▶</span>${escHtml(label)}</div>
+    <div class="msg-enc-colapsado"><div class="msg-body">${conteudoHtml}</div></div>`;
+  }
+
+  let corpoHtml;
+  if (isEncaminhamento) {
+    const textoNovo = renderImagens(m.texto_novo);
+    const parteNova = textoNovo
+      ? `<div class="msg-body">${textoNovo}</div>`
+      : `<div class="msg-body msg-sem-texto"><em>(encaminhou sem adicionar texto)</em></div>`;
+    const corpoEnc = renderImagens(m.corpo_encaminhado);
+    let parteEnc = '';
+    if (corpoEnc) {
+      // Interno (repetição): oculto por padrão com toggle
+      // Externo (conteúdo novo): sempre visível
+      if (m.enc_interno) {
+        parteEnc = blocoColapsavel('Encaminhamento — conteúdo já visível neste chat (clique para expandir)', corpoEnc);
+      } else {
+        parteEnc = `<div class="msg-enc-label">Encaminhamento — conteúdo original abaixo</div><div class="msg-body">${corpoEnc}</div>`;
+      }
+    }
+    corpoHtml = parteNova + parteEnc;
+  } else if (isResposta) {
+    const textoNovo = renderImagens(m.texto_novo);
+    const parteNova = textoNovo
+      ? `<div class="msg-body">${textoNovo}</div>`
+      : `<div class="msg-body msg-sem-texto"><em>(respondeu sem adicionar texto)</em></div>`;
+    const historico = renderImagens(m.historico_citado);
+    // Histórico de respostas é sempre repetição — oculto por padrão com toggle
+    const parteHistorico = historico
+      ? blocoColapsavel('Histórico da conversa — já visível acima (clique para expandir)', historico)
+      : '';
+    corpoHtml = parteNova + parteHistorico;
+  } else {
+    const corpo = renderImagens(m.corpo) || escHtml('(sem conteúdo)');
+    corpoHtml = `<div class="msg-body">${corpo}</div>`;
+  }
+  return { corpoHtml, anexos };
+}
+
+// Renderiza o modal-thread-body conforme o estado atual
+function _renderThreadBody() {
+  if (!_thrData) return;
+  const { threadId, t } = _thrData;
+  const msgs = t.mensagens;
+  const corte = Math.max(0, msgs.length - 2);
+  const historico = msgs.slice(0, corte);
+  const recentes = msgs.slice(corte);
+  const partes = [];
+
+  if (historico.length > 0) {
+    if (!_thrHistAberto) {
+      const n = historico.length;
+      partes.push(`<button class="msg-ver-historico" onclick="_togHist()">Ver ${n} mensage${n > 1 ? 'ns anteriores' : 'm anterior'}</button>`);
+    } else {
+      const histHtml = historico.map((m, idx) => {
+        const { corpoHtml, anexos } = _renderMsgHtml(m, threadId);
+        const borderCls = /finaud/i.test(m.de) ? 'msg-card-finaud' : 'msg-card-cliente';
+        return `<div class="msg-card ${borderCls}" data-hist-idx="${idx}">
+          <div class="msg-head msg-head-clicavel" onclick="_togHistMsg(${idx})">
+            <span><strong>De:</strong> ${escHtml(m.de)}</span>
+            <span><strong>Para:</strong> ${escHtml(m.para)}</span>
+            <span>${escHtml(m.data)}</span>
+            <span class="msg-hist-toggle-label">▼ recolher</span>
+          </div>
+          ${corpoHtml}${anexos}
+        </div>`;
+      }).join('');
+      partes.push(histHtml);
+      partes.push(`<button class="msg-ver-historico" onclick="_togHist()">Ocultar histórico</button>`);
+    }
+    if (recentes.length > 0) partes.push('<div class="msg-sep-recentes">— Mensagens recentes —</div>');
+  }
+
+  const recentesHtml = recentes.map(m => {
+    const { corpoHtml, anexos } = _renderMsgHtml(m, threadId);
+    const borderCls = /finaud/i.test(m.de) ? 'msg-card-finaud' : 'msg-card-cliente';
+    return `<div class="msg-card ${borderCls}">
+      <div class="msg-head">
+        <span><strong>De:</strong> ${escHtml(m.de)}</span>
+        <span><strong>Para:</strong> ${escHtml(m.para)}</span>
+        <span>${escHtml(m.data)}</span>
+      </div>
+      ${corpoHtml}${anexos}
+    </div>`;
+  }).join('');
+  partes.push(recentesHtml);
+
+  document.getElementById('modal-thread-body').innerHTML = partes.join('');
+}
+
+// Expande/oculta a seção de histórico
+function _togHist() {
+  _thrHistAberto = !_thrHistAberto;
+  _renderThreadBody();
+}
+
+// Recolhe/expande uma mensagem individual do histórico (só DOM, preserva inner toggles)
+function _togHistMsg(idx) {
+  const card = document.querySelector('.msg-card[data-hist-idx="' + idx + '"]');
+  if (!card) return;
+  const colapsado = card.classList.toggle('msg-historico-colapsado');
+  const lbl = card.querySelector('.msg-hist-toggle-label');
+  if (lbl) lbl.textContent = colapsado ? '▶ expandir' : '▼ recolher';
+}
+
 async function abrirThread(threadId) {
   document.getElementById('modal-thread-assunto').textContent = 'Carregando…';
   document.getElementById('modal-thread-body').innerHTML = '';
+  _thrHistAberto = false;
+  _thrData = null;
   abrirModal('modal-thread');
   try {
     const t = await _get('/api/thread/' + encodeURIComponent(threadId));
@@ -2615,140 +2810,8 @@ async function abrirThread(threadId) {
       `<span class="chip ${chipCls}"${motivoAttr}>${escHtml(t.status)}</span>
        &nbsp;<span style="color:#94a3b8;">·</span>&nbsp;
        ${escHtml(t.categoria_nome)}`;
-
-    document.getElementById('modal-thread-body').innerHTML =
-      t.mensagens.map(m => {
-        // Tipo C/D/F: texto_novo + bloco encaminhado | Tipo B/E: texto_novo + histórico citado
-        const isEncaminhamento = m.tipo_estrutura === 'C' || m.tipo_estrutura === 'D' || m.tipo_estrutura === 'F';
-        const isResposta = m.tipo_estrutura === 'B' || m.tipo_estrutura === 'E';
-        // Substitui marcadores de imagem por <img> — 3 formatos:
-        //   [cid:xxx@yyy]         → Outlook (mapa por content-id)
-        //   [image: arquivo.ext]  → Gmail   (busca por nome de arquivo)
-        //   [arquivo.ext]         → Gmail variante sem prefixo
-        const IMG_EXT = /\.(png|jpg|jpeg|gif|bmp|webp)$/i;
-        const gmailImgs = m.gmail_images || [];
-        const gmailUsados = new Set();
-        const buscarGmail = (nome) => {
-          for (let i = 0; i < gmailImgs.length; i++) {
-            if (!gmailUsados.has(i) && gmailImgs[i].filename === nome) {
-              gmailUsados.add(i);
-              return gmailImgs[i];
-            }
-          }
-          return null;
-        };
-        // I7: Gmail substituiu imagem por descrição de IA — busca posicional (próxima disponível)
-        const buscarGmailPositional = () => {
-          for (let i = 0; i < gmailImgs.length; i++) {
-            if (!gmailUsados.has(i)) {
-              gmailUsados.add(i);
-              return gmailImgs[i];
-            }
-          }
-          return null;
-        };
-        const RE_I7 = /O\s+conte[uú]do\s+gerado\s+por\s+IA/i;
-        const renderImagens = (texto) => {
-          if (!texto) return '';
-          const txt = texto.trim();
-          if (!txt) return '';
-          // grupo 4 captura I7 antes do [image:] genérico para não cair no ramo de nome
-          const re = /\[cid:([^\]]+)\]|\[([^\]]*O\s+conte[uú]do\s+gerado\s+por\s+IA[^\]]*)\]|\[image:\s*([^\]]+)\]|\[(\w[^\]]*\.(png|jpg|jpeg|gif|bmp|webp))\]/gi;
-          const parts = []; let lastIdx = 0; let mo;
-          re.lastIndex = 0;
-          while ((mo = re.exec(txt)) !== null) {
-            parts.push(escHtml(txt.slice(lastIdx, mo.index)));
-            if (mo[1] !== undefined) {
-              // [cid:xxx] — Outlook
-              const info = m.cids && m.cids[mo[1]];
-              if (info) {
-                const url = `/api/imagem/${encodeURIComponent(threadId)}/${encodeURIComponent(m.message_id)}/${encodeURIComponent(info.attachment_id)}`;
-                parts.push(`<img src="${url}" alt="imagem" style="max-width:100%;display:block;margin:4px 0;">`);
-              }
-            } else if (mo[2] !== undefined) {
-              // I7 — descrição de IA do Gmail → busca posicional
-              const info = buscarGmailPositional();
-              if (info) {
-                const url = `/api/imagem/${encodeURIComponent(threadId)}/${encodeURIComponent(m.message_id)}/${encodeURIComponent(info.attachment_id)}`;
-                parts.push(`<img src="${url}" alt="imagem" style="max-width:100%;display:block;margin:4px 0;">`);
-              }
-            } else {
-              // [image: xxx] ou [arquivo.ext] — Gmail (busca por nome)
-              const candidato = (mo[3] !== undefined ? mo[3] : mo[4]).trim();
-              if (IMG_EXT.test(candidato)) {
-                const info = buscarGmail(candidato);
-                if (info) {
-                  const url = `/api/imagem/${encodeURIComponent(threadId)}/${encodeURIComponent(m.message_id)}/${encodeURIComponent(info.attachment_id)}`;
-                  parts.push(`<img src="${url}" alt="${escHtml(candidato)}" style="max-width:100%;display:block;margin:4px 0;">`);
-                }
-              }
-              // candidato sem extensão de imagem (URL, texto) → remove silenciosamente
-            }
-            lastIdx = mo.index + mo[0].length;
-          }
-          parts.push(escHtml(txt.slice(lastIdx)));
-          return parts.join('').trim();
-        };
-        // Sempre usar só arquivos reais (sem imagens de assinatura) na lista de anexos
-        const listaAnexos = (m.anexos_reais && m.anexos_reais.length) ? m.anexos_reais : m.anexos;
-        const anexos = listaAnexos.length
-          ? `<div class="msg-anexos">📎 ${listaAnexos.map(a => `<span>${escHtml(a)}</span>`).join('')}</div>`
-          : '';
-        // Gera bloco colapsável (oculto por padrão) com botão de expandir
-        function blocoColapsavel(label, conteudoHtml) {
-          const uid = Math.random().toString(36).slice(2);
-          return `<div class="msg-enc-toggle" onclick="
-            var b=this.nextElementSibling;
-            var i=this.querySelector('.toggle-icon');
-            if(b.style.display===''){b.style.display='block';i.textContent='▼';}
-            else{b.style.display='';i.textContent='▶';}
-          "><span class="toggle-icon">▶</span>${escHtml(label)}</div>
-          <div class="msg-enc-colapsado"><div class="msg-body">${conteudoHtml}</div></div>`;
-        }
-
-        let corpoHtml;
-        if (isEncaminhamento) {
-          const textoNovo = renderImagens(m.texto_novo);
-          const parteNova = textoNovo
-            ? `<div class="msg-body">${textoNovo}</div>`
-            : `<div class="msg-body msg-sem-texto"><em>(encaminhou sem adicionar texto)</em></div>`;
-          const corpoEnc = renderImagens(m.corpo_encaminhado);
-          let parteEnc = '';
-          if (corpoEnc) {
-            // Interno (repetição): oculto por padrão com toggle
-            // Externo (conteúdo novo): sempre visível
-            if (m.enc_interno) {
-              parteEnc = blocoColapsavel('Encaminhamento — conteúdo já visível neste chat (clique para expandir)', corpoEnc);
-            } else {
-              parteEnc = `<div class="msg-enc-label">Encaminhamento — conteúdo original abaixo</div><div class="msg-body">${corpoEnc}</div>`;
-            }
-          }
-          corpoHtml = parteNova + parteEnc;
-        } else if (isResposta) {
-          const textoNovo = renderImagens(m.texto_novo);
-          const parteNova = textoNovo
-            ? `<div class="msg-body">${textoNovo}</div>`
-            : `<div class="msg-body msg-sem-texto"><em>(respondeu sem adicionar texto)</em></div>`;
-          const historico = renderImagens(m.historico_citado);
-          // Histórico de respostas é sempre repetição — oculto por padrão com toggle
-          const parteHistorico = historico
-            ? blocoColapsavel('Histórico da conversa — já visível acima (clique para expandir)', historico)
-            : '';
-          corpoHtml = parteNova + parteHistorico;
-        } else {
-          const corpo = renderImagens(m.corpo) || escHtml('(sem conteúdo)');
-          corpoHtml = `<div class="msg-body">${corpo}</div>`;
-        }
-        return `<div class="msg-card">
-          <div class="msg-head">
-            <span><strong>De:</strong> ${escHtml(m.de)}</span>
-            <span><strong>Para:</strong> ${escHtml(m.para)}</span>
-            <span>${escHtml(m.data)}</span>
-          </div>
-          ${corpoHtml}
-          ${anexos}
-        </div>`;
-      }).join('');
+    _thrData = { threadId, t };
+    _renderThreadBody();
   } catch (e) {
     document.getElementById('modal-thread-body').innerHTML =
       '<p class="vazio">Erro ao carregar a thread.</p>';
