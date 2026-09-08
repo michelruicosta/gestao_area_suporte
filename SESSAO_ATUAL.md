@@ -12,9 +12,10 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
+| 08/09 | Verificação e-mails do dia + criação serviço agendador VPS | abaixo |
 | 08/09 | Fix: campo data vazio — retomada /fechar | abaixo |
 | 08/09 | Fix: filtro de período Lista de Casos + campo data vazio | abaixo |
-| 08/09 | Display modal A–G: mapeamento, implementação, spec e artifact | abaixo |
+| 08/09 | Display modal A–G: mapeamento, implementação, spec e artifact | arquivo |
 | 08/09 | UX modal thread: histórico sob demanda, fim do scroll duplo | arquivo |
 | 08/09 | Skills/MCPs — limpeza de config + regra de comunicação técnica | arquivo |
 | 08/09 | Fix: mensagens duplicadas (coletor colaboradores + message_id) | arquivo |
@@ -50,6 +51,45 @@
 >
 > **Regra:** este arquivo guarda as **3 sessões mais recentes**. O `/fechar` acrescenta a
 > linha nova aqui e move a 4ª sessão para o arquivo.
+
+---
+
+## 📓 Diário da sessão (2026-09-08) — Verificação e-mails do dia + criação serviço agendador VPS
+
+### O que foi feito
+
+Sessão operacional — verificação dos e-mails de 08/09 e manutenção da VPS.
+
+1. **Verificação dos e-mails de hoje:** consultado o banco local — 76 threads com atividade em 08/09, todas classificadas corretamente. As 4 sem categoria são e-mails automáticos de sistema (relatórios Risk Driver, FogBugz, newsletter Bacen), corretamente em destino `descartes`.
+
+2. **Diagnóstico da VPS via SSH:**
+   - Tela (`gestao-suporte`): ativa ✅
+   - Agendador externo (`gestao-suporte-agendador`): **inexistente** — nunca tinha sido criado no systemd
+   - Coleta estava sendo feita pelo agendador legado dentro da tela; última rodada: 16:36
+   - Disparada coleta manual: 9 threads atualizadas, 7 classificadas, 0 erros
+
+3. **Criação do serviço `gestao-suporte-agendador` na VPS:**
+   - Criado `/etc/systemd/system/gestao-suporte-agendador.service` (roda `executar_pipeline.py --agendar`)
+   - Adicionado `GESTAO_AGENDADOR_EXTERNO=1` no `.env` da VPS
+   - Serviço habilitado e iniciado; tela reiniciada para ler a nova variável
+   - Ambos os serviços: `active` ✅
+
+4. **`REGISTRO_CORRECOES.md`:** entrada registrada (sem código alterado — mudança só na VPS).
+
+### Estado atual
+
+**pytest:** 608 passed ✅ (não rodado nesta sessão — nenhum código alterado).
+**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅.
+
+### Próximo passo
+
+🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
+
+**Pendências que continuam:**
+- 🟡 Passo C — tela de manutenção de regras
+- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
+
+Último /fechar: 2026-09-08 20:00 — memórias revisadas ✅
 
 ---
 
@@ -114,48 +154,6 @@ Sessão curta de retomada após limite de contexto na sessão anterior.
 Último /fechar: 2026-09-08 — memórias revisadas ✅
 
 ---
-
-## 📓 Diário da sessão (2026-09-08) — Display modal A–G: mapeamento, implementação e documentação
-
-### O que foi feito
-
-**Spec completa + implementação do display modal para todos os tipos de e-mail (A–G).**
-
-1. **`_SEP_HISTORICO` limite 120 → 200 chars** — separadores com `<mailto:…>` embutido chegavam a 181 chars; diagnóstico com 9.004 separadores reais confirmou o novo limite seguro.
-
-2. **`_remover_disclaimers_por_bloco` (banco_threads.py)** — nova função que remove avisos de confidencialidade bloco a bloco (por separador de histórico), sem apagar mensagens de outros participantes.
-
-3. **Detecção interno/externo para encaminhamentos C/D/F (banco_threads.py):**
-   - `_e_encaminhamento_interno()`: cascata V1 (e-mail) → V2 (nome) → V3 (assunto) → V4 (externo padrão)
-   - `_cabecalho_bloco_encaminhado()`, `_limpar_linha_cab()`, `_emails_e_nomes_participantes()`
-   - `_limpar_linha_cab()` remove prefixos `>` e negrito Markdown antes da análise
-   - V4 em produção: apenas 0,9 % dos encaminhamentos
-
-4. **`servidor_telas.py`:** campo `enc_interno` calculado e adicionado a cada mensagem C/D/F.
-
-5. **`gestao_email.html`:** toggle colapsável — B/E: histórico oculto; C/D/F-interno: bloco oculto; C/D/F-externo: sempre visível.
-
-6. **Documentação:** `spec_display_modal.md` atualizado para B, C, D, E, F. Artifact "Matriz de Padrões de E-mail" atualizado com sub-cenários C/D/F e contador 10 → 13.
-
-7. **Decisão A1–A4 (Michel):** manter os 4 sub-cenários — úteis para a IA assistente futura que poderá tratar imagens, texto e anexos diferentemente.
-
-8. **11 novos testes.** Total: 608 passando. Commit `913e12f`. Deploy VPS ativo.
-
-### Estado atual
-
-**pytest:** 608 passed ✅
-**Produção:** `gestao-suporte.finaudapps.com.br` — serviço ativo ✅.
-**PENDENCIAS.md:** itens "Spec display modal A–G" e "Revisar sub-classificação A1–A4" removidos (encerrados).
-
-### Próximo passo
-
-🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
-
-**Pendências que continuam:**
-- 🟡 Passo C — tela de manutenção de regras
-- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
-
-Último /fechar: 2026-09-08 — memórias revisadas ✅
 
 ---
 <!-- fim das 3 sessões recentes -->
