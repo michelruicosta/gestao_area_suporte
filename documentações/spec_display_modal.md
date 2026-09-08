@@ -110,9 +110,73 @@ contém informação que não está nos próprios anexos (premissas, resultados 
 
 ---
 
-## Tipos B–G — Pendente
+## Tipo B — Resposta com texto novo + histórico citado
 
-A ser definido com Michel, tipo por tipo.
+**O que é:** e-mail de resposta onde o remetente escreve algo novo no topo e mantém o
+e-mail anterior citado abaixo (separado por uma linha como "Em seg., 31 de ago. escreveu:").  
+**Volume:** 293 threads (15% do total).
+
+**Estrutura:**
+- **Parte nova** — o que o remetente escreveu agora (antes do separador)
+- **Parte encadeada** — o e-mail anterior citado abaixo (após o separador) — é sempre
+  repetição de uma mensagem que já aparece separadamente no modal
+
+**Exemplo real:** thread "INDICE DE BASILEIA - 06.2026" — Monica (Finaud) responde a Carol
+(Coluna DTVM) com o relatório DLO solicitado. A parte nova tem texto explicativo + arquivo
+ZIP. A parte encadeada repete o e-mail original da Carol já visível na mensagem anterior.
+
+**Decisão (08/09/2026):** mostrar tudo — parte nova e parte encadeada exibidas integralmente.  
+**Revisão:** ao concluir o mapeamento de todos os tipos, reavaliar se a parte encadeada
+deve ser ocultada (é sempre repetição de e-mail já visível acima no modal).
+
+---
+
+## Tipo C — Encaminhamento Outlook com texto novo
+
+**O que é:** e-mail encaminhado via Outlook onde o remetente escreveu algo antes do bloco
+encaminhado. Identificado pelos cabeçalhos "De: / Enviada em: / Para: / Assunto:" do Outlook.  
+**Volume:** 96 threads (5% do total).
+
+**Decisão:** pendente — aguarda mapeamento.
+
+---
+
+## Tipo D — Encaminhamento Outlook sem texto novo
+
+**O que é:** e-mail encaminhado via Outlook onde não há texto novo antes do bloco — só
+assinatura ou campo vazio antes dos cabeçalhos "De: / Enviada em:".  
+**Volume:** 128 threads (6% do total).
+
+**Decisão:** pendente — aguarda mapeamento.
+
+---
+
+## Tipo E — Resposta sem texto novo
+
+**O que é:** e-mail de resposta onde não há conteúdo real antes do separador — só assinatura
+ou campo vazio. O remetente respondeu mas não escreveu nada de novo.  
+**Volume:** 21 threads (1% do total).
+
+**Decisão:** pendente — aguarda mapeamento.
+
+---
+
+## Tipo F — Encaminhamento Gmail
+
+**O que é:** e-mail encaminhado via Gmail, identificado pelo separador "---------- Forwarded
+message ---------" seguido dos cabeçalhos Gmail (From: / Date: / Subject: / To:).  
+**Volume:** 51 threads (2% do total).
+
+**Decisão:** pendente — aguarda mapeamento.
+
+---
+
+## Tipo G — Corpo vazio
+
+**O que é:** e-mail sem corpo de texto — só assunto e anexos, ou campo completamente vazio.  
+**Volume:** 2 threads (0% do total).
+
+**Decisão:** pendente — aguarda mapeamento.
 
 ---
 
