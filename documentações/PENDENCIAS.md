@@ -8,6 +8,22 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ---
 
+## 🟡 DISPLAY MODAL — Revisar sub-classificação do Tipo A após mapeamento completo (08/09/2026)
+
+Os 4 sub-cenários do Tipo A (A1, A2, A3, A4) foram mapeados e todos tiveram a mesma
+decisão: mostrar tudo. Com isso, a sub-classificação não gera nenhum comportamento diferente
+no modal — a regra prática é uma só: *Tipo A → exibir tudo*.
+
+**Questão pendente:** quando todos os tipos (B–G) estiverem mapeados e as decisões tomadas,
+revisar se vale manter os sub-cenários como regras separadas ou simplificar a spec para uma
+única regra por tipo. A resposta pode mudar se B–G trouxerem alguma exceção que justifique
+manter granularidade também no Tipo A.
+
+**Como retomar:** ao concluir o mapeamento de B–G, trazer esta questão para Michel decidir:
+simplificar o Tipo A para uma regra só, ou manter os sub-cenários como documentação.
+
+---
+
 ## 🟡 DISPLAY MODAL — Spec por tipo de e-mail A–G (identificado em 03/09/2026)
 
 Antes de qualquer nova alteração no modal de e-mails, mapear o comportamento atual e o desejado para cada tipo (A–G), com exemplos reais de thread com 1 mensagem e com múltiplas mensagens. Michel define o que quer ver em cada cenário. Resultado vira `documentações/spec_display_modal.md`.
