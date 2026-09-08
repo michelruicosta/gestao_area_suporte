@@ -2,6 +2,34 @@
 
 ---
 
+### 08/09 — Para: no modal mostrava CC sem verificar se era @finaud
+
+**🔎 Em miúdos:** o cabeçalho "Para:" dentro de um e-mail no modal mostrava o nome de quem estava no CC (ex.: Mariana Pereira) em vez de `suporte@finaud.com.br`, mesmo quando essa pessoa não era da Finaud — criando inconsistência com a coluna PARA da lista, que mostrava `suporte@finaud.com.br`.
+
+**Problema:** `_resolver_para` detectava `To = suporte@finaud.com.br` e exibia o CC inteiro sem filtrar se havia alguém @finaud ali. Resultado: lista e modal mostravam coisas diferentes para o mesmo e-mail.
+
+**Correção (`scripts/servidor_telas.py`):** nova função `_primeiro_finaud_no_cc` busca no CC o primeiro endereço @finaud/@finaudtec; se achar, exibe o nome desse colaborador; se não achar, exibe `suporte@finaud.com.br`.
+
+**Validação:** 608 testes ✅ VALIDADO. Sem teste novo: mudança de renderização de cabeçalho sem cobertura unitária dedicada.
+
+---
+
+### 08/09 — Criação do serviço gestao-suporte-agendador na VPS
+
+**🔎 Em miúdos:** o relógio de coleta de e-mails funcionava embutido dentro da tela (modo legado). Foi separado em serviço próprio no systemd da VPS, igual ao design previsto — assim tela e coletor são independentes.
+
+**Problema:** o serviço `gestao-suporte-agendador` existia só na documentação, nunca tinha sido criado na VPS. A coleta de e-mails dependia do agendador legado dentro da tela: se a tela caísse, o coletor parava junto; se a tela subisse com `GESTAO_AGENDADOR_EXTERNO=1`, parava tudo.
+
+**Correção (VPS — fora do git):**
+1. Criado `/etc/systemd/system/gestao-suporte-agendador.service` — roda `executar_pipeline.py --agendar` como `finaud-tec`, com `Restart=always`
+2. Adicionado `GESTAO_AGENDADOR_EXTERNO=1` no `.env` da VPS — tela para de subir o agendador legado
+3. Serviço habilitado e iniciado: `systemctl enable --now gestao-suporte-agendador`
+4. Tela reiniciada para ler a nova variável
+
+**Validação:** ✅ `systemctl is-active gestao-suporte` → active · `systemctl is-active gestao-suporte-agendador` → active
+
+---
+
 ## 2026-09-08 — Fix: campo de data vazio exibia texto cortado ("dd") no seletor de período
 
 **🔎 Em miúdos:** Os campos "DE" e "ATÉ" do seletor de período agora mostram apenas o ícone 📅 quando nenhuma data foi escolhida. Antes aparecia "dd" cortado, que ficava feio e causava confusão.

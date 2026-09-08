@@ -464,12 +464,26 @@ def _resolver_de(msg: dict) -> str:
     return _extrair_nome(from_raw)
 
 
+def _primeiro_finaud_no_cc(raw: str) -> str:
+    """Retorna o nome do primeiro @finaud/@finaudtec no CC; '' se não houver."""
+    for parte in re.split(r',\s*', raw):
+        parte = parte.strip()
+        if not parte:
+            continue
+        m = _RE_EMAIL.search(parte)
+        email = m.group(1).strip() if m else parte
+        if '@finaud' in email.lower() or '@finaudtec' in email.lower():
+            return _extrair_nome(parte)
+    return ''
+
+
 def _resolver_para(msg: dict) -> str:
-    """§7 Campo 2: To=suporte@ → mostra CC; CC vazio → mostra suporte."""
+    """§7 Campo 2: To=suporte@ → prefere colaborador @finaud no CC; senão suporte@finaud.com.br."""
     to_raw = msg.get('destinatarios', '')
     cc_raw = msg.get('cc', '')
     if _eh_suporte(to_raw):
-        return _extrair_nome(cc_raw) if cc_raw else 'suporte@finaud.com.br'
+        finaud_cc = _primeiro_finaud_no_cc(cc_raw)
+        return finaud_cc if finaud_cc else 'suporte@finaud.com.br'
     return _extrair_nome(to_raw)
 
 
