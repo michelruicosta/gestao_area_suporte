@@ -2660,6 +2660,7 @@ function _tabelaCampos(texto) {
     while (j + nCols <= linhas.length) {
       const grupo = linhas.slice(j, j + nCols);
       if (grupo.some(ehRotulo)) break;
+      if (grupo.some(l => l.length > 80 || l.includes('http'))) break;
       itens.push(grupo); j += nCols;
     }
     if (itens.length < 2) continue;
@@ -2683,6 +2684,7 @@ function _tabelaCampos(texto) {
   while (j2 + nCols2 <= linhas.length) {
     const grupo = linhas.slice(j2, j2 + nCols2);
     if (grupo.some(ehRotulo)) break;
+    if (grupo.some(l => l.length > 80 || l.includes('http'))) break;
     itens2.push(grupo); j2 += nCols2;
   }
   if (itens2.length < 2) return null;
