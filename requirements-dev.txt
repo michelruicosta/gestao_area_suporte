@@ -35,6 +35,14 @@ charset-normalizer==3.4.4
 idna==3.11
 urllib3==2.6.3
 
+# --- Google API (importado a nível de módulo em coletor_gmail.py e coletor_enviados_colaboradores.py) ---
+google-api-python-client==2.187.0
+google-auth==2.41.1
+google-auth-httplib2==0.3.0
+google-auth-oauthlib==1.2.3
+httplib2==0.31.0
+uritemplate==4.2.0
+
 # --- Agendador (importado a nível de módulo em servidor_telas.py) ---
 APScheduler==3.10.4
 
