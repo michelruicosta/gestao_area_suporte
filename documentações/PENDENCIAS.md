@@ -1,12 +1,28 @@
 # PENDÊNCIAS — Gestão Área Suporte
 
-**Atualizado:** 2026-09-03 00:30
+**Atualizado:** 2026-09-08
 **Organização:** por etapa que bloqueia — reorganizado em 03/08/2026 para seguir as fases sem brechas.
 **Regra:** este arquivo lista **só o que ainda falta** (aberto / aguardando decisão / backlog).
 Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada no
 `REGISTRO_CORRECOES.md` — nesta ordem: primeiro grava no REGISTRO, depois remove daqui.
 
 ---
+
+---
+
+## 🟡 IDEIA — Alerta automático de análise semanal da aba Evolução (identificado em 08/09/2026)
+
+Michel quer um e-mail automático semanal com a leitura analítica da tela Evolução — similar à análise feita manualmente em 08/09/2026. O e-mail calcularia automaticamente a partir dos snapshots já existentes no banco: qual categoria mais melhorou, qual piorou, destaque positivo e alerta. Ainda a definir: frequência, destinatários, formato e gatilho (dia fixo ou queda acima de um limiar).
+
+**Próximo passo:** conversa com Michel para definir o escopo exato antes de planejar.
+
+---
+
+## 🟡 MELHORIA — Parâmetros de período do FOG Evolução iguais ao E-mails Evolução (identificado em 08/09/2026)
+
+Alinhar os controles de filtro de período da aba Evolução do FogBugz com os da aba Evolução de e-mails (Hoje / Semana / Quinzena / Mês / Semestre / Personalizado + intervalo de datas). Hoje as duas abas podem ter controles diferentes — unificar para consistência.
+
+**Próximo passo:** levantar o que o FOG Evolução tem hoje vs. o que falta, e implementar as diferenças.
 
 ---
 
