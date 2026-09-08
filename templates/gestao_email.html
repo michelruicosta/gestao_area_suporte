@@ -354,7 +354,7 @@ body { margin: 0; background: var(--bg); color: var(--text); display: flex; min-
 .dt-ico{font-size:0.85rem;line-height:1;opacity:.75}
 .dt-inp{position:absolute;opacity:0;pointer-events:none;width:0;height:0}
 .dt-disp{font-size:0.75rem;color:var(--text);width:82px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;user-select:none}
-.dt-disp.vazio{color:var(--muted)}
+.dt-disp.vazio{color:var(--muted);width:0;overflow:hidden}
 .dt-cal-popup{position:fixed;z-index:9500;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.28);padding:14px;width:236px;animation:calIn .12s ease}
 @keyframes calIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
 .dt-cal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
@@ -652,8 +652,9 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
 .msg-historico-colapsado .msg-enc-colapsado,
 .msg-historico-colapsado .msg-anexos { display: none; }
 .msg-hist-toggle-label { margin-left: auto; font-size: 0.73rem; color: var(--muted); font-style: normal; white-space: nowrap; }
-.msg-ver-historico { display: block; width: 100%; padding: 0.6rem; background: var(--bg); border: 1px dashed var(--border); border-radius: 8px; font-size: 0.83rem; color: var(--muted); cursor: pointer; text-align: center; margin-bottom: 0.75rem; font: inherit; }
+.msg-ver-historico { display: inline-block; padding: 0.25rem 0.85rem; background: none; border: 1px dashed var(--border); border-radius: 20px; font-size: 0.78rem; color: var(--muted); cursor: pointer; margin: 0 auto 0.65rem; font: inherit; }
 .msg-ver-historico:hover { color: var(--text); border-color: var(--muted); }
+.msg-ver-historico-wrap { text-align: center; margin-bottom: 0.1rem; }
 .msg-sep-recentes { text-align: center; font-size: 0.75rem; color: var(--muted); padding: 0.35rem 0; margin: 0.25rem 0 0.6rem; border-top: 1px solid var(--border); }
 
 /* Modal classificar */
@@ -1796,7 +1797,7 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
         <div class="filtros-body">
           <div class="p-bar" id="fog-lista-periodo-bar">
             <span class="p-lbl">Período</span>
-            <button class="p-btn active" onclick="fogListaSelPeriod('hoje',this)">Hoje</button>
+            <button class="p-btn" onclick="fogListaSelPeriod('hoje',this)">Hoje</button>
             <button class="p-btn" onclick="fogListaSelPeriod('semana',this)">Semana</button>
             <button class="p-btn" onclick="fogListaSelPeriod('quinzena',this)">Quinzena</button>
             <button class="p-btn" onclick="fogListaSelPeriod('mes',this)">Mês</button>
@@ -2740,7 +2741,7 @@ function _renderThreadBody() {
   if (historico.length > 0) {
     if (!_thrHistAberto) {
       const n = historico.length;
-      partes.push(`<button class="msg-ver-historico" onclick="_togHist()">Ver ${n} mensage${n > 1 ? 'ns anteriores' : 'm anterior'}</button>`);
+      partes.push(`<div class="msg-ver-historico-wrap"><button class="msg-ver-historico" onclick="_togHist()">▾ Ver ${n} mensage${n > 1 ? 'ns anteriores' : 'm anterior'}</button></div>`);
     } else {
       const histHtml = historico.map((m, idx) => {
         const { corpoHtml, anexos } = _renderMsgHtml(m, threadId);
@@ -2756,7 +2757,7 @@ function _renderThreadBody() {
         </div>`;
       }).join('');
       partes.push(histHtml);
-      partes.push(`<button class="msg-ver-historico" onclick="_togHist()">Ocultar histórico</button>`);
+      partes.push(`<div class="msg-ver-historico-wrap"><button class="msg-ver-historico" onclick="_togHist()">▴ Ocultar histórico</button></div>`);
     }
     if (recentes.length > 0) partes.push('<div class="msg-sep-recentes">— Mensagens recentes —</div>');
   }
@@ -3847,7 +3848,7 @@ function limparFiltrosEvo() {
   renderEvo(); _atualizarResumoEvo();
 }
 
-let _fogListaPeriod = 'hoje';
+let _fogListaPeriod = '';
 function fogListaSelPeriod(p, btn) {
   _fogListaPeriod = p;
   document.querySelectorAll('#fog-lista-periodo-bar .p-btn').forEach(b => b.classList.remove('active'));
@@ -3868,10 +3869,8 @@ function salvarFiltrosFogLista() {
 }
 
 function limparFiltrosFogLista() {
-  _fogListaPeriod = 'hoje';
+  _fogListaPeriod = '';
   document.querySelectorAll('#fog-lista-periodo-bar .p-btn').forEach(b => b.classList.remove('active'));
-  const h = document.querySelector('#fog-lista-periodo-bar .p-btn');
-  if (h) h.classList.add('active');
   const mini = document.getElementById('foglist-dt-mini');
   if (mini) mini.classList.remove('vis');
   document.getElementById('foglist-dt-inicio').value = '';
@@ -3990,6 +3989,26 @@ function fogFiltrar() {
   const resp  = document.getElementById('fResponsavel')?.value || '';
   const stat  = document.getElementById('fStatus')?.value || '';
   const area  = document.getElementById('fArea')?.value || '';
+
+  // Pré-calcula intervalo de datas (período de abertura)
+  let _dtIni = null, _dtFim = null;
+  if (_fogListaPeriod) {
+    const _hj = new Date(); _hj.setHours(0,0,0,0);
+    if (_fogListaPeriod === 'custom') {
+      const iv = document.getElementById('foglist-dt-inicio')?.value;
+      const fv = document.getElementById('foglist-dt-fim')?.value;
+      if (iv) _dtIni = new Date(iv + 'T00:00:00');
+      if (fv) { _dtFim = new Date(fv + 'T00:00:00'); _dtFim.setHours(23,59,59,999); }
+    } else {
+      const _dm = {hoje:0, semana:6, quinzena:14, mes:29, semestre:179};
+      const _d  = _dm[_fogListaPeriod] ?? -1;
+      if (_d >= 0) {
+        _dtIni = new Date(_hj); _dtIni.setDate(_dtIni.getDate() - _d);
+        _dtFim = new Date(_hj); _dtFim.setHours(23,59,59,999);
+      }
+    }
+  }
+
   const rows  = document.querySelectorAll('#fogBody .fog-tbl-row');
   let vis = 0;
   rows.forEach(r => {
@@ -3999,6 +4018,14 @@ function fogFiltrar() {
     if (resp && r.dataset.responsavel !== resp) ok = false;
     if (stat && r.dataset.status     !== stat) ok = false;
     if (area && r.dataset.area       !== area) ok = false;
+    if (ok && (_dtIni || _dtFim)) {
+      const ds = r.dataset.data || '';
+      if (ds) {
+        const dr = new Date(ds + 'T00:00:00');
+        if (_dtIni && dr < _dtIni) ok = false;
+        if (_dtFim && dr > _dtFim) ok = false;
+      }
+    }
     if (_fogUrgenciaFiltro) {
       const dias = Number(r.dataset.dias || 0);
       const st   = r.dataset.status || '';
