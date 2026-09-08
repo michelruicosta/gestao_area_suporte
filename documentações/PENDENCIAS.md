@@ -42,23 +42,6 @@ A correção do Tipo D (Passo 2, commit `4581095`) causou regressão no display 
 
 ---
 
-## 🔴 INVESTIGAR + CORRIGIR — Status mal calculado em threads (identificado em 02/09/2026)
-
-### O problema
-
-O código de classificação (`_determinar_status` em `scripts/banco_threads.py`) evoluiu ao longo do tempo, mas threads classificadas por versões mais antigas do código podem ter ficado com status desatualizado. O `recalcular_status_todos()` só processa threads ativas (`inativa_desde IS NULL`) — threads arquivadas ficam com status "congelado".
-
-**Exemplo confirmado:** thread `19fb991b1633268e` (SALDOS_CONTABEIS_DIARIOS_4111) — última mensagem da Finaud (Flávio via suporte@finaud.com.br) enviando dados ao cliente, mas status salvo é "Aguardando Finaud". Status correto: "Aguardando Cliente".
-
-**Escopo:** pode afetar todas as threads, em todas as categorias, não só as arquivadas.
-
-### O que fazer
-
-Chat dedicado já preparado ("02/09 — Correção status threads") — texto completo disponível no histórico desta sessão. O chat deve:
-1. Varrer todas as threads e recalcular o status com o código atual
-2. Mostrar distribuição das divergências para aprovação do Michel
-3. Corrigir no banco após aprovação (com backup antes)
-
 ---
 
 ## 🟡 MELHORIA — Encerramento automático quando Finaud não faz pergunta (identificado em 02/09/2026)

@@ -2,6 +2,32 @@
 
 ---
 
+## 2026-09-08 — Verificação: status de todas as 1.541 threads — zero divergências
+
+**🔎 Em miúdos:** Verificamos se o status gravado no banco estava correto para todas as threads — ativas e arquivadas. Resultado: zero divergências. O recálculo de 02/09/2026 (933 threads) já havia corrigido tudo, e a limpeza de duplicatas de hoje não introduziu novos erros.
+
+**O que foi feito:** dry-run em todas as 1.541 threads do destino `principal` — calculado o status que `_determinar_status()` retornaria hoje e comparado com o status gravado. Zero threads com divergência.
+
+**Thread do PENDENCIAS (`19fb991b1633268e`):** verificada — status "Aguardando Cliente" correto. O erro de 02/09 foi corrigido no recálculo daquele dia.
+
+**Validação:** ✅ PENDENCIAS item 🔴 encerrado · sem alteração no banco · backup `20260908_1221_dedup_mensagens` cobre o estado pré-limpeza
+
+---
+
+## 2026-09-08 — Limpeza: 244 mensagens duplicadas removidas do banco (151 threads)
+
+**🔎 Em miúdos:** O banco acumulou mensagens duplicadas desde 02/09 (quando o coletor de colaboradores foi instalado). Cada e-mail enviado pelo cliente para suporte@ e para um colaborador ao mesmo tempo entrava duas vezes. Limpeza manual removeu todas as duplicatas existentes.
+
+**Problema:** 151 threads com 244 mensagens duplicadas no campo `mensagens_json`. A duplicação começou em 02/09/2026 com a instalação do `coletor_enviados_colaboradores.py`.
+
+**Correção:** Script pontual varreu todas as threads, identificou duplicatas por `(data + primeiros 120 chars do corpo)` e removeu a segunda ocorrência de cada par. Campos `qtd_mensagens` e `remetente_ultima_msg` atualizados em consequência.
+
+**Backup:** `data/backups/20260908_1221_dedup_mensagens/gestao.db`
+
+**Validação:** ✅ 593 testes passando, zero regressões · sem teste novo (operação pontual de dados, não lógica de produção)
+
+---
+
 ## 2026-09-08 — Fix: mensagens duplicadas quando cliente envia para suporte@ e colaborador ao mesmo tempo
 
 **🔎 Em miúdos:** O sistema mostrava 2 mensagens na mesma thread quando na verdade era 1. Acontecia quando o cliente mandava o e-mail para `suporte@finaud.com.br` E para a Andrea (ou outro colaborador) ao mesmo tempo. Os dois coletores capturavam a mesma mensagem de caixas diferentes e não reconheciam que era a mesma.
