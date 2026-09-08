@@ -2,6 +2,30 @@
 
 ---
 
+## 2026-09-08 — UX modal thread: histórico sob demanda, fim do scroll duplo
+
+**🔎 Em miúdos:** O modal de thread agora abre direto nas 2 mensagens mais recentes, sem scroll interno por mensagem. As mensagens mais antigas ficam escondidas atrás de um botão "Ver X mensagens anteriores" — só aparecem quando você pede. Cada mensagem do histórico pode ser recolhida individualmente. Borda colorida identifica quem enviou: azul = cliente, verde = Finaud.
+
+**Problema:** o modal tinha dois scrolls simultâneos — um no próprio modal (scroll externo) e um dentro de cada mensagem (scroll interno, `max-height: 14rem`). Em threads longas, era necessário scrollar fora e dentro ao mesmo tempo. Threads antigas ficavam todas abertas, ocupando espaço desnecessário.
+
+**Correção (commit `d585ddc`, `templates/gestao_email.html`):**
+
+1. **CSS — `.msg-body`:** removido `max-height: 14rem; overflow-y: auto;`. Cada mensagem agora abre na altura natural do conteúdo. Scroll único (externo do modal).
+
+2. **JS — nova lógica de renderização:** as mensagens são divididas em dois grupos: `recentes` (últimas 2) e `historico` (todas as demais). O modal abre mostrando apenas as recentes.
+
+3. **Botão "Ver X mensagens anteriores":** aparece no topo quando há histórico. Ao clicar, revela as mensagens antigas com borda colorida (azul/verde) e indicador "▼ recolher" em cada cabeçalho.
+
+4. **Toggle por mensagem (`_togHistMsg`):** clique no cabeçalho de uma mensagem do histórico recolhe/expande ela individualmente, usando manipulação direta do DOM (preserva os inner toggles B/E/C/D/F que já existiam).
+
+5. **Botão "Ocultar histórico":** substitui o botão de abertura; recolhe toda a seção de uma vez.
+
+6. **Borda colorida:** `.msg-card-finaud` (verde `#10b981`) e `.msg-card-cliente` (azul `#3b82f6`), detectados por `/finaud/i` no campo `De:`.
+
+**Testes:** sem teste — mudança de UI pura no template JS/CSS; sem lógica de backend testável. `pytest tests/ -q` → 608 passed ✅ (zero regressões).
+
+---
+
 ## 2026-09-08 — Mapeamento e implementação display modal A–G
 
 **🔎 Em miúdos:** O modal de e-mails agora exibe cada mensagem de forma inteligente: texto repetido fica escondido com um botão "clique para expandir", e a parte nova do e-mail aparece sempre visível. Também passa a identificar se um encaminhamento é de alguém que já está na conversa (interno) ou de alguém novo (externo), mostrando ou escondendo o bloco de acordo.
