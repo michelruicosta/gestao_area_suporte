@@ -12,9 +12,10 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
+| 08/09 | Skills/MCPs — limpeza de config + regra de comunicação técnica | abaixo |
 | 08/09 | Fix: mensagens duplicadas (coletor colaboradores + message_id) | abaixo |
 | 08/09 | Consulta pontual — e-mail DRL 07 2026 rejeitado | abaixo |
-| 06/09 | Alerta "busca parada": origem do alerta (local vs produção) | abaixo |
+| 06/09 | Alerta "busca parada": origem do alerta (local vs produção) | arquivo |
 | 06/09 | Visão Geral — filtro de data + dados sempre frescos | arquivo |
 | 03/09 | Migração HTML na VPS + fix modal C/D/F | arquivo |
 | 02/09 | Fix: cronômetro de atualização | arquivo |
@@ -45,6 +46,42 @@
 >
 > **Regra:** este arquivo guarda as **3 sessões mais recentes**. O `/fechar` acrescenta a
 > linha nova aqui e move a 4ª sessão para o arquivo.
+
+---
+
+## 📓 Diário da sessão (2026-09-08) — Skills/MCPs — limpeza de config e regra de comunicação
+
+### O que foi feito
+
+**Sessão educativa + limpeza de configuração.** Nenhum código de produção foi alterado.
+
+1. **Diferença entre skills e MCPs explicada** — Michel aprendeu o que são MCPs (conexões com ferramentas externas, como o Gmail) e skills (roteiros de comportamento que seguimos ao executar comandos como `/iniciar`).
+
+2. **Nova regra registrada (CLAUDE.md §2.6):** ao explicar conceitos técnicos, sempre ancorar em linguagem simples antes de apresentar o nome técnico — âncora simples → conceito técnico → consequência prática. Michel quer aprender o universo técnico, não tê-lo omitido.
+
+3. **Limpeza de 4 problemas de configuração** (não versionados — `.claude/` blindado pelo `.gitignore`):
+   - Hook corrigido: rodava `pytest` do Oráculo 360, agora roda `pytest tests/ -q` deste projeto
+   - `.claude/commands/salvar.md` corrigido: instrução sobre branch `main` alinhada com decisão de 27/08/2026
+   - `launch.json` limpo: removida entrada `oraculo-flask` do projeto antigo
+   - `settings.local.json` limpo: removidas 4 entradas Bash obsoletas do Oráculo 360
+
+### Estado atual
+
+**pytest:** não rodado (sem código de produção alterado).
+**Produção:** sem alterações — `gestao-suporte.finaudapps.com.br` estável ✅.
+
+### Próximo passo
+
+🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Investigação em chat dedicado.
+
+**Antes de qualquer mudança no modal:**
+🟡 **Spec display modal A–G** — mapear comportamento atual e desejado com exemplos reais (ver PENDENCIAS.md).
+
+**Pendências que continuam:**
+- 🟡 Passo C — tela de manutenção de regras
+- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
+
+Último /fechar: 2026-09-08 — memórias revisadas ✅
 
 ---
 
@@ -128,45 +165,6 @@ Sem alterações de código. Produção estável: `gestao-suporte.finaudapps.com
 - 🔴 Monitorar caixas da Andrea e Sarah
 
 Último /fechar: 2026-09-08 — memórias revisadas ✅
-
----
-
-## 📓 Diário da sessão (2026-09-06) — Alerta "busca parada": origem do alerta
-
-### O que foi feito
-
-**Diagnóstico de alerta + melhoria no e-mail de notificação**
-
-Michel recebeu o e-mail "Busca de e-mail parou" e não sabia se o problema era no PC dele ou no servidor de produção. Investigamos o log do dia e confirmamos: foi um `WinError 10060` (timeout de rede do Windows) no PC local às 00:41 do dia 05/09 — a busca voltou sozinha na hora seguinte (01:41).
-
-**Melhoria implementada (commit `efcba4a`):**
-
-- Nova linha "Origem do alerta" no quadro do e-mail: "PC local (seu computador)" ou "Servidor (produção)"
-- Nova função `origem_do_alerta(portal_url)` em `scripts/aviso_busca_parou.py`
-- 2 asserções novas no teste existente (cenário servidor e cenário local)
-- Deploy na VPS ✅
-
-### Estado atual
-
-**Commits:** `efcba4a` — no GitHub e na VPS.
-**Produção:** `gestao-suporte.finaudapps.com.br` — serviço ativo ✅.
-**pytest:** 583 testes passando, zero regressões.
-
-### Próximo passo
-
-🔴 **Chat dedicado: correção de status de todas as threads**
-
-`recalcular_status_todos()` só processa threads ativas (`inativa_desde IS NULL`) — threads arquivadas ficam com status congelado. Chat dedicado já preparado.
-
-**Antes de qualquer mudança no modal:**
-🟡 **Spec display modal A–G** — mapear comportamento atual e desejado com exemplos reais (ver PENDENCIAS.md).
-
-**Pendências que continuam:**
-- 🟡 Passo C — tela de manutenção de regras
-- 🔴 Threads irmãs — investigação em chat dedicado
-- 🔴 Monitorar caixas da Andrea e Sarah
-
-Último /fechar: 2026-09-06 — memórias revisadas ✅
 
 ---
 

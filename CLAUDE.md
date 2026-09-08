@@ -143,6 +143,34 @@ ser a primeira mensagem.**
 Michel pode cobrar a qualquer hora: **"ficou algo para gravar?"** — responder varrendo o chat
 inteiro e dizendo o que falta e onde vai.
 
+### 2.6 Explicar o técnico sem perder o técnico
+
+Michel quer **aprender** o universo técnico — não quer que o técnico seja omitido, quer que
+seja **ancorado** em algo concreto antes de aparecer.
+
+**Estrutura obrigatória ao introduzir qualquer conceito técnico:**
+
+1. **Âncora simples** — uma frase do mundo real que captura a essência
+2. **O conceito técnico** — o nome e o detalhe real
+3. **O que muda na prática** — consequência concreta para o projeto
+
+**Exemplo:**
+
+> ❌ *"O hook PostToolUse aponta para o projeto errado."*
+>
+> ✅ *"Existe um gatilho automático — chamado de 'hook' — que roda um teste sempre que eu
+> edito um arquivo, para garantir que nada quebrou. O problema: esse gatilho está apontando
+> para o projeto antigo, não para este. É como um alarme que dispara quando você abre a
+> porta errada."*
+
+**Quando usar:** sempre que um conceito técnico aparecer pela primeira vez no chat, ou
+quando a explicação anterior não ficou clara. Nunca omitir o técnico — Michel quer aprender;
+só garantir que o concreto vem antes do abstrato.
+
+> **Por que existe:** em 08/09/2026 Michel pediu que a explicação sobre skills e MCPs
+> trouxesse o técnico junto com a linguagem acessível — o formato anterior separava os dois
+> modos sem âncora entre eles.
+
 ---
 
 ## 3 — Antes de agir: declarar o plano

@@ -2,6 +2,37 @@
 
 ---
 
+## 2026-09-08 — Limpeza de configuração + nova regra de comunicação técnica (CLAUDE.md §2.6)
+
+**🔎 Em miúdos:** Arrumamos 4 problemas de "configuração desatualizada" — gatilhos e arquivos que ainda apontavam para o projeto antigo ou contrariavam decisões já tomadas. Também registramos em regra oficial o jeito certo de explicar coisas técnicas para Michel: âncora simples primeiro, depois o conceito técnico.
+
+**Problema 1 — Hook rodava testes do projeto errado:**
+O gatilho automático (PostToolUse hook em `.claude/settings.json`) que roda testes toda vez que um arquivo é editado estava configurado para rodar `D:\oraculo_360_finaud\scripts\rodar_testes_triagem.ps1` — script do projeto antigo. Corrigido para `pytest tests/ -q` deste projeto.
+
+**Problema 2 — `/salvar.md` contrariava decisão sobre a main:**
+O script do `/salvar` dizia para parar e avisar sempre que a branch fosse `main`, contradizendo a decisão de 27/08/2026 (trabalhamos direto na `main`). Corrigido para refletir a regra atual.
+
+**Problema 3 — `launch.json` com config do projeto antigo:**
+Arquivo de configuração de servidor tinha entrada `oraculo-flask → painel_oraculo.py` (Oráculo 360). Removida; só `gestao-email` permanece.
+
+**Problema 4 — Permissões antigas acumuladas:**
+4 entradas Bash do Oráculo 360 removidas do `settings.local.json` (monitor de cargas do projeto antigo).
+
+**Regra nova — CLAUDE.md §2.6:** ao explicar conceitos técnicos, sempre usar âncora simples antes → conceito técnico → consequência prática. Michel quer aprender o universo técnico, não tê-lo omitido. Registrado também em memória (`feedback_explicar_tecnico_com_ancora.md`).
+
+**Arquivos alterados (versionados):**
+- `CLAUDE.md` — adicionado §2.6
+- `.claude/commands/salvar.md` — instrução de branch corrigida
+
+**Arquivos alterados (não versionados — `.gitignore` blinda `.claude/`):**
+- `.claude/settings.json` — hook corrigido
+- `.claude/launch.json` — removido oraculo-flask
+- `.claude/settings.local.json` — removidas 4 entradas antigas
+
+**Validação:** ✅ VALIDADO — mudanças de documentação e configuração local; sem lógica de produção alterada; sem teste novo (não aplica)
+
+---
+
 ## 2026-09-08 — Verificação: status de todas as 1.541 threads — zero divergências
 
 **🔎 Em miúdos:** Verificamos se o status gravado no banco estava correto para todas as threads — ativas e arquivadas. Resultado: zero divergências. O recálculo de 02/09/2026 (933 threads) já havia corrigido tudo, e a limpeza de duplicatas de hoje não introduziu novos erros.

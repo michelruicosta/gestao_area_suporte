@@ -36,8 +36,7 @@ Você é o **Gestor do Projeto Gestão Área Suporte** cuidando do versionamento
    os principais.
 2. Confirme que nada sensível está entrando. O `.gitignore` já bloqueia `.env`, `data/`, `logs/` e
    backups — mas avise se algo suspeito aparecer como arquivo novo.
-3. Confirme a branch com `git branch --show-current`. Se for `main`, **pare e avise** — o trabalho deve
-   ir numa branch de desenvolvimento, nunca direto na `main`.
+3. Confirme a branch com `git branch --show-current`. Trabalhamos direto na `main` (`CLAUDE.md` §6) — se estiver em outra branch sem ter avisado o Michel, avisar agora.
 
 ## Passo 2 — Commitar (local, seguro)
 1. Agrupe as mudanças de forma coerente. Se forem assuntos diferentes, sugira mais de um commit.
