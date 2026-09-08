@@ -441,16 +441,40 @@ def _eh_finaud_addr(raw: str) -> bool:
 
 
 def _eh_suporte(raw: str) -> bool:
-    return 'suporte@finaud.com.br' in raw.lower()
+    r = raw.lower()
+    return 'suporte@finaud.com.br' in r or 'suporteforcapital@finaud.com.br' in r
+
+
+def _primeiro_finaud_colaborador(raw: str) -> str:
+    """Varre um campo (To ou CC) e retorna o nome do primeiro @finaud que não seja suporte.
+    Retorna '' se não houver nenhum colaborador @finaud além do suporte."""
+    for parte in re.split(r',\s*', raw):
+        parte = parte.strip()
+        if not parte:
+            continue
+        m = _RE_EMAIL.search(parte)
+        email = m.group(1).strip() if m else parte
+        if (_eh_finaud_addr(email)) and not _eh_suporte(email):
+            return _extrair_nome(parte)
+    return ''
 
 
 def _primeiro_finaud_ou_primeiro(raw: str) -> str:
-    """De uma lista de destinatários, retorna o primeiro @finaud; senão, o primeiro da lista."""
-    emails = _RE_EMAIL.findall(raw)
-    if not emails:
-        emails = [e.strip() for e in re.split(r'[,;]', raw) if '@' in e.strip()]
+    """De uma lista de destinatários, retorna o primeiro colaborador @finaud (não suporte);
+    senão o primeiro endereço suporte@finaud; senão o primeiro da lista."""
+    emails_raw = re.split(r',\s*', raw)
+    emails = []
+    for parte in emails_raw:
+        parte = parte.strip()
+        if not parte:
+            continue
+        m = _RE_EMAIL.search(parte)
+        emails.append(m.group(1).strip() if m else parte)
     for e in emails:
-        if '@finaud' in e.lower() or '@finaudtec' in e.lower():
+        if _eh_finaud_addr(e) and not _eh_suporte(e):
+            return e.strip()
+    for e in emails:
+        if _eh_suporte(e):
             return e.strip()
     return emails[0].strip() if emails else raw.strip()
 
@@ -464,25 +488,16 @@ def _resolver_de(msg: dict) -> str:
     return _extrair_nome(from_raw)
 
 
-def _primeiro_finaud_no_cc(raw: str) -> str:
-    """Retorna o nome do primeiro @finaud/@finaudtec no CC; '' se não houver."""
-    for parte in re.split(r',\s*', raw):
-        parte = parte.strip()
-        if not parte:
-            continue
-        m = _RE_EMAIL.search(parte)
-        email = m.group(1).strip() if m else parte
-        if '@finaud' in email.lower() or '@finaudtec' in email.lower():
-            return _extrair_nome(parte)
-    return ''
-
-
 def _resolver_para(msg: dict) -> str:
-    """§7 Campo 2: To=suporte@ → prefere colaborador @finaud no CC; senão suporte@finaud.com.br."""
+    """§7 Campo 2+3: To tem colaborador @finaud → exibe colaborador.
+    To tem só suporte → consulta CC. CC tem @finaud → exibe. Senão → suporte@finaud.com.br."""
     to_raw = msg.get('destinatarios', '')
     cc_raw = msg.get('cc', '')
     if _eh_suporte(to_raw):
-        finaud_cc = _primeiro_finaud_no_cc(cc_raw)
+        colaborador = _primeiro_finaud_colaborador(to_raw)
+        if colaborador:
+            return colaborador
+        finaud_cc = _primeiro_finaud_colaborador(cc_raw)
         return finaud_cc if finaud_cc else 'suporte@finaud.com.br'
     return _extrair_nome(to_raw)
 

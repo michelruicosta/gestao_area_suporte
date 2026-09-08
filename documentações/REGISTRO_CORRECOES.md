@@ -2,6 +2,38 @@
 
 ---
 
+### 08/09 — CI: pacotes do Google ausentes no requirements-dev.txt
+
+**🔎 Em miúdos:** os testes automáticos no GitHub estavam falhando porque dois arquivos de teste carregam código que depende das bibliotecas do Google — bibliotecas que existiam só no arquivo de produção, não no arquivo de desenvolvimento usado pelo CI.
+
+**Problema:** `requirements-dev.txt` (instalado pelo GitHub Actions antes de rodar os testes) não listava `google-api-python-client`, `google-auth` e outros 4 pacotes do Google. Esses pacotes são importados logo no início de `coletor_gmail.py` e `coletor_enviados_colaboradores.py`. Os testes `test_coletor_html.py` e `test_coletor_colaboradores.py` falhavam com `ImportError` antes de rodar qualquer asserção — gerando as 2 anotações de erro no e-mail do GitHub.
+
+**Causa raiz:** pacotes adicionados ao `requirements.txt` (produção/VPS) mas esquecidos no `requirements-dev.txt` (CI). Localmente passava porque `google-api-python-client 2.198.0` estava instalado no Python global do usuário.
+
+**Correção (commit `9f97437`, `requirements-dev.txt`):** adicionados 6 pacotes com as mesmas versões já em produção: `google-api-python-client==2.187.0`, `google-auth==2.41.1`, `google-auth-httplib2==0.3.0`, `google-auth-oauthlib==1.2.3`, `httplib2==0.31.0`, `uritemplate==4.2.0`.
+
+**Validação:** 608 testes ✅ VALIDADO localmente. Push feito — CI vai rodar automaticamente no commit `9f97437`.
+
+---
+
+### 08/09 — Campo Para: passa a mostrar colaborador @finaud em vez de suporte (lista + modal)
+
+**🔎 Em miúdos:** quando um e-mail chegava para suporte@finaud.com.br com colaboradores da Finaud no campo "Para:", o sistema mostrava apenas `suporte@finaud.com.br` — ignorando Andrea, Márcio, Mônica e outros que estavam no mesmo campo. Agora mostra o colaborador.
+
+**Problema:** `_primeiro_finaud_ou_primeiro` (lista) e `_resolver_para` (modal) pegavam o primeiro @finaud do To sem pular o suporte. Como `suporte@finaud.com.br` costuma vir primeiro, sempre ganhava. A spec (§7, Campo 3, Passo 1) determina que o CC só é consultado quando o To não identifica nenhum @finaud — logo, com colaborador no To, o CC não deveria entrar.
+
+**Correção (`scripts/servidor_telas.py`):**
+- `_eh_suporte` ampliado para incluir `suporteforcapital@finaud.com.br`
+- nova função `_primeiro_finaud_colaborador(raw)` varre qualquer campo e retorna o nome do primeiro @finaud que não seja suporte
+- `_primeiro_finaud_ou_primeiro` (lista) agora prioriza colaborador @finaud → suporte → primeiro da lista
+- `_resolver_para` (modal) agora: colaborador no To? → exibe. Só suporte no To? → consulta CC. CC vazio? → suporte@finaud.com.br
+
+**Impacto:** 120 de 998 threads ativas afetadas (12%). Colaboradores que passam a aparecer: andrea (71), marcio (17), monica (8), flavio (7), michel (6) e outros.
+
+**Validação:** 608 testes ✅ VALIDADO. Sem teste novo: mudança de renderização de cabeçalho sem cobertura unitária dedicada.
+
+---
+
 ### 08/09 — Para: no modal mostrava CC sem verificar se era @finaud
 
 **🔎 Em miúdos:** o cabeçalho "Para:" dentro de um e-mail no modal mostrava o nome de quem estava no CC (ex.: Mariana Pereira) em vez de `suporte@finaud.com.br`, mesmo quando essa pessoa não era da Finaud — criando inconsistência com a coluna PARA da lista, que mostrava `suporte@finaud.com.br`.
