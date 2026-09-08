@@ -2,6 +2,48 @@
 
 ---
 
+## 2026-09-08 — Fix: campo de data vazio exibia texto cortado ("dd") no seletor de período
+
+**🔎 Em miúdos:** Os campos "DE" e "ATÉ" do seletor de período agora mostram apenas o ícone 📅 quando nenhuma data foi escolhida. Antes aparecia "dd" cortado, que ficava feio e causava confusão.
+
+**Problema:** a CSS `.dt-disp.vazio` tentava esconder o texto com `width:0;overflow:hidden`, mas o texto "dd/mm/aaaa" vazava para fora e aparecia truncado como "dd". Afetava todos os seletores de período do sistema (E-mails Evolução, FogBugz Lista de Casos, FogBugz Evolução).
+
+**Causa raiz:** `width:0;overflow:hidden` não garante ocultação completa em todos os contextos — o elemento ainda ocupa espaço e pode vazar texto. A abordagem correta é `display:none`.
+
+**Correção (commit `22f8959`, `templates/gestao_email.html`):**
+`.dt-disp.vazio { display: none }` — o span com o placeholder desaparece completamente quando vazio. Quando uma data é selecionada, `_sincDispCal` remove a classe `vazio` e o span volta a aparecer com a data formatada.
+
+**Testes:** mudança de CSS pura; `pytest tests/ -q` → 608 passed ✅.
+
+**Validação:** confirmado visualmente na tela local — apenas 📅 aparece quando os campos estão vazios. Deploy VPS ativo ✅.
+
+---
+
+## 2026-09-08 — Fix: filtro de período de abertura não aplicava na Lista de Casos
+
+**🔎 Em miúdos:** O filtro "PERÍODO" na tela "Lista de Casos" do FogBugz agora funciona de verdade. Antes, clicar em Hoje/Semana/Personalizado/Aplicar não fazia nenhuma diferença — todos os casos apareciam sempre.
+
+**Problema:** a função `fogFiltrar()` — que filtra as linhas visíveis na tabela — aplicava corretamente os filtros de projeto, responsável, status e área, mas **ignorava completamente** o seletor de período (`_fogListaPeriod`) e os campos de data personalizada (`foglist-dt-inicio` / `foglist-dt-fim`). O botão "Aplicar" chamava a função, mas a função não usava os valores.
+
+**Causa raiz:** código incompleto — os controles de período foram implementados na interface mas a lógica de filtragem no JS nunca foi escrita.
+
+**Correção (commit `28c5004`, `templates/gestao_email.html`):**
+
+1. Adicionado bloco de pré-cálculo do intervalo de datas em `fogFiltrar()`, antes do `forEach`:
+   - `custom`: usa os valores de `foglist-dt-inicio` e `foglist-dt-fim`
+   - Outros (hoje/semana/quinzena/mês/semestre): calcula range relativo a hoje
+   - `_fogListaPeriod = ''`: nenhum filtro de data aplicado
+2. Dentro do `forEach`, cada linha é verificada contra `data-data` (atributo já existente com a data de abertura em `YYYY-MM-DD`).
+3. Padrão alterado: `_fogListaPeriod` inicia como `''` (sem filtro) — ao abrir a página, todos os casos aparecem; o filtro só age quando o usuário seleciona um período.
+4. Botão "Hoje" removido como ativo por padrão na marcação HTML.
+5. `limparFiltrosFogLista()` ajustado para voltar ao estado "sem período ativo" (sem reativar "Hoje").
+
+**Testes:** mudança de JS no template; `pytest tests/ -q` → 608 passed ✅.
+
+**Validação:** testado com filtro Personalizado 01/08/2026–31/08/2026 — casos de 2025 corretamente ocultados. Deploy VPS ativo ✅.
+
+---
+
 ## 2026-09-08 — UX modal thread: histórico sob demanda, fim do scroll duplo
 
 **🔎 Em miúdos:** O modal de thread agora abre direto nas 2 mensagens mais recentes, sem scroll interno por mensagem. As mensagens mais antigas ficam escondidas atrás de um botão "Ver X mensagens anteriores" — só aparecem quando você pede. Cada mensagem do histórico pode ser recolhida individualmente. Borda colorida identifica quem enviou: azul = cliente, verde = Finaud.

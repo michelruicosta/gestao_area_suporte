@@ -12,9 +12,10 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
+| 08/09 | Fix: filtro de período Lista de Casos + campo data vazio | abaixo |
 | 08/09 | Display modal A–G: mapeamento, implementação, spec e artifact | abaixo |
 | 08/09 | Skills/MCPs — limpeza de config + regra de comunicação técnica | abaixo |
-| 08/09 | Fix: mensagens duplicadas (coletor colaboradores + message_id) | abaixo |
+| 08/09 | Fix: mensagens duplicadas (coletor colaboradores + message_id) | arquivo |
 | 08/09 | Consulta pontual — e-mail DRL 07 2026 rejeitado | arquivo |
 | 06/09 | Alerta "busca parada": origem do alerta (local vs produção) | arquivo |
 | 06/09 | Visão Geral — filtro de data + dados sempre frescos | arquivo |
@@ -47,6 +48,41 @@
 >
 > **Regra:** este arquivo guarda as **3 sessões mais recentes**. O `/fechar` acrescenta a
 > linha nova aqui e move a 4ª sessão para o arquivo.
+
+---
+
+## 📓 Diário da sessão (2026-09-08) — Fix: filtro de período Lista de Casos + campo data vazio
+
+### O que foi feito
+
+**Dois bugs de interface corrigidos na tela FogBugz Lista de Casos.**
+
+1. **Filtro de período não aplicava (commits `28c5004` e `22f8959`):**
+   - `fogFiltrar()` tinha controles de período na tela (Hoje, Semana, Personalizado + Aplicar) mas ignorava completamente os valores — todos os casos apareciam sempre.
+   - Causa: lógica de filtragem por data nunca foi escrita quando os controles foram criados.
+   - Correção: adicionado pré-cálculo de `_dtIni`/`_dtFim` em `fogFiltrar()`, com comparação contra o atributo `data-data` (data de abertura) de cada linha.
+   - Padrão de abertura alterado para sem filtro ativo (opção B aprovada por Michel): ao abrir a página todos os casos aparecem; filtro só age quando selecionado.
+
+2. **Campo de data vazio mostrava "dd" cortado:**
+   - `.dt-disp.vazio` tinha `width:0;overflow:hidden` — o texto "dd/mm/aaaa" vazava como "dd".
+   - Corrigido para `display:none`. Campos vazios mostram só 📅. Afeta todos os 3 seletores de período do sistema (E-mails Evolução, FOG Lista, FOG Evolução).
+
+3. **Deploy VPS:** ambas as correções publicadas. Serviço ativo ✅.
+
+### Estado atual
+
+**pytest:** 608 passed ✅ (zero regressões).
+**Produção:** `gestao-suporte.finaudapps.com.br` — serviço ativo ✅.
+
+### Próximo passo
+
+🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
+
+**Pendências que continuam:**
+- 🟡 Passo C — tela de manutenção de regras
+- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
+
+Último /fechar: 2026-09-08 — memórias revisadas ✅
 
 ---
 
@@ -114,52 +150,6 @@
 
 **pytest:** não rodado (sem código de produção alterado).
 **Produção:** sem alterações — `gestao-suporte.finaudapps.com.br` estável ✅.
-
-### Próximo passo
-
-🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Investigação em chat dedicado.
-
-**Antes de qualquer mudança no modal:**
-🟡 **Spec display modal A–G** — mapear comportamento atual e desejado com exemplos reais (ver PENDENCIAS.md).
-
-**Pendências que continuam:**
-- 🟡 Passo C — tela de manutenção de regras
-- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
-
-Último /fechar: 2026-09-08 — memórias revisadas ✅
-
----
-
-## 📓 Diário da sessão (2026-09-08) — Fix: mensagens duplicadas (coletor colaboradores)
-
-### O que foi feito
-
-**Bug reportado:** thread DRM - 2060 PLANNER CORRETORA exibia 2 mensagens no sistema, mas o Gmail mostrava apenas 1.
-
-**Causa raiz identificada:** o mesmo e-mail físico chegava em dois caminhos — via `suporte@finaud.com.br` (Google Groups mascarando o remetente) e diretamente na caixa da Andrea. O campo `message_id` (RFC 5322, único por e-mail em qualquer caixa) **não estava sendo gravado**, então o filtro anti-duplicata só comparava `(data, remetente)` — que difere entre as duas cópias.
-
-**Correção (commits desta sessão):**
-
-1. **`coletor_gmail.py` — `_processar_mensagem()`:** adicionado `'message_id': h('Message-ID')` ao dict de retorno. Todas as mensagens capturadas por qualquer coletor agora armazenam o Message-ID.
-
-2. **`coletor_enviados_colaboradores.py` — `_ja_existe()`:** reescrita completa. Lógica nova:
-   - Ambos com `message_id` → comparação definitiva; se IDs diferentes, **não cai no fallback** (evita falso positivo por `(data, remetente)` coincidente)
-   - Mensagem antiga sem `message_id` → fallback por `(data, remetente)` apenas para aquela mensagem
-   - Nova sem `message_id` → fallback integral
-
-3. **`tests/test_coletor_colaboradores.py`:** 4 novos testes cobrindo os 4 cenários da lógica nova.
-
-4. **Limpeza do banco:** 244 mensagens duplicadas removidas de 151 threads (backup em `data/backups/20260908_1221_dedup_mensagens/` antes da limpeza).
-
-5. **Verificação de status:** dry-run em todas as 1.541 threads ativas → zero divergências. A recalculação de 02/09/2026 já havia corrigido tudo.
-
-6. **Deploy na VPS:** serviço reiniciado, ativo ✅.
-
-### Estado atual
-
-**pytest:** testes passando, zero regressões.
-**Produção:** `gestao-suporte.finaudapps.com.br` — serviço ativo ✅.
-**Banco:** limpo de duplicatas, backup disponível.
 
 ### Próximo passo
 
