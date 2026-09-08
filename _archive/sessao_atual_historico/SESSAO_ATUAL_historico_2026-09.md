@@ -6,6 +6,34 @@
 
 ---
 
+## 📓 Diário da sessão (2026-09-08) — Redesign telas Evolução e Classificação e Status
+
+### O que foi feito
+
+Redesign visual completo das duas telas principais da aba de e-mails, aprovado por Michel após mockup interativo.
+
+**1. Variação embutida no número (tela principal e Evolução) — commits `2d4191c` e `db70954`:**
+- Antes: cada métrica tinha uma coluna de número + uma coluna VAR separada → 10 colunas na tela principal, 9 na Evolução.
+- Depois: o badge de variação (▲3 / ▼1) fica embutido dentro da célula do número → 6 colunas na tela principal, 5 na Evolução.
+- Funções JS novas: `_numDelta()` (tela principal), `evoCelNum()` e `evoBdg()` (Evolução).
+- Tela principal comparava com "ontem" → passou a comparar com a **última rodada** (`ler_penultimo_snapshot()` em `servidor_telas.py`).
+- Legenda da tela principal atualizada: "Variação desde a última atualização".
+- Aba Evolução ganhou barra de contexto: "Comparando **este mês** com **mês passado**" (atualizada por `getEvoCompLabel()` a cada `renderEvo()`).
+- Categorias na aba Evolução viraram **multiselect** (clique adiciona/remove; antes era seleção única).
+
+**2. Legenda da aba Evolução igual à tela principal — commits `ccd74f3` e `4b5973d`:**
+- Antes: rodapé `evo-ft` com badges-pílula em tamanho diferente do texto de comparação.
+- Depois: uma única `card-legenda` com tudo na mesma linha e no mesmo tamanho: `● Comparando... · ▲ AF/AC cresceu · ▼ AF/AC caiu · ...`
+
+**Deploy VPS:** todos os commits publicados; serviço ativo ✅.
+
+### Estado atual
+
+**pytest:** 608 passed ✅ (mudanças de UI pura — sem testes dedicados; registrado no REGISTRO).
+**Produção:** `gestao-suporte.finaudapps.com.br` — serviço ativo ✅.
+
+---
+
 ## 📓 Diário da sessão (2026-09-08) — Fix: CI — pacotes Google ausentes no requirements-dev.txt
 
 ### O que foi feito

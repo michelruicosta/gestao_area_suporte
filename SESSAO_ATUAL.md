@@ -12,9 +12,10 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
-| 08/09 | Redesign telas Evolução e Classificação e Status | abaixo |
-| 08/09 | Fix: campo data vazio — retomada /fechar | abaixo |
+| 08/09 | Fix: campo Para — colaborador @finaud em vez de suporte | abaixo |
 | 08/09 | Verificação e-mails do dia + criação serviço agendador VPS | abaixo |
+| 08/09 | Fix: campo data vazio — retomada /fechar | abaixo |
+| 08/09 | Redesign telas Evolução e Classificação e Status | arquivo |
 | 08/09 | Fix: CI — pacotes Google ausentes no requirements-dev.txt | arquivo |
 | 08/09 | Display modal A–G: mapeamento, implementação, spec e artifact | arquivo |
 | 08/09 | UX modal thread: histórico sob demanda, fim do scroll duplo | arquivo |
@@ -52,6 +53,46 @@
 >
 > **Regra:** este arquivo guarda as **3 sessões mais recentes**. O `/fechar` acrescenta a
 > linha nova aqui e move a 4ª sessão para o arquivo.
+
+---
+
+## 📓 Diário da sessão (2026-09-08) — Fix: campo Para — colaborador @finaud em vez de suporte
+
+### O que foi feito
+
+Correção do campo "Para:" na lista e no modal de threads — dois commits.
+
+1. **Fix 1 — modal mostrava pessoa externa do CC (`4062f9c`):**
+   - Quando e-mail chegava de externo para `suporte@finaud.com.br` com CC externo (ex.: Mariana Pereira da Ebury), o modal mostrava "Para: Mariana Pereira" em vez de `suporte@finaud.com.br`.
+   - Causa: `_resolver_para` ia direto ao CC quando via `suporte@` no To, sem verificar se o CC era @finaud.
+   - Correção: nova função `_primeiro_finaud_no_cc` filtra o CC por @finaud antes de exibir.
+
+2. **Fix 2 — lista e modal ignoravam colaborador @finaud no To (`b4e118e`):**
+   - Quando o To tinha `suporte + andrea + rodrigo`, o campo Para exibia `suporte@finaud.com.br` porque era o primeiro @finaud encontrado.
+   - A spec (§7, Campo 3, Passo 1) confirma: CC só é consultado quando o To não identifica nenhum @finaud além do suporte.
+   - Impacto verificado antes: 120 de 998 threads ativas (12%) — principalmente andrea (71), marcio (17), monica (8).
+   - Correção: `_primeiro_finaud_colaborador` pula endereços de suporte; `suporteforcapital@finaud.com.br` tratado como suporte.
+   - Afeta lista (`_primeiro_finaud_ou_primeiro`) e modal (`_resolver_para`).
+
+3. **Validação e deploy:**
+   - 608 testes ✅ (zero regressões em ambos os commits)
+   - Push e deploy na VPS — serviço ativo ✅
+   - Testado na tela: thread DDR Raúl Salazar passou de `suporte@finaud.com.br` → `andrea.inacio@finaud.com.br`
+
+### Estado atual
+
+**pytest:** 608 passed ✅.
+**Produção:** `gestao-suporte.finaudapps.com.br` — serviço ativo ✅. Commits `4062f9c` e `b4e118e` publicados.
+
+### Próximo passo
+
+🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
+
+**Pendências que continuam:**
+- 🟡 Passo C — tela de manutenção de regras
+- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
+
+Último /fechar: 2026-09-08 21:00 — memórias revisadas ✅
 
 ---
 
@@ -120,44 +161,6 @@ Sessão curta de retomada após limite de contexto na sessão anterior.
 Último /fechar: 2026-09-08 — memórias revisadas ✅
 
 ---
-
----
-
-## 📓 Diário da sessão (2026-09-08) — Redesign telas Evolução e Classificação e Status
-
-### O que foi feito
-
-Redesign visual completo das duas telas principais da aba de e-mails, aprovado por Michel após mockup interativo.
-
-**1. Variação embutida no número (tela principal e Evolução) — commits `2d4191c` e `db70954`:**
-- Antes: cada métrica tinha uma coluna de número + uma coluna VAR separada → 10 colunas na tela principal, 9 na Evolução.
-- Depois: o badge de variação (▲3 / ▼1) fica embutido dentro da célula do número → 6 colunas na tela principal, 5 na Evolução.
-- Funções JS novas: `_numDelta()` (tela principal), `evoCelNum()` e `evoBdg()` (Evolução).
-- Tela principal comparava com "ontem" → passou a comparar com a **última rodada** (`ler_penultimo_snapshot()` em `servidor_telas.py`).
-- Legenda da tela principal atualizada: "Variação desde a última atualização".
-- Aba Evolução ganhou barra de contexto: "Comparando **este mês** com **mês passado**" (atualizada por `getEvoCompLabel()` a cada `renderEvo()`).
-- Categorias na aba Evolução viraram **multiselect** (clique adiciona/remove; antes era seleção única).
-
-**2. Legenda da aba Evolução igual à tela principal — commits `ccd74f3` e `4b5973d`:**
-- Antes: rodapé `evo-ft` com badges-pílula em tamanho diferente do texto de comparação.
-- Depois: uma única `card-legenda` com tudo na mesma linha e no mesmo tamanho: `● Comparando... · ▲ AF/AC cresceu · ▼ AF/AC caiu · ...`
-
-**Deploy VPS:** todos os commits publicados; serviço ativo ✅.
-
-### Estado atual
-
-**pytest:** 608 passed ✅ (mudanças de UI pura — sem testes dedicados; registrado no REGISTRO).
-**Produção:** `gestao-suporte.finaudapps.com.br` — serviço ativo ✅.
-
-### Próximo passo
-
-🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
-
-**Pendências que continuam:**
-- 🟡 Passo C — tela de manutenção de regras
-- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
-
-Último /fechar: 2026-09-08 — memórias revisadas ✅
 
 ---
 <!-- fim das 3 sessões recentes -->
