@@ -82,7 +82,7 @@ def buscar_fogs_suporte_abertos(token: str) -> list[dict]:
         }, timeout=10)
         resp = requests.get(_FOGBUGZ_URL, params={
             'token': token, 'cmd': 'search',
-            'q': 'assignedTo:"Suporte Finaud"',
+            'q': 'assignedTo:"Suporte Finaud" opened:"2025/01/01..today"',
             'cols': 'ixBug,sTitle,dtOpened,sPersonAssignedTo',
         }, timeout=30)
         root = ET.fromstring(resp.text)

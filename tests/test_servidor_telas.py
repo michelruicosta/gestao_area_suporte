@@ -498,3 +498,24 @@ def test_fog_suporte_notificacao_no_html():
     assert 'notif-fog-g-administrador' in html
     assert 'notif-fog-dia' in html
     assert 'FOGs aguardando encerramento' in html
+
+
+def test_fog_suporte_busca_inclui_filtro_data():
+    """A query enviada ao FogBugz deve incluir o filtro de data desde Jan/2025."""
+    from unittest.mock import patch, MagicMock
+    from aviso_fog_suporte import buscar_fogs_suporte_abertos
+
+    resp_mock = MagicMock()
+    resp_mock.text = '<cases></cases>'
+
+    with patch('aviso_fog_suporte.requests.get', return_value=resp_mock) as mock_get:
+        buscar_fogs_suporte_abertos('token-teste')
+
+    queries = [
+        c.kwargs.get('params', {}).get('q', '')
+        for c in mock_get.call_args_list
+        if c.kwargs.get('params', {}).get('cmd') == 'search'
+    ]
+    assert queries, 'Nenhuma chamada de search encontrada'
+    assert '2025/01/01' in queries[0], f'Filtro de data ausente: {queries[0]!r}'
+    assert 'assignedTo:"Suporte Finaud"' in queries[0]
