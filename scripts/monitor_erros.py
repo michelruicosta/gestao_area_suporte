@@ -51,6 +51,21 @@ def before_send(event: dict, hint: dict) -> dict:
     return _limpar_dict(event)
 
 
+def before_send_transaction(event: dict, hint: dict) -> dict:
+    return _limpar_dict(event)
+
+
+def before_breadcrumb(crumb: dict, hint: dict) -> dict:
+    """Filtra mensagens de log antes de enviarem ao Sentry."""
+    msg = crumb.get('message', '')
+    if isinstance(msg, str):
+        if _RE_EMAIL.search(msg):
+            crumb['message'] = _RE_EMAIL.sub('[EMAIL OCULTO]', msg)
+    if isinstance(crumb.get('data'), dict):
+        crumb['data'] = _limpar_dict(crumb['data'])
+    return crumb
+
+
 def iniciar(modo: str = 'pipeline') -> None:
     """
     modo='flask'    — inclui integração Flask (captura erros de rotas HTTP)
@@ -61,9 +76,16 @@ def iniciar(modo: str = 'pipeline') -> None:
     if not dsn:
         return
 
+    import logging as _logging
     import sentry_sdk
+    from sentry_sdk.integrations.logging import LoggingIntegration
 
-    integracoes: list = []
+    integracoes: list = [
+        LoggingIntegration(
+            level=_logging.WARNING,
+            event_level=_logging.ERROR,
+        ),
+    ]
     if modo == 'flask':
         from sentry_sdk.integrations.flask import FlaskIntegration
         integracoes.append(FlaskIntegration())
@@ -72,6 +94,9 @@ def iniciar(modo: str = 'pipeline') -> None:
         dsn=dsn,
         send_default_pii=False,
         before_send=before_send,
+        before_send_transaction=before_send_transaction,
+        before_breadcrumb=before_breadcrumb,
+        traces_sample_rate=0.2,
         integrations=integracoes,
     )
 

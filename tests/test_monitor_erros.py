@@ -56,6 +56,29 @@ def test_iniciar_sem_dsn_nao_levanta_erro(monkeypatch):
 def test_checkin_sem_dsn_nao_levanta_erro(monkeypatch):
     monkeypatch.delenv('SENTRY_DSN', raising=False)
     from monitor_erros import checkin_inicio, checkin_fim
-    checkin_inicio()   # sem DSN — silencioso
-    checkin_fim(ok=True)   # sem DSN — silencioso
-    checkin_fim(ok=False)  # sem DSN — silencioso
+    checkin_inicio()
+    checkin_fim(ok=True)
+    checkin_fim(ok=False)
+
+
+def test_breadcrumb_email_ocultado():
+    from monitor_erros import before_breadcrumb
+    crumb = {'message': 'Processando thread de cliente@banco.com.br', 'data': {}}
+    resultado = before_breadcrumb(crumb, {})
+    assert 'cliente@banco.com.br' not in resultado['message']
+    assert '[EMAIL OCULTO]' in resultado['message']
+
+
+def test_breadcrumb_sem_email_passa_intacto():
+    from monitor_erros import before_breadcrumb
+    crumb = {'message': 'Pipeline iniciado com sucesso', 'data': {}}
+    resultado = before_breadcrumb(crumb, {})
+    assert resultado['message'] == 'Pipeline iniciado com sucesso'
+
+
+def test_send_transaction_redacta_sensiveis():
+    from monitor_erros import before_send_transaction
+    ev = {'request': {'data': {'assunto': 'Urgente cliente', 'thread_id': 'abc'}}}
+    resultado = before_send_transaction(ev, {})
+    assert resultado['request']['data']['assunto'] == '[REDACTED]'
+    assert resultado['request']['data']['thread_id'] == 'abc'
