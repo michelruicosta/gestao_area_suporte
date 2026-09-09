@@ -2717,6 +2717,71 @@ function _montarTabelaHtml(linhas, inicio, fimDados, rotulos, itens) {
   return html;
 }
 
+// Detecta tabela alinhada por espaços (Excel colado no e-mail) e retorna HTML de tabela, ou null.
+// Padrão: 3+ linhas com ≥3 colunas separadas por 2+ espaços; primeira linha = cabeçalho.
+function _tabelaEspacos(texto) {
+  if (!texto || texto.length < 60) return null;
+  function parseLinha(l) {
+    return l.split(/  +/).map(s => s.trim()).filter(s => s);
+  }
+  function ehLinhaDados(l) {
+    if (l.includes('*') || l.includes('http')) return false;
+    const partes = parseLinha(l);
+    return partes.length >= 3;
+  }
+  const linhasRaw = texto.split('\n');
+  // Encontrar bloco de linhas tabeladas
+  let blocoInicio = -1, blocoFim = -1;
+  let seq = [], seqStart = -1;
+  for (let i = 0; i < linhasRaw.length; i++) {
+    const l = linhasRaw[i].replace(/\r$/, '');
+    if (ehLinhaDados(l)) {
+      if (seq.length === 0) seqStart = i;
+      seq.push({ idx: i, raw: l, partes: parseLinha(l) });
+    } else {
+      if (seq.length >= 3) { blocoInicio = seqStart; blocoFim = i; break; }
+      seq = []; seqStart = -1;
+    }
+  }
+  if (blocoInicio === -1 && seq.length >= 3) { blocoInicio = seqStart; blocoFim = linhasRaw.length; }
+  if (blocoInicio === -1) return null;
+  // Primeira linha = cabeçalho; excluir se partes terminam em ':'
+  const cabecalho = seq[0];
+  if (cabecalho.partes.some(p => p.endsWith(':'))) return null;
+  const nCols = cabecalho.partes.length;
+  const dataLinhas = seq.slice(1);
+  // Consistência: ≥2 linhas com número de colunas próximo ao cabeçalho
+  const consistentes = dataLinhas.filter(l => Math.abs(l.partes.length - nCols) <= 1);
+  if (consistentes.length < 2) return null;
+  // Montar HTML
+  const uid = 'te' + Math.random().toString(36).slice(2, 8);
+  const ths = cabecalho.partes.map(p => `<th>${escHtml(p)}</th>`).join('');
+  const trs = dataLinhas.map(l => {
+    const cells = l.partes;
+    while (cells.length < nCols) cells.push('');
+    return `<tr>${cells.slice(0, nCols).map(v => `<td>${escHtml(v)}</td>`).join('')}</tr>`;
+  }).join('');
+  const rawBloco = escHtml(linhasRaw.slice(blocoInicio, blocoFim).join('\n'));
+  let html = '';
+  const antes = linhasRaw.slice(0, blocoInicio).join('\n').trim();
+  if (antes) html += `<div class="msg-body">${escHtml(antes)}</div>`;
+  html += `<div class="msg-tcampos-badge">
+    <span>📊 ${nCols} colunas · ${dataLinhas.length} linhas detectadas</span>
+    <a onclick="(function(e){
+      var tbl=document.getElementById('${uid}-t');
+      var raw=document.getElementById('${uid}-r');
+      if(tbl.hidden){tbl.hidden=false;raw.hidden=true;e.textContent='Ver texto original';}
+      else{tbl.hidden=true;raw.hidden=false;e.textContent='Ver tabela';}
+    })(this)">Ver texto original</a></div>
+  <div id="${uid}-t" class="msg-tcampos-tbl-wrap">
+    <table class="msg-tcampos-tbl"><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>
+  </div>
+  <div id="${uid}-r" class="msg-body" hidden>${rawBloco}</div>`;
+  const depois = linhasRaw.slice(blocoFim).join('\n').trim();
+  if (depois) html += `<div class="msg-body">${escHtml(depois)}</div>`;
+  return html;
+}
+
 // Gera o HTML de corpo + anexos para uma única mensagem
 function _renderMsgHtml(m, threadId) {
   const isEncaminhamento = m.tipo_estrutura === 'C' || m.tipo_estrutura === 'D' || m.tipo_estrutura === 'F';
@@ -2795,7 +2860,7 @@ function _renderMsgHtml(m, threadId) {
   let corpoHtml;
   if (isEncaminhamento) {
     let parteNova;
-    const tblNovo = _tabelaCampos(m.texto_novo || '');
+    const tblNovo = _tabelaCampos(m.texto_novo || '') || _tabelaEspacos(m.texto_novo || '');
     if (tblNovo) {
       parteNova = tblNovo;
     } else {
@@ -2818,7 +2883,7 @@ function _renderMsgHtml(m, threadId) {
     corpoHtml = parteNova + parteEnc;
   } else if (isResposta) {
     let parteNova;
-    const tblNovo = _tabelaCampos(m.texto_novo || '');
+    const tblNovo = _tabelaCampos(m.texto_novo || '') || _tabelaEspacos(m.texto_novo || '');
     if (tblNovo) {
       parteNova = tblNovo;
     } else {
@@ -2834,7 +2899,7 @@ function _renderMsgHtml(m, threadId) {
       : '';
     corpoHtml = parteNova + parteHistorico;
   } else {
-    const tbl = _tabelaCampos(m.corpo || '');
+    const tbl = _tabelaCampos(m.corpo || '') || _tabelaEspacos(m.corpo || '');
     if (tbl) {
       corpoHtml = tbl;
     } else {
