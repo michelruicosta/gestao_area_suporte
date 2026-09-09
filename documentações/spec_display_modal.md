@@ -300,3 +300,62 @@ posição no corpo, nome do arquivo e recorrência por remetente existem, mas ne
 | Correção de performance (Gmail API só chamado quando há imagem) | ✅ Implementado e commitado (a3082d5) |
 | Ocultar imagens da parte encadeada | 🔴 Pendente — decisão aprovada em 04/09/2026 |
 | Exibir imagens I7 (descrições de IA do Gmail) | ✅ Implementado e commitado (0782317) |
+
+---
+
+## Campos De e Para — regras de exibição no modal
+
+**Criado:** 2026-09-09  
+**Status:** ✅ Implementado — commit a seguir
+
+Cada card de mensagem no modal exibe dois campos: **De** (quem enviou) e **Para** (quem recebeu).
+A regra abaixo define o que exibir em cada caso, considerando o canal usado (email pessoal ou grupo suporte@).
+
+### Campo De
+
+| Situação no From | Reply-To | O que exibir |
+|---|---|---|
+| Endereço pessoal (não suporte@) | — | Nome extraído do From |
+| suporte@finaud.com.br | Reply-To externo (não @finaud) | Nome extraído do Reply-To — é o cliente que enviou via grupo |
+| suporte@finaud.com.br | Reply-To vazio ou @finaud | Nome extraído do From — é o colaborador que enviou via grupo |
+| suporte@finaud.com.br | Reply-To vazio ou @finaud, e From sem nome individual | "Suporte Finaud" — não há como identificar o colaborador |
+
+**Regra prática:** "De" sempre mostra a pessoa real, não o grupo suporte@.
+
+### Campo Para
+
+A lógica depende de quem enviou a mensagem:
+
+**Remetente é cliente** (From não @finaud, ou suporte@ + Reply-To externo, ou "via Suporte" no From):
+- Para = primeiro colaborador @finaud no To (excluindo suporte@)
+- Se não houver colaborador no To → busca no CC
+- Se não houver colaborador em nenhum → "suporte@finaud.com.br"
+- Colega externo do cliente no To/CC é **ignorado** — não é relevante para a Finaud
+
+**Remetente é colaborador Finaud** (From @finaud ou suporte@ sem Reply-To externo):
+- Para = primeiro endereço externo (não @finaud) no To
+- Se não houver externo no To → busca no CC
+- Se não houver externo em nenhum → primeiro colaborador @finaud (mensagem interna)
+- suporte@ que aparece no To por routing do Google Groups é **ignorado** na busca pelo externo
+
+**Cenários mapeados com dados reais (09/09/2026):**
+
+| Padrão | De | Para | Obs |
+|---|---|---|---|
+| Cliente direto → só colaborador | cliente | colaborador | ✓ |
+| Cliente direto → colaborador + suporte@ | cliente | colaborador | suporte@ ignorado |
+| Cliente direto → externo + colaborador | cliente | colaborador | externo (colega do cliente) ignorado |
+| Cliente direto → só suporte@ | cliente | suporte@finaud.com.br | ✓ |
+| Cliente via suporte@ → colaborador | cliente (via Reply-To) | colaborador | ✓ |
+| Cliente via suporte@ → externo + colaborador | cliente (via Reply-To) | colaborador | externo ignorado |
+| Colaborador pessoal → cliente | colaborador | cliente | ✓ |
+| Colaborador pessoal → cliente + CC colaborador | colaborador | cliente | CC ignorado |
+| Colaborador pessoal → cliente + suporte@ CC | colaborador | cliente | suporte@ ignorado |
+| Colaborador via suporte@ → cliente | colaborador | cliente | ✓ |
+| Colaborador via suporte@ → cliente + colaborador CC | colaborador | cliente | CC ignorado — **era o bug principal** |
+| Colaborador via suporte@ → cliente + suporte@ no To | colaborador | cliente | suporte@ ignorado |
+| Colaborador pessoal → só colaborador (interno) | colaborador | colaborador | mensagem interna |
+
+**Implementação:** `scripts/servidor_telas.py` — funções `_resolver_de`, `_resolver_para`, `_primeiro_externo`, `_eh_cliente_remetente`.  
+**Testes:** `tests/test_servidor_telas.py` — classes `TestResolverDe` e `TestResolverPara` (15 casos).  
+**Validado contra:** 3.082 mensagens reais do banco — 323 corrigidas, 0 regressões, 0 campos vazios.

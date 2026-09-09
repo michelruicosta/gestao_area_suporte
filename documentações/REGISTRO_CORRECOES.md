@@ -2,6 +2,33 @@
 
 ---
 
+### 09/09 19:00 — Modal: campos De e Para corrigidos — regras unificadas De/Para por tipo de remetente
+
+**🔎 Em miúdos:** o modal de thread mostrava "suporte@finaud.com.br" no campo Para quando um colaborador da Finaud respondia ao cliente — em vez do nome do cliente. Em outros casos, o campo Para mostrava um colega colaborador ou o suporte@ quando devia mostrar o cliente. Foram identificados 7 padrões problemáticos, todos corrigidos por uma regra única: quando o remetente é cliente → Para = primeiro colaborador Finaud; quando o remetente é colaborador Finaud → Para = primeiro cliente externo.
+
+**Problema:** `_resolver_de()` e `_resolver_para()` em `scripts/servidor_telas.py` não diferenciavam remetente-cliente de remetente-colaborador. Usavam o campo `destinatarios` diretamente, sem filtrar por tipo. Resultados incorretos:
+- `colab_pessoal | dest=externo+suporte` (206 msgs) — Para mostrava `suporte@finaud.com.br` em vez do cliente
+- `colab_pessoal | dest=externo+colab` (63 msgs) — Para mostrava colaborador em vez do cliente
+- `cliente_direto | dest=externo+colab` (131 msgs) — Para mostrava colega externo em vez do colaborador Finaud
+- `cliente_via_suporte | dest=externo+colab` (138 msgs) — Para mostrava colega externo em vez do colaborador Finaud
+- `colab_via_suporte | dest=externo+suporte` (32 msgs) — Para mostrava suporte@ em vez do cliente
+- `colab_via_suporte | dest=externo+colab` (8 msgs) — Para mostrava colaborador em vez do cliente
+- `colab_via_suporte | dest=so_externo` (43 msgs, parcial) — De mostrava "suporte" em vez de "Suporte Finaud"
+
+**Correção:** `scripts/servidor_telas.py` — 2 funções substituídas, 2 helpers adicionados:
+- `_primeiro_externo(raw)` — varre um campo e retorna o nome do primeiro endereço não-Finaud
+- `_eh_cliente_remetente(msg)` — retorna True se o remetente é cliente (From não-Finaud, ou suporte@ com Reply-To externo, ou "via suporte" no From)
+- `_resolver_de(msg)` reescrita — From=suporte@ + Reply-To externo → nome do Reply-To; From=suporte@ sem Reply-To → "Suporte Finaud"; caso contrário → nome do From
+- `_resolver_para(msg)` reescrita — remetente cliente → primeiro colaborador @finaud (ou suporte@); remetente colaborador → primeiro externo (cliente)
+
+**Documentação:**
+- `documentações/spec_display_modal.md` — nova seção "Campos De e Para — regras de exibição no modal" com tabelas De, tabela Para e mapeamento dos 13 cenários
+- `documentações/PENDENCIAS.md` — item "COLETOR — Mostrar nome do colaborador Finaud em vez de 'suporte'" removido (resolvido)
+
+**Validação:** ✅ Snapshot antes/depois em `data/snapshot_de_para_antes.json` e `data/snapshot_de_para_depois.json`. 323 mudanças em 3.082 mensagens (≈10,5%), 0 campos vazios, 0 regressões detectadas. `pytest tests/ -q`: **653 passed** (+15 novos testes nas classes `TestResolverDe` e `TestResolverPara`).
+
+---
+
 ### 09/09 16:00 — Contaminação cruzada de threads DRM 2060 detectada, banco restaurado, coletor desativado
 
 **🔎 Em miúdos:** o sistema estava colocando mensagens de um cliente dentro da conversa de outro. Comparamos o sistema com o Gmail e vimos que a thread da Trustee DTVM, que devia ter 2 mensagens, mostrava 22 mensagens — incluindo mensagens da Western Union. Restauramos os dados corretos buscando direto no Gmail e desligamos a rotina responsável até o bug ser corrigido.
