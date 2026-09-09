@@ -2201,8 +2201,8 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
 
       <div class="page-header" style="margin-bottom:0.75rem">
         <div class="page-header-left">
-          <h1 class="page-titulo">FOGs por Colaborador</h1>
-          <p class="page-subtitulo">Quantos casos passaram pela mão de cada colaborador e por quanto tempo</p>
+          <h1 class="page-titulo">Jornada dos Casos</h1>
+          <p class="page-subtitulo">Como cada FOG passou pelos colaboradores — quem teve, por quanto tempo e onde o tempo foi maior</p>
         </div>
       </div>
 
@@ -5276,7 +5276,7 @@ async function fogColabBuscar() {
   load.style.display = 'block';
   lista.innerHTML = '';
   try {
-    const r = await fetch(`/api/fog-colaboradores?inicio=${ini}&fim=${fim}`);
+    const r = await fetch(`/api/fog-jornadas?inicio=${ini}&fim=${fim}`);
     _fogColabDados = await r.json();
     _fogColabCarregado = true;
     fogColabRender();
@@ -5296,62 +5296,60 @@ function fogColabRender() {
   const esc = s => (s || '').replace(/[&<>"']/g,
     c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-  function corDias(d) {
-    if (d <= 7)  return 'background:#EAF3DE;color:#3B6D11';
-    if (d <= 20) return 'background:#FAEEDA;color:#854F0B';
-    return 'background:#FCEBEB;color:#A32D2D';
+  function primeiroNome(nome) {
+    return (nome || '').split(' ')[0];
   }
 
-  function initiais(nome) {
-    return nome.split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase();
+  function estiloEtapa(e) {
+    if (e.gargalo && !e.em_aberto)
+      return { bg: 'rgba(239,68,68,.1)', borda: '#ef4444', cor: '#ef4444' };
+    if (e.em_aberto)
+      return { bg: 'rgba(59,130,246,.08)', borda: 'var(--accent)', cor: 'var(--accent)' };
+    if (e.dias >= 60)
+      return { bg: 'rgba(239,68,68,.06)', borda: '#fca5a5', cor: '#dc2626' };
+    if (e.dias >= 20)
+      return { bg: 'rgba(245,158,11,.07)', borda: '#fcd34d', cor: '#b45309' };
+    return { bg: 'var(--bg)', borda: 'var(--border)', cor: 'var(--muted)' };
   }
 
-  lista.innerHTML = _fogColabDados.map((c, ci) => {
-    const fogsHtml = c.fogs.map((fog, fi) => {
-      const atribHtml = fog.atribuicoes.map(a => {
-        const fimTxt = a.em_aberto ? 'hoje (atual)' : _fogColabFmtDt(a.fim);
-        return `<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;
-            background:var(--bg);border-radius:6px;font-size:12px">
-          <span style="color:var(--muted);min-width:24px">${a.seq}ª</span>
-          <span style="flex:1;color:var(--muted)">${_fogColabFmtDt(a.inicio)} → ${fimTxt}</span>
-          <span style="padding:2px 8px;border-radius:9px;font-size:11px;font-weight:500;${corDias(a.dias)}">${a.dias} dia${a.dias !== 1 ? 's' : ''}</span>
-        </div>`;
-      }).join('');
+  lista.innerHTML = _fogColabDados.map(fog => {
+    const statusStyle = fog.status === 'Ativo'
+      ? 'background:#EAF3DE;color:#3B6D11'
+      : 'background:#f1f5f9;color:#64748b';
 
-      return `<div style="border-bottom:0.5px solid var(--border);padding:8px 0 6px">
-        <div style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:0 0 6px"
-          onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'flex':'none';
-                   this.querySelector('.fc-chev').textContent=this.nextElementSibling.style.display==='none'?'▶':'▼'">
-          <span style="font-size:11px;color:var(--accent);font-weight:500;min-width:52px">#${esc(fog.id)}</span>
-          <span style="flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(fog.titulo)}</span>
-          <span style="font-size:11px;color:var(--muted)">${fog.total_atribuicoes}x</span>
-          <span style="padding:2px 8px;border-radius:9px;font-size:11px;font-weight:500;${corDias(fog.total_dias)}">${fog.total_dias} dias</span>
-          <span class="fc-chev" style="font-size:10px;color:var(--muted)">▶</span>
-        </div>
-        <div style="display:none;flex-direction:column;gap:4px;padding-left:60px">${atribHtml}</div>
-      </div>`;
+    const etapasHtml = fog.etapas.map((e, i) => {
+      const st  = estiloEtapa(e);
+      const seta = i < fog.etapas.length - 1
+        ? `<span style="color:var(--muted);font-size:13px;flex-shrink:0;padding:0 2px">→</span>` : '';
+      const rodape = e.gargalo && !e.em_aberto
+        ? `<span style="font-size:9px;color:#ef4444;letter-spacing:.3px">⚠ gargalo</span>`
+        : e.em_aberto
+          ? `<span style="font-size:9px;color:var(--accent)">● atual</span>`
+          : '';
+      return `<div style="display:inline-flex;flex-direction:column;align-items:center;
+          padding:5px 11px;border-radius:8px;border:1px solid ${st.borda};
+          background:${st.bg};min-width:76px;text-align:center;gap:1px">
+        <span style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap">${esc(primeiroNome(e.nome))}</span>
+        <span style="font-size:12px;font-weight:700;color:${st.cor}">${e.dias}d</span>
+        ${rodape}
+      </div>${seta}`;
     }).join('');
 
-    return `<div style="background:var(--card-bg);border:0.5px solid var(--border);border-radius:12px;
-        padding:1rem 1.25rem;margin-bottom:10px">
-      <div style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:0"
-        onclick="const b=document.getElementById('fcb-${ci}');
-                 b.style.display=b.style.display==='none'?'block':'none';
-                 this.querySelector('.fc-arr').textContent=b.style.display==='none'?'▼':'▲'">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--marca);color:#fff;
-          display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">
-          ${esc(initiais(c.nome))}
-        </div>
-        <div style="flex:1">
-          <div style="font-weight:500;font-size:14px">${esc(c.nome)}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">
-            ${c.total_fogs} FOGs · ${c.total_atribuicoes} atribuições · ${c.total_dias} dias acumulados
-          </div>
-        </div>
-        <span class="fc-arr" style="font-size:11px;color:var(--muted)">▼</span>
+    const fogLink = `https://finaud.fogbugz.com/f/cases/${esc(fog.id)}`;
+
+    return `<div style="background:var(--surface);border:1px solid var(--border);
+        border-radius:10px;padding:.875rem 1.125rem;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:.625rem;flex-wrap:wrap">
+        <a href="${fogLink}" target="_blank"
+           style="font-size:12px;font-weight:700;color:var(--accent);text-decoration:none;white-space:nowrap"
+           title="Abrir no FogBugz">#${esc(fog.id)}</a>
+        <span style="flex:1;font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+              title="${esc(fog.titulo)}">${esc(fog.titulo)}</span>
+        <span style="padding:2px 8px;border-radius:9px;font-size:11px;font-weight:600;${statusStyle};flex-shrink:0">${esc(fog.status)}</span>
+        <span style="font-size:12px;color:var(--muted);white-space:nowrap;flex-shrink:0">${fog.total_dias} dias total</span>
       </div>
-      <div id="fcb-${ci}" style="display:none;border-top:0.5px solid var(--border);margin-top:.75rem;padding-top:.75rem">
-        ${fogsHtml}
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        ${etapasHtml}
       </div>
     </div>`;
   }).join('');

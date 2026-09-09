@@ -2,6 +2,23 @@
 
 ---
 
+### 09/09 16:00 — Contaminação cruzada de threads DRM 2060 detectada, banco restaurado, coletor desativado
+
+**🔎 Em miúdos:** o sistema estava colocando mensagens de um cliente dentro da conversa de outro. Comparamos o sistema com o Gmail e vimos que a thread da Trustee DTVM, que devia ter 2 mensagens, mostrava 22 mensagens — incluindo mensagens da Western Union. Restauramos os dados corretos buscando direto no Gmail e desligamos a rotina responsável até o bug ser corrigido.
+
+**Problema:** o `coletor_enviados_colaboradores.py` identifica a qual conversa (thread) uma mensagem de colaborador pertence usando o **assunto normalizado** (sem Re:/ENC:/FW:). Quando há 20+ threads com o mesmo assunto "BANCO CENTRAL - COMUNICACAO DE INCONSISTENCIA NO DRM - 2060", todas mapeiam para a mesma chave — e mensagens de um cliente são adicionadas às threads de outros. O filtro de participantes e o limite `MAX_CANDIDATOS = 3` eram insuficientes para este caso.
+
+**Causa raiz:** `coletor_enviados_colaboradores.py` linhas ≈57–65 (`_normalizar`) + ≈261–265 (index build por assunto normalizado). 8 ondas de contaminação entre 02/09/2026 e 09/09/2026; 527 threads afetadas.
+
+**Correção:**
+- `scripts/executar_pipeline.py` (função `rodar_sem_retorno`): desativado o `coletar_colaboradores()` com comentário explicativo.
+- Script de restauração: re-buscamos os 527 threads via Gmail API (`_processar_thread` + `salvar_thread`); 168 threads tiveram o número de mensagens reduzido. Snapshots antes/depois salvos em `data/backups/snapshot_antes_restauracao.csv` e `snapshot_depois_restauracao.csv`. Backup completo do banco em `data/backups/20260909_1529_restauracao_banco/gestao.db`.
+- Thread Trustee DTVM (`1a05d9178be1c1b7`): 22 msgs → 2 msgs; destinatário corrigido de Raphael (WU) para Igor Menezes Costa (Trustee). ✅
+
+**Validação:** ✅ Banco restaurado confirmado via snapshot comparativo (168 threads com redução de mensagens, 2 com aumento legítimo). ⚠️ PENDENTE: bug raiz no `coletor_enviados_colaboradores.py` não foi corrigido — coletor permanece desativado. Ver PENDENCIAS.md.
+
+---
+
 ### 09/09 14:45 — FOG ranking: campo media_dias ausente causava erro 500 na tela principal
 
 **🔎 Em miúdos:** a tela principal travava com erro 500 para qualquer usuário que abrisse. O Sentry avisou na hora — sem ele, o problema ficaria invisível até alguém reclamar.

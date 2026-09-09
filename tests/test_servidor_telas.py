@@ -446,6 +446,59 @@ def test_fog_colaboradores_pagina_no_html():
     assert 'Por Colaborador' in html
 
 
+# ── Jornada dos Casos (Por Colaborador) ──────────────────────────────────────
+
+def test_pivotar_por_fog_jornada_cronologica():
+    """_pivotar_por_fog deve montar a jornada de cada FOG em ordem cronológica."""
+    from servidor_telas import _pivotar_por_fog
+    colaboradores = [
+        {
+            'nome': 'Ana',
+            'fogs': [{'id': '1', 'titulo': 'Caso A', 'status': 'Ativo',
+                      'atribuicoes': [{'seq': 1, 'inicio': '2026-01-01', 'fim': '2026-02-01',
+                                       'dias': 31, 'em_aberto': False}]}],
+        },
+        {
+            'nome': 'Bruno',
+            'fogs': [{'id': '1', 'titulo': 'Caso A', 'status': 'Ativo',
+                      'atribuicoes': [{'seq': 1, 'inicio': '2026-02-01', 'fim': None,
+                                       'dias': 50, 'em_aberto': True}]}],
+        },
+    ]
+    resultado = _pivotar_por_fog(colaboradores)
+    assert len(resultado) == 1
+    fog = resultado[0]
+    assert fog['id'] == '1'
+    assert fog['total_dias'] == 81
+    assert len(fog['etapas']) == 2
+    assert fog['etapas'][0]['nome'] == 'Ana'    # ordem cronológica
+    assert fog['etapas'][1]['nome'] == 'Bruno'
+    assert fog['etapas'][1]['em_aberto'] is True
+
+
+def test_pivotar_por_fog_gargalo_marcado():
+    """A etapa com mais dias deve ser marcada como gargalo (quando há 2+ etapas)."""
+    from servidor_telas import _pivotar_por_fog
+    colaboradores = [
+        {
+            'nome': 'Ana',
+            'fogs': [{'id': '2', 'titulo': 'Caso B', 'status': 'Ativo',
+                      'atribuicoes': [{'seq': 1, 'inicio': '2026-01-01', 'fim': '2026-02-01',
+                                       'dias': 10, 'em_aberto': False}]}],
+        },
+        {
+            'nome': 'Bruno',
+            'fogs': [{'id': '2', 'titulo': 'Caso B', 'status': 'Ativo',
+                      'atribuicoes': [{'seq': 1, 'inicio': '2026-02-01', 'fim': None,
+                                       'dias': 90, 'em_aberto': True}]}],
+        },
+    ]
+    resultado = _pivotar_por_fog(colaboradores)
+    fog = resultado[0]
+    assert not fog['etapas'][0]['gargalo']   # Ana: 10d — não é gargalo
+    assert fog['etapas'][1]['gargalo']        # Bruno: 90d — é gargalo
+
+
 # ── Ranking Visão Consolidada ─────────────────────────────────────────────────
 
 def test_ranking_media_dias_calculada():

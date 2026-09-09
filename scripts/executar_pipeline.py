@@ -122,17 +122,10 @@ def rodar_sem_retorno() -> None:
     dias_af = int(cfg.get('dias_sr_af', 30))
     dias_ac = int(cfg.get('dias_sr_ac', 60))
 
-    # Etapa 0: coleta caixas dos colaboradores antes de arquivar
-    log.info('Sem Retorno — coletando caixas dos colaboradores...')
-    try:
-        r = coletar_colaboradores()
-        log.info('Colaboradores: %d verificados, %d msgs novas, %d threads atualizadas.',
-                 r['colaboradores'], r['mensagens_novas'], r['threads_atualizadas'])
-        if r['threads_atualizadas'] > 0:
-            bt.recalcular_status_todos()
-            log.info('Status recalculado após coleta de colaboradores.')
-    except Exception as e:
-        log.warning('Coleta de colaboradores falhou (continua): %s', e)
+    # Etapa 0: coleta caixas dos colaboradores — DESATIVADO temporariamente
+    # Bug crítico: contaminação cruzada de threads por assunto genérico (09/09/2026)
+    # Reativar após corrigir coletor_enviados_colaboradores.py
+    log.info('Sem Retorno — coleta de colaboradores desativada (bug em correção).')
 
     log.info('Sem Retorno — iniciando (AF=%d dias, AC=%d dias).', dias_af, dias_ac)
     try:

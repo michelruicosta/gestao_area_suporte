@@ -1529,6 +1529,7 @@ def _buscar_fog_colaboradores(inicio: str, fim: str) -> list[dict]:
                 fog_entry = colaboradores[nome][fog_id]
                 fog_entry['atribuicoes'].append({
                     'seq':       len(fog_entry['atribuicoes']) + 1,
+                    'posicao':   i,   # posição global no histórico do caso
                     'inicio':    inicio_resp.isoformat(),
                     'fim':       None if em_aberto else proximo.isoformat(),
                     'em_aberto': em_aberto,
@@ -1564,6 +1565,53 @@ def api_fog_colaboradores():
     inicio = request.args.get('inicio', hoje.replace(month=1, day=1).isoformat())
     fim    = request.args.get('fim',    hoje.isoformat())
     return jsonify(_buscar_fog_colaboradores(inicio, fim))
+
+
+def _pivotar_por_fog(colaboradores: list[dict]) -> list[dict]:
+    """Reorganiza dados por colaborador em jornada cronológica por FOG."""
+    fogs: dict[str, dict] = {}
+    for colab in colaboradores:
+        for fog in colab['fogs']:
+            fog_id = fog['id']
+            if fog_id not in fogs:
+                fogs[fog_id] = {
+                    'id':     fog_id,
+                    'titulo': fog['titulo'],
+                    'status': fog['status'],
+                    'etapas': [],
+                }
+            for atr in fog['atribuicoes']:
+                fogs[fog_id]['etapas'].append({
+                    'nome':      colab['nome'],
+                    'inicio':    atr['inicio'],
+                    'fim':       atr['fim'],
+                    'dias':      atr['dias'],
+                    'em_aberto': atr['em_aberto'],
+                    'gargalo':   False,
+                })
+
+    resultado = []
+    for fog in fogs.values():
+        fog['etapas'].sort(key=lambda e: (e['inicio'], e.get('posicao', 0)))
+        fog['total_dias'] = sum(e['dias'] for e in fog['etapas'])
+        if len(fog['etapas']) >= 2:
+            max_dias = max(e['dias'] for e in fog['etapas'])
+            if max_dias > 0:
+                for e in fog['etapas']:
+                    e['gargalo'] = e['dias'] == max_dias
+        resultado.append(fog)
+
+    resultado.sort(key=lambda f: f['total_dias'], reverse=True)
+    return resultado
+
+
+@app.route('/api/fog-jornadas')
+@_requer_login
+def api_fog_jornadas():
+    hoje = datetime.now(timezone.utc).date()
+    inicio = request.args.get('inicio', hoje.replace(month=1, day=1).isoformat())
+    fim    = request.args.get('fim',    hoje.isoformat())
+    return jsonify(_pivotar_por_fog(_buscar_fog_colaboradores(inicio, fim)))
 
 
 # ── Inicialização ─────────────────────────────────────────────────────────────
