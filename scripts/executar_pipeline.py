@@ -193,9 +193,12 @@ def _aplicar_intervalo_coleta(scheduler) -> None:
 
 
 def _job_coleta_segura() -> None:
+    monitor_erros.checkin_inicio()
     try:
         rodar_coleta_ciclo()
+        monitor_erros.checkin_fim(ok=True)
     except Exception:
+        monitor_erros.checkin_fim(ok=False)
         log.exception('Coleta automática falhou.')
 
 

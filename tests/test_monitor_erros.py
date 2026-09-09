@@ -51,3 +51,11 @@ def test_iniciar_sem_dsn_nao_levanta_erro(monkeypatch):
     monkeypatch.delenv('SENTRY_DSN', raising=False)
     from monitor_erros import iniciar
     iniciar()  # não deve levantar exceção
+
+
+def test_checkin_sem_dsn_nao_levanta_erro(monkeypatch):
+    monkeypatch.delenv('SENTRY_DSN', raising=False)
+    from monitor_erros import checkin_inicio, checkin_fim
+    checkin_inicio()   # sem DSN — silencioso
+    checkin_fim(ok=True)   # sem DSN — silencioso
+    checkin_fim(ok=False)  # sem DSN — silencioso

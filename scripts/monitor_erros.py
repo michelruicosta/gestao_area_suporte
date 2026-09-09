@@ -1,8 +1,9 @@
 """
 monitor_erros.py
-O que faz: inicializa o monitoramento de erros via Sentry e filtra dados
-           sensíveis (corpo de e-mail, remetente, assunto) antes do envio.
-Uso: importar e chamar monitor_erros.iniciar() no início de cada script.
+O que faz: inicializa o monitoramento de erros via Sentry, filtra dados
+           sensíveis antes do envio e registra o batimento do relógio de coleta.
+Uso: monitor_erros.iniciar() no início de cada script.
+     monitor_erros.checkin_inicio() / checkin_fim() ao redor do job agendado.
 """
 from __future__ import annotations
 
@@ -73,3 +74,50 @@ def iniciar(modo: str = 'pipeline') -> None:
         before_send=before_send,
         integrations=integracoes,
     )
+
+
+_SLUG_RELOGIO = 'relogio-coleta'
+_MONITOR_CONFIG = {
+    'schedule': {'type': 'interval', 'value': 60, 'unit': 'minute'},
+    'checkin_margin': 5,
+    'max_runtime': 20,
+}
+_checkin_id_atual: str | None = None
+
+
+def checkin_inicio() -> None:
+    """Registra no Sentry que o relógio de coleta começou a rodar."""
+    global _checkin_id_atual
+    if not os.getenv('SENTRY_DSN', '').strip():
+        return
+    try:
+        import sentry_sdk
+        from sentry_sdk.tracing import MonitorStatus
+        _checkin_id_atual = sentry_sdk.capture_check_in(
+            monitor_slug=_SLUG_RELOGIO,
+            status=MonitorStatus.IN_PROGRESS,
+            monitor_config=_MONITOR_CONFIG,
+        )
+    except Exception:
+        pass
+
+
+def checkin_fim(ok: bool = True) -> None:
+    """Registra no Sentry que o relógio terminou (ok=True) ou falhou (ok=False)."""
+    global _checkin_id_atual
+    if not os.getenv('SENTRY_DSN', '').strip():
+        return
+    try:
+        import sentry_sdk
+        from sentry_sdk.tracing import MonitorStatus
+        status = MonitorStatus.OK if ok else MonitorStatus.ERROR
+        sentry_sdk.capture_check_in(
+            monitor_slug=_SLUG_RELOGIO,
+            status=status,
+            check_in_id=_checkin_id_atual,
+            monitor_config=_MONITOR_CONFIG,
+        )
+    except Exception:
+        pass
+    finally:
+        _checkin_id_atual = None
