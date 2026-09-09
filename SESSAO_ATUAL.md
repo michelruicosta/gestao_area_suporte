@@ -12,9 +12,10 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
+| 09/09 | Sentry: guia interativo + fix UndefinedError media_dias | abaixo |
 | 09/09 | Modal — Cenário 3: listas com marcadores implementadas e publicadas na VPS | abaixo |
 | 08/09 | Tabela COSIF no modal: validação do Cenário 2 + registro Cenários 1–2 + Cenário 3 aberto | abaixo |
-| 08/09 | Sentry monitoring + 3 otimizações de performance | abaixo |
+| 08/09 | Sentry monitoring + 3 otimizações de performance | arquivo |
 | 08/09 | Fix: campo Para — colaborador @finaud em vez de suporte | arquivo |
 | 08/09 | Verificação e-mails do dia + criação serviço agendador VPS | arquivo |
 | 08/09 | Fix: campo data vazio — retomada /fechar | arquivo |
@@ -57,6 +58,35 @@
 >
 > **Regra:** este arquivo guarda as **3 sessões mais recentes**. O `/fechar` acrescenta a
 > linha nova aqui e move a 4ª sessão para o arquivo.
+
+---
+
+## 📓 Diário da sessão (2026-09-09) — Sentry: guia interativo + fix UndefinedError media_dias
+
+### O que foi feito
+
+1. **Guia interativo do Sentry** — artifact publicado em claude.ai com 6 abas (Erros, Rastreamento, Perfis, Logs, Relógio, Proteção de Dados), cada uma seguindo a estrutura âncora simples → conceito técnico → consequência prática → o que fazer. Dados reais do projeto (4,81s, nomes das rotas, filtros LGPD).
+
+2. **Fix: `UndefinedError 'dict object' has no attribute 'media_dias'`** — Sentry capturou o erro às 13h21 de hoje na rota `index` (`gestao_email.html`, linha 2104).
+   - **Causa:** template tinha coluna "Média/caso" usando `p.media_dias` no ranking FOG, mas `servidor_telas.py` não calculava esse campo no dict. As mudanças estavam no working tree não commitado; o servidor em produção rodava `a5521b5` (commit anterior) sem o campo.
+   - **Correção:** `media_dias` adicionado ao dict do ranking em `index()` (`servidor_telas.py`, linha 663); template com coluna "Média/caso" + grid 6 colunas + ordenação; teste `test_ranking_media_dias_calculada` adicionado.
+   - **642 testes passando ✅**. Commit `32fb917`, push e deploy na VPS — tela + agendador ativos.
+
+### Estado atual
+
+**pytest:** 642 passed ✅.
+**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅. Commit `32fb917` publicado.
+
+### Próximo passo
+
+🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
+
+**Pendências que continuam:**
+- 🟡 Modal — acabamentos menores: Cenário 2b (COSIF citada 2× perde espaços duplos) e `white-space: nowrap` na coluna Valor
+- 🟡 Passo C — tela de manutenção de regras
+- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
+
+Último /fechar: 2026-09-09 14:45 — memórias revisadas ✅
 
 ---
 
@@ -132,56 +162,6 @@ Sessão de diagnóstico — retomada de chat que esgotou o contexto. Michel rela
 - 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
 
 Último /fechar: 2026-09-08 23:55 — memórias revisadas ✅
-
----
-
-## 📓 Diário da sessão (2026-09-08) — Sentry monitoring + 3 otimizações de performance
-
-### O que foi feito
-
-Duas sessões encadeadas (a segunda retomou da primeira, que esgotou o contexto).
-
-**Sentry monitoring (sessão anterior — contexto esgotado):**
-1. Projeto `gestao-area-suporte` criado no Sentry. DSN adicionado ao `.env` da VPS.
-2. `scripts/monitor_erros.py` — centraliza toda a integração Sentry:
-   - Filtros de dados sensíveis LGPD: `before_send`, `before_send_transaction`, `before_breadcrumb` — campos pessoais (`remetente`, `assunto`, `body`, etc.) substituídos por `[REDACTED]`; e-mails detectados por regex → `[EMAIL OCULTO]`
-   - `send_default_pii=False` — sem IP nem sessão de usuário
-   - Tracing (`traces_sample_rate=0.2`), Profiling (`profiles_sample_rate=1.0`), Logging (WARNING+)
-   - Cron monitor `relogio-coleta` — detecta se o pipeline parar silenciosamente
-3. `scripts/servidor_telas.py` — `monitor_erros.iniciar(modo='flask')` antes de `app = Flask(...)`
-4. `scripts/executar_pipeline.py` — `monitor_erros.iniciar()` + `checkin_inicio()`/`checkin_fim()` ao redor do job agendado
-5. Fix 503 pós-deploy: `sentry-sdk` não estava instalado no venv da VPS → instalado com `venv/bin/pip`
-6. Fix extra `[profiling]` inexistente no sentry-sdk 2.x → removido do `requirements.txt`
-7. 10 testes em `tests/test_monitor_erros.py` ✅
-
-**Profiling Sentry revelou 3 rotas lentas — todas corrigidas nesta sessão:**
-
-| Rota | Causa | Correção | Melhora |
-|---|---|---|---|
-| `api_imagem` (4,81s) | Chamada ao Gmail a cada requisição de imagem | Cache em arquivo `data/cache_imagens_gmail/` | ~4,8s → <10ms da 2ª vez |
-| `index` (3,44s) | Chamada ao FogBugz fria após cada reinício | Thread de aquecimento de cache ao subir servidor | ~3,4s → <50ms pós-deploy |
-| `api_thread` (3,04s) | Buscava thread completa no Gmail para mapas de imagem inline | Cache em arquivo `data/cache_threads_gmail/` (invalida quando nova mensagem chega) | ~3s → <10ms da 2ª abertura |
-
-Também não commitado na sessão anterior: melhoria no parser de tabelas do modal (`_tabelaEspacos`) — normalização de colunas "R$ valor sinal" e look-back de cabeçalho. Incluído neste commit.
-
-**Novos testes:** 9 (cache_imagem) + 2 (aquece_cache_fog) + 6 (cache_thread) = **17 testes novos**.
-**3 deploys via SSH.** Servidor ativo ✅.
-
-### Estado atual
-
-**pytest:** 635 passed ✅.
-**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅. Commits `a7cf548`, `055aa7b`, `64c43d6` publicados.
-
-### Próximo passo
-
-🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
-
-**Pendências que continuam:**
-- 🟡 Modal — leitura inteligente **Cenário 3: listas com marcadores** (Cenários 1 e 2 feitos, registrados em 08/09 23:30 e publicados na VPS em `220c2fb`; detalhe em `PENDENCIAS.md`).
-- 🟡 Passo C — tela de manutenção de regras
-- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
-
-Último /fechar: 2026-09-08 23:00 — memórias revisadas ✅
 
 ---
 

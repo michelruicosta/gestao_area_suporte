@@ -2,6 +2,24 @@
 
 ---
 
+### 09/09 14:45 — FOG ranking: campo media_dias ausente causava erro 500 na tela principal
+
+**🔎 Em miúdos:** a tela principal travava com erro 500 para qualquer usuário que abrisse. O Sentry avisou na hora — sem ele, o problema ficaria invisível até alguém reclamar.
+
+**Problema:** a coluna "Média/caso" foi adicionada ao painel do ranking FOG (mostrando a média de dias de espera por responsável), mas o servidor nunca recebeu a instrução de calcular esse número. Quando a tela tentava exibir `p.media_dias`, o Python não sabia o que era e travava com `UndefinedError`.
+
+**Causa raiz:** as mudanças no template (`gestao_email.html`) e no servidor (`servidor_telas.py`) foram feitas juntas no working tree, mas o servidor já estava rodando a versão anterior (`a5521b5` — commit da notificação FOG) sem o campo. O template novo foi servido, o servidor antigo não tinha o campo → mismatch. Sentry capturou às 13h21 na rota `index`, `gestao_email.html` linha 2104.
+
+**Correção:**
+- `scripts/servidor_telas.py`: adicionado `'media_dias': round(sum(c['dias_responsavel'] for c in casos) / len(casos))` ao dict de cada item do ranking (linha 663).
+- `templates/gestao_email.html`: coluna "Média/caso" com cor semafórica + `data-media` para ordenação + grid de 6 colunas.
+- `tests/test_servidor_telas.py`: teste `test_ranking_media_dias_calculada` adicionado.
+- Commit `32fb917`.
+
+**Validação:** ✅ 642 passed. Deploy VPS: tela + agendador ativos ✅.
+
+---
+
 ### 09/09 12:30 — Modal: leitura inteligente — Cenário 3 (listas com marcadores)
 
 **🔎 Em miúdos:** quando um e-mail lista itens com traço, asterisco ou numeração (ex.: "- CAM0050 BACEN PDF."), o modal passa a mostrar uma lista visual com marcadores reais `•` e badge "📋 N itens detectados" com link para ver o texto original.
