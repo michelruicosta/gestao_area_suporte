@@ -1568,65 +1568,95 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
           <p class="page-sub">O que é, ligada ou desligada, e quais grupos recebem (pode ser mais de um).</p>
         </div>
       </div>
-      <p class="nota-admin">Lista que pode crescer. A luz da busca continua em E-mail → Situação da busca. Com a notificação ligada, o sistema manda o e-mail se a busca atrasar — um recado por episódio, não a cada minuto.</p>
-      <div class="admin-card">
-        <div class="tabela-wrap">
-          <table class="tabela">
-            <thead>
-              <tr>
-                <th>O que é</th>
-                <th>Status</th>
-                <th>Grupos que recebem</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>
-                  <strong>Busca de e-mail parou</strong>
-                  <div style="font-size:0.82rem;color:var(--muted);margin:0">A busca automática não rodou no tempo marcado em Agendamentos.</div>
-                </td>
-                <td>
-                  <label class="chk-grupo"><input type="checkbox" id="notif-busca-ativa"> Ligada</label>
-                </td>
-                <td>
-                  <label class="chk-grupo"><input type="checkbox" id="notif-g-administrador" value="administrador"> Administrador</label>
-                  <label class="chk-grupo"><input type="checkbox" id="notif-g-gestor" value="gestor"> Gestor</label>
-                  <label class="chk-grupo"><input type="checkbox" id="notif-g-operador" value="operador"> Operador</label>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <strong>FOGs aguardando encerramento</strong>
-                  <div style="font-size:0.82rem;color:var(--muted);margin:0">FOGs abertos no Suporte Finaud — possíveis casos resolvidos sem encerramento.</div>
-                </td>
-                <td>
-                  <label class="chk-grupo"><input type="checkbox" id="notif-fog-ativa"> Ligada</label>
-                </td>
-                <td>
-                  <label class="chk-grupo"><input type="checkbox" id="notif-fog-g-administrador" value="administrador"> Administrador</label>
-                  <label class="chk-grupo"><input type="checkbox" id="notif-fog-g-gestor" value="gestor"> Gestor</label>
-                  <label class="chk-grupo"><input type="checkbox" id="notif-fog-g-operador" value="operador"> Operador</label>
-                  <div style="margin-top:0.5rem;display:flex;align-items:center;gap:0.4rem;">
-                    <span style="font-size:0.82rem;color:var(--muted);">Enviar toda:</span>
-                    <select id="notif-fog-dia" style="font-size:0.82rem;padding:2px 6px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);">
-                      <option value="0">Segunda-feira</option>
-                      <option value="1">Terça-feira</option>
-                      <option value="2">Quarta-feira</option>
-                      <option value="3">Quinta-feira</option>
-                      <option value="4">Sexta-feira</option>
-                      <option value="5">Sábado</option>
-                      <option value="6">Domingo</option>
-                    </select>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+
+      <div class="email-tabbar" role="tablist" id="notif-tab-bar">
+        <button class="email-tab ativa" onclick="_notifMudarAba('email', this)">E-mail</button>
+        <button class="email-tab" onclick="_notifMudarAba('fog', this)">FOG</button>
+      </div>
+
+      <!-- Aba E-mail -->
+      <div id="notif-aba-email" style="margin-top:1rem;">
+        <p class="nota-admin">A luz da busca continua em E-mail → Situação da busca. Com a notificação ligada, o sistema manda o e-mail se a busca atrasar — um recado por episódio, não a cada minuto.</p>
+        <div class="admin-card">
+          <div class="tabela-wrap">
+            <table class="tabela">
+              <thead>
+                <tr>
+                  <th>O que é</th>
+                  <th>Status</th>
+                  <th>Grupos que recebem</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <strong>Busca de e-mail parou</strong>
+                    <div style="font-size:0.82rem;color:var(--muted);margin:0">A busca automática não rodou no tempo marcado em Agendamentos.</div>
+                  </td>
+                  <td>
+                    <label class="chk-grupo"><input type="checkbox" id="notif-busca-ativa"> Ligada</label>
+                  </td>
+                  <td>
+                    <label class="chk-grupo"><input type="checkbox" id="notif-g-administrador" value="administrador"> Administrador</label>
+                    <label class="chk-grupo"><input type="checkbox" id="notif-g-gestor" value="gestor"> Gestor</label>
+                    <label class="chk-grupo"><input type="checkbox" id="notif-g-operador" value="operador"> Operador</label>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-        <div style="display:flex;align-items:center;gap:1rem;margin-top:1rem">
-          <button class="btn-coletar" type="button" onclick="_notifSalvar()">Salvar notificações</button>
-          <span id="notif-feedback" style="font-size:0.85rem;color:var(--muted)"></span>
+      </div>
+
+      <!-- Aba FOG -->
+      <div id="notif-aba-fog" style="margin-top:1rem;" hidden>
+        <p class="nota-admin">FOGs atribuídos ao Suporte Finaud que continuam abertos — podem ser casos resolvidos aguardando encerramento.</p>
+        <div class="admin-card">
+          <div class="tabela-wrap">
+            <table class="tabela">
+              <thead>
+                <tr>
+                  <th>O que é</th>
+                  <th>Status</th>
+                  <th>Grupos que recebem</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <strong>FOGs aguardando encerramento</strong>
+                    <div style="font-size:0.82rem;color:var(--muted);margin:0">FOGs abertos no Suporte Finaud — possíveis casos resolvidos sem encerramento.</div>
+                  </td>
+                  <td>
+                    <label class="chk-grupo"><input type="checkbox" id="notif-fog-ativa"> Ligada</label>
+                  </td>
+                  <td>
+                    <label class="chk-grupo"><input type="checkbox" id="notif-fog-g-administrador" value="administrador"> Administrador</label>
+                    <label class="chk-grupo"><input type="checkbox" id="notif-fog-g-gestor" value="gestor"> Gestor</label>
+                    <label class="chk-grupo"><input type="checkbox" id="notif-fog-g-operador" value="operador"> Operador</label>
+                    <div style="margin-top:0.5rem;display:flex;align-items:center;gap:0.4rem;">
+                      <span style="font-size:0.82rem;color:var(--muted);">Enviar toda:</span>
+                      <select id="notif-fog-dia" style="font-size:0.82rem;padding:2px 6px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);">
+                        <option value="0">Segunda-feira</option>
+                        <option value="1">Terça-feira</option>
+                        <option value="2">Quarta-feira</option>
+                        <option value="3">Quinta-feira</option>
+                        <option value="4">Sexta-feira</option>
+                        <option value="5">Sábado</option>
+                        <option value="6">Domingo</option>
+                      </select>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:1rem;margin-top:1rem">
+        <button class="btn-coletar" type="button" onclick="_notifSalvar()">Salvar notificações</button>
+        <span id="notif-feedback" style="font-size:0.85rem;color:var(--muted)"></span>
       </div>
     </section>
     <section class="page" id="pag-admin-detalhe">
@@ -3327,6 +3357,13 @@ async function _admCarregarSituacao() {
   } catch (e) {
     document.getElementById('sit-busca-det').textContent = 'Não foi possível ler a situação.';
   }
+}
+
+function _notifMudarAba(aba, btn) {
+  document.getElementById('notif-aba-email').hidden = aba !== 'email';
+  document.getElementById('notif-aba-fog').hidden   = aba !== 'fog';
+  document.querySelectorAll('#notif-tab-bar .email-tab').forEach(b => b.classList.remove('ativa'));
+  btn.classList.add('ativa');
 }
 
 async function _notifCarregar() {
