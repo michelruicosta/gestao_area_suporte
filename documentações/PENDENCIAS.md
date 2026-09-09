@@ -10,15 +10,12 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ---
 
-## 🟡 MODAL — Leitura inteligente, Cenário 3: listas com marcadores (identificado em 08/09/2026)
+## 🟡 MODAL — Acabamentos menores na leitura inteligente (identificados em 08/09/2026)
 
-E-mails com linhas iniciadas por `-`, `•`, `*` ou `1.` hoje aparecem como texto corrido no modal de thread. Renderizar como lista (`<ul>`/`<ol>`) em `templates/gestao_email.html`, na mesma família de `_tabelaCampos` (Cenário 1) e `_tabelaEspacos` (Cenário 2) — ver entrada de 08/09 23:30 no `REGISTRO_CORRECOES.md` para o que já existe.
+Cenários 1, 2 e 3 concluídos. Dois acabamentos menores permanecem abertos:
 
-**Antes de implementar:** levantar 5–10 threads reais com esse padrão no `data/gestao.db` para validar a regra de detecção e evitar falsos positivos (ex.: "- " dentro de frases, assinaturas).
-
-**Também pendentes no modal (menores):**
-- **Cenário 2b** — tabela COSIF citada pela 2ª vez (citação dupla) perde os espaços duplos e não é detectada. Alternativa: reconhecer o padrão da linha `conta-dígito · descrição · R$ valor · sinal` mesmo com espaço simples.
-- **Acabamento** — coluna Valor quebra "R$" numa linha e o número na outra; `white-space: nowrap` nas células de valor.
+- **Cenário 2b** — tabela COSIF citada pela 2ª vez (citação dupla) perde os espaços duplos e não é detectada pela `_tabelaEspacos`. Alternativa: reconhecer o padrão `conta-dígito · descrição · R$ valor · sinal` mesmo com espaço simples.
+- **Acabamento** — coluna Valor quebra "R$" numa linha e o número na outra; `white-space: nowrap` nas células de valor da tabela.
 
 ---
 

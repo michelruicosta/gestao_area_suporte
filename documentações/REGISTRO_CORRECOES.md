@@ -2,6 +2,24 @@
 
 ---
 
+### 09/09 12:30 — Modal: leitura inteligente — Cenário 3 (listas com marcadores)
+
+**🔎 Em miúdos:** quando um e-mail lista itens com traço, asterisco ou numeração (ex.: "- CAM0050 BACEN PDF."), o modal passa a mostrar uma lista visual com marcadores reais `•` e badge "📋 N itens detectados" com link para ver o texto original.
+
+**Problema:** e-mails com listas de itens (ex.: Western Union enviando posições de câmbio diárias) apareciam como texto corrido — os traços `- item` ficavam colados ao texto, sem separação visual.
+
+**Causa raiz:** o template só tinha `_tabelaCampos` (Cenário 1) e `_tabelaEspacos` (Cenário 2) para leitura inteligente. Listas com marcadores não tinham tratamento.
+
+**Correção (`templates/gestao_email.html`):**
+- **Cenário 3** — nova função `_listaMarcadores(texto)`: detecta ≥ 3 linhas consecutivas começando com `- `, `* `, `• ` ou `N. `; exclui linhas com URL (`http`) e itens com mais de 300 chars; suporta linhas em branco entre itens; retorna `<ul>` ou `<ol>` com badge e link "Ver texto original".
+- CSS `.msg-lista` adicionado (mesma família visual dos Cenários 1 e 2).
+- Encadeada nos 5 pontos de chamada: `_tabelaCampos || _tabelaEspacos || _listaMarcadores` — para `texto_novo`, `corpo_encaminhado`, `historico_citado` e `corpo`.
+- Commit `a5521b5`.
+
+**Validação:** ✅ 6 casos no Node com textos reais do banco (4 devem detectar, 2 devem ser ignorados) — 6/6. Testado na tela local por Michel: badge e lista aparecem corretamente nas threads "Posição de Câmbio corretora". Sem pytest: lógica JS no template. pytest: 640 passed (sem regressão). Deploy VPS: `a5521b5` publicado ✅.
+
+---
+
 ### 08/09 23:30 — Modal: leitura inteligente — Cenários 1 e 2 (lista de campos e tabela por espaços)
 
 **🔎 Em miúdos:** quando um e-mail traz dados em formato de planilha (lista "rótulo / valor" ou tabela colada do Excel), o modal de conversa passa a mostrar uma tabela de verdade, com um badge "📊 N colunas · M linhas detectadas" e um link para ver o texto original. Vale também para o bloco colapsado "Histórico da conversa".

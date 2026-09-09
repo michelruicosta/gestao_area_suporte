@@ -237,3 +237,43 @@ Sessão operacional — verificação dos e-mails de 08/09 e manutenção da VPS
 Último /fechar: 2026-09-08 20:00 — memórias revisadas ✅
 
 ---
+
+## 📓 Diário da sessão (2026-09-08) — Fix: campo Para — colaborador @finaud em vez de suporte
+
+### O que foi feito
+
+Correção do campo "Para:" na lista e no modal de threads — dois commits.
+
+1. **Fix 1 — modal mostrava pessoa externa do CC (`4062f9c`):**
+   - Quando e-mail chegava de externo para `suporte@finaud.com.br` com CC externo (ex.: Mariana Pereira da Ebury), o modal mostrava "Para: Mariana Pereira" em vez de `suporte@finaud.com.br`.
+   - Causa: `_resolver_para` ia direto ao CC quando via `suporte@` no To, sem verificar se o CC era @finaud.
+   - Correção: nova função `_primeiro_finaud_no_cc` filtra o CC por @finaud antes de exibir.
+
+2. **Fix 2 — lista e modal ignoravam colaborador @finaud no To (`b4e118e`):**
+   - Quando o To tinha `suporte + andrea + rodrigo`, o campo Para exibia `suporte@finaud.com.br` porque era o primeiro @finaud encontrado.
+   - A spec (§7, Campo 3, Passo 1) confirma: CC só é consultado quando o To não identifica nenhum @finaud além do suporte.
+   - Impacto verificado antes: 120 de 998 threads ativas (12%) — principalmente andrea (71), marcio (17), monica (8).
+   - Correção: `_primeiro_finaud_colaborador` pula endereços de suporte; `suporteforcapital@finaud.com.br` tratado como suporte.
+   - Afeta lista (`_primeiro_finaud_ou_primeiro`) e modal (`_resolver_para`).
+
+3. **Validação e deploy:**
+   - 608 testes ✅ (zero regressões em ambos os commits)
+   - Push e deploy na VPS — serviço ativo ✅
+   - Testado na tela: thread DDR Raúl Salazar passou de `suporte@finaud.com.br` → `andrea.inacio@finaud.com.br`
+
+### Estado atual
+
+**pytest:** 608 passed ✅.
+**Produção:** `gestao-suporte.finaudapps.com.br` — serviço ativo ✅. Commits `4062f9c` e `b4e118e` publicados.
+
+### Próximo passo
+
+🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
+
+**Pendências que continuam:**
+- 🟡 Passo C — tela de manutenção de regras
+- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
+
+Último /fechar: 2026-09-08 21:00 — memórias revisadas ✅
+
+---
