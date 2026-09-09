@@ -57,7 +57,7 @@ from aviso_busca_parou import (
     normalizar_notificacoes,
     verificar_e_avisar_busca_parada,
 )
-from paths import criar_log, CACHE_IMAGENS_DIR
+from paths import criar_log, CACHE_IMAGENS_DIR, CACHE_THREADS_DIR
 from portal_sso import COOKIE_AUDITORIA, COOKIE_PORTAL, usuario_pelos_cookies
 import monitor_erros
 
@@ -795,22 +795,27 @@ def api_thread(thread_id: str):
 
     gmail_cid_maps: list[dict] = [{}] * n
     if tem_imagem:
-        try:
-            service = _get_gmail_service()
-            if service:
-                gmail_thread = service.users().threads().get(
-                    userId='me', id=thread_id, format='full'
-                ).execute()
-                for idx, gm in enumerate(gmail_thread.get('messages', [])):
-                    if idx < n:
-                        payload = gm.get('payload', {})
-                        gmail_cid_maps[idx] = {
-                            'message_id': gm['id'],
-                            'cids': _extrair_cids_payload(payload),
-                            'gmail_images': _extrair_gmail_images_payload(payload),
-                        }
-        except Exception as exc:
-            _log.warning('Gmail image fetch falhou para %s: %s', thread_id, exc)
+        cached_maps = _thread_cid_cache_ler(thread_id, n)
+        if cached_maps is not None:
+            gmail_cid_maps = cached_maps
+        else:
+            try:
+                service = _get_gmail_service()
+                if service:
+                    gmail_thread = service.users().threads().get(
+                        userId='me', id=thread_id, format='full'
+                    ).execute()
+                    for idx, gm in enumerate(gmail_thread.get('messages', [])):
+                        if idx < n:
+                            payload = gm.get('payload', {})
+                            gmail_cid_maps[idx] = {
+                                'message_id': gm['id'],
+                                'cids': _extrair_cids_payload(payload),
+                                'gmail_images': _extrair_gmail_images_payload(payload),
+                            }
+                    _thread_cid_cache_gravar(thread_id, n, gmail_cid_maps)
+            except Exception as exc:
+                _log.warning('Gmail image fetch falhou para %s: %s', thread_id, exc)
 
     # Dados de participantes e assuntos da thread — usados para detectar
     # se encaminhamentos (C/D/F) são internos (repetição) ou externos (conteúdo novo)
@@ -889,6 +894,29 @@ def _imagem_cache_gravar(message_id: str, attachment_id: str, data: bytes, ct: s
             f.write(data)
         with open(base + '.ct', 'w', encoding='utf-8') as f:
             f.write(ct)
+    except OSError:
+        pass
+
+
+def _thread_cid_cache_ler(thread_id: str, n: int) -> 'list[dict] | None':
+    """Retorna mapas de CID em cache se o número de mensagens não mudou."""
+    path = os.path.join(CACHE_THREADS_DIR, re.sub(r'[^A-Za-z0-9_\-]', '_', thread_id) + '.json')
+    try:
+        if os.path.isfile(path):
+            with open(path, encoding='utf-8') as f:
+                cached = json.load(f)
+            if cached.get('n') == n:
+                return cached['maps']
+    except (OSError, json.JSONDecodeError, KeyError, UnicodeDecodeError):
+        pass
+    return None
+
+
+def _thread_cid_cache_gravar(thread_id: str, n: int, maps: list) -> None:
+    path = os.path.join(CACHE_THREADS_DIR, re.sub(r'[^A-Za-z0-9_\-]', '_', thread_id) + '.json')
+    try:
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump({'n': n, 'maps': maps}, f, ensure_ascii=False)
     except OSError:
         pass
 
