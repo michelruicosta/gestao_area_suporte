@@ -1506,6 +1506,18 @@ def api_fog_colaboradores():
 
 bt.criar_banco()
 _cfg_inicial = _ler_config()
+
+
+def _aquece_cache_fog() -> None:
+    try:
+        _buscar_fog()
+        _log.info('Cache FogBugz pré-aquecido na subida do servidor.')
+    except Exception:
+        pass
+
+
+if 'pytest' not in sys.modules:
+    threading.Thread(target=_aquece_cache_fog, daemon=True).start()
 if _deve_ligar_agendador_na_tela():
     _reagendar_coleta(_cfg_inicial.get('intervalo_coleta_min', 60))
     _scheduler.add_job(
