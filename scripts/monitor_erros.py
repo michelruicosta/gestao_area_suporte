@@ -97,6 +97,7 @@ def iniciar(modo: str = 'pipeline') -> None:
         before_send_transaction=before_send_transaction,
         before_breadcrumb=before_breadcrumb,
         traces_sample_rate=0.2,
+        profiles_sample_rate=1.0,
         integrations=integracoes,
     )
 
