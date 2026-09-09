@@ -499,6 +499,61 @@ def test_pivotar_por_fog_gargalo_marcado():
     assert fog['etapas'][1]['gargalo']        # Bruno: 90d — é gargalo
 
 
+def test_pivotar_por_fog_mescla_etapas_consecutivas():
+    """Etapas consecutivas do mesmo colaborador devem ser mescladas em uma só."""
+    from servidor_telas import _pivotar_por_fog
+    colaboradores = [
+        {
+            'nome': 'Fabio',
+            'fogs': [{'id': '9', 'titulo': 'Volta pra Fabio', 'status': 'Ativo',
+                      'atribuicoes': [
+                          {'posicao': 0, 'inicio': '2026-01-01', 'fim': '2026-01-10',
+                           'dias': 9, 'em_aberto': False},
+                          {'posicao': 1, 'inicio': '2026-01-10', 'fim': None,
+                           'dias': 5, 'em_aberto': True},
+                      ]}],
+        },
+    ]
+    resultado = _pivotar_por_fog(colaboradores)
+    fog = resultado[0]
+    # Duas atribuições consecutivas do mesmo colaborador devem virar uma
+    assert len(fog['etapas']) == 1
+    assert fog['etapas'][0]['dias'] == 14
+    assert fog['etapas'][0]['passagens'] == 2
+    assert fog['etapas'][0]['em_aberto'] is True
+
+
+def test_pivotar_por_fog_nao_mescla_nao_consecutivas():
+    """Etapas do mesmo colaborador separadas por outro não devem ser mescladas."""
+    from servidor_telas import _pivotar_por_fog
+    colaboradores = [
+        {
+            'nome': 'Fabio',
+            'fogs': [{'id': '10', 'titulo': 'Vai e volta', 'status': 'Ativo',
+                      'atribuicoes': [
+                          {'posicao': 0, 'inicio': '2026-01-01', 'fim': '2026-01-10',
+                           'dias': 9, 'em_aberto': False},
+                          {'posicao': 2, 'inicio': '2026-01-20', 'fim': None,
+                           'dias': 5, 'em_aberto': True},
+                      ]}],
+        },
+        {
+            'nome': 'Suporte',
+            'fogs': [{'id': '10', 'titulo': 'Vai e volta', 'status': 'Ativo',
+                      'atribuicoes': [
+                          {'posicao': 1, 'inicio': '2026-01-10', 'fim': '2026-01-20',
+                           'dias': 10, 'em_aberto': False},
+                      ]}],
+        },
+    ]
+    resultado = _pivotar_por_fog(colaboradores)
+    fog = resultado[0]
+    # Fabio → Suporte → Fabio: 3 etapas separadas
+    assert len(fog['etapas']) == 3
+    nomes = [e['nome'] for e in fog['etapas']]
+    assert nomes == ['Fabio', 'Suporte', 'Fabio']
+
+
 # ── Ranking Visão Consolidada ─────────────────────────────────────────────────
 
 def test_ranking_media_dias_calculada():

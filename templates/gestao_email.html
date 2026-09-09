@@ -5326,30 +5326,51 @@ function fogColabRender() {
         : e.em_aberto
           ? `<span style="font-size:9px;color:var(--accent)">● atual</span>`
           : '';
+      const label = (e.passagens || 1) > 1
+        ? `${esc(primeiroNome(e.nome))} (${e.passagens}×)`
+        : esc(primeiroNome(e.nome));
       return `<div style="display:inline-flex;flex-direction:column;align-items:center;
           padding:5px 11px;border-radius:8px;border:1px solid ${st.borda};
           background:${st.bg};min-width:76px;text-align:center;gap:1px">
-        <span style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap">${esc(primeiroNome(e.nome))}</span>
+        <span style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap">${label}</span>
         <span style="font-size:12px;font-weight:700;color:${st.cor}">${e.dias}d</span>
         ${rodape}
       </div>${seta}`;
     }).join('');
+
+    // Totalizador: soma dias por pessoa em ordem decrescente
+    const totais = {};
+    fog.etapas.forEach(e => {
+      const p = primeiroNome(e.nome);
+      totais[p] = (totais[p] || 0) + e.dias;
+    });
+    const totalizadorHtml = Object.entries(totais)
+      .sort((a, b) => b[1] - a[1])
+      .map(([nome, dias]) => `<span>${esc(nome)} <strong>${dias}d</strong></span>`)
+      .join('<span style="color:var(--border);margin:0 4px">·</span>');
 
     const fogLink = `https://finaud.fogbugz.com/f/cases/${esc(fog.id)}`;
 
     return `<div style="background:var(--surface);border:1px solid var(--border);
         border-radius:10px;padding:.875rem 1.125rem;margin-bottom:8px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:.625rem;flex-wrap:wrap">
-        <a href="${fogLink}" target="_blank"
-           style="font-size:12px;font-weight:700;color:var(--accent);text-decoration:none;white-space:nowrap"
-           title="Abrir no FogBugz">#${esc(fog.id)}</a>
+        <span style="font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap">#${esc(fog.id)}</span>
         <span style="flex:1;font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
               title="${esc(fog.titulo)}">${esc(fog.titulo)}</span>
         <span style="padding:2px 8px;border-radius:9px;font-size:11px;font-weight:600;${statusStyle};flex-shrink:0">${esc(fog.status)}</span>
         <span style="font-size:12px;color:var(--muted);white-space:nowrap;flex-shrink:0">${fog.total_dias} dias total</span>
+        <a href="${fogLink}" target="_blank"
+           style="padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;
+                  background:var(--accent);color:#fff;text-decoration:none;flex-shrink:0;white-space:nowrap"
+           title="Abrir caso no FogBugz">Abrir ↗</a>
       </div>
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
         ${etapasHtml}
+      </div>
+      <div style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--border);
+                  font-size:11px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px;align-items:center">
+        <span style="font-weight:600;margin-right:2px">Total por pessoa:</span>
+        ${totalizadorHtml}
       </div>
     </div>`;
   }).join('');

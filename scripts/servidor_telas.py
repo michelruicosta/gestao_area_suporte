@@ -1583,17 +1583,34 @@ def _pivotar_por_fog(colaboradores: list[dict]) -> list[dict]:
             for atr in fog['atribuicoes']:
                 fogs[fog_id]['etapas'].append({
                     'nome':      colab['nome'],
+                    'posicao':   atr.get('posicao', 0),
                     'inicio':    atr['inicio'],
                     'fim':       atr['fim'],
                     'dias':      atr['dias'],
                     'em_aberto': atr['em_aberto'],
                     'gargalo':   False,
+                    'passagens': 1,
                 })
 
     resultado = []
     for fog in fogs.values():
         fog['etapas'].sort(key=lambda e: (e['inicio'], e.get('posicao', 0)))
         fog['total_dias'] = sum(e['dias'] for e in fog['etapas'])
+
+        # Mescla etapas consecutivas do mesmo colaborador
+        merged: list[dict] = []
+        for e in fog['etapas']:
+            if merged and merged[-1]['nome'] == e['nome']:
+                prev = merged[-1]
+                prev['dias'] += e['dias']
+                prev['fim'] = e['fim']
+                prev['em_aberto'] = e['em_aberto']
+                prev['passagens'] += 1
+            else:
+                merged.append(dict(e))
+        fog['etapas'] = merged
+
+        # Recalcula gargalo após mesclagem
         if len(fog['etapas']) >= 2:
             max_dias = max(e['dias'] for e in fog['etapas'])
             if max_dias > 0:
