@@ -41,6 +41,7 @@ PAINEL_DIR      = os.path.join(BASE_DIR, "data", "json", "painel_estado")
 CONFIG_DIR      = os.path.join(BASE_DIR, "data", "json", "config")
 BACKUPS_DIR     = os.path.join(BASE_DIR, "data", "json", "_backups")
 BACKUPS_AUTO_DIR = os.path.join(BACKUPS_DIR, "auto")
+CACHE_IMAGENS_DIR = os.path.join(BASE_DIR, "data", "cache_imagens_gmail")
 
 # ── PIPELINE ──────────────────────────────────────────────────────────────────
 F_EMAILS_BRUTOS     = os.path.join(PIPELINE_DIR, "01_extração_dados_brutos_gmail.json")
@@ -82,7 +83,7 @@ F_DESTINATARIOS_FOG = os.path.join(CONFIG_DIR, "destinatarios_alertas_fog.json")
 F_USUARIOS          = os.path.join(CONFIG_DIR, "usuarios.json")
 F_PROMPTS_LLM       = os.path.join(CONFIG_DIR, "prompts_llm.json")
 
-for _d in (PIPELINE_DIR, PAINEL_DIR, CONFIG_DIR, BACKUPS_DIR):
+for _d in (PIPELINE_DIR, PAINEL_DIR, CONFIG_DIR, BACKUPS_DIR, CACHE_IMAGENS_DIR):
     os.makedirs(_d, exist_ok=True)
 
 

@@ -57,7 +57,7 @@ from aviso_busca_parou import (
     normalizar_notificacoes,
     verificar_e_avisar_busca_parada,
 )
-from paths import criar_log
+from paths import criar_log, CACHE_IMAGENS_DIR
 from portal_sso import COOKIE_AUDITORIA, COOKIE_PORTAL, usuario_pelos_cookies
 import monitor_erros
 
@@ -856,9 +856,50 @@ def api_thread(thread_id: str):
     })
 
 
+def _imagem_detectar_ct(data: bytes) -> str:
+    if data[:8] == b'\x89PNG\r\n\x1a\n':
+        return 'image/png'
+    if data[:2] == b'\xff\xd8':
+        return 'image/jpeg'
+    if data[:6] in (b'GIF87a', b'GIF89a'):
+        return 'image/gif'
+    if len(data) >= 12 and data[:4] == b'RIFF' and data[8:12] == b'WEBP':
+        return 'image/webp'
+    return 'application/octet-stream'
+
+
+def _imagem_cache_ler(message_id: str, attachment_id: str) -> 'tuple[bytes, str] | None':
+    base = os.path.join(CACHE_IMAGENS_DIR, re.sub(r'[^A-Za-z0-9_\-]', '_', f'{message_id}__{attachment_id}'))
+    try:
+        if os.path.isfile(base + '.bin'):
+            with open(base + '.bin', 'rb') as f:
+                data = f.read()
+            with open(base + '.ct', encoding='utf-8') as f:
+                ct = f.read().strip()
+            return data, ct
+    except OSError:
+        pass
+    return None
+
+
+def _imagem_cache_gravar(message_id: str, attachment_id: str, data: bytes, ct: str) -> None:
+    base = os.path.join(CACHE_IMAGENS_DIR, re.sub(r'[^A-Za-z0-9_\-]', '_', f'{message_id}__{attachment_id}'))
+    try:
+        with open(base + '.bin', 'wb') as f:
+            f.write(data)
+        with open(base + '.ct', 'w', encoding='utf-8') as f:
+            f.write(ct)
+    except OSError:
+        pass
+
+
 @app.route('/api/imagem/<thread_id>/<message_id>/<attachment_id>')
 @_requer_login
 def api_imagem(thread_id, message_id, attachment_id):
+    cached = _imagem_cache_ler(message_id, attachment_id)
+    if cached:
+        return Response(cached[0], content_type=cached[1])
+
     service = _get_gmail_service()
     if not service:
         abort(503)
@@ -867,16 +908,8 @@ def api_imagem(thread_id, message_id, attachment_id):
             userId='me', messageId=message_id, id=attachment_id
         ).execute()
         data = base64.urlsafe_b64decode(att['data'])
-        if data[:8] == b'\x89PNG\r\n\x1a\n':
-            ct = 'image/png'
-        elif data[:2] == b'\xff\xd8':
-            ct = 'image/jpeg'
-        elif data[:6] in (b'GIF87a', b'GIF89a'):
-            ct = 'image/gif'
-        elif len(data) >= 12 and data[:4] == b'RIFF' and data[8:12] == b'WEBP':
-            ct = 'image/webp'
-        else:
-            ct = 'application/octet-stream'
+        ct = _imagem_detectar_ct(data)
+        _imagem_cache_gravar(message_id, attachment_id, data, ct)
         return Response(data, content_type=ct)
     except Exception as exc:
         _log.warning('Imagem não encontrada msg=%s att=%s: %s', message_id, attachment_id, exc)
