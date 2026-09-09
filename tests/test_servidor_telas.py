@@ -446,6 +446,36 @@ def test_fog_colaboradores_pagina_no_html():
     assert 'Por Colaborador' in html
 
 
+# ── Ranking Visão Consolidada ─────────────────────────────────────────────────
+
+def test_ranking_media_dias_calculada():
+    """Cada item do ranking deve conter media_dias = média de dias dos casos ativos."""
+    from collections import defaultdict
+    casos_mock = [
+        {'responsavel': 'Ana', 'dias_responsavel': 10, 'assunto': 'Caso A'},
+        {'responsavel': 'Ana', 'dias_responsavel': 30, 'assunto': 'Caso B'},
+        {'responsavel': 'Bruno', 'dias_responsavel': 50, 'assunto': 'Caso C'},
+    ]
+    by_resp = defaultdict(list)
+    for c in casos_mock:
+        by_resp[c['responsavel']].append(c)
+    ranking = [
+        {
+            'nome':             nome,
+            'casos':            len(casos),
+            'caso_mais_antigo': max(casos, key=lambda x: x['dias_responsavel'])['assunto'],
+            'dias_mais_antigo': max(casos, key=lambda x: x['dias_responsavel'])['dias_responsavel'],
+            'media_dias':       round(sum(c['dias_responsavel'] for c in casos) / len(casos)),
+        }
+        for nome, casos in by_resp.items()
+    ]
+    ana   = next(r for r in ranking if r['nome'] == 'Ana')
+    bruno = next(r for r in ranking if r['nome'] == 'Bruno')
+    assert ana['media_dias'] == 20    # (10+30)/2
+    assert bruno['media_dias'] == 50  # 50/1
+    assert ana['dias_mais_antigo'] == 30
+
+
 # ── Notificação FOG Suporte Finaud ────────────────────────────────────────────
 
 def test_fog_suporte_normalizar_padrao():

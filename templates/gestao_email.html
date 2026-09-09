@@ -1020,7 +1020,7 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
 }
 .fog-tgl-btn.on { background: var(--accent); color: #fff; border-color: var(--accent) }
 .fog-rk-table  { background: var(--surface); border: 1px solid var(--border); border-radius: 0 0 10px 10px; border-top: none; overflow: hidden }
-.fog-rk-cols   { grid-template-columns: 36px 1fr 70px 2fr 90px }
+.fog-rk-cols   { grid-template-columns: 36px 1fr 70px 2fr 90px 80px }
 .fog-rk-thead  {
   display: grid; padding: 0 16px; height: 32px;
   background: var(--bg); border-bottom: 1px solid var(--border); align-items: center;
@@ -2095,15 +2095,18 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
           <div class="fog-rk-th" data-sort="volume" onclick="fogSort('volume')" style="text-align:center">Casos <span class="fog-rk-si" id="rksi-volume"></span></div>
           <div class="fog-rk-th" data-sort="antigo" onclick="fogSort('antigo')">Caso mais antigo <span class="fog-rk-si" id="rksi-antigo"></span></div>
           <div class="fog-rk-th" data-sort="parado" onclick="fogSort('antigo')" style="text-align:right">Parado há <span class="fog-rk-si" id="rksi-parado">▼</span></div>
+          <div class="fog-rk-th" data-sort="media" onclick="fogSort('media')" style="text-align:right">Média/caso <span class="fog-rk-si" id="rksi-media"></span></div>
         </div>
         <div id="rkBody">
         {% for p in fog_stats.ranking %}
           {% set iniciais = (p.nome.split()[0][0] + (p.nome.split()[1][0] if p.nome.split()|length > 1 else ''))|upper %}
-          {% set cls_dias = 'color:#ef4444' if p.dias_mais_antigo >= fog_corte_vermelho else ('color:#f59e0b' if p.dias_mais_antigo >= fog_corte_ambar else 'color:#10b981') %}
+          {% set cls_dias  = 'color:#ef4444' if p.dias_mais_antigo >= fog_corte_vermelho else ('color:#f59e0b' if p.dias_mais_antigo >= fog_corte_ambar else 'color:#10b981') %}
+          {% set cls_media = 'color:#ef4444' if p.media_dias     >= fog_corte_vermelho else ('color:#f59e0b' if p.media_dias     >= fog_corte_ambar else 'color:#10b981') %}
           <div class="fog-rk-row fog-rk-cols"
                data-dias="{{ p.dias_mais_antigo }}"
                data-casos="{{ p.casos }}"
                data-nome="{{ p.nome|lower }}"
+               data-media="{{ p.media_dias }}"
                onclick="fogFiltrarPorResponsavel('{{ p.nome }}')"
                title="Ver casos de {{ p.nome }}">
             <div class="fog-rk-av">{{ iniciais }}</div>
@@ -2111,6 +2114,7 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
             <div class="fog-rk-num">{{ p.casos }}</div>
             <div class="fog-rk-antigo" title="{{ p.caso_mais_antigo }}">{{ p.caso_mais_antigo }}</div>
             <div class="fog-rk-dias" style="{{ cls_dias }}">{{ p.dias_mais_antigo }} du</div>
+            <div class="fog-rk-dias" style="{{ cls_media }};text-align:right">{{ p.media_dias }} du</div>
           </div>
         {% else %}
           <div style="padding:24px;text-align:center;color:var(--muted);font-size:13px">Nenhum responsável com casos ativos.</div>
@@ -4513,6 +4517,7 @@ function fogSort(m) {
   rows.sort((a, b) => {
     if (m === 'volume') return dir * (Number(b.dataset.casos) - Number(a.dataset.casos));
     if (m === 'nome')   return dir * (a.dataset.nome || '').localeCompare(b.dataset.nome || '', 'pt-BR');
+    if (m === 'media')  return dir * (Number(b.dataset.media) - Number(a.dataset.media));
     return dir * (Number(b.dataset.dias) - Number(a.dataset.dias));
   });
   rows.forEach(r => body.appendChild(r));
@@ -4526,7 +4531,7 @@ function fogSort(m) {
     if (si) si.textContent = ativo ? ico : '';
   });
   // descrição
-  const descs = { volume: 'ordenado por quem tem mais casos ativos', nome: 'ordenado por nome', antigo: 'ordenado pelo caso mais antigo', parado: 'ordenado pelo caso mais antigo' };
+  const descs = { volume: 'ordenado por quem tem mais casos ativos', nome: 'ordenado por nome', antigo: 'ordenado pelo caso mais antigo', parado: 'ordenado pelo caso mais antigo', media: 'ordenado pela média de dias por caso' };
   const desc = document.getElementById('rkDesc');
   if (desc) desc.textContent = descs[m] || '';
 }

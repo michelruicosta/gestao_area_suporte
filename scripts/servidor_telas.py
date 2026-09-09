@@ -660,6 +660,7 @@ def index():
             'casos':            len(casos),
             'caso_mais_antigo': max(casos, key=lambda x: x['dias_responsavel'])['assunto'],
             'dias_mais_antigo': max(casos, key=lambda x: x['dias_responsavel'])['dias_responsavel'],
+            'media_dias':       round(sum(c['dias_responsavel'] for c in casos) / len(casos)),
         }
         for nome, casos in by_resp.items()
     ], key=lambda x: x['dias_mais_antigo'], reverse=True)
