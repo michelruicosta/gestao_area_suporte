@@ -10,6 +10,19 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ---
 
+## 🟡 MODAL — Leitura inteligente, Cenário 3: listas com marcadores (identificado em 08/09/2026)
+
+E-mails com linhas iniciadas por `-`, `•`, `*` ou `1.` hoje aparecem como texto corrido no modal de thread. Renderizar como lista (`<ul>`/`<ol>`) em `templates/gestao_email.html`, na mesma família de `_tabelaCampos` (Cenário 1) e `_tabelaEspacos` (Cenário 2) — ver entrada de 08/09 23:30 no `REGISTRO_CORRECOES.md` para o que já existe.
+
+**Antes de implementar:** levantar 5–10 threads reais com esse padrão no `data/gestao.db` para validar a regra de detecção e evitar falsos positivos (ex.: "- " dentro de frases, assinaturas).
+
+**Também pendentes no modal (menores):**
+- **Cenário 2b** — tabela COSIF citada pela 2ª vez (citação dupla) perde os espaços duplos e não é detectada. Alternativa: reconhecer o padrão da linha `conta-dígito · descrição · R$ valor · sinal` mesmo com espaço simples.
+- **Acabamento** — coluna Valor quebra "R$" numa linha e o número na outra; `white-space: nowrap` nas células de valor.
+- **Deploy** — commit `2bd95e5` (cabeçalho correto + tabela no histórico citado) ainda não publicado na VPS.
+
+---
+
 ## 🟡 IDEIA — Alerta automático de análise semanal da aba Evolução (identificado em 08/09/2026)
 
 Michel quer um e-mail automático semanal com a leitura analítica da tela Evolução — similar à análise feita manualmente em 08/09/2026. O e-mail calcularia automaticamente a partir dos snapshots já existentes no banco: qual categoria mais melhorou, qual piorou, destaque positivo e alerta. Ainda a definir: frequência, destinatários, formato e gatilho (dia fixo ou queda acima de um limiar).

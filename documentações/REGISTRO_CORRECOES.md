@@ -2,6 +2,21 @@
 
 ---
 
+### 08/09 23:30 — Modal: leitura inteligente — Cenários 1 e 2 (lista de campos e tabela por espaços)
+
+**🔎 Em miúdos:** quando um e-mail traz dados em formato de planilha (lista "rótulo / valor" ou tabela colada do Excel), o modal de conversa passa a mostrar uma tabela de verdade, com um badge "📊 N colunas · M linhas detectadas" e um link para ver o texto original. Vale também para o bloco colapsado "Histórico da conversa".
+
+**Problema:** o corpo do e-mail era exibido como texto corrido — tabelas COSIF, posições de carteira e listas de campos financeiros ficavam ilegíveis. Na primeira versão do Cenário 2, o detector ainda pegava a 2ª linha de dados como cabeçalho quando a 1ª linha tinha só 2 partes (tabela COSIF da thread `1a06e8e5284ba878` aparecia como "3 colunas · 6 linhas").
+
+**Correção (`templates/gestao_email.html`):**
+- **Cenário 1** — `_tabelaCampos`: bloco de rótulos financeiros consecutivos (Padrão 1) ou rótulo/valor alternados (Padrão 2) vira tabela. Commits `d9cca17`, `46adde5`, `012ff2c`.
+- **Cenário 2** — `_tabelaEspacos`: linhas com ≥2 colunas separadas por 2+ espaços; look-back sobe até o cabeçalho real; separa "R$ valor sinal" em células distintas. Chamada em `texto_novo`, `corpo`, `corpo_encaminhado` e `historico_citado`. Commits `49386da` (base) e `2bd95e5` (look-back + histórico — entrou junto com o commit de bordo).
+- Limite conhecido: e-mail citado pela 2ª vez (citação dupla) perde os espaços duplos — a tabela não é detectada nesse card. Ver Cenário 2b em `PENDENCIAS.md`.
+
+**Validação:** ✅ função extraída do template e rodada no Node com os 6 textos reais da thread `1a06e8e5284ba878` — só o histórico citado do card da Jacilaine detecta (4 colunas · 8 linhas), os demais devolvem `null`; DOM da tela ao vivo confirmou o badge e a tabela. Sem teste pytest: lógica em JS dentro do template. Deploy VPS: Cenário 1 e `49386da` publicados em `64c43d6`; `2bd95e5` **ainda não publicado**.
+
+---
+
 ### 08/09 23:00 — Cache em arquivo para api_thread (mapas de imagem inline)
 
 **🔎 Em miúdos:** quando você abria uma conversa de e-mail com imagens embutidas (logos, fotos no corpo), o sistema ia buscar o e-mail completo no Gmail a cada vez (~3s). Agora o resultado fica salvo em disco. Da segunda abertura em diante, a resposta é imediata.

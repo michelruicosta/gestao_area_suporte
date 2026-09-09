@@ -99,6 +99,7 @@ Também não commitado na sessão anterior: melhoria no parser de tabelas do mod
 🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
 
 **Pendências que continuam:**
+- 🟡 Modal — leitura inteligente **Cenário 3: listas com marcadores** (Cenários 1 e 2 feitos e registrados em 08/09 23:30; detalhe em `PENDENCIAS.md`). Commit `2bd95e5` do Cenário 2 ainda não publicado na VPS.
 - 🟡 Passo C — tela de manutenção de regras
 - 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
 
