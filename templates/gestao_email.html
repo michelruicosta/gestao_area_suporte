@@ -2727,10 +2727,32 @@ function _tabelaEspacos(texto) {
   function ehLinhaDados(l) {
     if (l.includes('*') || l.includes('http')) return false;
     const partes = parseLinha(l);
-    return partes.length >= 3;
+    return partes.length >= 2;
+  }
+  // Separa "R$ valor sinal" colado numa célula em células distintas
+  function normalizarColunas(partes) {
+    let p = partes.slice();
+    // Caso 1: último campo é só sinal (+/-) e o anterior termina com "R$ valor"
+    if (p.length >= 2) {
+      const ult = p[p.length - 1].trim();
+      if (ult === '+' || ult === '-') {
+        const ant = p[p.length - 2];
+        const m = ant.match(/^(.*?)\s+(R\$\s*[\d.,]+)\s*$/);
+        if (m) return [...p.slice(0, -2), m[1].trim(), m[2], ult];
+      }
+    }
+    // Caso 2: último campo é "R$ valor sinal" junto
+    const m2 = p[p.length - 1].match(/^(R\$\s*[\d.,]+)\s+([+-])$/);
+    if (m2) return [...p.slice(0, -1), m2[1], m2[2]];
+    // Caso 3: algum campo interno contém "texto R$ valor sinal"
+    for (let i = 1; i < p.length; i++) {
+      const m3 = p[i].match(/^(.+?)\s+(R\$\s*[\d.,]+)\s+([+-])$/);
+      if (m3) return [...p.slice(0, i), m3[1].trim(), m3[2], m3[3], ...p.slice(i + 1)];
+    }
+    return p;
   }
   const linhasRaw = texto.split('\n');
-  // Encontrar bloco de linhas tabeladas
+  // Encontrar bloco de ≥3 linhas consecutivas com ≥3 partes
   let blocoInicio = -1, blocoFim = -1;
   let seq = [], seqStart = -1;
   for (let i = 0; i < linhasRaw.length; i++) {
@@ -2745,28 +2767,45 @@ function _tabelaEspacos(texto) {
   }
   if (blocoInicio === -1 && seq.length >= 3) { blocoInicio = seqStart; blocoFim = linhasRaw.length; }
   if (blocoInicio === -1) return null;
-  // Primeira linha = cabeçalho; excluir se partes terminam em ':'
-  const cabecalho = seq[0];
-  if (cabecalho.partes.some(p => p.endsWith(':'))) return null;
-  const nCols = cabecalho.partes.length;
-  const dataLinhas = seq.slice(1);
-  // Consistência: ≥2 linhas com número de colunas próximo ao cabeçalho
-  const consistentes = dataLinhas.filter(l => Math.abs(l.partes.length - nCols) <= 1);
-  if (consistentes.length < 2) return null;
+  // Look-back: subir para incluir cabeçalho real e linhas órfãs com ≥2 partes
+  let extStart = blocoInicio;
+  for (let k = blocoInicio - 1; k >= 0; k--) {
+    const l = linhasRaw[k].replace(/\r$/, '');
+    if (!l.trim() || l.includes('http') || l.includes('@') || l.includes('*')) break;
+    const p = parseLinha(l);
+    if (p.length >= 2 && !p.some(pp => pp.endsWith(':'))) { extStart = k; }
+    else break;
+  }
+  // Reconstruir bloco a partir de extStart (pular linhas vazias internas)
+  const seqExt = [];
+  for (let k = extStart; k < blocoFim; k++) {
+    const l = linhasRaw[k].replace(/\r$/, '');
+    const p = parseLinha(l);
+    if (p.length >= 1) seqExt.push({ idx: k, raw: l, partes: p });
+  }
+  const cabecalho = seqExt[0];
+  if (!cabecalho || cabecalho.partes.some(p => p.endsWith(':'))) return null;
+  const dataLinhas = seqExt.slice(1);
+  if (dataLinhas.length < 2) return null;
+  // Normalizar colunas de cada linha de dados
+  const dataLinhasNorm = dataLinhas.map(l => ({ ...l, partes: normalizarColunas(l.partes) }));
+  const nCols = Math.max(cabecalho.partes.length, ...dataLinhasNorm.map(l => l.partes.length));
   // Montar HTML
   const uid = 'te' + Math.random().toString(36).slice(2, 8);
-  const ths = cabecalho.partes.map(p => `<th>${escHtml(p)}</th>`).join('');
-  const trs = dataLinhas.map(l => {
-    const cells = l.partes;
+  const thsCols = cabecalho.partes.slice();
+  while (thsCols.length < nCols) thsCols.push('');
+  const ths = thsCols.map(p => `<th>${escHtml(p)}</th>`).join('');
+  const trs = dataLinhasNorm.map(l => {
+    const cells = l.partes.slice();
     while (cells.length < nCols) cells.push('');
     return `<tr>${cells.slice(0, nCols).map(v => `<td>${escHtml(v)}</td>`).join('')}</tr>`;
   }).join('');
-  const rawBloco = escHtml(linhasRaw.slice(blocoInicio, blocoFim).join('\n'));
+  const rawBloco = escHtml(linhasRaw.slice(extStart, blocoFim).join('\n'));
   let html = '';
-  const antes = linhasRaw.slice(0, blocoInicio).join('\n').trim();
+  const antes = linhasRaw.slice(0, extStart).join('\n').trim();
   if (antes) html += `<div class="msg-body">${escHtml(antes)}</div>`;
   html += `<div class="msg-tcampos-badge">
-    <span>📊 ${nCols} colunas · ${dataLinhas.length} linhas detectadas</span>
+    <span>📊 ${nCols} colunas · ${dataLinhasNorm.length} linhas detectadas</span>
     <a onclick="(function(e){
       var tbl=document.getElementById('${uid}-t');
       var raw=document.getElementById('${uid}-r');
@@ -2846,15 +2885,17 @@ function _renderMsgHtml(m, threadId) {
     ? `<div class="msg-anexos">📎 ${listaAnexos.map(a => `<span>${escHtml(a)}</span>`).join('')}</div>`
     : '';
 
-  // Gera bloco colapsável (oculto por padrão) com botão de expandir
-  function blocoColapsavel(label, conteudoHtml) {
+  // Gera bloco colapsável (oculto por padrão) com botão de expandir.
+  // rawHtml=true: conteudoHtml já tem estrutura própria (ex.: tabela detectada) — não envolve em msg-body.
+  function blocoColapsavel(label, conteudoHtml, rawHtml) {
+    const inner = rawHtml ? conteudoHtml : `<div class="msg-body">${conteudoHtml}</div>`;
     return `<div class="msg-enc-toggle" onclick="
       var b=this.nextElementSibling;
       var i=this.querySelector('.toggle-icon');
       if(b.style.display===''){b.style.display='block';i.textContent='▼';}
       else{b.style.display='';i.textContent='▶';}
     "><span class="toggle-icon">▶</span>${escHtml(label)}</div>
-    <div class="msg-enc-colapsado"><div class="msg-body">${conteudoHtml}</div></div>`;
+    <div class="msg-enc-colapsado">${inner}</div>`;
   }
 
   let corpoHtml;
@@ -2869,15 +2910,22 @@ function _renderMsgHtml(m, threadId) {
         ? `<div class="msg-body">${textoNovo}</div>`
         : `<div class="msg-body msg-sem-texto"><em>(encaminhou sem adicionar texto)</em></div>`;
     }
-    const corpoEnc = renderImagens(m.corpo_encaminhado);
+    const tblEnc = _tabelaCampos(m.corpo_encaminhado || '') || _tabelaEspacos(m.corpo_encaminhado || '');
     let parteEnc = '';
-    if (corpoEnc) {
-      // Interno (repetição): oculto por padrão com toggle
-      // Externo (conteúdo novo): sempre visível
+    if (tblEnc) {
       if (m.enc_interno) {
-        parteEnc = blocoColapsavel('Encaminhamento — conteúdo já visível neste chat (clique para expandir)', corpoEnc);
+        parteEnc = blocoColapsavel('Encaminhamento — conteúdo já visível neste chat (clique para expandir)', tblEnc, true);
       } else {
-        parteEnc = `<div class="msg-enc-label">Encaminhamento — conteúdo original abaixo</div><div class="msg-body">${corpoEnc}</div>`;
+        parteEnc = `<div class="msg-enc-label">Encaminhamento — conteúdo original abaixo</div>${tblEnc}`;
+      }
+    } else {
+      const corpoEnc = renderImagens(m.corpo_encaminhado);
+      if (corpoEnc) {
+        if (m.enc_interno) {
+          parteEnc = blocoColapsavel('Encaminhamento — conteúdo já visível neste chat (clique para expandir)', corpoEnc);
+        } else {
+          parteEnc = `<div class="msg-enc-label">Encaminhamento — conteúdo original abaixo</div><div class="msg-body">${corpoEnc}</div>`;
+        }
       }
     }
     corpoHtml = parteNova + parteEnc;
@@ -2892,11 +2940,17 @@ function _renderMsgHtml(m, threadId) {
         ? `<div class="msg-body">${textoNovo}</div>`
         : `<div class="msg-body msg-sem-texto"><em>(respondeu sem adicionar texto)</em></div>`;
     }
-    const historico = renderImagens(m.historico_citado);
     // Histórico de respostas é sempre repetição — oculto por padrão com toggle
-    const parteHistorico = historico
-      ? blocoColapsavel('Histórico da conversa — já visível acima (clique para expandir)', historico)
-      : '';
+    const tblHistorico = _tabelaCampos(m.historico_citado || '') || _tabelaEspacos(m.historico_citado || '');
+    let parteHistorico = '';
+    if (tblHistorico) {
+      parteHistorico = blocoColapsavel('Histórico da conversa — já visível acima (clique para expandir)', tblHistorico, true);
+    } else {
+      const historico = renderImagens(m.historico_citado);
+      parteHistorico = historico
+        ? blocoColapsavel('Histórico da conversa — já visível acima (clique para expandir)', historico)
+        : '';
+    }
     corpoHtml = parteNova + parteHistorico;
   } else {
     const tbl = _tabelaCampos(m.corpo || '') || _tabelaEspacos(m.corpo || '');

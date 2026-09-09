@@ -7,6 +7,29 @@
 
 ---
 
+## 📓 Diário da sessão (2026-09-08) — Fix: campo data vazio — retomada /fechar
+
+### O que foi feito
+
+Sessão curta de retomada após limite de contexto na sessão anterior.
+
+- **Fix confirmado em produção:** `.dt-disp.vazio { display:none }` — campos de data vazios mostram só 📅 em vez de "dd/m..." cortado (commit `22f8959`, sessão anterior). Michel verificou e confirmou "Corrigido".
+- **VPS:** já estava atualizada (commit publicado pela sessão paralela); nenhuma ação de deploy necessária.
+- **/fechar:** ritual concluído (havia sido interrompido pelo limite de contexto).
+
+### Estado atual
+
+**pytest:** 608 passed ✅ (zero regressões).
+**Produção:** `gestao-suporte.finaudapps.com.br` — serviço ativo ✅.
+
+### Próximo passo
+
+🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
+
+Último /fechar: 2026-09-08 — memórias revisadas ✅
+
+---
+
 ## 📓 Diário da sessão (2026-09-06) — Visão Geral: filtro de data + dados sempre frescos
 
 ### O que foi feito

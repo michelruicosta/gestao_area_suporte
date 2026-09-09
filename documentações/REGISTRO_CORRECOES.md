@@ -2,6 +2,77 @@
 
 ---
 
+### 08/09 23:00 — Cache em arquivo para api_thread (mapas de imagem inline)
+
+**🔎 Em miúdos:** quando você abria uma conversa de e-mail com imagens embutidas (logos, fotos no corpo), o sistema ia buscar o e-mail completo no Gmail a cada vez (~3s). Agora o resultado fica salvo em disco. Da segunda abertura em diante, a resposta é imediata.
+
+**Problema:** `api_thread` chamava `threads().get(format='full')` — busca completa da thread no Gmail — toda vez que detectava referência de imagem inline, sem guardar o resultado.
+
+**Causa raiz:** os mapas de CID (identificadores de imagem embutida) são imutáveis uma vez que o e-mail chegou. Nenhum cache havia sido implementado.
+
+**Correção (`scripts/servidor_telas.py`, `scripts/paths.py`):**
+- `CACHE_THREADS_DIR = data/cache_threads_gmail/` registrado em `paths.py`
+- `_thread_cid_cache_ler(thread_id, n)` — retorna mapas se `n` (número de mensagens) não mudou
+- `_thread_cid_cache_gravar(thread_id, n, maps)` — salva em `{thread_id}.json`
+- Invalidação automática quando nova mensagem chega (n muda)
+
+**Validação:** 6 testes em `tests/test_cache_thread.py` ✅. 635 testes ✅. Deploy VPS `64c43d6` ✅.
+
+---
+
+### 08/09 22:45 — Pre-aquecimento do cache FogBugz na subida do servidor (index)
+
+**🔎 Em miúdos:** a tela inicial levava ~3,4s para abrir depois de cada reinício do servidor (cada deploy), porque precisava ir buscar os dados do FogBugz na internet. Agora o servidor busca esses dados sozinho ao ligar, então quando você abre a tela os dados já estão prontos.
+
+**Problema:** a rota `index` chamava `_buscar_fog()` — 2 chamadas HTTP ao FogBugz — na primeira requisição após cada reinício. O cache em memória (10 min) funcionava bem depois, mas ficava frio em cada deploy.
+
+**Causa raiz:** cache em memória zera ao reiniciar o processo Gunicorn. Com 3+ deploys no dia, o cache ficava frio repetidamente.
+
+**Correção (`scripts/servidor_telas.py`):**
+- `_aquece_cache_fog()` — função que chama `_buscar_fog()` silenciosamente, engolindo exceções
+- Disparada em `threading.Thread(daemon=True)` na inicialização, protegida por `'pytest' not in sys.modules`
+
+**Validação:** 2 testes em `tests/test_aquece_cache_fog.py` ✅. 635 testes ✅. Deploy VPS `055aa7b` ✅.
+
+---
+
+### 08/09 22:30 — Cache em arquivo para api_imagem (imagens de e-mail)
+
+**🔎 Em miúdos:** toda vez que uma imagem aparecia na tela (foto ou logo dentro de um e-mail), o sistema ia buscar esse arquivo no Gmail — demorando ~4,8 segundos. Agora, na primeira vez vai ao Gmail e salva em disco; nas seguintes lê do disco e responde em milissegundos.
+
+**Problema:** `api_imagem` chamava `attachments().get().execute()` no Gmail a cada requisição, sem cache. 10 chamadas observadas no Sentry Profiling, todas ~4,81s.
+
+**Causa raiz:** imagens de e-mail são imutáveis (mesmo anexo, mesmo Gmail ID). Nenhum cache havia sido implementado.
+
+**Correção (`scripts/servidor_telas.py`, `scripts/paths.py`):**
+- `CACHE_IMAGENS_DIR = data/cache_imagens_gmail/` registrado em `paths.py`
+- `_imagem_detectar_ct(data)` — detecta content-type pelos bytes mágicos
+- `_imagem_cache_ler(message_id, attachment_id)` → `(data, ct) | None`
+- `_imagem_cache_gravar(message_id, attachment_id, data, ct)` — salva `.bin` + `.ct`
+
+**Validação:** 9 testes em `tests/test_cache_imagem.py` ✅. 635 testes ✅. Deploy VPS `a7cf548` ✅.
+
+---
+
+### 08/09 22:00 — Sentry monitoring integrado ao sistema
+
+**🔎 Em miúdos:** o sistema agora tem um "painel de controle de saúde" externo (Sentry). Se algo travar, der erro ou ficar lento, o Sentry avisa. Os dados dos clientes estão protegidos — nenhuma informação pessoal é enviada ao Sentry.
+
+**O que foi feito:**
+- Projeto `gestao-area-suporte` criado em `finaud.sentry.io`. DSN no `.env` da VPS.
+- `scripts/monitor_erros.py` criado — centraliza toda integração:
+  - Filtros LGPD: `before_send`, `before_send_transaction`, `before_breadcrumb` — campos pessoais → `[REDACTED]`, e-mails → `[EMAIL OCULTO]`. `send_default_pii=False`.
+  - Tracing (`traces_sample_rate=0.2`), Profiling (`profiles_sample_rate=1.0`), Logging (WARNING+)
+  - Cron monitor `relogio-coleta` — detecta se pipeline parar silenciosamente
+- `servidor_telas.py`: `monitor_erros.iniciar(modo='flask')` antes de `Flask(...)`
+- `executar_pipeline.py`: `monitor_erros.iniciar()` + `checkin_inicio()`/`checkin_fim()`
+- Fix 503 pós-deploy: `sentry-sdk[flask]==2.27.0` instalado no venv da VPS (`venv/bin/pip`)
+- Fix extra `[profiling]` inexistente no sentry-sdk 2.x — removido do `requirements.txt`
+
+**Validação:** 10 testes em `tests/test_monitor_erros.py` ✅. Sentry recebendo eventos, profiling ativo.
+
+---
+
 ### 08/09 — Redesign visual: variação embutida no número + legenda unificada (Evolução e Classificação e Status)
 
 **🔎 Em miúdos:** as duas telas principais ficaram mais limpas e fáceis de ler. O número de variação (ex: ▲3) agora aparece junto ao número da coluna, em vez de numa coluna separada. A aba Evolução ganhou uma barra que mostra com qual período está comparando, e o botão de filtros ficou na mesma linha da legenda.
