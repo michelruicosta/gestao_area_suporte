@@ -13,7 +13,7 @@
 - **Cenário 2** — `_tabelaEspacos`: linhas com ≥2 colunas separadas por 2+ espaços; look-back sobe até o cabeçalho real; separa "R$ valor sinal" em células distintas. Chamada em `texto_novo`, `corpo`, `corpo_encaminhado` e `historico_citado`. Commits `49386da` (base) e `2bd95e5` (look-back + histórico — entrou junto com o commit de bordo).
 - Limite conhecido: e-mail citado pela 2ª vez (citação dupla) perde os espaços duplos — a tabela não é detectada nesse card. Ver Cenário 2b em `PENDENCIAS.md`.
 
-**Validação:** ✅ função extraída do template e rodada no Node com os 6 textos reais da thread `1a06e8e5284ba878` — só o histórico citado do card da Jacilaine detecta (4 colunas · 8 linhas), os demais devolvem `null`; DOM da tela ao vivo confirmou o badge e a tabela. Sem teste pytest: lógica em JS dentro do template. Deploy VPS: Cenário 1 e `49386da` publicados em `64c43d6`; `2bd95e5` **ainda não publicado**.
+**Validação:** ✅ função extraída do template e rodada no Node com os 6 textos reais da thread `1a06e8e5284ba878` — só o histórico citado do card da Jacilaine detecta (4 colunas · 8 linhas), os demais devolvem `null`; DOM da tela ao vivo confirmou o badge e a tabela. Sem teste pytest: lógica em JS dentro do template. Deploy VPS: Cenário 1 e `49386da` publicados em `64c43d6`; `2bd95e5` publicado em `220c2fb` (08/09 23:45) ✅.
 
 ---
 

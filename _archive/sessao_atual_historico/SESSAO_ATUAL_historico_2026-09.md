@@ -198,3 +198,42 @@ Michel recebeu o e-mail "Busca de e-mail parou" e não sabia se o problema era n
 Último /fechar: 2026-09-08 — memórias revisadas ✅
 
 ---
+
+## 📓 Diário da sessão (2026-09-08) — Verificação e-mails do dia + criação serviço agendador VPS
+
+### O que foi feito
+
+Sessão operacional — verificação dos e-mails de 08/09 e manutenção da VPS.
+
+1. **Verificação dos e-mails de hoje:** consultado o banco local — 76 threads com atividade em 08/09, todas classificadas corretamente. As 4 sem categoria são e-mails automáticos de sistema (relatórios Risk Driver, FogBugz, newsletter Bacen), corretamente em destino `descartes`.
+
+2. **Diagnóstico da VPS via SSH:**
+   - Tela (`gestao-suporte`): ativa ✅
+   - Agendador externo (`gestao-suporte-agendador`): **inexistente** — nunca tinha sido criado no systemd
+   - Coleta estava sendo feita pelo agendador legado dentro da tela; última rodada: 16:36
+   - Disparada coleta manual: 9 threads atualizadas, 7 classificadas, 0 erros
+
+3. **Criação do serviço `gestao-suporte-agendador` na VPS:**
+   - Criado `/etc/systemd/system/gestao-suporte-agendador.service` (roda `executar_pipeline.py --agendar`)
+   - Adicionado `GESTAO_AGENDADOR_EXTERNO=1` no `.env` da VPS
+   - Serviço habilitado e iniciado; tela reiniciada para ler a nova variável
+   - Ambos os serviços: `active` ✅
+
+4. **`REGISTRO_CORRECOES.md`:** entrada registrada (sem código alterado — mudança só na VPS).
+
+### Estado atual
+
+**pytest:** 608 passed ✅ (não rodado nesta sessão — nenhum código alterado).
+**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅.
+
+### Próximo passo
+
+🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
+
+**Pendências que continuam:**
+- 🟡 Passo C — tela de manutenção de regras
+- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
+
+Último /fechar: 2026-09-08 20:00 — memórias revisadas ✅
+
+---

@@ -19,7 +19,6 @@ E-mails com linhas iniciadas por `-`, `•`, `*` ou `1.` hoje aparecem como text
 **Também pendentes no modal (menores):**
 - **Cenário 2b** — tabela COSIF citada pela 2ª vez (citação dupla) perde os espaços duplos e não é detectada. Alternativa: reconhecer o padrão da linha `conta-dígito · descrição · R$ valor · sinal` mesmo com espaço simples.
 - **Acabamento** — coluna Valor quebra "R$" numa linha e o número na outra; `white-space: nowrap` nas células de valor.
-- **Deploy** — commit `2bd95e5` (cabeçalho correto + tabela no histórico citado) ainda não publicado na VPS.
 
 ---
 

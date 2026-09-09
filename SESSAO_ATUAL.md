@@ -12,9 +12,10 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
+| 08/09 | Tabela COSIF no modal: validação do Cenário 2 + registro Cenários 1–2 + Cenário 3 aberto | abaixo |
 | 08/09 | Sentry monitoring + 3 otimizações de performance | abaixo |
 | 08/09 | Fix: campo Para — colaborador @finaud em vez de suporte | abaixo |
-| 08/09 | Verificação e-mails do dia + criação serviço agendador VPS | abaixo |
+| 08/09 | Verificação e-mails do dia + criação serviço agendador VPS | arquivo |
 | 08/09 | Fix: campo data vazio — retomada /fechar | arquivo |
 | 08/09 | Redesign telas Evolução e Classificação e Status | arquivo |
 | 08/09 | Fix: CI — pacotes Google ausentes no requirements-dev.txt | arquivo |
@@ -50,10 +51,44 @@
 | 24/08 | Pente fino completo das AF | arquivo |
 
 > **abaixo** = o diário completo está neste arquivo · **arquivo** =
-> `_archive/sessao_atual_historico/SESSAO_ATUAL_historico_2026-08.md`
+> `_archive/sessao_atual_historico/SESSAO_ATUAL_historico_2026-08.md` (agosto e primeiras sessões de setembro)
+> ou `SESSAO_ATUAL_historico_2026-09.md` (setembro)
 >
 > **Regra:** este arquivo guarda as **3 sessões mais recentes**. O `/fechar` acrescenta a
 > linha nova aqui e move a 4ª sessão para o arquivo.
+
+---
+
+## 📓 Diário da sessão (2026-09-08) — Tabela COSIF no modal: validação do Cenário 2 + registro + Cenário 3 aberto
+
+### O que foi feito
+
+Sessão de diagnóstico — retomada de chat que esgotou o contexto. Michel relatou que a tabela COSIF (thread `1a06e8e5284ba878`, "Re: DLO e DLI - JULHO 2026") não aparecia mais no bloco "Histórico da conversa" após reiniciar o servidor, e pediu que a correção fosse **testada antes** de qualquer novo pedido de reinício.
+
+1. **Diagnóstico — não era bug.** A função `_tabelaEspacos` (commit `2bd95e5`) estava correta. Prova em duas camadas:
+   - Função extraída do template e rodada no **Node** com os 6 textos reais que `/api/thread` envia: só o histórico citado do **2º card** (Jacilaine) detecta — "📊 4 colunas · 8 linhas"; os outros cinco devolvem `null`, como devem.
+   - **Aba logada do Browser pane:** JS servido já era o novo, `_thrData` correto, 1 badge no DOM dentro do bloco colapsado do 2º card.
+   - Michel expandia o histórico do **1º card** (Andrea, mais recente), onde a tabela é citada pela 2ª vez e o cliente de e-mail esmagou os espaços duplos — não há colunas para detectar (limite anotado como Cenário 2b).
+   - O "3 colunas · 6 linhas" visto antes era a versão antiga pegando a 2ª linha de dados como cabeçalho; "4 colunas · 8 linhas" é o correto.
+2. **Registro:** `REGISTRO_CORRECOES.md` 08/09 23:30 — Cenários 1 e 2 (nenhum dos dois estava registrado); `PENDENCIAS.md` — Cenário 3 (listas com marcadores) + Cenário 2b + `nowrap` na coluna Valor. Commit `220c2fb` (só documentação).
+3. **Deploy:** `220c2fb` publicado na VPS — levou o `2bd95e5`, que estava só no GitHub. Tela e agendador `active`; site responde em 0,35s.
+4. **Memória nova:** `feedback_testar_antes_de_pedir_restart` — provar correção de tela (Node com dados reais + aba logada) antes de pedir reinício; F5 troca o JS carregado, reiniciar o servidor não.
+
+### Estado atual
+
+**pytest:** 635 passed ✅.
+**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅. Commit `220c2fb` publicado.
+
+### Próximo passo
+
+🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
+
+**Pendências que continuam:**
+- 🟡 Modal — leitura inteligente **Cenário 3: listas com marcadores** (Cenários 1 e 2 feitos, registrados e publicados; detalhe em `PENDENCIAS.md` — levantar 5–10 threads reais antes de implementar)
+- 🟡 Passo C — tela de manutenção de regras
+- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
+
+Último /fechar: 2026-09-08 23:55 — memórias revisadas ✅
 
 ---
 
@@ -99,7 +134,7 @@ Também não commitado na sessão anterior: melhoria no parser de tabelas do mod
 🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
 
 **Pendências que continuam:**
-- 🟡 Modal — leitura inteligente **Cenário 3: listas com marcadores** (Cenários 1 e 2 feitos e registrados em 08/09 23:30; detalhe em `PENDENCIAS.md`). Commit `2bd95e5` do Cenário 2 ainda não publicado na VPS.
+- 🟡 Modal — leitura inteligente **Cenário 3: listas com marcadores** (Cenários 1 e 2 feitos, registrados em 08/09 23:30 e publicados na VPS em `220c2fb`; detalhe em `PENDENCIAS.md`).
 - 🟡 Passo C — tela de manutenção de regras
 - 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
 
@@ -147,44 +182,6 @@ Correção do campo "Para:" na lista e no modal de threads — dois commits.
 
 ---
 
-## 📓 Diário da sessão (2026-09-08) — Verificação e-mails do dia + criação serviço agendador VPS
-
-### O que foi feito
-
-Sessão operacional — verificação dos e-mails de 08/09 e manutenção da VPS.
-
-1. **Verificação dos e-mails de hoje:** consultado o banco local — 76 threads com atividade em 08/09, todas classificadas corretamente. As 4 sem categoria são e-mails automáticos de sistema (relatórios Risk Driver, FogBugz, newsletter Bacen), corretamente em destino `descartes`.
-
-2. **Diagnóstico da VPS via SSH:**
-   - Tela (`gestao-suporte`): ativa ✅
-   - Agendador externo (`gestao-suporte-agendador`): **inexistente** — nunca tinha sido criado no systemd
-   - Coleta estava sendo feita pelo agendador legado dentro da tela; última rodada: 16:36
-   - Disparada coleta manual: 9 threads atualizadas, 7 classificadas, 0 erros
-
-3. **Criação do serviço `gestao-suporte-agendador` na VPS:**
-   - Criado `/etc/systemd/system/gestao-suporte-agendador.service` (roda `executar_pipeline.py --agendar`)
-   - Adicionado `GESTAO_AGENDADOR_EXTERNO=1` no `.env` da VPS
-   - Serviço habilitado e iniciado; tela reiniciada para ler a nova variável
-   - Ambos os serviços: `active` ✅
-
-4. **`REGISTRO_CORRECOES.md`:** entrada registrada (sem código alterado — mudança só na VPS).
-
-### Estado atual
-
-**pytest:** 608 passed ✅ (não rodado nesta sessão — nenhum código alterado).
-**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅.
-
-### Próximo passo
-
-🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
-
-**Pendências que continuam:**
-- 🟡 Passo C — tela de manutenção de regras
-- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
-
-Último /fechar: 2026-09-08 20:00 — memórias revisadas ✅
-
----
 
 ---
 <!-- fim das 3 sessões recentes -->
