@@ -57,6 +57,10 @@ from aviso_busca_parou import (
     normalizar_notificacoes,
     verificar_e_avisar_busca_parada,
 )
+from aviso_fog_suporte import (
+    normalizar_notificacao_fog,
+    verificar_e_enviar_fog_suporte,
+)
 from paths import criar_log, CACHE_IMAGENS_DIR, CACHE_THREADS_DIR
 from portal_sso import COOKIE_AUDITORIA, COOKIE_PORTAL, usuario_pelos_cookies
 import monitor_erros
@@ -266,6 +270,34 @@ def _agendar_vigia_busca() -> None:
         'interval',
         minutes=_INTERVALO_VIGIA_MIN,
         id='vigia_busca_email',
+        replace_existing=True,
+    )
+
+
+def _job_vigia_fog_suporte():
+    """Verifica se hoje é o dia configurado e envia o aviso de FOGs do Suporte Finaud."""
+    try:
+        cfg   = _ler_config()
+        token = os.environ.get('FOGBUGZ_TOKEN', '')
+        novo, _enviou = verificar_e_enviar_fog_suporte(
+            cfg,
+            admin_email=_ADMIN_EMAIL,
+            token=token,
+        )
+        if novo.get('notif_fog_suporte_ultimo_envio') != cfg.get('notif_fog_suporte_ultimo_envio'):
+            _salvar_config(novo)
+    except Exception:
+        _log.exception('Vigia FOG suporte — falhou.')
+
+
+def _agendar_vigia_fog_suporte() -> None:
+    if _scheduler.get_job('vigia_fog_suporte'):
+        return
+    _scheduler.add_job(
+        _job_vigia_fog_suporte,
+        'interval',
+        minutes=_INTERVALO_VIGIA_MIN,
+        id='vigia_fog_suporte',
         replace_existing=True,
     )
 
@@ -1134,6 +1166,7 @@ def api_admin_config_get():
     cfg = dict(_ler_config())
     cfg.pop('senha_hash', None)
     cfg['notificacoes'] = normalizar_notificacoes(cfg.get('notificacoes'))
+    cfg['notif_fog_suporte'] = normalizar_notificacao_fog(cfg.get('notif_fog_suporte'))
     ultimo_ts = _ultimo_refresh_ts  # fallback: agendador interno
     logs = bt.ler_log_coletas(limite=1)
     if logs:
@@ -1161,10 +1194,13 @@ def api_admin_config_post():
         cfg['dias_sr_ac'] = max(1, int(dados['dias_sr_ac']))
     if 'notificacoes' in dados:
         cfg['notificacoes'] = normalizar_notificacoes(dados.get('notificacoes'))
+    if 'notif_fog_suporte' in dados:
+        cfg['notif_fog_suporte'] = normalizar_notificacao_fog(dados.get('notif_fog_suporte'))
     _salvar_config(cfg)
     _reagendar_coleta(cfg['intervalo_coleta_min'])
     visivel = {k: v for k, v in cfg.items() if k != 'senha_hash'}
     visivel['notificacoes'] = normalizar_notificacoes(visivel.get('notificacoes'))
+    visivel['notif_fog_suporte'] = normalizar_notificacao_fog(visivel.get('notif_fog_suporte'))
     return jsonify({'ok': True, 'config': visivel})
 
 
@@ -1557,6 +1593,7 @@ if _deve_ligar_agendador_na_tela():
         replace_existing=True,
     )
     _agendar_vigia_busca()
+    _agendar_vigia_fog_suporte()
     if not _scheduler.running:
         _scheduler.start()
         _log.info(

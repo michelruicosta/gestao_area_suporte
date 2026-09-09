@@ -657,6 +657,9 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
 .msg-tcampos-tbl td { padding: 0.55rem 0.85rem; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
 .msg-tcampos-tbl tr:last-child td { border-bottom: none; }
 .msg-tcampos-tbl tr:hover td { background: var(--bg); }
+/* Lista com marcadores detectada automaticamente (Cenário 3) */
+.msg-lista { margin: 0; padding: 0.6rem 0.85rem 0.6rem 2rem; font-size: 0.88rem; line-height: 1.7; }
+.msg-lista li { padding: 0.05rem 0; }
 .msg-enc-label { padding: 0.3rem 0.85rem; font-size: 0.75rem; color: var(--muted); font-style: italic; border-bottom: 1px solid var(--border); }
 .msg-enc-toggle { display: flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.85rem; font-size: 0.75rem; color: var(--muted); font-style: italic; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
 .msg-enc-toggle:hover { color: var(--text); }
@@ -1589,6 +1592,32 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
                   <label class="chk-grupo"><input type="checkbox" id="notif-g-administrador" value="administrador"> Administrador</label>
                   <label class="chk-grupo"><input type="checkbox" id="notif-g-gestor" value="gestor"> Gestor</label>
                   <label class="chk-grupo"><input type="checkbox" id="notif-g-operador" value="operador"> Operador</label>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <strong>FOGs aguardando encerramento</strong>
+                  <div style="font-size:0.82rem;color:var(--muted);margin:0">FOGs abertos no Suporte Finaud — possíveis casos resolvidos sem encerramento.</div>
+                </td>
+                <td>
+                  <label class="chk-grupo"><input type="checkbox" id="notif-fog-ativa"> Ligada</label>
+                </td>
+                <td>
+                  <label class="chk-grupo"><input type="checkbox" id="notif-fog-g-administrador" value="administrador"> Administrador</label>
+                  <label class="chk-grupo"><input type="checkbox" id="notif-fog-g-gestor" value="gestor"> Gestor</label>
+                  <label class="chk-grupo"><input type="checkbox" id="notif-fog-g-operador" value="operador"> Operador</label>
+                  <div style="margin-top:0.5rem;display:flex;align-items:center;gap:0.4rem;">
+                    <span style="font-size:0.82rem;color:var(--muted);">Enviar toda:</span>
+                    <select id="notif-fog-dia" style="font-size:0.82rem;padding:2px 6px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);">
+                      <option value="0">Segunda-feira</option>
+                      <option value="1">Terça-feira</option>
+                      <option value="2">Quarta-feira</option>
+                      <option value="3">Quinta-feira</option>
+                      <option value="4">Sexta-feira</option>
+                      <option value="5">Sábado</option>
+                      <option value="6">Domingo</option>
+                    </select>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -2821,6 +2850,61 @@ function _tabelaEspacos(texto) {
   return html;
 }
 
+// Detecta lista com marcadores (Cenário 3): ≥3 linhas consecutivas com "- ", "* ", "• " ou "1. "
+// Retorna HTML com badge + <ul>/<ol>, ou null se não detectar.
+function _listaMarcadores(texto) {
+  if (!texto || texto.length < 30) return null;
+  const PAT_UNORD = /^[ \t]*[-*•][ \t]+/;
+  const PAT_ORD   = /^[ \t]*\d+[.)]\s+/;
+  const linhas = texto.split('\n').map(l => l.replace(/\r$/, ''));
+  function ehItem(l) {
+    const isUnord = PAT_UNORD.test(l);
+    const isOrd   = PAT_ORD.test(l);
+    if (!isUnord && !isOrd) return null;
+    if (l.includes('http')) return null;
+    const conteudo = l.replace(PAT_UNORD, '').replace(PAT_ORD, '').trim();
+    if (!conteudo || conteudo.length > 300) return null;
+    return { tipo: isOrd ? 'ol' : 'ul', conteudo };
+  }
+  let blocoInicio = -1, blocoFim = -1, tipoBloco = null;
+  let itens = [], seqStart = -1, ultimoItemIdx = -1;
+  for (let i = 0; i < linhas.length; i++) {
+    const item = ehItem(linhas[i]);
+    if (item) {
+      if (itens.length === 0) { seqStart = i; tipoBloco = item.tipo; }
+      itens.push(item.conteudo);
+      ultimoItemIdx = i;
+    } else if (linhas[i].trim() === '') {
+      continue; // linha vazia entre itens não quebra o bloco
+    } else {
+      if (itens.length >= 3) { blocoInicio = seqStart; blocoFim = ultimoItemIdx + 1; break; }
+      itens = []; seqStart = -1; tipoBloco = null; ultimoItemIdx = -1;
+    }
+  }
+  if (blocoInicio === -1 && itens.length >= 3) { blocoInicio = seqStart; blocoFim = ultimoItemIdx + 1; }
+  if (blocoInicio === -1) return null;
+  const uid = 'lm' + Math.random().toString(36).slice(2, 8);
+  const tag = tipoBloco === 'ol' ? 'ol' : 'ul';
+  const liItems = itens.map(t => `<li>${escHtml(t)}</li>`).join('');
+  const rawBloco = escHtml(linhas.slice(blocoInicio, blocoFim).join('\n'));
+  let html = '';
+  const antes = linhas.slice(0, blocoInicio).join('\n').trim();
+  if (antes) html += `<div class="msg-body">${escHtml(antes)}</div>`;
+  html += `<div class="msg-tcampos-badge">
+    <span>📋 ${itens.length} itens detectados</span>
+    <a onclick="(function(e){
+      var lst=document.getElementById('${uid}-l');
+      var raw=document.getElementById('${uid}-r');
+      if(lst.hidden){lst.hidden=false;raw.hidden=true;e.textContent='Ver texto original';}
+      else{lst.hidden=true;raw.hidden=false;e.textContent='Ver lista';}
+    })(this)">Ver texto original</a></div>
+  <${tag} id="${uid}-l" class="msg-lista">${liItems}</${tag}>
+  <div id="${uid}-r" class="msg-body" hidden>${rawBloco}</div>`;
+  const depois = linhas.slice(blocoFim).join('\n').trim();
+  if (depois) html += `<div class="msg-body">${escHtml(depois)}</div>`;
+  return html;
+}
+
 // Gera o HTML de corpo + anexos para uma única mensagem
 function _renderMsgHtml(m, threadId) {
   const isEncaminhamento = m.tipo_estrutura === 'C' || m.tipo_estrutura === 'D' || m.tipo_estrutura === 'F';
@@ -2901,7 +2985,7 @@ function _renderMsgHtml(m, threadId) {
   let corpoHtml;
   if (isEncaminhamento) {
     let parteNova;
-    const tblNovo = _tabelaCampos(m.texto_novo || '') || _tabelaEspacos(m.texto_novo || '');
+    const tblNovo = _tabelaCampos(m.texto_novo || '') || _tabelaEspacos(m.texto_novo || '') || _listaMarcadores(m.texto_novo || '');
     if (tblNovo) {
       parteNova = tblNovo;
     } else {
@@ -2910,7 +2994,7 @@ function _renderMsgHtml(m, threadId) {
         ? `<div class="msg-body">${textoNovo}</div>`
         : `<div class="msg-body msg-sem-texto"><em>(encaminhou sem adicionar texto)</em></div>`;
     }
-    const tblEnc = _tabelaCampos(m.corpo_encaminhado || '') || _tabelaEspacos(m.corpo_encaminhado || '');
+    const tblEnc = _tabelaCampos(m.corpo_encaminhado || '') || _tabelaEspacos(m.corpo_encaminhado || '') || _listaMarcadores(m.corpo_encaminhado || '');
     let parteEnc = '';
     if (tblEnc) {
       if (m.enc_interno) {
@@ -2931,7 +3015,7 @@ function _renderMsgHtml(m, threadId) {
     corpoHtml = parteNova + parteEnc;
   } else if (isResposta) {
     let parteNova;
-    const tblNovo = _tabelaCampos(m.texto_novo || '') || _tabelaEspacos(m.texto_novo || '');
+    const tblNovo = _tabelaCampos(m.texto_novo || '') || _tabelaEspacos(m.texto_novo || '') || _listaMarcadores(m.texto_novo || '');
     if (tblNovo) {
       parteNova = tblNovo;
     } else {
@@ -2941,7 +3025,7 @@ function _renderMsgHtml(m, threadId) {
         : `<div class="msg-body msg-sem-texto"><em>(respondeu sem adicionar texto)</em></div>`;
     }
     // Histórico de respostas é sempre repetição — oculto por padrão com toggle
-    const tblHistorico = _tabelaCampos(m.historico_citado || '') || _tabelaEspacos(m.historico_citado || '');
+    const tblHistorico = _tabelaCampos(m.historico_citado || '') || _tabelaEspacos(m.historico_citado || '') || _listaMarcadores(m.historico_citado || '');
     let parteHistorico = '';
     if (tblHistorico) {
       parteHistorico = blocoColapsavel('Histórico da conversa — já visível acima (clique para expandir)', tblHistorico, true);
@@ -2953,7 +3037,7 @@ function _renderMsgHtml(m, threadId) {
     }
     corpoHtml = parteNova + parteHistorico;
   } else {
-    const tbl = _tabelaCampos(m.corpo || '') || _tabelaEspacos(m.corpo || '');
+    const tbl = _tabelaCampos(m.corpo || '') || _tabelaEspacos(m.corpo || '') || _listaMarcadores(m.corpo || '');
     if (tbl) {
       corpoHtml = tbl;
     } else {
@@ -3248,6 +3332,7 @@ async function _admCarregarSituacao() {
 async function _notifCarregar() {
   try {
     const cfg = await _get('/api/admin/config');
+    // Notificação: busca de e-mail parou
     const n = (cfg.notificacoes || []).find(x => x.id === 'busca_email_parou') || {};
     document.getElementById('notif-busca-ativa').checked = n.ativa !== false;
     const grupos = n.grupos || ['administrador'];
@@ -3255,6 +3340,16 @@ async function _notifCarregar() {
       const el = document.getElementById('notif-g-' + g);
       if (el) el.checked = grupos.includes(g);
     });
+    // Notificação: FOGs aguardando encerramento
+    const fog = cfg.notif_fog_suporte || {};
+    document.getElementById('notif-fog-ativa').checked = fog.ativa !== false;
+    const fgr = fog.grupos || ['administrador'];
+    ['administrador', 'gestor', 'operador'].forEach(g => {
+      const el = document.getElementById('notif-fog-g-' + g);
+      if (el) el.checked = fgr.includes(g);
+    });
+    const diaEl = document.getElementById('notif-fog-dia');
+    if (diaEl) diaEl.value = String(fog.dia_semana ?? 0);
   } catch (e) {
     const fb = document.getElementById('notif-feedback');
     if (fb) fb.textContent = 'Erro ao carregar.';
@@ -3264,6 +3359,10 @@ async function _notifCarregar() {
 async function _notifSalvar() {
   const grupos = ['administrador', 'gestor', 'operador'].filter(g => {
     const el = document.getElementById('notif-g-' + g);
+    return el && el.checked;
+  });
+  const fgr = ['administrador', 'gestor', 'operador'].filter(g => {
+    const el = document.getElementById('notif-fog-g-' + g);
     return el && el.checked;
   });
   const fb = document.getElementById('notif-feedback');
@@ -3278,6 +3377,11 @@ async function _notifSalvar() {
           ativa: document.getElementById('notif-busca-ativa').checked,
           grupos: grupos.length ? grupos : ['administrador'],
         }],
+        notif_fog_suporte: {
+          ativa: document.getElementById('notif-fog-ativa').checked,
+          grupos: fgr.length ? fgr : ['administrador'],
+          dia_semana: parseInt(document.getElementById('notif-fog-dia').value || '0'),
+        },
       }),
     });
     if (!r.ok) throw new Error();

@@ -444,3 +444,57 @@ def test_fog_colaboradores_pagina_no_html():
     assert 'id="pag-fog-colaboradores"' in html
     assert 'fog-colaboradores' in html
     assert 'Por Colaborador' in html
+
+
+# ── Notificação FOG Suporte Finaud ────────────────────────────────────────────
+
+def test_fog_suporte_normalizar_padrao():
+    import sys
+    sys.path.insert(0, os.path.join(RAIZ, 'scripts'))
+    from aviso_fog_suporte import normalizar_notificacao_fog
+    n = normalizar_notificacao_fog(None)
+    assert n['ativa'] is True
+    assert 'administrador' in n['grupos']
+    assert 0 <= n['dia_semana'] <= 6
+
+
+def test_fog_suporte_normalizar_dia_invalido():
+    from aviso_fog_suporte import normalizar_notificacao_fog
+    n = normalizar_notificacao_fog({'dia_semana': 99, 'ativa': True, 'grupos': ['gestor']})
+    assert n['dia_semana'] == 6
+
+
+def test_fog_suporte_deve_enviar_dia_errado():
+    from aviso_fog_suporte import verificar_e_enviar_fog_suporte
+    from datetime import datetime, timezone
+    # dia_semana=0 (segunda), testa numa terça (weekday=1)
+    cfg = {'notif_fog_suporte': {'ativa': True, 'grupos': ['administrador'], 'dia_semana': 0}}
+    terca = datetime(2026, 9, 8, 10, 0, tzinfo=timezone.utc)  # terça-feira
+    novo, enviou = verificar_e_enviar_fog_suporte(
+        cfg, admin_email='test@test.com', token='', agora=terca
+    )
+    assert not enviou
+
+
+def test_fog_suporte_html_contem_estrutura():
+    from aviso_fog_suporte import montar_html_fog_suporte
+    fogs = [
+        {'id': '9999', 'titulo': 'Caso de teste', 'dias': 45},
+        {'id': '9998', 'titulo': 'Outro caso', 'dias': 5},
+    ]
+    html = montar_html_fog_suporte('Michel', fogs, '09/09/2026', 'Segunda-feira')
+    assert 'FOGs aguardando encerramento' in html
+    assert '9999' in html
+    assert 'Abrir' in html
+    assert 'Segunda-feira' in html
+    assert '#fff7ed' in html  # badge laranja (45 dias)
+
+
+def test_fog_suporte_notificacao_no_html():
+    caminho = os.path.join(RAIZ, 'templates', 'gestao_email.html')
+    with open(caminho, encoding='utf-8') as f:
+        html = f.read()
+    assert 'notif-fog-ativa' in html
+    assert 'notif-fog-g-administrador' in html
+    assert 'notif-fog-dia' in html
+    assert 'FOGs aguardando encerramento' in html
