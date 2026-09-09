@@ -19,6 +19,29 @@
 
 ---
 
+### 09/09 17:30 — Coletor de colaboradores: bug de contaminação corrigido com Message-ID/In-Reply-To; coletor reativado
+
+**🔎 Em miúdos:** a rotina que captura e-mails respondidos por colaboradores fora do canal oficial foi reescrita para identificar a qual conversa cada mensagem pertence de forma precisa — usando a cadeia de "reply" dos e-mails (cabeçalhos técnicos) em vez do assunto. Com isso, o risco de misturar mensagens de clientes diferentes, que causou a contaminação de 09/09, é eliminado.
+
+**Problema:** o algoritmo original usava assunto normalizado como chave para associar mensagens a threads. Funcionava quando os assuntos eram únicos, mas falhava quando vários clientes tinham o mesmo assunto (ex: DRM 2060). Toda mensagem de colaborador relacionada ao DRM 2060 podia ir parar em qualquer uma das 20+ threads de DRM 2060 no banco.
+
+**Causa raiz:** `_normalizar()` + `indice.setdefault(chave, [])` em `coletor_enviados_colaboradores.py` — chave única por assunto colapsa threads distintas.
+
+**Correção:**
+- `scripts/coletor_enviados_colaboradores.py`: reescrita completa da lógica de identificação. Removidos `_normalizar()`, `_RE_PREFIXO`, `MAX_CANDIDATOS`. Nova abordagem:
+  1. Constrói índice `message_id → thread_id` a partir de todas as mensagens gravadas no banco (`_construir_indice_mid()`)
+  2. Para cada mensagem de colaborador, busca cabeçalhos `In-Reply-To` e `References` via API (`_headers()`)
+  3. Se não há `In-Reply-To` nem `References` → não é reply de conversa conhecida → descarta
+  4. `_thread_por_reply()` percorre os IDs (In-Reply-To primeiro, depois References da direita para esquerda) buscando no índice
+  5. Se não encontra → descarta (sem adivinhar por assunto)
+  6. Se encontra → associa a mensagem à thread correta
+- `tests/test_coletor_colaboradores.py`: reescrito com 20 testes cobrindo a nova lógica.
+- `scripts/executar_pipeline.py`: coletor reativado em `rodar_sem_retorno()`.
+
+**Validação:** ✅ 638 testes passando (zero falhas). ⚠️ Validação em produção recomendada: na próxima rodada das 6h, comparar snapshot antes/depois para confirmar que nenhuma thread DRM 2060 ganha mensagens de outro cliente.
+
+---
+
 ### 09/09 14:45 — FOG ranking: campo media_dias ausente causava erro 500 na tela principal
 
 **🔎 Em miúdos:** a tela principal travava com erro 500 para qualquer usuário que abrisse. O Sentry avisou na hora — sem ele, o problema ficaria invisível até alguém reclamar.

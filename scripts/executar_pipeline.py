@@ -122,10 +122,13 @@ def rodar_sem_retorno() -> None:
     dias_af = int(cfg.get('dias_sr_af', 30))
     dias_ac = int(cfg.get('dias_sr_ac', 60))
 
-    # Etapa 0: coleta caixas dos colaboradores — DESATIVADO temporariamente
-    # Bug crítico: contaminação cruzada de threads por assunto genérico (09/09/2026)
-    # Reativar após corrigir coletor_enviados_colaboradores.py
-    log.info('Sem Retorno — coleta de colaboradores desativada (bug em correção).')
+    # Etapa 0: coleta caixas dos colaboradores
+    try:
+        r_col = coletar_colaboradores()
+        log.info('Colaboradores — %d mensagens novas em %d threads.',
+                 r_col['mensagens_novas'], r_col['threads_atualizadas'])
+    except Exception as e:
+        log.error('Falha no coletor de colaboradores: %s', e)
 
     log.info('Sem Retorno — iniciando (AF=%d dias, AC=%d dias).', dias_af, dias_ac)
     try:

@@ -1,60 +1,12 @@
 # PENDÊNCIAS — Gestão Área Suporte
 
-**Atualizado:** 2026-09-08
+**Atualizado:** 2026-09-09
 **Organização:** por etapa que bloqueia — reorganizado em 03/08/2026 para seguir as fases sem brechas.
 **Regra:** este arquivo lista **só o que ainda falta** (aberto / aguardando decisão / backlog).
 Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada no
 `REGISTRO_CORRECOES.md` — nesta ordem: primeiro grava no REGISTRO, depois remove daqui.
 
 ---
-
----
-
-## 🔴 BUG CRÍTICO — Coletor de colaboradores usa assunto para identificar thread (banco restaurado; coletor desativado aguardando correção — 09/09/2026)
-
-### O que aconteceu
-
-O sistema mostrava mensagens de outros clientes dentro de threads do DRM 2060. Exemplo confirmado antes da restauração:
-
-**Thread Trustee DTVM** (`1a05d9178be1c1b7`):
-- **Gmail (verdade):** 2 mensagens — Miguel Santos → Igor Menezes Costa (Trustee)
-- **Sistema (antes da correção):** 22 mensagens — última de Flávio → Raphael Pinheiro Marino (Western Union)
-
-### Causa raiz confirmada
-
-O arquivo `scripts/coletor_enviados_colaboradores.py` identifica a qual thread uma mensagem pertence pelo **assunto normalizado** (remove Re:/ENC:/FW:). Com 20+ threads compartilhando o assunto "BANCO CENTRAL - COMUNICACAO DE INCONSISTENCIA NO DRM - 2060", todas mapeiam para a mesma chave interna — mensagens de um cliente vão parar em threads de outros.
-
-**Onde fica no código:**
-- `_normalizar()` (≈ linhas 57–64): remove todos os prefixos de assunto
-- Index build (≈ linhas 261–265): `indice.setdefault(chave, [])` agrupa threads pelo assunto normalizado
-- `MAX_CANDIDATOS = 3`: insuficiente quando há 20+ threads com assunto idêntico
-
-**Alcance:** 527 threads contaminadas em 8 ondas entre 02/09/2026 e 09/09/2026.
-
-### O que já foi feito (09/09/2026)
-
-- ✅ **Banco restaurado:** re-buscamos os 527 threads diretamente na API do Gmail; 168 threads tiveram o número de mensagens reduzido (decontaminadas). Snapshots antes/depois em `data/backups/snapshot_antes_restauracao.csv` e `snapshot_depois_restauracao.csv`.
-- ✅ **Coletor desativado:** `executar_pipeline.py` (função `rodar_sem_retorno`) não chama mais o coletor até o bug ser corrigido.
-
-### O que ainda falta fazer
-
-**Corrigir `scripts/coletor_enviados_colaboradores.py`** para identificar a thread correta usando cabeçalhos de e-mail, não o assunto:
-
-1. Ao processar uma mensagem enviada por colaborador, extrair os cabeçalhos `Message-ID` e `In-Reply-To`
-2. Buscar no banco a thread que contém uma mensagem com `Message-ID` igual ao `In-Reply-To` da mensagem sendo processada
-3. Se encontrar → associar a mensagem a essa thread (match preciso por cadeia de resposta)
-4. Se não encontrar → descartar (não tentar adivinhar pelo assunto)
-5. Reativar o coletor em `executar_pipeline.py` após validar
-
-### Como validar após a correção
-
-1. Tirar snapshot CSV do banco antes de rodar (`data/backups/AAAAMMDD_HHMM_teste_coletor/`)
-2. Rodar o coletor isolado em uma amostra de threads DRM 2060
-3. Tirar snapshot depois e comparar: nenhuma thread deve ganhar mensagens de outro cliente
-4. Conferir spot-check de 3 threads DRM 2060 diretamente na API do Gmail vs. banco
-5. Verificar que a thread Trustee DTVM (`1a05d9178be1c1b7`) continua com 2 mensagens
-
-**Quando fazer:** chat dedicado. Antes de reativar o coletor de colaboradores.
 
 ---
 

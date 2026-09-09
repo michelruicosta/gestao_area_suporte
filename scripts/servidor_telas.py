@@ -494,6 +494,32 @@ def _primeiro_finaud_colaborador(raw: str) -> str:
     return ''
 
 
+def _primeiro_externo(raw: str) -> str:
+    """Varre um campo e retorna o nome do primeiro endereço externo (não @finaud)."""
+    for parte in re.split(r',\s*', raw):
+        parte = parte.strip()
+        if not parte:
+            continue
+        m = _RE_EMAIL.search(parte)
+        email = m.group(1).strip() if m else parte
+        if email and not _eh_finaud_addr(email) and not _eh_suporte(email):
+            return _extrair_nome(parte)
+    return ''
+
+
+def _eh_cliente_remetente(msg: dict) -> bool:
+    """Retorna True se o remetente da mensagem é um cliente (não colaborador Finaud)."""
+    from_raw = msg.get('remetente', '') or ''
+    reply_to = msg.get('reply_to', '') or ''
+    if not _eh_finaud_addr(from_raw):
+        return True
+    if _eh_suporte(from_raw) and reply_to and not _eh_finaud_addr(reply_to):
+        return True
+    if 'via suporte' in from_raw.lower():
+        return True
+    return False
+
+
 def _primeiro_finaud_ou_primeiro(raw: str) -> str:
     """De uma lista de destinatários, retorna o primeiro colaborador @finaud (não suporte);
     senão o primeiro endereço suporte@finaud; senão o primeiro da lista."""
@@ -515,25 +541,43 @@ def _primeiro_finaud_ou_primeiro(raw: str) -> str:
 
 
 def _resolver_de(msg: dict) -> str:
-    """§7 Campo 1: From=suporte@ → usa Reply-To; caso contrário usa From."""
-    from_raw = msg.get('remetente', '')
-    reply_to = msg.get('reply_to', '')
-    if _eh_suporte(from_raw):
-        return _extrair_nome(reply_to) if reply_to else _extrair_nome(from_raw)
-    return _extrair_nome(from_raw)
+    """De: para exibição no modal.
+    From=suporte@ + Reply-To externo → nome do Reply-To (cliente via suporte@).
+    From=suporte@ sem Reply-To externo → nome extraído do From; se vazio/genérico → 'Suporte Finaud'.
+    Caso contrário → nome do From."""
+    from_raw = msg.get('remetente', '') or ''
+    reply_to = msg.get('reply_to', '') or ''
+    if not _eh_suporte(from_raw):
+        return _extrair_nome(from_raw)
+    if reply_to and not _eh_finaud_addr(reply_to):
+        return _extrair_nome(reply_to)
+    nome = _extrair_nome(from_raw)
+    if nome.lower() in ('suporte', ''):
+        return 'Suporte Finaud'
+    return nome
 
 
 def _resolver_para(msg: dict) -> str:
-    """§7 Campo 2+3: To tem colaborador @finaud → exibe colaborador.
-    To tem só suporte → consulta CC. CC tem @finaud → exibe. Senão → suporte@finaud.com.br."""
-    to_raw = msg.get('destinatarios', '')
-    cc_raw = msg.get('cc', '')
-    if _eh_suporte(to_raw):
-        colaborador = _primeiro_finaud_colaborador(to_raw)
-        if colaborador:
-            return colaborador
-        finaud_cc = _primeiro_finaud_colaborador(cc_raw)
-        return finaud_cc if finaud_cc else 'suporte@finaud.com.br'
+    """Para: para exibição no modal.
+    Remetente é cliente → Para = primeiro colaborador @finaud (exceto suporte@) ou suporte@finaud.com.br.
+    Remetente é colaborador Finaud → Para = primeiro externo (cliente); se não houver → primeiro colaborador."""
+    to_raw = msg.get('destinatarios', '') or ''
+    cc_raw = msg.get('cc', '') or ''
+    if _eh_cliente_remetente(msg):
+        col = _primeiro_finaud_colaborador(to_raw) or _primeiro_finaud_colaborador(cc_raw)
+        if col:
+            return col
+        if _eh_suporte(to_raw) or _eh_suporte(cc_raw):
+            return 'suporte@finaud.com.br'
+        return _extrair_nome(to_raw)
+    ext = _primeiro_externo(to_raw) or _primeiro_externo(cc_raw)
+    if ext:
+        return ext
+    col = _primeiro_finaud_colaborador(to_raw) or _primeiro_finaud_colaborador(cc_raw)
+    if col:
+        return col
+    if _eh_suporte(to_raw) or _eh_suporte(cc_raw):
+        return 'suporte@finaud.com.br'
     return _extrair_nome(to_raw)
 
 

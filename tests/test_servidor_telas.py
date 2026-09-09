@@ -657,3 +657,114 @@ def test_fog_suporte_busca_inclui_filtro_data():
     assert queries, 'Nenhuma chamada de search encontrada'
     assert '2025/01/01' in queries[0], f'Filtro de data ausente: {queries[0]!r}'
     assert 'assignedTo:"Suporte Finaud"' in queries[0]
+
+
+# ── Testes: _resolver_de e _resolver_para (regras De/Para do modal) ────────────
+
+def _msg(remetente='', destinatarios='', cc='', reply_to=''):
+    return {'remetente': remetente, 'destinatarios': destinatarios, 'cc': cc, 'reply_to': reply_to}
+
+
+class TestResolverDe:
+    def test_colaborador_pessoal_usa_from(self):
+        m = _msg(remetente='Sarah Sá <sarah.sa@finaud.com.br>')
+        assert st._resolver_de(m) == 'Sarah Sá'
+
+    def test_cliente_direto_usa_from(self):
+        m = _msg(remetente='João Silva <joao@empresa.com.br>')
+        assert st._resolver_de(m) == 'João Silva'
+
+    def test_cliente_via_suporte_usa_reply_to(self):
+        m = _msg(
+            remetente='"\'Leonardo Ueda\' via Suporte" <suporte@finaud.com.br>',
+            reply_to='Leonardo Ueda <leonardo@westernunion.com>',
+        )
+        assert st._resolver_de(m) == 'Leonardo Ueda'
+
+    def test_colaborador_via_suporte_com_nome_usa_from(self):
+        m = _msg(remetente='Sarah Sá <suporte@finaud.com.br>')
+        assert st._resolver_de(m) == 'Sarah Sá'
+
+    def test_suporte_sem_nome_vira_suporte_finaud(self):
+        m = _msg(remetente='suporte <suporte@finaud.com.br>')
+        assert st._resolver_de(m) == 'Suporte Finaud'
+
+
+class TestResolverPara:
+    def test_cliente_direto_para_colaborador(self):
+        m = _msg(
+            remetente='João <joao@empresa.com.br>',
+            destinatarios='Andrea Inacio <andrea.inacio@finaud.com.br>',
+        )
+        assert st._resolver_para(m) == 'Andrea Inacio'
+
+    def test_cliente_direto_para_so_suporte(self):
+        m = _msg(
+            remetente='João <joao@empresa.com.br>',
+            destinatarios='suporte <suporte@finaud.com.br>',
+        )
+        assert st._resolver_para(m) == 'suporte@finaud.com.br'
+
+    def test_cliente_direto_para_colaborador_e_suporte(self):
+        m = _msg(
+            remetente='João <joao@empresa.com.br>',
+            destinatarios='Andrea Inacio <andrea.inacio@finaud.com.br>, suporte <suporte@finaud.com.br>',
+        )
+        assert st._resolver_para(m) == 'Andrea Inacio'
+
+    def test_cliente_direto_externo_e_colaborador_mostra_colaborador(self):
+        """C-A: cliente envia para colega externo + colaborador Finaud → Para = colaborador."""
+        m = _msg(
+            remetente='Empresas Denver <contato@denver.com.br>',
+            destinatarios='Luiz Externo <luiz@outraempresa.com.br>, Monica Macedo <monica.macedo@finaud.com.br>',
+        )
+        assert st._resolver_para(m) == 'Monica Macedo'
+
+    def test_cliente_via_suporte_externo_e_colaborador_mostra_colaborador(self):
+        """C-B: cliente via suporte@ envia para externo + colaborador → Para = colaborador."""
+        m = _msg(
+            remetente='"Victor via Suporte" <suporte@finaud.com.br>',
+            reply_to='Victor <victor@miraeinvest.com.br>',
+            destinatarios='Vitor Externo <vitor@miraeinvest.com.br>, Andrea Inacio <andrea.inacio@finaud.com.br>',
+        )
+        assert st._resolver_para(m) == 'Andrea Inacio'
+
+    def test_colaborador_via_suporte_para_cliente_e_colaborador_cc_mostra_cliente(self):
+        """F4a: colaborador via suporte@ para cliente + colaborador em CC → Para = cliente (Fix A)."""
+        m = _msg(
+            remetente='"Sarah Sá" <suporte@finaud.com.br>',
+            destinatarios='Andrea Inacio <andrea.inacio@finaud.com.br>, Jacilaine Lima <j@planner.com.br>',
+        )
+        assert st._resolver_para(m) == 'Jacilaine Lima'
+
+    def test_colaborador_via_suporte_para_cliente_suporte_no_to_mostra_cliente(self):
+        """F2a+: colaborador via suporte@ para cliente + suporte@ no To → Para = cliente."""
+        m = _msg(
+            remetente='"Rodrigo Tiberio" <suporte@finaud.com.br>',
+            destinatarios='Mariana Fagueiro <mariana@wise.com>, suporte <suporte@finaud.com.br>',
+        )
+        assert st._resolver_para(m) == 'Mariana Fagueiro'
+
+    def test_colaborador_pessoal_externo_e_colaborador_cc_mostra_externo(self):
+        """F3a: colaborador (email pessoal) para cliente + colega em CC → Para = cliente."""
+        m = _msg(
+            remetente='Rodrigo Tiberio <rodrigo.tiberio@finaud.com.br>',
+            destinatarios='Juliana Meirelles <juliana@agk.com.br>, Marcio Vellani <marcio@finaud.com.br>',
+        )
+        assert st._resolver_para(m) == 'Juliana Meirelles'
+
+    def test_colaborador_pessoal_externo_suporte_cc_mostra_externo(self):
+        """F3b: colaborador (email pessoal) para cliente + suporte@ em CC → Para = cliente."""
+        m = _msg(
+            remetente='Rodrigo Tiberio <rodrigo.tiberio@finaud.com.br>',
+            destinatarios='Jessica Santos <jessica@unidad.com.br>, suporte <suporte@finaud.com.br>',
+        )
+        assert st._resolver_para(m) == 'Jessica Santos'
+
+    def test_colaborador_interno_para_colaborador(self):
+        """F1b: colaborador pessoal → outro colaborador (interno) → Para = colaborador."""
+        m = _msg(
+            remetente='Rodrigo Tiberio <rodrigo.tiberio@finaud.com.br>',
+            destinatarios='Rafael Pereira <rafael@finaud.com.br>',
+        )
+        assert st._resolver_para(m) == 'Rafael Pereira'

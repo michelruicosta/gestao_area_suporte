@@ -6,6 +6,39 @@
 
 ---
 
+## 📓 Diário da sessão (2026-09-08) — Tabela COSIF no modal: validação do Cenário 2 + registro + Cenário 3 aberto
+
+### O que foi feito
+
+Sessão de diagnóstico — retomada de chat que esgotou o contexto. Michel relatou que a tabela COSIF (thread `1a06e8e5284ba878`, "Re: DLO e DLI - JULHO 2026") não aparecia mais no bloco "Histórico da conversa" após reiniciar o servidor, e pediu que a correção fosse **testada antes** de qualquer novo pedido de reinício.
+
+1. **Diagnóstico — não era bug.** A função `_tabelaEspacos` (commit `2bd95e5`) estava correta. Prova em duas camadas:
+   - Função extraída do template e rodada no **Node** com os 6 textos reais que `/api/thread` envia: só o histórico citado do **2º card** (Jacilaine) detecta — "📊 4 colunas · 8 linhas"; os outros cinco devolvem `null`, como devem.
+   - **Aba logada do Browser pane:** JS servido já era o novo, `_thrData` correto, 1 badge no DOM dentro do bloco colapsado do 2º card.
+   - Michel expandia o histórico do **1º card** (Andrea, mais recente), onde a tabela é citada pela 2ª vez e o cliente de e-mail esmagou os espaços duplos — não há colunas para detectar (limite anotado como Cenário 2b).
+   - O "3 colunas · 6 linhas" visto antes era a versão antiga pegando a 2ª linha de dados como cabeçalho; "4 colunas · 8 linhas" é o correto.
+2. **Registro:** `REGISTRO_CORRECOES.md` 08/09 23:30 — Cenários 1 e 2 (nenhum dos dois estava registrado); `PENDENCIAS.md` — Cenário 3 (listas com marcadores) + Cenário 2b + `nowrap` na coluna Valor. Commit `220c2fb` (só documentação).
+3. **Deploy:** `220c2fb` publicado na VPS — levou o `2bd95e5`, que estava só no GitHub. Tela e agendador `active`; site responde em 0,35s.
+4. **Memória nova:** `feedback_testar_antes_de_pedir_restart` — provar correção de tela (Node com dados reais + aba logada) antes de pedir reinício; F5 troca o JS carregado, reiniciar o servidor não.
+
+### Estado atual
+
+**pytest:** 635 passed ✅.
+**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅. Commit `220c2fb` publicado.
+
+### Próximo passo
+
+🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
+
+**Pendências que continuam:**
+- 🟡 Modal — leitura inteligente **Cenário 3: listas com marcadores** (Cenários 1 e 2 feitos, registrados e publicados; detalhe em `PENDENCIAS.md` — levantar 5–10 threads reais antes de implementar)
+- 🟡 Passo C — tela de manutenção de regras
+- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
+
+Último /fechar: 2026-09-08 23:55 — memórias revisadas ✅
+
+---
+
 ## 📓 Diário da sessão (2026-09-08) — Redesign telas Evolução e Classificação e Status
 
 ### O que foi feito

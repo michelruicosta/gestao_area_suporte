@@ -6,12 +6,12 @@ O que faz: complementa a coleta do oraculo@ lendo enviados e recebidos
            e respostas do cliente direto ao colaborador (cenário 5).
            Nunca cria threads novas — só enriquece as que já existem no banco.
            Roda todo dia às 6h dentro do pipeline (executar_pipeline.py).
+           Identificação da thread: Message-ID / In-Reply-To (não assunto).
 """
 from __future__ import annotations
 
 import json
 import os
-import re
 import sqlite3
 import sys
 import time
@@ -32,12 +32,6 @@ BANCO       = os.path.join(BASE_DIR, 'data', 'gestao.db')
 CONFIG_PATH = os.path.join(BASE_DIR, 'data', 'config.json')
 SCOPES      = ['https://www.googleapis.com/auth/gmail.readonly']
 
-_RE_PREFIXO   = re.compile(r'^(re|res|fwd|fw|enc|encaminhado|rv|r):\s*', re.IGNORECASE)
-_RE_EMAIL     = re.compile(r'[\w.+-]+@[\w.+-]+\.\w+')
-_RE_EMAIL_ABK = re.compile(r'<([\w.+-]+@[\w.+-]+\.\w+)>')  # "Nome <email>"
-_FINAUD_DOMS  = {'finaud.com.br', 'finaudtec.com.br'}
-MAX_CANDIDATOS = 3  # mais que isso → assunto genérico demais, pular
-
 log = criar_log('coletor_colaboradores')
 _cache_svc: dict[str, object] = {}
 
@@ -50,18 +44,6 @@ def _ler_config() -> dict:
             return json.load(f)
     except Exception:
         return {}
-
-
-# ── Assunto normalizado ───────────────────────────────────────────────────────
-
-def _normalizar(assunto: str) -> str:
-    s = assunto.strip()
-    while True:
-        s2 = _RE_PREFIXO.sub('', s).strip()
-        if s2 == s:
-            break
-        s = s2
-    return s.lower()
 
 
 # ── Gmail API ─────────────────────────────────────────────────────────────────
@@ -98,11 +80,12 @@ def _detalhar(conta: str, msg_id: str) -> dict | None:
 
 
 def _headers(conta: str, msg_id: str) -> dict:
-    """Busca Subject, Date, From, To, Cc — mais rápido que full."""
+    """Busca cabeçalhos para identificar a thread por cadeia de resposta."""
     try:
         msg = _svc(conta).users().messages().get(
             userId='me', id=msg_id, format='metadata',
-            metadataHeaders=['Subject', 'Date', 'From', 'To', 'Cc']
+            metadataHeaders=['Subject', 'Date', 'From', 'To', 'Cc',
+                             'Message-ID', 'In-Reply-To', 'References']
         ).execute()
         return {h['name']: h['value']
                 for h in msg.get('payload', {}).get('headers', [])}
@@ -110,41 +93,33 @@ def _headers(conta: str, msg_id: str) -> dict:
         return {}
 
 
-# ── Participantes ─────────────────────────────────────────────────────────────
+# ── Índice por Message-ID ─────────────────────────────────────────────────────
 
-def _extrair_email(texto: str) -> str | None:
-    m = _RE_EMAIL_ABK.search(texto)
-    if m:
-        return m.group(1).lower()
-    m = _RE_EMAIL.search(texto)
-    return m.group(0).lower() if m else None
-
-
-def _eh_externo(email: str) -> bool:
-    return email.split('@')[-1].lower() not in _FINAUD_DOMS
-
-
-def _externos_hdrs(hdrs: dict) -> set[str]:
-    """Emails externos (não-Finaud) presentes no From/To/Cc do cabeçalho."""
-    texto = ' '.join([hdrs.get('From', ''), hdrs.get('To', ''), hdrs.get('Cc', '')])
-    return {e.lower() for e in _RE_EMAIL.findall(texto) if _eh_externo(e)}
+def _construir_indice_mid(threads_banco: dict) -> dict[str, str]:
+    """Constrói índice message_id → thread_id a partir das mensagens gravadas no banco."""
+    indice: dict[str, str] = {}
+    for tid, t in threads_banco.items():
+        for msg in t.get('mensagens', []):
+            mid = msg.get('message_id', '').strip()
+            if mid:
+                indice[mid] = tid
+    return indice
 
 
-def _externos_thread(thread: dict) -> set[str]:
-    """Emails externos já conhecidos na thread (remetente_principal + primeiras msgs)."""
-    emails: set[str] = set()
-    e = _extrair_email(thread.get('remetente_principal', ''))
-    if e and _eh_externo(e):
-        emails.add(e)
-    for msg in thread.get('mensagens', [])[:10]:
-        e = _extrair_email(msg.get('remetente', ''))
-        if e and _eh_externo(e):
-            emails.add(e)
-        for dest in msg.get('destinatarios', '').split(','):
-            e = _extrair_email(dest.strip())
-            if e and _eh_externo(e):
-                emails.add(e)
-    return emails
+def _thread_por_reply(in_reply_to: str, references: str,
+                      indice_mid: dict[str, str]) -> str | None:
+    """Retorna thread_id se In-Reply-To ou References aponta para mensagem conhecida no banco."""
+    if in_reply_to:
+        tid = indice_mid.get(in_reply_to.strip())
+        if tid:
+            return tid
+    # References: cadeia de Message-IDs separados por espaço — checar da direita (mais recente)
+    if references:
+        for mid in reversed(references.split()):
+            mid = mid.strip()
+            if mid and mid in indice_mid:
+                return indice_mid[mid]
+    return None
 
 
 # ── Banco ─────────────────────────────────────────────────────────────────────
@@ -184,7 +159,6 @@ def _ja_existe(msgs: list[dict], nova: dict) -> bool:
         for m in msgs:
             m_mid = m.get('message_id', '').strip()
             if m_mid:
-                # Ambos têm message_id: comparação definitiva — não cai no fallback.
                 if m_mid == mid:
                     return True
             else:
@@ -242,13 +216,14 @@ def _salvar(thread: dict) -> None:
 def coletar_colaboradores() -> dict:
     """
     Para cada colaborador, busca mensagens enviadas e recebidas de externos
-    nos últimos N dias. Para cada mensagem encontrada, verifica se o assunto
-    corresponde a uma thread do banco — se sim e a mensagem for nova, adiciona.
-    Nunca cria threads novas, nunca sobrescreve mensagens existentes.
+    nos últimos N dias. Para cada mensagem encontrada, localiza a thread
+    correta pelo cabeçalho In-Reply-To/References (Message-ID exato) — sem
+    usar assunto. Se não encontrar correspondência no banco, descarta.
+    Nunca cria threads novas.
     """
-    cfg          = _ler_config()
+    cfg           = _ler_config()
     colaboradores = cfg.get('colaboradores_suporte', [])
-    dias         = int(cfg.get('dias_coleta_colaboradores', 30))
+    dias          = int(cfg.get('dias_coleta_colaboradores', 30))
 
     if not colaboradores:
         log.info('Nenhum colaborador em colaboradores_suporte — nada a fazer.')
@@ -256,16 +231,11 @@ def coletar_colaboradores() -> dict:
 
     data_corte = (datetime.now() - timedelta(days=dias)).strftime('%Y/%m/%d')
 
-    # Carregar banco e montar índice assunto_normalizado → [thread_ids]
     threads_banco = _carregar_threads()
-    indice: dict[str, list[str]] = {}
-    for tid, t in threads_banco.items():
-        chave = _normalizar(t['assunto'])
-        if chave:
-            indice.setdefault(chave, []).append(tid)
+    indice_mid    = _construir_indice_mid(threads_banco)
 
-    log.info('Banco: %d threads | índice: %d assuntos | %d colaboradores | últimos %d dias',
-             len(threads_banco), len(indice), len(colaboradores), dias)
+    log.info('Banco: %d threads | %d message-ids indexados | %d colaboradores | últimos %d dias',
+             len(threads_banco), len(indice_mid), len(colaboradores), dias)
 
     threads_mod: dict[str, dict] = {}
     total_novas = 0
@@ -273,7 +243,6 @@ def coletar_colaboradores() -> dict:
     for colaborador in colaboradores:
         log.info('Verificando: %s', colaborador)
 
-        # Buscar mensagens recentes: enviadas (cenário 4) e inbox externos (cenário 5)
         queries = [
             f'in:sent after:{data_corte}',
             f'in:inbox after:{data_corte} -from:finaud.com.br -from:finaudtec.com.br',
@@ -282,58 +251,47 @@ def coletar_colaboradores() -> dict:
         for query in queries:
             refs = _listar(colaborador, query)
             for ref in refs:
-                # 1. Buscar headers (Subject, From, To, Cc)
+                # 1. Buscar cabeçalhos incluindo In-Reply-To e References
                 hdrs = _headers(colaborador, ref['id'])
-                assunto_msg = _normalizar(hdrs.get('Subject', ''))
-                candidatos  = indice.get(assunto_msg, [])
-                if not candidatos:
+
+                in_reply_to = hdrs.get('In-Reply-To', '')
+                references  = hdrs.get('References', '')
+
+                # 2. Sem marcadores de resposta → não é reply de conversa conhecida
+                if not in_reply_to and not references:
                     time.sleep(0.03)
                     continue
 
-                # 2. Filtrar por participante: só manter threads que já conhecem
-                #    ao menos um email externo presente no From/To/Cc da mensagem
-                externos_msg = _externos_hdrs(hdrs)
-                if externos_msg:
-                    candidatos = [
-                        tid for tid in candidatos
-                        if _externos_thread(threads_banco[tid]) & externos_msg
-                    ]
-                if not candidatos:
+                # 3. Localizar thread pelo encadeamento de Message-IDs
+                tid = _thread_por_reply(in_reply_to, references, indice_mid)
+                if not tid:
                     time.sleep(0.03)
                     continue
 
-                # 3. Segurança extra: assunto genérico demais → pular
-                if len(candidatos) > MAX_CANDIDATOS:
-                    log.debug('Assunto "%s" → %d candidatos após filtro, pulando',
-                              assunto_msg[:50], len(candidatos))
-                    time.sleep(0.03)
-                    continue
-
-                # 4. Assunto + participante bateram — buscar mensagem completa
+                # 4. Encontrou — buscar mensagem completa e adicionar se nova
                 detalhe = _detalhar(colaborador, ref['id'])
                 if not detalhe:
                     time.sleep(0.03)
                     continue
 
-                for tid in candidatos:
-                    thread = threads_mod.get(tid) or dict(threads_banco[tid])
-                    thread['mensagens'] = list(thread['mensagens'])
+                thread = threads_mod.get(tid) or dict(threads_banco[tid])
+                thread['mensagens'] = list(thread['mensagens'])
 
-                    if _ja_existe(thread['mensagens'], detalhe):
-                        continue
+                if _ja_existe(thread['mensagens'], detalhe):
+                    time.sleep(0.03)
+                    continue
 
-                    thread['mensagens'].append(detalhe)
-                    thread['mensagens'].sort(key=_chave_data)
-                    threads_mod[tid] = thread
-                    total_novas += 1
-                    log.info('  + thread %s | %s | %s',
-                             tid, detalhe.get('remetente', '')[:45], detalhe.get('data', ''))
+                thread['mensagens'].append(detalhe)
+                thread['mensagens'].sort(key=_chave_data)
+                threads_mod[tid] = thread
+                total_novas += 1
+                log.info('  + thread %s | %s | %s',
+                         tid, detalhe.get('remetente', '')[:45], detalhe.get('data', ''))
 
                 time.sleep(0.05)
 
         time.sleep(0.1)
 
-    # Salvar tudo
     for thread in threads_mod.values():
         _salvar(thread)
 
