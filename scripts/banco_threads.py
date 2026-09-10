@@ -953,6 +953,14 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
             assunto_lower = re.sub(r'^(res|enc|fwd|fw)\s*:\s*', '', assunto.strip(), flags=re.IGNORECASE).lower()
             if any(assunto_lower.startswith(p) for p in _ASSUNTOS_INFORMATIVOS):
                 return 'Concluída', 'Finaud concluiu a solicitação'
+            # §8.7b: checar conteúdo do corpo — mesma lógica de qualquer e-mail
+            if _tem_pergunta_acao(texto_novo):
+                return 'Aguardando Finaud', 'E-mail interno — aguarda ação da Finaud'
+            _fc_int = _FRASES_CONCLUSIVAS_FINAUD + tuple(_termos_db('Finaud concluiu a solicitação'))
+            if any(f in texto_flat for f in _fc_int):
+                return 'Concluída', 'Finaud concluiu a solicitação'
+            if _tem_arquivo_entregavel(ultimo.get('nomes_anexos') or []):
+                return 'Concluída', 'Finaud concluiu a solicitação'
             return 'Aguardando Finaud', 'E-mail interno — aguarda ação da Finaud'
         # Finaud → Cliente
         tem_arquivo_real = _tem_arquivo_entregavel(ultimo.get('nomes_anexos') or [])

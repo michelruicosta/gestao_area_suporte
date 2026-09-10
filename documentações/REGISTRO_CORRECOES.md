@@ -2,6 +2,21 @@
 
 ---
 
+### 10/09 — Script testar_status_ia.py criado — Fase 1 validação de status via GPT-4o
+
+**🔎 Em miúdos:** criado script de análise que compara o status que o sistema calcula com o que o GPT-4o atribuiria, para medir quantos erros reais existem antes de escrever qualquer correção de código.
+
+**O que é:** `scripts/testar_status_ia.py` — somente leitura, não toca no banco nem em produção. Salva resultado em `data/teste_status_ia/YYYYMMDD_faseN_resultados.csv`.
+
+**Fase 1 — 178 threads suspeitas:**
+- Grupo A (53): status AF mas Finaud enviou a última mensagem — suspeita de que deveria ser AC ou Concluída
+- Grupo B (125): status Concluída mas última mensagem do cliente tem "?" — suspeita de erro (maioria pode ser falso alarme: "?" em URLs de assinaturas)
+
+**Validação:** ✅ `pytest tests/ -q`: **656 passed**, zero regressões. Sem teste para o script: análise pontual sem lógica de negócio nova a cobrir.
+**Commit:** `8c54c30`
+
+---
+
 ### 09/09 19:00 — Modal: campos De e Para corrigidos — regras unificadas De/Para por tipo de remetente
 
 **🔎 Em miúdos:** o modal de thread mostrava "suporte@finaud.com.br" no campo Para quando um colaborador da Finaud respondia ao cliente — em vez do nome do cliente. Em outros casos, o campo Para mostrava um colega colaborador ou o suporte@ quando devia mostrar o cliente. Foram identificados 7 padrões problemáticos, todos corrigidos por uma regra única: quando o remetente é cliente → Para = primeiro colaborador Finaud; quando o remetente é colaborador Finaud → Para = primeiro cliente externo.

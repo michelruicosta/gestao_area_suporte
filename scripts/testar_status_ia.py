@@ -29,6 +29,9 @@ from datetime import datetime
 from pathlib import Path
 
 import openai
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).parent.parent / '.env')
 
 BASE_DIR  = Path(__file__).parent.parent
 BANCO     = BASE_DIR / 'data' / 'gestao.db'
@@ -301,8 +304,8 @@ def main() -> None:
             writer.writerow(linha)
             resultados.append(linha)
 
-            icone = '✅' if bate else '❌'
-            print(f'{icone}  IA: {ia["status"]}')
+            icone = 'OK' if bate else 'XX'
+            print(f'[{icone}]  IA: {ia["status"]}')
             if ia['status'] in ('API_ERROR', 'JSON_ERROR', 'PARSE_ERROR'):
                 erros += 1
 

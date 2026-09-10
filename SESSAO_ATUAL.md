@@ -65,6 +65,41 @@
 
 ---
 
+## 📓 Diário da sessão (2026-09-10 continuação) — Script testar_status_ia.py criado
+
+### O que foi feito
+
+1. **Código não-commitado identificado no /iniciar** — 3 arquivos com feature "Jornada ▼" parcialmente staged; Michel decidiu deixar para outro chat.
+
+2. **Script `scripts/testar_status_ia.py` criado** — Fase 1 do teste de IA. Lê as threads suspeitas do banco, envia a última mensagem ao GPT-4o (temperatura=0) e salva CSV com divergências. Fases 2 e 3 disponíveis via `--fase`.
+
+3. **Fase 1 — 178 threads suspeitas** (número maior que os ~80 estimados em 10/09):
+   - Grupo A (53): AF com Finaud enviou por último — suspeita de AF errada
+   - Grupo B (125): Concluída com "?" do cliente — maioria provável falso alarme
+
+4. **pytest:** 656 passed ✅ (3 a mais: testes da Jornada não-commitada). Zero regressões.
+5. **Commit:** `8c54c30`
+
+### Estado atual
+
+**pytest:** 656 passed ✅.
+**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅.
+**Script pronto para rodar:** `set OPENAI_API_KEY=sk-... && python scripts/testar_status_ia.py --fase 1`
+**PENDENCIAS.md:** item "🟡 Teste de IA" permanece aberto — script criado, falta rodar e analisar.
+
+### Próximo passo
+
+🟡 **Rodar a Fase 1** — `python scripts/testar_status_ia.py --fase 1` (custo estimado ~$0,36; requer OPENAI_API_KEY). Analisar o CSV e decidir se o prompt está correto antes de partir para a Fase 2.
+
+**Pendências que continuam:**
+- 🔴 Fix status — "Concluída" quando Finaud perguntou algo ao cliente (executar APÓS o teste de IA)
+- 🔴 Threads irmãs — 11 grupos com thread Concluída + pendente no mesmo caso
+- 🟡 Modal — Cenário 2b (COSIF citada 2×) e `white-space: nowrap` na coluna Valor
+- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
+- ⚠️ Código não-commitado (Jornada ▼): `servidor_telas.py` staged + `gestao_email.html` + `tests/test_servidor_telas.py` — commitar em outro chat
+
+---
+
 ## 📓 Diário da sessão (2026-09-10) — Teste de IA: planejamento e análise de 1.629 threads
 
 ### O que foi feito
