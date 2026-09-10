@@ -1063,44 +1063,95 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
 .fog-rk-antigo { font-size: 0.6875rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0 }
 .fog-rk-dias  { font-size: 0.8125rem; font-weight: 800; text-align: right }
 /* ── Jornada por Colaborador ──────────────────────────────────────────────── */
-.jcol-filtros{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:1.25rem}
-.jcol-input{padding:6px 10px;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--text);font-size:.84rem}
-.jcol-lbl{font-size:.82rem;color:var(--muted)}
-.jcol-btn{padding:6px 18px;border-radius:7px;background:var(--accent);color:#fff;font-size:.84rem;font-weight:600;border:none;cursor:pointer}
+.jcol-filter-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:20px}
+.jcol-fg{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:12px;align-items:end}
+@media(max-width:600px){.jcol-fg{grid-template-columns:1fr 1fr}.jcol-fg-btn-wrap{grid-column:1/-1}}
+.jcol-fg-lbl{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:5px}
+.jcol-fg-sel{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:.875rem;color:var(--text);background:var(--surface2);outline:none;-webkit-appearance:none;appearance:none}
+.jcol-fg-sel:focus{border-color:var(--accent)}
+.jcol-fg .dt-field{width:100%;padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);display:flex;align-items:center;gap:6px;cursor:pointer;box-sizing:border-box}
+.jcol-fg .dt-field:hover{border-color:var(--accent)}
+.jcol-fg .dt-disp{font-size:.875rem;flex:1;width:auto;white-space:nowrap}
+.jcol-fg .dt-disp.vazio{display:flex;color:var(--muted)}
+.jcol-btn{padding:9px 22px;border-radius:6px;background:var(--accent);color:#fff;font-size:.875rem;font-weight:600;border:none;cursor:pointer;white-space:nowrap}
 .jcol-btn:hover{opacity:.9}
-.jcol-placeholder{padding:40px;text-align:center;color:var(--muted);font-size:.9rem}
-.jcol-cards{display:flex;gap:12px;margin-bottom:1.25rem;flex-wrap:wrap}
-.jcol-card{flex:1;min-width:130px;padding:14px 18px;border-radius:10px;border:1px solid var(--border);border-left:3px solid var(--border);background:var(--surface);cursor:pointer;transition:.15s}
-.jcol-card:hover,.jcol-card.ativo{border-left-color:var(--accent);background:rgba(163,209,51,.05)}
-.jcol-card.ambar:hover,.jcol-card.ambar.ativo{border-left-color:#f59e0b;background:rgba(245,158,11,.05)}
-.jcol-card.azul:hover,.jcol-card.azul.ativo{border-left-color:#3b82f6;background:rgba(59,130,246,.05)}
-.jcol-card-num{font-size:1.7rem;font-weight:700;color:var(--text);line-height:1.1}
-.jcol-card-lbl{font-size:.8rem;color:var(--muted);margin-top:4px}
-.jcol-graf-wrap{border:1px solid var(--border);border-radius:10px;background:var(--surface);padding:16px 20px;margin-bottom:1.25rem}
-.jcol-graf-titulo{font-size:.875rem;font-weight:700;color:var(--text);margin-bottom:10px}
-.jcol-graf-leg{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-.jcol-chip{display:inline-flex;align-items:center;gap:5px;font-size:.78rem;color:var(--muted);cursor:pointer;padding:2px 8px;border-radius:20px;border:1px solid var(--border)}
-.jcol-chip:hover,.jcol-chip.ativo{border-color:var(--accent);color:var(--text)}
-.jcol-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.jcol-grafico{display:flex;align-items:flex-end;gap:6px;overflow-x:auto;padding-bottom:8px;min-height:60px}
-.jcol-bar-grp{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:40px}
-.jcol-bar-stk{display:flex;flex-direction:column-reverse;width:26px;gap:1px;align-items:stretch}
-.jcol-bar-lbl{font-size:.68rem;color:var(--muted);white-space:nowrap}
-.jcol-fog-card{border:1px solid var(--border);border-radius:10px;background:var(--surface);margin-bottom:10px;overflow:hidden}
-.jcol-fog-hd{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border)}
-.jcol-fog-id{font-size:.78rem;font-weight:700;color:var(--muted);flex-shrink:0}
-.jcol-fog-titulo{font-size:.875rem;font-weight:600;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.jcol-fog-bd{padding:10px 14px}
-.jcol-scroll{overflow-x:auto;padding-bottom:4px}
-.jcol-etapas{display:flex;align-items:center;gap:5px;width:max-content;padding:2px 0}
-.jcol-et{display:flex;flex-direction:column;align-items:center;padding:4px 9px;border-radius:7px;border:1px solid var(--border);background:var(--accent-bg);min-width:62px;text-align:center;gap:1px}
-.jcol-et.colab{border-color:var(--accent);background:rgba(163,209,51,.1)}
-.jcol-et.atual{border-color:#3b82f6;background:rgba(59,130,246,.08)}
-.jcol-et-nome{font-size:11px;font-weight:600;color:var(--text);white-space:nowrap}
-.jcol-et-dias{font-size:12px;font-weight:700;color:var(--muted)}
-.jcol-et.colab .jcol-et-dias{color:var(--accent)}
-.jcol-et.atual .jcol-et-dias{color:#3b82f6}
-.jcol-seta{color:var(--muted);font-size:12px;flex-shrink:0;padding:0 2px}
+.jcol-placeholder{text-align:center;padding:48px 16px;color:var(--muted);font-size:.875rem}
+/* result heading */
+.jcol-rh{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.jcol-rh h2{font-size:15px;font-weight:600;color:var(--text)}
+.jcol-rh-tag{font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:3px 10px}
+/* summary card */
+.jcol-summ-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:20px}
+.jcol-summ-ttl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:14px}
+.jcol-sg{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.jcol-si{text-align:center;padding:14px 10px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;transition:.15s;user-select:none}
+.jcol-si:hover,.jcol-si.ativo{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.jcol-sn{font-size:26px;font-weight:700;line-height:1;margin-bottom:5px}
+.jcol-sn-t{color:var(--accent)}.jcol-sn-a{color:#C0392B}.jcol-sn-n{color:var(--muted)}
+.jcol-sd{font-size:12px;font-weight:600;color:var(--text);line-height:1.3;margin-bottom:3px}
+.jcol-sd2{font-size:10px;color:var(--muted);line-height:1.35}
+.jcol-note{font-size:11px;color:var(--muted);margin-top:12px;line-height:1.5}
+/* chart card */
+.jcol-chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px 20px;margin-bottom:20px}
+.jcol-chart-ttl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:14px}
+.jcol-chart-body{display:flex;align-items:flex-end;gap:6px;height:120px;padding-bottom:28px;position:relative;border-bottom:1px solid var(--border)}
+.jcol-chart-col{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;min-width:28px;cursor:pointer;transition:opacity .15s}
+.jcol-chart-col:hover{opacity:.8}
+.jcol-sbar{display:flex;flex-direction:column-reverse;width:100%;border-radius:3px 3px 0 0;overflow:hidden;min-height:3px}
+.jcol-sbar-s{width:100%;transition:height .2s}
+.jcol-s-ainda{background:var(--accent)}.jcol-s-passou{background:#F59E0B}.jcol-s-final{background:#10b981}
+.jcol-chart-cnt{font-size:10px;font-weight:600;color:var(--text);margin-bottom:3px;line-height:1}
+.jcol-chart-lbl{position:absolute;bottom:-20px;font-size:10px;color:var(--muted);white-space:nowrap}
+.jcol-chart-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.jcol-leg-chip{font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;border:1px solid;cursor:pointer;background:transparent;font-family:inherit;transition:opacity .15s}
+.jcol-leg-chip.l-ainda{color:var(--accent);border-color:var(--accent)}
+.jcol-leg-chip.l-passou{color:#B45309;border-color:#F59E0B}
+.jcol-leg-chip.l-final{color:#0A7550;border-color:#10b981;opacity:.4;cursor:not-allowed}
+.jcol-leg-chip.inativo{opacity:.3}
+/* FOG cards */
+.jcol-fog-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:12px;overflow:hidden}
+.jcol-fog-head{display:flex;align-items:center;gap:10px;padding:13px 18px;background:var(--surface2);border-bottom:1px solid var(--border)}
+.jcol-fid{font-size:11px;font-weight:700;color:var(--accent);background:var(--accent-bg);border-radius:4px;padding:2px 8px;white-space:nowrap}
+.jcol-ftit{font-size:.875rem;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.jcol-badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;white-space:nowrap}
+.jcol-badge-ab{color:#C0392B;background:#FEF2F1;border:1px solid #FACCCA}
+.jcol-badge-fc{color:#0A7550;background:#EDFAF4;border:1px solid #B8EDD8}
+.jcol-fog-body{padding:14px 18px 16px}
+.jcol-jl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:11px}
+/* flow jornada */
+.jcol-flow-outer{position:relative}
+.jcol-flow{display:flex;align-items:stretch;overflow-x:auto;padding-bottom:2px;gap:0;scrollbar-width:none;-ms-overflow-style:none}
+.jcol-flow::-webkit-scrollbar{display:none}
+.jcol-csb-track{height:4px;background:var(--border);border-radius:2px;margin-top:5px;cursor:pointer;position:relative;display:none}
+.jcol-csb-thumb{position:absolute;top:0;height:4px;background:var(--muted);border-radius:2px;cursor:pointer;min-width:16px;transition:background .15s}
+.jcol-csb-track:hover .jcol-csb-thumb,.jcol-csb-thumb:hover{background:var(--accent)}
+.jcol-step{display:flex;align-items:center;flex-shrink:0}
+.jcol-node{display:flex;flex-direction:column;align-items:center;min-width:72px;max-width:90px}
+.jcol-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid var(--border);background:var(--surface2);color:var(--muted);margin-bottom:4px;flex-shrink:0}
+.jcol-av-hi{border-color:#BFDBFE;background:#DBEAFE;color:#1D4ED8}
+.jcol-av-cur{border-color:#FDE68A;background:#FFFBEB;color:#B45309}
+.jcol-av-hi-cur{border-color:#FDE68A;background:#FFFBEB;color:#B45309}
+.jcol-nn{font-size:11px;font-weight:500;color:var(--text);text-align:center;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jcol-nn-hi{color:#1D4ED8;font-weight:600}
+.jcol-nd{font-size:10px;color:var(--muted);margin-top:1px;font-variant-numeric:tabular-nums}
+.jcol-nd-cur{color:#B45309;font-weight:600}
+.jcol-ndt{font-size:10px;color:var(--muted);margin-top:1px}
+.jcol-arr{color:var(--muted);font-size:18px;margin:0 2px;flex-shrink:0;margin-bottom:20px;align-self:flex-start;padding-top:10px}
+.jcol-badge-mini{font-size:9px;font-weight:700;text-transform:uppercase;border-radius:10px;padding:1px 6px;margin-top:2px;border:1px solid}
+.jcol-badge-cur{color:#B45309;background:#FFFBEB;border-color:#FDE68A}
+/* distribuição por pessoa */
+.jcol-dist-wrap{padding:12px 18px 14px;border-top:1px solid var(--border)}
+.jcol-dist-ttl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:10px}
+.jcol-dist-total{font-size:11px;color:var(--muted);float:right;font-weight:500}
+.jcol-dist-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.jcol-dist-row:last-child{margin-bottom:0}
+.jcol-dist-name{font-size:11px;font-weight:500;width:60px;text-align:right;flex-shrink:0;color:var(--text)}
+.jcol-dist-name-hi{color:#C0392B;font-weight:700}
+.jcol-dist-track{flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.jcol-dist-fill{height:100%;border-radius:4px;background:var(--accent);opacity:.6}
+.jcol-dist-fill-hi{background:#C0392B;opacity:1}
+.jcol-dist-days{font-size:11px;font-variant-numeric:tabular-nums;width:36px;color:var(--muted);flex-shrink:0}
+.jcol-dist-days-hi{color:#C0392B;font-weight:700}
 </style>
 </head>
 <body>
@@ -2298,60 +2349,79 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
         <button class="btn-fullscreen" onclick="toggleFullscreen()" title="Tela cheia">⛶</button>
       </div>
 
-      <div class="jcol-filtros">
-        <select id="jcol-select" class="jcol-input">
-          <option value="">Colaborador…</option>
-          <option value="Fabio">Fabio</option>
-          <option value="Luiz">Luiz</option>
-          <option value="Antonio">Antonio</option>
-          <option value="Bruno">Bruno</option>
-          <option value="Daniela">Daniela</option>
-        </select>
-        <span class="jcol-lbl">De</span>
-        <label class="dt-field" onclick="_abrirCal('jcol-de',event)">
-          <span class="dt-ico">📅</span>
-          <span class="dt-disp vazio" id="jcol-de-disp">dd/mm/aaaa</span>
-          <input type="hidden" id="jcol-de" class="dt-inp">
-        </label>
-        <span class="jcol-lbl">Até</span>
-        <label class="dt-field" onclick="_abrirCal('jcol-ate',event)">
-          <span class="dt-ico">📅</span>
-          <span class="dt-disp vazio" id="jcol-ate-disp">dd/mm/aaaa</span>
-          <input type="hidden" id="jcol-ate" class="dt-inp">
-        </label>
-        <button class="jcol-btn" onclick="buscarJornadaColab()">Buscar</button>
+      <!-- Filtro -->
+      <div class="jcol-filter-card">
+        <div class="jcol-fg">
+          <div>
+            <label class="jcol-fg-lbl">Colaborador</label>
+            <select id="jcol-select" class="jcol-fg-sel">
+              <option value="">Selecione…</option>
+              <option value="Fabio">Fabio</option>
+              <option value="Luiz">Luiz</option>
+              <option value="Antonio">Antonio</option>
+              <option value="Bruno">Bruno</option>
+              <option value="Daniela">Daniela</option>
+            </select>
+          </div>
+          <div>
+            <label class="jcol-fg-lbl">De</label>
+            <label class="dt-field" onclick="_abrirCal('jcol-de',event)">
+              <span class="dt-ico">📅</span>
+              <span class="dt-disp vazio" id="jcol-de-disp">dd/mm/aaaa</span>
+              <input type="hidden" id="jcol-de" class="dt-inp">
+            </label>
+          </div>
+          <div>
+            <label class="jcol-fg-lbl">Até</label>
+            <label class="dt-field" onclick="_abrirCal('jcol-ate',event)">
+              <span class="dt-ico">📅</span>
+              <span class="dt-disp vazio" id="jcol-ate-disp">dd/mm/aaaa</span>
+              <input type="hidden" id="jcol-ate" class="dt-inp">
+            </label>
+          </div>
+          <div class="jcol-fg-btn-wrap">
+            <button class="jcol-btn" onclick="buscarJornadaColab()">Buscar</button>
+          </div>
+        </div>
       </div>
 
-      <div id="jcol-msg" class="jcol-placeholder">Selecione um colaborador e o período para visualizar a jornada dos FOGs.</div>
+      <div id="jcol-msg" class="jcol-placeholder">Escolha um colaborador e o período, depois clique em <strong>Buscar</strong>.</div>
 
       <div id="jcol-resultado" hidden>
 
-        <div class="jcol-cards">
-          <div class="jcol-card" id="jcol-c-total" onclick="jcolFiltrar('total')">
-            <div class="jcol-card-num" id="jcol-n-total">0</div>
-            <div class="jcol-card-lbl" id="jcol-l-total">Passaram por —</div>
-          </div>
-          <div class="jcol-card ambar" id="jcol-c-passou" onclick="jcolFiltrar('passou')">
-            <div class="jcol-card-num" id="jcol-n-passou">0</div>
-            <div class="jcol-card-lbl">Passou adiante</div>
-          </div>
-          <div class="jcol-card azul" id="jcol-c-ainda" onclick="jcolFiltrar('ainda')">
-            <div class="jcol-card-num" id="jcol-n-ainda">0</div>
-            <div class="jcol-card-lbl" id="jcol-l-ainda">Com — hoje</div>
-          </div>
+        <!-- Heading -->
+        <div class="jcol-rh">
+          <h2 id="jcol-rh-txt"></h2>
+          <span class="jcol-rh-tag" id="jcol-rh-ct"></span>
         </div>
 
-        <div class="jcol-graf-wrap">
-          <div class="jcol-graf-titulo">FOGs por mês de chegada ao colaborador</div>
-          <div class="jcol-graf-leg">
-            <span class="jcol-chip" id="jcol-chip-azul" onclick="jcolFiltrar('ainda')"><span class="jcol-dot" style="background:#3b82f6"></span>Com ele hoje</span>
-            <span class="jcol-chip" id="jcol-chip-ambar" onclick="jcolFiltrar('passou')"><span class="jcol-dot" style="background:#f59e0b"></span>Passou adiante</span>
-            <span class="jcol-chip" id="jcol-chip-verde" onclick="jcolFiltrar('final')"><span class="jcol-dot" style="background:#10b981"></span>Finalizado</span>
-            <span class="jcol-chip" id="jcol-chip-total" onclick="jcolFiltrar('total')">Todos</span>
+        <!-- Cards de resumo -->
+        <div class="jcol-summ-card">
+          <div class="jcol-summ-ttl">Resumo <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:4px">— clique para filtrar</span></div>
+          <div class="jcol-sg">
+            <div class="jcol-si ativo" id="jcol-c-total" onclick="jcolFiltrar('total')">
+              <div class="jcol-sn jcol-sn-t" id="jcol-n-total">0</div>
+              <div class="jcol-sd" id="jcol-l-total">Passaram por —</div>
+              <div class="jcol-sd2">tocou no caso neste período</div>
+            </div>
+            <div class="jcol-si" id="jcol-c-passou" onclick="jcolFiltrar('passou')">
+              <div class="jcol-sn" style="color:#B45309" id="jcol-n-passou">0</div>
+              <div class="jcol-sd">Passou adiante</div>
+              <div class="jcol-sd2">tocou e encaminhou para outra pessoa</div>
+            </div>
+            <div class="jcol-si" id="jcol-c-ainda" onclick="jcolFiltrar('ainda')">
+              <div class="jcol-sn jcol-sn-n" id="jcol-n-ainda">0</div>
+              <div class="jcol-sd" id="jcol-l-ainda">Com — hoje</div>
+              <div class="jcol-sd2">é o responsável atual pelo caso</div>
+            </div>
           </div>
-          <div class="jcol-grafico" id="jcol-barras"></div>
+          <p class="jcol-note">⚠️ Casos encerrados não aparecem aqui — o FogBugz não registra o encerramento de forma que consigamos identificar via API.</p>
         </div>
 
+        <!-- Gráfico mensal -->
+        <div class="jcol-chart-card" id="jcol-chart-mensal"></div>
+
+        <!-- Lista de FOGs -->
         <div id="jcol-lista"></div>
 
       </div>
@@ -5485,19 +5555,19 @@ async function buscarJornadaColab() {
   const ate   = document.getElementById('jcol-ate').value;
   const msg   = document.getElementById('jcol-msg');
   const res   = document.getElementById('jcol-resultado');
-  if (!colab) { msg.textContent = 'Selecione um colaborador.'; msg.hidden = false; res.hidden = true; return; }
-  if (!de || !ate) { msg.textContent = 'Preencha o período.'; msg.hidden = false; res.hidden = true; return; }
-  msg.textContent = 'Buscando FOGs no FogBugz — pode levar alguns segundos…';
+  if (!colab) { msg.innerHTML = 'Selecione um colaborador.'; msg.hidden = false; res.hidden = true; return; }
+  if (!de || !ate) { msg.innerHTML = 'Preencha o período.'; msg.hidden = false; res.hidden = true; return; }
+  msg.innerHTML = 'Buscando FOGs no FogBugz — pode levar alguns segundos…';
   msg.hidden = false; res.hidden = true;
   try {
     const r = await fetch(`/api/fogbugz/jornada?colaborador=${encodeURIComponent(colab)}&de=${de}&ate=${ate}`);
-    if (!r.ok) { const e = await r.json().catch(()=>{}); msg.textContent = (e && e.erro) || 'Erro ao buscar.'; return; }
+    if (!r.ok) { const e = await r.json().catch(()=>{}); msg.innerHTML = (e && e.erro) || 'Erro ao buscar.'; return; }
     _jcolDados = await r.json();
     _jcolFiltroAtivo = 'total';
     _jcolRenderizar();
     msg.hidden = true; res.hidden = false;
   } catch(e) {
-    msg.textContent = 'Erro de conexão ao buscar dados.';
+    msg.innerHTML = 'Erro de conexão ao buscar dados.';
   }
 }
 
@@ -5508,12 +5578,26 @@ function _jcolClassif(fog, pessoa) {
   return 'passou';
 }
 
+function _jcolMesclar(etapas) {
+  if (!etapas.length) return [];
+  const m = [{...etapas[0]}];
+  for (let i = 1; i < etapas.length; i++) {
+    const pr = m[m.length-1], cr = etapas[i];
+    if (cr.p === pr.p) { pr.d += cr.d; if (cr.a) pr.a = true; }
+    else m.push({...cr});
+  }
+  return m;
+}
+
 function _jcolRenderizar() {
   if (!_jcolDados) return;
-  const { colaborador: colab, fogs } = _jcolDados;
+  const { colaborador: colab, fogs, de, ate } = _jcolDados;
   const nTotal  = fogs.length;
   const nPassou = fogs.filter(f => _jcolClassif(f, colab) === 'passou').length;
   const nAinda  = fogs.filter(f => _jcolClassif(f, colab) === 'ainda').length;
+  const fmtD = s => { if (!s) return ''; const [y,m,d] = s.split('-'); return `${d}/${m}/${y}`; };
+  document.getElementById('jcol-rh-txt').textContent = `${colab} — ${fmtD(de)} a ${fmtD(ate)}`;
+  document.getElementById('jcol-rh-ct').textContent  = `${nTotal} FOG${nTotal !== 1 ? 's' : ''} encontrado${nTotal !== 1 ? 's' : ''}`;
   document.getElementById('jcol-n-total').textContent  = nTotal;
   document.getElementById('jcol-n-passou').textContent = nPassou;
   document.getElementById('jcol-n-ainda').textContent  = nAinda;
@@ -5521,10 +5605,6 @@ function _jcolRenderizar() {
   document.getElementById('jcol-l-ainda').textContent  = `Com ${colab} hoje`;
   ['total','passou','ainda'].forEach(t => {
     document.getElementById('jcol-c-' + t)?.classList.toggle('ativo', _jcolFiltroAtivo === t);
-  });
-  const mapaChip = {azul:'ainda', ambar:'passou', verde:'final', total:'total'};
-  Object.entries(mapaChip).forEach(([k,v]) => {
-    document.getElementById('jcol-chip-' + k)?.classList.toggle('ativo', _jcolFiltroAtivo === v);
   });
   _jcolRenderGrafico(fogs, colab);
   _jcolRenderLista(fogs, colab, _jcolFiltroAtivo);
@@ -5545,74 +5625,148 @@ function _jcolRenderGrafico(fogs, colab) {
     porMes[mes][_jcolClassif(f, colab)]++;
   });
   const meses = Object.keys(porMes).sort();
-  if (!meses.length) { document.getElementById('jcol-barras').innerHTML = ''; return; }
+  const card = document.getElementById('jcol-chart-mensal');
+  if (!meses.length) { card.innerHTML = ''; return; }
   const maxV = Math.max(...meses.map(m => porMes[m].ainda + porMes[m].passou + porMes[m].final), 1);
-  const ALT = 120;
-  document.getElementById('jcol-barras').innerHTML = meses.map(m => {
+  const H = 72;
+  const bars = meses.map(m => {
     const d = porMes[m];
     const tot = d.ainda + d.passou + d.final;
-    const altTot = Math.max(Math.round((tot/maxV)*ALT), tot>0?4:0);
-    const hA = tot > 0 ? Math.round((d.ainda/tot)*altTot) : 0;
-    const hP = tot > 0 ? Math.round((d.passou/tot)*altTot) : 0;
-    const hF = Math.max(altTot - hA - hP, d.final>0?3:0);
-    const [yr, mo] = m.split('-');
-    const lbl = _jcMeses[+mo-1] + (meses.length > 12 ? ` ${yr.slice(2)}` : '');
+    const pxTot = Math.round((tot/maxV)*H);
     const segs = [
-      hA ? `<div style="height:${hA}px;background:#3b82f6;border-radius:2px"></div>` : '',
-      hP ? `<div style="height:${hP}px;background:#f59e0b;border-radius:2px"></div>` : '',
-      hF ? `<div style="height:${hF}px;background:#10b981;border-radius:2px"></div>` : '',
+      d.ainda  ? `<div class="jcol-sbar-s jcol-s-ainda" style="height:${Math.round((d.ainda/maxV)*H)}px"></div>` : '',
+      d.passou ? `<div class="jcol-sbar-s jcol-s-passou" style="height:${Math.round((d.passou/maxV)*H)}px"></div>` : '',
+      d.final  ? `<div class="jcol-sbar-s jcol-s-final"  style="height:${Math.round((d.final/maxV)*H)}px"></div>` : '',
     ].filter(Boolean).join('');
-    return `<div class="jcol-bar-grp" title="${lbl}: ${tot} FOG(s)">
-      <div class="jcol-bar-stk" style="display:flex;flex-direction:column-reverse;width:26px;gap:1px;align-items:stretch">${segs}</div>
-      <div class="jcol-bar-lbl">${lbl}</div>
+    const [yr, mo] = m.split('-');
+    const lbl = _jcMeses[+mo-1] + '/' + yr.slice(2);
+    return `<div class="jcol-chart-col" title="${lbl}: ${tot} FOG(s)">
+      <div class="jcol-chart-cnt">${tot}</div>
+      <div class="jcol-sbar" style="height:${Math.max(pxTot,3)}px">${segs}</div>
+      <div class="jcol-chart-lbl">${lbl}</div>
     </div>`;
   }).join('');
+  card.innerHTML = `<div class="jcol-chart-ttl">Casos que chegaram a ${colab} por mês</div>
+    <div class="jcol-chart-body">${bars}</div>
+    <div class="jcol-chart-legend">
+      <button class="jcol-leg-chip l-ainda" onclick="jcolFiltrar('ainda')">Com ele hoje</button>
+      <button class="jcol-leg-chip l-passou" onclick="jcolFiltrar('passou')">Passou adiante</button>
+      <button class="jcol-leg-chip l-final" disabled title="Não disponível via API">Finalizado <span style="font-size:9px;font-weight:400">· não disponível</span></button>
+    </div>`;
 }
 
 function _jcolRenderLista(fogs, colab, filtro) {
   const _esc = s => (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const ini2 = s => s ? s.slice(8,10)+'/'+s.slice(5,7) : '';
   const lista = filtro === 'total' ? fogs : fogs.filter(f => _jcolClassif(f, colab) === filtro);
   if (!lista.length) {
-    document.getElementById('jcol-lista').innerHTML = '<div class="jcol-placeholder">Nenhum FOG encontrado para este filtro.</div>';
+    document.getElementById('jcol-lista').innerHTML = '<p style="text-align:center;color:var(--muted);padding:32px 0;font-size:.875rem">Nenhum FOG nesta combinação de filtros</p>';
     return;
   }
-  const corClassif = {ainda:'#3b82f6', passou:'#f59e0b', final:'#10b981'};
-  const textoClassif = {ainda:'Com ele hoje', passou:'Passou adiante', final:'Finalizado'};
   document.getElementById('jcol-lista').innerHTML = lista.map(fog => {
-    const classif  = _jcolClassif(fog, colab);
-    const cor      = corClassif[classif];
-    const badgeTxt = textoClassif[classif];
-    const totDias  = fog.e.reduce((s,e)=>s+e.d,0);
-    const etapasHtml = fog.e.map((e,i) => {
-      let cls = 'jcol-et';
-      if (e.p === colab) cls += ' colab';
-      if (e.a) cls += ' atual';
-      const seta = i < fog.e.length-1 ? '<span class="jcol-seta">→</span>' : '';
-      const data = e.i ? `<span style="font-size:9px;color:var(--muted)">${e.i.slice(8,10)}/${e.i.slice(5,7)}</span>` : '';
-      return `<div class="${cls}">
-        <span class="jcol-et-nome">${_esc(e.p)}</span>${data}
-        <span class="jcol-et-dias">${e.d}d</span>
-      </div>${seta}`;
+    const classif = _jcolClassif(fog, colab);
+    const merged  = _jcolMesclar(fog.e);
+    const maxDias = Math.max(...merged.filter(e => e.d > 0).map(e => e.d), 0);
+    // jornada: avatar nodes
+    const flowHtml = merged.map((e, i) => {
+      const isHi   = e.p === colab;
+      const isGarg = e.d === maxDias && maxDias > 0 && merged.filter(x => x.d === maxDias).length === 1;
+      let avCls = 'jcol-av';
+      let nnCls = 'jcol-nn';
+      let ndCls = 'jcol-nd';
+      if (isHi && e.a) { avCls += ' jcol-av-hi-cur'; ndCls += ' jcol-nd-cur'; }
+      else if (isHi)   { avCls += ' jcol-av-hi'; nnCls += ' jcol-nn-hi'; }
+      else if (e.a)    { avCls += ' jcol-av-cur'; ndCls += ' jcol-nd-cur'; }
+      const iniciais = _esc(e.p.slice(0,2).toUpperCase());
+      const dtLabel  = e.a
+        ? `<div class="jcol-ndt">desde ${ini2(e.i)}</div>`
+        : `<div class="jcol-ndt">${ini2(e.i)}</div>`;
+      const curBadge  = e.a ? `<div class="jcol-badge-mini jcol-badge-cur">atual</div>` : '';
+      const arr = i < merged.length-1 ? '<div class="jcol-arr">›</div>' : '';
+      return `<div class="jcol-step">
+        <div class="jcol-node">
+          <div class="${avCls}">${iniciais}</div>
+          <div class="${nnCls}">${_esc(e.p)}</div>
+          ${dtLabel}
+          <div class="${ndCls}">${e.d}d</div>
+          ${curBadge}
+        </div>
+      </div>${arr}`;
     }).join('');
-    const distHtml = totDias > 0
-      ? fog.e.map(e => {
-          const w = Math.max(Math.round((e.d/totDias)*100), e.d>0?2:0);
-          const bg = e.p === colab ? 'var(--accent)' : 'var(--border)';
-          return `<div style="flex:${w};background:${bg};height:100%"></div>`;
-        }).join('')
-      : '';
+    // distribuição por pessoa (linhas)
+    const totPessoa = {};
+    fog.e.forEach(e => { totPessoa[e.p] = (totPessoa[e.p]||0) + e.d; });
+    const totalDias = Object.values(totPessoa).reduce((a,b)=>a+b,0);
+    const maxD = totalDias > 0 ? Math.max(...Object.values(totPessoa)) : 0;
+    const distHtml = totalDias > 0 ? `<div class="jcol-dist-wrap">
+      <div class="jcol-dist-ttl">Tempo por pessoa <span class="jcol-dist-total">Total: ${totalDias}d</span></div>
+      ${Object.entries(totPessoa).sort((a,b)=>b[1]-a[1]).map(([p,d]) => {
+        const isMax  = d === maxD;
+        const pct    = Math.round((d/totalDias)*100);
+        const nmCls  = 'jcol-dist-name' + (isMax ? ' jcol-dist-name-hi' : '');
+        const fillCls= 'jcol-dist-fill' + (isMax ? ' jcol-dist-fill-hi' : '');
+        const dyCls  = 'jcol-dist-days' + (isMax ? ' jcol-dist-days-hi' : '');
+        return `<div class="jcol-dist-row">
+          <div class="${nmCls}">${_esc(p)}</div>
+          <div class="jcol-dist-track"><div class="${fillCls}" style="width:${pct}%"></div></div>
+          <div class="${dyCls}">${d}d</div>
+        </div>`;
+      }).join('')}
+    </div>` : '';
+    const badgeCls = fog.ab ? 'jcol-badge jcol-badge-ab' : 'jcol-badge jcol-badge-fc';
+    const badgeTxt = fog.ab ? '● Em aberto' : '✓ Finalizado';
     return `<div class="jcol-fog-card">
-      <div class="jcol-fog-hd">
-        <span class="jcol-fog-id">#${_esc(fog.id)}</span>
-        <span class="jcol-fog-titulo" title="${_esc(fog.t)}">${_esc(fog.t)}</span>
-        <span style="font-size:.7rem;font-weight:600;padding:2px 8px;border-radius:20px;flex-shrink:0;background:${cor}22;color:${cor}">${_esc(badgeTxt)}</span>
+      <div class="jcol-fog-head">
+        <span class="jcol-fid">FOG ${_esc(fog.id)}</span>
+        <span class="jcol-ftit" title="${_esc(fog.t)}">${_esc(fog.t)}</span>
+        <span class="${badgeCls}">${badgeTxt}</span>
       </div>
-      <div class="jcol-fog-bd">
-        <div class="jcol-scroll"><div class="jcol-etapas">${etapasHtml}</div></div>
-        ${totDias>0 ? `<div style="display:flex;height:5px;border-radius:3px;overflow:hidden;margin-top:8px">${distHtml}</div>` : ''}
+      <div class="jcol-fog-body">
+        <div class="jcol-jl">Jornada do caso</div>
+        <div class="jcol-flow-outer">
+          <div class="jcol-flow">${flowHtml}</div>
+        </div>
       </div>
+      ${distHtml}
     </div>`;
   }).join('');
+  _jcolInitScrollbars();
+}
+
+function _jcolInitScrollbars() {
+  document.querySelectorAll('#pag-fog-jornada-colab .jcol-flow').forEach(flow => {
+    if (flow.dataset.csb) return;
+    flow.dataset.csb = '1';
+    const outer = flow.closest('.jcol-flow-outer');
+    if (!outer) return;
+    const track = document.createElement('div');
+    track.className = 'jcol-csb-track';
+    const thumb = document.createElement('div');
+    thumb.className = 'jcol-csb-thumb';
+    track.appendChild(thumb);
+    outer.appendChild(track);
+    function upd() {
+      const ratio = flow.scrollWidth > flow.clientWidth ? flow.clientWidth / flow.scrollWidth : 1;
+      if (ratio >= 1) { track.style.display = 'none'; return; }
+      track.style.display = 'block';
+      const tw = Math.max(ratio * track.clientWidth, 16);
+      thumb.style.width = tw + 'px';
+      const mxS = flow.scrollWidth - flow.clientWidth;
+      const mxL = track.clientWidth - tw;
+      thumb.style.left = (mxS > 0 ? (flow.scrollLeft / mxS) * mxL : 0) + 'px';
+    }
+    flow.addEventListener('scroll', upd);
+    new ResizeObserver(upd).observe(flow);
+    setTimeout(upd, 50);
+    let drag = false, sx = 0, ss = 0;
+    thumb.addEventListener('mousedown', e => { drag=true; sx=e.clientX; ss=flow.scrollLeft; e.preventDefault(); });
+    document.addEventListener('mousemove', e => {
+      if (!drag) return;
+      const mxL = track.clientWidth - thumb.clientWidth;
+      flow.scrollLeft = ss + (e.clientX - sx) * ((flow.scrollWidth - flow.clientWidth) / mxL);
+    });
+    document.addEventListener('mouseup', () => { drag = false; });
+  });
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
