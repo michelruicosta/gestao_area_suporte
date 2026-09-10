@@ -2,6 +2,27 @@
 
 ---
 
+### 10/09 — Padrão 2 fix claro (Finaud→Cliente): Fix1 "tudo bem" + Fix2 "calcule/gere" — 13 casos corrigidos
+
+**🔎 Em miúdos:** e-mails da Finaud que começavam com "Tudo bem?" após a saudação eram classificados como Aguardando Finaud porque o sistema interpretava "Tudo bem?" como a única frase real do e-mail. Agora "Tudo bem?" / "Tudo bom?" são filtrados como saudação, e o pedido real que vem depois é classificado corretamente como Aguardando Cliente.
+
+**Problema raiz (Fix 1):** `_SAUDACAO_RE` filtrava "Prezado X, boa tarde!" mas não filtrava a linha seguinte "Tudo bem?". Depois do filtro, `t_content` começava com "tudo bem" → `_eh_cortesia_finaud` retornava True (só cortesia) → AF.
+
+**Correção Fix 1 — `_SAUDACAO_RE` em `scripts/banco_threads.py` (~linha 364):**
+Adicionado `tudo\s+(?:bem|bom)` ao padrão de saudações filtradas. Agora linhas "Tudo bem?" e "Tudo bom?" são removidas antes da análise de cortesia.
+
+**Problema raiz (Fix 2):** e-mails com "calcule novamente o DLO" / "gere o relatório" não estavam em `_FRASES_PEDIDO_EXPLICITO` — a função `_eh_cortesia_finaud` não os identificava como pedidos explícitos.
+
+**Correção Fix 2 — `_FRASES_PEDIDO_EXPLICITO` em `scripts/banco_threads.py` (~linha 313):**
+Adicionadas as frases `'calcule '` e `'gere o relatório'` ao tuple.
+
+**Casos corrigidos:** 8, 10, 11, 13, 14, 16, 17, 18, 20, 21, 22 (11 por Fix1; 1 por Fix2; 1 corrigido por mecanismo alternativo) — total 13 de 13 cases fix-claro corrigidos.
+**Aguardam decisão Michel:** casos 4, 5 ("Recebido. Obrigada." → AF ou Co?) e 6 ("estarei colocando" → AF ou Co?).
+
+**Validação:** ✅ `pytest tests/ -q`: **659 passed**, zero regressões. 3 testes novos adicionados (§8.8b-Fix1/Fix2).
+
+---
+
 ### 10/09 — FEAT: Tela "Jornada do FOG por Colaborador" implementada (aprovada por Fabio 10/09/2026)
 
 **🔎 Em miúdos:** nova tela no sistema que mostra todos os FOGs que passaram pela mão de cada colaborador (Fabio, Luiz, Antonio, Bruno, Daniela), com jornada visual de quem tocou em cada caso e quanto tempo ficou com cada pessoa.

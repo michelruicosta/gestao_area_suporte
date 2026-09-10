@@ -311,6 +311,8 @@ _FRASES_PEDIDO_EXPLICITO = (
     'solicito ',        # forma singular: "solicito também os balanços", "solicito que envie"
     'vou precisar',    # "vou precisar dos COSIFs", "vou precisar que você"
     'no aguardo',      # Fix S: "No aguardo." = Finaud está aguardando resposta do cliente → AC
+    'calcule ',        # "calcule novamente o DLO" — pedido de ação ao cliente
+    'gere o relatório',  # "gere o relatório DLO" — pedido de documento
 )
 
 # Subconjunto de _FRASES_PEDIDO_EXPLICITO que indica pedido de documento — AC específico
@@ -362,7 +364,7 @@ _FRASES_REUNIAO = (
 )
 
 _SAUDACAO_RE = re.compile(
-    r'^(prezad[ao]s?|bom\s+dia|boa\s+tarde|boa\s+noite|ol[aá]|caro|cara)\b',
+    r'^(prezad[ao]s?|bom\s+dia|boa\s+tarde|boa\s+noite|ol[aá]|caro|cara|tudo\s+(?:bem|bom))\b',
     re.IGNORECASE,
 )
 

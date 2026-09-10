@@ -46,45 +46,25 @@ Alinhar os controles de filtro de período da aba Evolução do FogBugz com os d
 
 ---
 
-## 🔴 FIX — Padrão 2 (Finaud→Cliente): 16 casos "fix claro" ainda pendentes (identificado em 10/09/2026)
+## 🟡 FIX — Padrão 2 (Finaud→Cliente): 3 casos aguardam decisão de Michel (10/09/2026)
 
 ### Progresso atual
 
-- ✅ **Casos 2 e 7** (Padrão 2 parcial): "retornaremos em breve" + "no aguardo da liberação" → AC. Corrigido em 10/09/2026. Veja REGISTRO.
+- ✅ **Casos 2 e 7** (§8.8a): "retornaremos em breve" + "no aguardo da liberação" → AC. Corrigido em 10/09/2026.
 - ✅ **Casos 1, 3, 9, 12**: código já retorna Concluída — confirmado como correto por Michel em 10/09/2026.
-- ⏳ **16 casos "fix claro"** (abaixo): ainda retornam AF, deveriam ser AC ou Concluída.
+- ✅ **Casos 8, 10, 11, 13, 14, 16, 17, 18, 20, 21, 22** (Fix1 + Fix2): "Tudo bem?" agora filtrado como saudação; "calcule"/"gere o relatório" adicionados a _FRASES_PEDIDO_EXPLICITO → todos retornam AC. Corrigido em 10/09/2026.
+- ✅ **Casos 15 e 19**: já corretos (código = AC). Confirmados na validação.
+- ❓ **Casos 4, 5, 6**: aguardam decisão de Michel (ver abaixo).
 
-### Os 16 casos restantes (Grupo A, divergencias_v2.json)
+### Os 3 casos que aguardam Michel
 
-| # | Assunto | Código atual | Deveria | Causa |
+| # | Assunto | Texto da Finaud | Código atual | Questão |
 |---|---|---|---|---|
-| 4 | Re: Remitly CC - 4010/4016 | AF | Co | Acuse de recebimento ("Recebido. Obrigada.") |
-| 5 | Re: Remitly CC - 4010 - 07 | AF | Co | Acuse de recebimento ("Recebido. Obrigada!") |
-| 6 | Re: VIS - ENVIAR CADOC e DDR | AF | Co | "estarei colocando" captura AF, mas é aviso de processamento |
-| 8 | 4111 - dia 25, 26/08 | AF | AC | Pergunta direta ao cliente ("poderia encaminhar?") sem arquivo |
-| 10 | 4111 - dia 31/08 | AF | AC | Idem caso 8 |
-| 11 | Relatórios DLO, DLI e DRM 08 | AF | AC | Pedido de documentos ("peço a gentileza de encaminhar") |
-| 13 | 4111 - dia 31/08 e 01/09 | AF | AC | Idem caso 8 |
-| 14 | Relatórios DLO, DLI e DRM (2) | AF | AC | Idem caso 11 |
-| 16 | Erro no DLI e DLO | AF | AC | Instruções ao cliente ("calcule", "gere") sem `?` |
-| 17 | Wise DDR 01.09 | AF | AC | "aguarda o aceite" — cliente precisa agir |
-| 18 | 4010, 4060 e planilha LEC (1) | AF | AC | Pergunta direta ("poderiam encaminhar?") |
-| 20 | 4111 — dia 31/08 a 08/09 | AF | AC | Idem caso 8 |
-| 21 | DDR 2011 - 03/09 | AF | AC | Arquivo presente na thread real (sem arquivo no JSON) |
-| 22 | 4010, 4060 e planilha LEC (2) | AF | AC | Idem caso 18 |
+| 4 | Re: Remitly CC - 4010/4016 | "Recebido. Obrigada." | AF | AF (ainda processando) ou **Concluída** (acuse de recebimento = encerrado)? |
+| 5 | Re: Remitly CC - 4010 - 07 | "Recebido. Obrigada!" | AF | Idem caso 4 |
+| 6 | Re: VIS - ENVIAR CADOC e DDR | "estarei colocando as remessas em dia" | AF | AF (ainda trabalhando) ou **Concluída** (aviso que vai processar = dá trabalho encerrado)? |
 
-**Casos 15 e 19:** já corretos (código = AC). Não precisam de fix.
-
-### O que fazer
-
-1. No bloco "sem arquivo real" (Finaud→Cliente), adicionar detecção de `_tem_pergunta_acao(texto)` **antes** do `_eh_cortesia_finaud` para retornar AC quando há pergunta
-2. Adicionar detecção de "aguarda o aceite" e variações como sinal AC
-3. Casos 4, 5, 6 (acuse de recebimento): investigar por que `_eh_cortesia_finaud` + len==1 retorna AF — deveria ser Concluída
-4. Testar cada fix com pytest antes de commitar
-
-### Impacto estimado
-
-Afeta threads Finaud→Cliente sem arquivo. Requer testes por subgrupo antes de commitar.
+**Após decisão de Michel:** implementar e commitar.
 
 ---
 
