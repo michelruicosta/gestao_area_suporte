@@ -1234,6 +1234,35 @@ Imagens inline do e-mail HTML (`.png`, `.gif`, `.jpg`, `.jpeg`, `.bmp`, `.ico`, 
 
 ---
 
+### 8.7 E-mails internos genuínos (Finaud → Finaud, sem forward para cliente)
+
+**Quando se aplica:** último e-mail é de um colaborador @finaud/@finaudtec para outro(s) colaborador(es) @finaud/@finaudtec, e o corpo **não** contém um forward cujo `Para:` aponta para cliente externo.
+
+O sistema percorre as 7 etapas abaixo em ordem. A primeira que bate determina o status.
+
+| Etapa | Condição | Status | Motivo exibido |
+|---|---|---|---|
+| **§8.7a** | Assunto começa com prefixo informativo (ex.: "Divulgação", "Boas-Vindas", "Comunicado de Saída") — strip de RES:/ENC: antes de comparar | Concluída | "Finaud concluiu a solicitação" |
+| **§8.7a2** | "day-off", "day off" ou "folga" aparece no assunto | Concluída | "E-mail interno informativo — sem ação pendente" |
+| **§8.7b** | Corpo contém frase de "ainda trabalhando" (ex.: "retornaremos em breve", "entrega parcial") | Aguardando Finaud | "E-mail interno — entrega parcial, aguarda conclusão" |
+| **§8.7b2** | Corpo contém frase de circular informativa: "compartilhar com todos", "passando para formalizar", "passando para informar", "passando para comunicar" | Concluída | "E-mail interno informativo — sem ação pendente" |
+| **§8.7c** | Corpo contém pergunta de ação (após strip de saudações sociais como "tudo bem?") | Aguardando Finaud | "E-mail interno — aguarda ação da Finaud" |
+| **§8.7d** | Corpo contém frase conclusiva (ex.: "seguem anexo", "segue em anexo") ou tem arquivo entregável | Concluída | "Finaud concluiu a solicitação" |
+| **§8.7d2** | Corpo contém "vou te chamar" ou "vou ligar" → resolução migrada para outro canal | Concluída | "E-mail interno informativo — sem ação pendente" |
+| **§8.7e** | Corpo contém instrução de trabalho explícita (ex.: "corrija ", "acesse ", "devemos verificar") | Aguardando Finaud | "E-mail interno — aguarda ação da Finaud" |
+| **§8.7f** | Corpo vazio (sem texto novo) | Aguardando Finaud | "E-mail interno — aguarda processamento" |
+| **§8.7g** | Nenhuma condição anterior bateu | Aguardando Finaud | "E-mail interno — aguarda ação da Finaud" |
+
+**Por que §8.7g é conservador (AF e não Concluída):**
+Quando nenhum sinal claro indica conclusão nem pendência, é mais seguro assumir que algo ainda está em aberto. Um caso marcado como AF que já foi resolvido aparece no painel e alguém confirma. Um caso marcado como Concluída erroneamente some do radar sem que ninguém perceba. *(Confirmado por Michel, 10/09/2026.)*
+
+**Prefixos de assunto informativos (`_ASSUNTOS_INFORMATIVOS`):**
+`'divulgação'`, `'boas-vindas'`, `'comunicado de saída'`, `'comunicado de saída'`, `'aviso de'`, `'informativo:'`, `'fyi:'`.
+
+> **Implementado em 10/09/2026.** Validado contra 21 casos reais do Padrão 1 (e-mails Finaud→Finaud em `divergencias_v2.json`). 648 testes passando.
+
+---
+
 ## 9. Modelo de Rastreamento — duas camadas
 
 **Decisão confirmada por Michel (27/07/2026)**

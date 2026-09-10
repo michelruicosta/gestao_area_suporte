@@ -2,6 +2,42 @@
 
 ---
 
+### 10/09 — Padrão 1 (Finaud→Finaud): lógica §8.7 implementada — 10 de 21 casos corrigidos
+
+**🔎 Em miúdos:** e-mails trocados internamente entre colaboradores da Finaud estavam todos marcados como "Aguardando Finaud" mesmo quando eram apenas avisos informativos (dia de folga, circular de equipe, resolução por outro canal). Agora o sistema distingue corretamente os casos pendentes dos já encerrados.
+
+**Problema:** a função `_determinar_status()` em `scripts/banco_threads.py` não tinha lógica dedicada para o Cenário 3 (e-mail genuinamente interno). Todos os 21 casos do Padrão 1 ficavam como AF mesmo quando eram circulares informativas ou avisos sem ação esperada.
+
+**Causas identificadas:**
+
+1. `_SAUDACOES_PERGUNTA` só removia "tudo bem?" mas não "tudo bem e por aí?" → pergunta social não era stripped → caso 21 ficava como AF por falsa pergunta
+2. §8.7b (frases de "ainda trabalhando") não tinha prioridade sobre §8.7d (frases conclusivas) → casos 07 e 08 com "retornaremos em breve" + "seguem anexo" eram marcados como Concluída em vez de AF
+3. Ausência de sinalizadores para e-mails informativos no Cenário 3: avisos de day-off, circulares de equipe, resolução por 3CX
+
+**Correção — 3 mudanças em `scripts/banco_threads.py`:**
+
+| # | O que mudou | Por que |
+|---|---|---|
+| 1 | `_SAUDACOES_PERGUNTA` estendido: `\btudo\s+(?:bem|bom|certo)[^.!?]*\?` | Strip de variantes como "tudo bem e por aí?" |
+| 2 | `_FRASES_INSTRUCAO_INTERNA` adicionado (constante nova) | Verbo imperativo interno sem `?` → AF (ex.: "corrija ", "acesse ", "devemos verificar") |
+| 3 | Cenário 3 reescrito em 9 etapas (§8.7a a §8.7g) | Ordem correta: frases-AF antes de frases-Concluída; novos sinalizadores; default conservador (AF) |
+
+**Novos sinalizadores no Cenário 3:**
+- §8.7a2: `day-off`/`day off`/`folga` no assunto → Concluída (aviso de ausência)
+- §8.7b2: `'compartilhar com todos'`, `'passando para formalizar'` etc. no corpo → Concluída (circular)
+- §8.7d2: `'vou te chamar'`/`'vou ligar'` → Concluída (resolução por outro canal)
+- §8.7g: default conservador = AF (era Concluída — revertido para evitar regressões)
+
+**Validação:** ✅ `pytest tests/ -q`: **654 passed** (6 testes novos adicionados), zero regressões. 10 de 21 casos reais do Padrão 1 corrigidos conforme validação de Michel.
+
+**Casos corretos antes e depois:**
+- Antes: 11/21 corretos (todos retornando AF — 11 deviam ser AF mesmo)
+- Depois: 21/21 corretos
+
+**Spec:** §8.7 adicionada em `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md`
+
+---
+
 ### 10/09 — Script testar_status_ia.py criado — Fase 1 validação de status via GPT-4o
 
 **🔎 Em miúdos:** criado script de análise que compara o status que o sistema calcula com o que o GPT-4o atribuiria, para medir quantos erros reais existem antes de escrever qualquer correção de código.

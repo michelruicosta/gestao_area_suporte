@@ -839,6 +839,78 @@ def test_interno_operacional_nao_vira_informativo():
     assert bt._determinar_status(msgs)[0] == 'Aguardando Finaud'
 
 
+# ── §8.7 — Padrão 1: novos sinalizadores (fix 10/09/2026) ────────────────────
+
+def test_interno_dayoff_assunto_concluida():
+    """§8.7a2: 'day-off' no assunto → aviso de ausência → Concluída."""
+    msgs = [_msg(
+        FINAUD,
+        assunto='Re: Implementação Day-Off - FINAUD 2024',
+        corpo='Em tempo, passando para formalizar que no dia 31/08 estarei no meu Day-off.',
+        destinatarios='rodrigo.tiberio@finaud.com.br',
+    )]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída'
+    assert 'informativo' in motivo.lower()
+
+
+def test_interno_circular_compartilhar_com_todos_concluida():
+    """§8.7b2: 'compartilhar com todos' no corpo → circular informativa → Concluída."""
+    msgs = [_msg(
+        FINAUD,
+        assunto='Disparos de E-mails recorrentes - DLO',
+        corpo='Prezados, considero importante compartilhar com todos esta situação relatada pelo cliente.',
+        destinatarios='andrea.inacio@finaud.com.br',
+    )]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída'
+    assert 'informativo' in motivo.lower()
+
+
+def test_interno_passando_para_formalizar_concluida():
+    """§8.7b2: 'passando para formalizar' no corpo → aviso formal → Concluída."""
+    msgs = [_msg(
+        FINAUD,
+        assunto='Re: Reunião de equipe',
+        corpo='Em tempo, passando para formalizar que não poderei comparecer na sexta.',
+        destinatarios='suporte@finaud.com.br',
+    )]
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
+
+
+def test_interno_vou_te_chamar_3cx_concluida():
+    """§8.7d2: 'vou te chamar' → resolução por outro canal → Concluída."""
+    msgs = [_msg(
+        FINAUD,
+        assunto='Re: Pasta Activetrades',
+        corpo='Boa tarde. Vou te chamar no 3CX.',
+        destinatarios='suporte@finaud.com.br',
+    )]
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
+
+
+def test_interno_sem_sinalizador_af_conservador():
+    """§8.7g: sem sinal de conclusão nem instrução → conservador → Aguardando Finaud."""
+    msgs = [_msg(
+        FINAUD,
+        assunto='Re: BARU Basileia',
+        corpo='Rodrigo, verifique os indicadores de Basileia OPAD e CPAD.',
+        destinatarios='rodrigo.tiberio@finaud.com.br',
+    )]
+    assert bt._determinar_status(msgs)[0] == 'Aguardando Finaud'
+
+
+def test_interno_circular_nao_vira_af_por_instrucao():
+    """§8.7b2 antes de §8.7e: circular com 'compartilhar com todos' vence frase de instrução."""
+    msgs = [_msg(
+        FINAUD,
+        assunto='Disparos de E-mails recorrentes',
+        corpo='Prezados, considero importante compartilhar com todos. Solicito atenção ao tema.',
+        destinatarios='andrea.inacio@finaud.com.br',
+    )]
+    assert bt._determinar_status(msgs)[0] == 'Concluída'
+
+
 def test_regressao_so_imagens_nao_e_arquivo_entregavel():
     """Regressão §8.6: forward com só imagens inline não é sub-caso 1a → Aguardando Cliente."""
     msgs = [_msg(

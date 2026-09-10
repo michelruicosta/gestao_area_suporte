@@ -60,7 +60,8 @@ _ENC_PREFIX = re.compile(r'^(enc|fwd?)\s*:', re.IGNORECASE)
 _EXTRATO_RE = re.compile(r'\bextratos?\b', re.IGNORECASE)
 
 # §8.9 — saudações com "?" que não indicam pedido de ação do cliente
-_SAUDACOES_PERGUNTA = re.compile(r'\btudo\s+(?:bem|bom|certo)\s*\?', re.IGNORECASE)
+# Inclui variações com complemento social ("tudo bem e por aí?", "tudo bem com você?")
+_SAUDACOES_PERGUNTA = re.compile(r'\btudo\s+(?:bem|bom|certo)[^.!?]*\?', re.IGNORECASE)
 
 # §8.10 — notificação de reação do Teams ("reacted to your message")
 _REACAO_TEAMS_RE = re.compile(r'reacted to your message|reagiu à sua mensagem', re.IGNORECASE)
@@ -330,6 +331,25 @@ _FRASES_SOLICITA_EXTRATO = (
 _FRASES_ORIENTACAO_TECNICA = (
     'orientamos que',
     'verifique ',
+)
+
+# §8.7e — e-mail interno com instrução de trabalho sem pergunta explícita (Padrão 1)
+# Verbos imperativos e pedidos que indicam que o destinatário precisa executar algo
+_FRASES_INSTRUCAO_INTERNA = (
+    # Imperativos técnicos comuns em Finaud
+    'corrija ', 'acesse ', 'calcule ', 'importe ', 'exporte ',
+    'transmita a', 'transmita o',
+    'ajuste os saldos', 'ajuste o valor',
+    'gere o relatório', 'gere a substituição',
+    'para solucionar,', 'para solucionar:', 'para corrigir,',
+    # Pedidos diretos
+    'solicito ', 'solicito por',
+    # Delegação
+    'pode pedir para o', 'poderia pedir para o',
+    'pode pedir ao', 'poderia pedir ao',
+    # Coletivo com ação clara
+    'devemos verificar', 'devemos encaminhar', 'devemos subir',
+    'devem subir', 'devem transmitir',
 )
 
 # Finaud propôs contato síncrono — aguarda confirmação do cliente
@@ -948,19 +968,40 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
                         return 'Concluída', 'Finaud concluiu a solicitação'
                 # 1b-padrão: sem sinal claro → Aguardando Cliente (erro mais seguro)
                 return 'Aguardando Cliente', ('Comunicado do BACEN — aguarda retorno do cliente' if _assunto_bacen else 'Finaud fez pergunta — aguarda resposta')
-            # E-mail interno genuíno (Cenário 3)
-            # §8.7: assunto informativo → sem ação pendente (strip RES:/ENC: antes)
+            # E-mail interno genuíno (Cenário 3 — §8.7)
+            # §8.7a: assunto informativo → sem ação pendente (strip RES:/ENC: antes)
             assunto_lower = re.sub(r'^(res|enc|fwd|fw)\s*:\s*', '', assunto.strip(), flags=re.IGNORECASE).lower()
             if any(assunto_lower.startswith(p) for p in _ASSUNTOS_INFORMATIVOS):
                 return 'Concluída', 'Finaud concluiu a solicitação'
-            # §8.7b: checar conteúdo do corpo — mesma lógica de qualquer e-mail
+            # §8.7a2: day-off/folga no assunto → aviso de ausência, sem ação pendente
+            if re.search(r'\b(?:day[- ]?off|folga)\b', assunto_lower):
+                return 'Concluída', 'E-mail interno informativo — sem ação pendente'
+            # §8.7b: frases "ainda trabalhando" têm prioridade — ganham mesmo quando há entrega parcial
+            if any(f in texto_lower for f in _FRASES_AGUARDANDO_FINAUD_ATIVA + tuple(_termos_db('Finaud prometeu retornar'))):
+                return 'Aguardando Finaud', 'E-mail interno — entrega parcial, aguarda conclusão'
+            # §8.7b2: frases de circular informativa no corpo → sem ação pendente
+            _FRASES_CIRCULAR = ('compartilhar com todos', 'passando para formalizar', 'passando para informar', 'passando para comunicar')
+            if any(f in texto_flat for f in _FRASES_CIRCULAR):
+                return 'Concluída', 'E-mail interno informativo — sem ação pendente'
+            # §8.7c: pergunta de ação → aguarda resposta
             if _tem_pergunta_acao(texto_novo):
                 return 'Aguardando Finaud', 'E-mail interno — aguarda ação da Finaud'
+            # §8.7d: entregou algo → Concluída
             _fc_int = _FRASES_CONCLUSIVAS_FINAUD + tuple(_termos_db('Finaud concluiu a solicitação'))
             if any(f in texto_flat for f in _fc_int):
                 return 'Concluída', 'Finaud concluiu a solicitação'
             if _tem_arquivo_entregavel(ultimo.get('nomes_anexos') or []):
                 return 'Concluída', 'Finaud concluiu a solicitação'
+            # §8.7d2: resolução por outro canal (ex: 3CX) → sem ação pendente no e-mail
+            if 'vou te chamar' in texto_flat or 'vou ligar' in texto_flat:
+                return 'Concluída', 'E-mail interno informativo — sem ação pendente'
+            # §8.7e: instrução de trabalho → destinatário precisa executar
+            if any(f in texto_flat for f in _FRASES_INSTRUCAO_INTERNA):
+                return 'Aguardando Finaud', 'E-mail interno — aguarda ação da Finaud'
+            # §8.7f: sem texto → não foi possível determinar, assume pendente
+            if not texto_novo.strip():
+                return 'Aguardando Finaud', 'E-mail interno — aguarda processamento'
+            # §8.7g: sem sinal de ação ou conclusão → conservador, assume pendente
             return 'Aguardando Finaud', 'E-mail interno — aguarda ação da Finaud'
         # Finaud → Cliente
         tem_arquivo_real = _tem_arquivo_entregavel(ultimo.get('nomes_anexos') or [])

@@ -8,6 +8,17 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ---
 
+## 🟡 RESUMO SEMANAL — Identificar empresas sem nome nos cards Retorno Bacen (10/09/2026)
+
+No Resumo Semanal, vários cards de CADOC exibem "Sem empresa identificada (N)" porque o banco de dados não tem o nome da empresa linkado àquelas threads. São threads onde o assunto do e-mail não contém o nome da empresa de forma legível para o sistema.
+
+**Quantos casos afetados:**
+- Aguardando Cliente: DRM 2060 (2), DLO 2061 (1), DDR 2011 (2) = **5 casos**
+- Aguardando Finaud: DRM 2060 (5), DLO 2061 (3), Indício/Atraso (4), COSIF 4111 (2), DDR 2011 (2), DLI 2062 (2), DRL 2160 (1) = **19 casos**
+- Total: **24 casos sem empresa identificada**
+
+**Próximo passo:** abrir chat dedicado para inspecionar as threads sem empresa identificada — ler o `assunto` e `remetente_principal` de cada uma no banco e determinar o nome da empresa que falta.
+
 ---
 
 ## 🟡 MODAL — Acabamentos menores na leitura inteligente (identificados em 08/09/2026)
