@@ -6,6 +6,38 @@
 
 ---
 
+## 📓 Diário da sessão (2026-09-09) — Contaminação cruzada DRM 2060: investigação, restauração e prevenção
+
+### O que foi feito
+
+1. **Investigação do bug** — Michel relatou que o sistema mostrava mensagens erradas na thread Trustee DTVM (`1a05d9178be1c1b7`). Sistema: 22 msgs, última Flávio → Raphael (WU). Gmail real: 2 msgs, Miguel Santos → Igor Menezes Costa (Trustee). Outras threads do DRM 2060 com o mesmo problema.
+
+2. **Causa raiz confirmada** — `scripts/coletor_enviados_colaboradores.py` identifica a qual thread uma mensagem pertence pelo assunto normalizado (sem Re:/ENC:/FW:). Com 20+ threads compartilhando "BANCO CENTRAL - COMUNICACAO DE INCONSISTENCIA NO DRM - 2060", todas caem na mesma chave — mensagens de um cliente vão parar em threads de outros. 527 threads contaminadas em 8 ondas entre 02/09 e 09/09/2026.
+
+3. **Restauração do banco** — re-buscamos os 527 threads diretamente na API do Gmail via `_processar_thread` + `salvar_thread`. 168 threads decontaminadas. Trustee DTVM: 22 msgs → 2 msgs, destinatário corrigido (WU → Trustee) ✅. Snapshots antes/depois em `data/backups/snapshot_antes_restauracao.csv` e `snapshot_depois_restauracao.csv`. Backup do banco em `data/backups/20260909_1529_restauracao_banco/`.
+
+4. **Prevenção** — `executar_pipeline.py` (função `rodar_sem_retorno`): `coletar_colaboradores()` desativado com comentário explicativo até o bug ser corrigido.
+
+5. **Documentação** — `PENDENCIAS.md` e `REGISTRO_CORRECOES.md` atualizados com a contaminação.
+
+6. **Commit `e714861`**, push e deploy VPS — tela + agendador ativos ✅.
+
+7. **Fix do coletor encontrado já implementado** — ao fechar a sessão, descobrimos que a sessão anterior havia implementado o fix completo em `coletor_enviados_colaboradores.py` (usando `Message-ID`/`In-Reply-To` em vez de assunto), reativado o coletor em `executar_pipeline.py` e escrito 20 testes, mas não havia commitado. 638 testes passando ✅. Coletor voltou a rodar — bug resolvido.
+
+### Estado atual
+
+**pytest:** 638 passed ✅ (test_coletor_colaboradores.py reescrito com nova lógica).
+**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅. Commit `e714861` publicado.
+**Coletor de colaboradores:** ATIVO com fix de Message-ID/In-Reply-To. ✅
+
+### Próximo passo
+
+🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
+
+Último /fechar: 2026-09-09 17:00 — memórias revisadas ✅
+
+---
+
 ## 📓 Diário da sessão (2026-09-09) — Modal: Cenário 3 — listas com marcadores implementadas e publicadas
 
 ### O que foi feito

@@ -12,9 +12,10 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
+| 10/09 | Teste de IA — planejamento e análise de 1.629 threads para validação de status | abaixo |
 | 09/09 | Modal: De/Para unificados — regras por tipo de remetente; deploy e validação em produção | abaixo |
 | 09/09 | Coletor de colaboradores — verificação pós-deploy do fix Message-ID/In-Reply-To | abaixo |
-| 09/09 | Contaminação cruzada DRM 2060: investigação, restauração e prevenção | abaixo |
+| 09/09 | Contaminação cruzada DRM 2060: investigação, restauração e prevenção | arquivo |
 | 09/09 | Sentry: guia interativo + fix UndefinedError media_dias | arquivo |
 | 09/09 | Modal — Cenário 3: listas com marcadores implementadas e publicadas na VPS | arquivo |
 | 08/09 | Tabela COSIF no modal: validação do Cenário 2 + registro Cenários 1–2 + Cenário 3 aberto | arquivo |
@@ -61,6 +62,53 @@
 >
 > **Regra:** este arquivo guarda as **3 sessões mais recentes**. O `/fechar` acrescenta a
 > linha nova aqui e move a 4ª sessão para o arquivo.
+
+---
+
+## 📓 Diário da sessão (2026-09-10) — Teste de IA: planejamento e análise de 1.629 threads
+
+### O que foi feito
+
+1. **Retomada e correção de escopo** — chat anterior terminou com entendimento incompleto do teste de IA. Escopo correto: cobrir os **3 status** (Aguardando Finaud, Aguardando Cliente, Concluída) com todos os seus motivos e textos, não apenas casos onde Finaud enviou por último.
+
+2. **Por que IA não precisa de regras** — explicado para Michel: o sistema atual (regex) tenta descrever em código o que é senso comum humano. A IA entende significado diretamente, sem regras intermediárias. Diferença análoga a um estrangeiro que decorou frases vs alguém que cresceu falando a língua.
+
+3. **RAG não é necessário** — Michel questionou se o negócio específico exigiria RAG (base de conhecimento extra). Varredura dos dados mostrou que 3 regras curtas no prompt cobrem todos os edge cases identificados sem RAG.
+
+4. **Varredura completa de 1.629 threads** — mapeamento de todos os padrões por status e motivo:
+   - AF (1.040): 12 motivos, textos claros para IA em ~85% dos casos
+   - AC (99): Finaud fez pergunta, instrução, enviou arquivo com problema implícito
+   - Concluída (490): agradecimentos, entregas limpas, confirmações no BACEN
+
+5. **Erro confirmado** — thread "CV INVEST | DLO JUL" (`1a0110ea60284669`): Larissa (cliente) enviou última mensagem "Foi reenviado o documento?" mas sistema diz Concluída. Causa: status não foi recalculado após nova mensagem da cliente.
+
+6. **Varredura de suspeitos**:
+   - 579 "Finaud último + AF": 534 são "via Suporte" (cliente encaminhou pelo coletor — não são erros); 45 a investigar
+   - 35 "cliente + ? + Concluída": 1 erro confirmado (CV INVEST), resto falso alarme (? vem de URLs em assinaturas)
+   - Conclusão: sistema está correto na grande maioria; erros são pontuais
+
+7. **Estratégia de 3 fases definida** — Fase 1 (~80 threads, ~$0,06) → Fase 2 (~300 threads, ~$0,25) → Fase 3 (~1.629 threads, ~$1,50). Entrega: CSV com divergências para Michel revisar.
+
+8. **PENDENCIAS.md atualizado** — novo item "🟡 INVESTIGAR — Teste de IA para validar status" com plano, fases, custos e entregável.
+
+### Estado atual
+
+**pytest:** 653 passed ✅ (nenhuma alteração de código nesta sessão).
+**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅.
+**Nenhuma alteração de código** — sessão de análise e planejamento.
+
+### Próximo passo
+
+🟡 **Criar `scripts/testar_status_ia.py`** — script da Fase 1 do teste de IA. Chat dedicado.
+Ver PENDENCIAS.md → item "🟡 INVESTIGAR — Teste de IA para validar status".
+
+**Pendências que continuam:**
+- 🔴 Fix status — "Concluída" quando Finaud perguntou algo ao cliente (executar APÓS o teste de IA)
+- 🔴 Threads irmãs — 11 grupos com thread Concluída + pendente no mesmo caso
+- 🟡 Modal — Cenário 2b (COSIF citada 2×) e `white-space: nowrap` na coluna Valor
+- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
+
+Último /fechar: 2026-09-10 — memórias revisadas ✅
 
 ---
 
@@ -136,43 +184,6 @@ Sessão retomada após compactação de contexto — estado verificado e confirm
 - 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
 
 Último /fechar: 2026-09-09 18:30 — memórias revisadas ✅
-
----
-
-## 📓 Diário da sessão (2026-09-09) — Contaminação cruzada DRM 2060: investigação, restauração e prevenção
-
-### O que foi feito
-
-1. **Investigação do bug** — Michel relatou que o sistema mostrava mensagens erradas na thread Trustee DTVM (`1a05d9178be1c1b7`). Sistema: 22 msgs, última Flávio → Raphael (WU). Gmail real: 2 msgs, Miguel Santos → Igor Menezes Costa (Trustee). Outras threads do DRM 2060 com o mesmo problema.
-
-2. **Causa raiz confirmada** — `scripts/coletor_enviados_colaboradores.py` identifica a qual thread uma mensagem pertence pelo assunto normalizado (sem Re:/ENC:/FW:). Com 20+ threads compartilhando "BANCO CENTRAL - COMUNICACAO DE INCONSISTENCIA NO DRM - 2060", todas caem na mesma chave — mensagens de um cliente vão parar em threads de outros. 527 threads contaminadas em 8 ondas entre 02/09 e 09/09/2026.
-
-3. **Restauração do banco** — re-buscamos os 527 threads diretamente na API do Gmail via `_processar_thread` + `salvar_thread`. 168 threads decontaminadas. Trustee DTVM: 22 msgs → 2 msgs, destinatário corrigido (WU → Trustee) ✅. Snapshots antes/depois em `data/backups/snapshot_antes_restauracao.csv` e `snapshot_depois_restauracao.csv`. Backup do banco em `data/backups/20260909_1529_restauracao_banco/`.
-
-4. **Prevenção** — `executar_pipeline.py` (função `rodar_sem_retorno`): `coletar_colaboradores()` desativado com comentário explicativo até o bug ser corrigido.
-
-5. **Documentação** — `PENDENCIAS.md` e `REGISTRO_CORRECOES.md` atualizados com a contaminação.
-
-6. **Commit `e714861`**, push e deploy VPS — tela + agendador ativos ✅.
-
-7. **Fix do coletor encontrado já implementado** — ao fechar a sessão, descobrimos que a sessão anterior havia implementado o fix completo em `coletor_enviados_colaboradores.py` (usando `Message-ID`/`In-Reply-To` em vez de assunto), reativado o coletor em `executar_pipeline.py` e escrito 20 testes, mas não havia commitado. 638 testes passando ✅. Coletor voltou a rodar — bug resolvido.
-
-### Estado atual
-
-**pytest:** 638 passed ✅ (test_coletor_colaboradores.py reescrito com nova lógica).
-**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅. Commit `e714861` publicado.
-**Coletor de colaboradores:** ATIVO com fix de Message-ID/In-Reply-To. ✅
-
-### Próximo passo
-
-🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
-
-**Pendências que continuam:**
-- 🟡 Modal — acabamentos menores: Cenário 2b (COSIF citada 2× perde espaços duplos) e `white-space: nowrap` na coluna Valor
-- 🟡 Passo C — tela de manutenção de regras
-- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
-
-Último /fechar: 2026-09-09 17:00 — memórias revisadas ✅
 
 ---
 <!-- fim das 3 sessões recentes -->

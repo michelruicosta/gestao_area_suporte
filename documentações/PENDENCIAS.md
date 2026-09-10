@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Gestão Área Suporte
 
-**Atualizado:** 2026-09-09
+**Atualizado:** 2026-09-10
 **Organização:** por etapa que bloqueia — reorganizado em 03/08/2026 para seguir as fases sem brechas.
 **Regra:** este arquivo lista **só o que ainda falta** (aberto / aguardando decisão / backlog).
 Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada no
@@ -65,6 +65,49 @@ o sistema não sabe se foi uma pergunta (→ aguardar cliente) ou uma entrega fi
 ### Impacto estimado
 
 Afeta todos os threads. Requer testes dedicados — **não implementar sem amostra validada**.
+
+---
+
+## 🟡 INVESTIGAR — Teste de IA para validar status das threads (identificado em 10/09/2026)
+
+### O que é
+
+Rodar o GPT-4o em paralelo (sem tocar na produção) para comparar o status
+que a IA atribuiria a cada thread com o status que o sistema atual calculou.
+Objetivo: medir quantos erros reais existem e confirmar se a IA é mais
+confiável que o sistema de regras atual.
+
+### Contexto
+
+Varredura de 10/09/2026 identificou:
+- 1 erro confirmado (CV INVEST | DLO JUL — cliente perguntou, sistema disse Concluída)
+- ~45 casos suspeitos onde Finaud enviou por último mas status ficou AF
+- ~35 casos onde cliente tem pergunta e status é Concluída (maioria falso alarme)
+
+### Plano em 3 fases
+
+1. **Fase 1 — Suspeitos (~80 threads):** rodar só os casos já identificados
+   como prováveis erros. Custo: ~$0,06. Valida se o prompt está correto.
+2. **Fase 2 — Amostra (~300 threads):** 100 por status, aleatório. Mede a
+   precisão geral da IA. Custo: ~$0,25.
+3. **Fase 3 — Tudo (~1.629 threads):** só após Fase 2 aprovada. Gera lista
+   completa de divergências para Michel revisar. Custo: ~$1,50.
+
+### Entrega
+
+CSV com: Assunto · Status atual · IA diz · Bate? · Motivo IA.
+As linhas com divergência são candidatas a erro — Michel decide quem está certo.
+
+### Script a criar
+
+`scripts/testar_status_ia.py` — lê o banco, manda última mensagem para o
+GPT-4o (temperatura 0), salva resultado em
+`data/teste_status_ia/YYYYMMDD_fase{N}_resultados.csv`.
+
+### Quando fazer
+
+Chat dedicado. Executar antes do fix do status — o resultado vai mostrar
+o real escopo do problema e validar se a correção proposta cobre tudo.
 
 ---
 
