@@ -1622,6 +1622,112 @@ def api_fog_jornada_caso(fog_id):
     return jsonify(resultado)
 
 
+# ── Jornada por Colaborador ───────────────────────────────────────────────────
+
+_COLABORADORES_JORNADA = ['Fabio', 'Luiz', 'Antonio', 'Bruno', 'Daniela']
+_jornada_colab_cache: dict = {}
+_JORNADA_COLAB_TTL = 600
+
+
+def _buscar_jornada_colaborador(colaborador: str, de: str, ate: str) -> list[dict]:
+    import re as _re, time as _time
+    cache_key = f'{colaborador}|{de}|{ate}'
+    agora = _time.monotonic()
+    cached = _jornada_colab_cache.get(cache_key)
+    if cached and agora - cached[0] < _JORNADA_COLAB_TTL:
+        return cached[1]
+
+    token = os.environ.get('FOGBUGZ_TOKEN', '')
+    if not token:
+        return []
+
+    de_fmt = de.replace('-', '/')
+    ate_fmt = ate.replace('-', '/')
+    url_fb = 'https://finaud.fogbugz.com/api.asp'
+    try:
+        resp = requests.get(url_fb, params={
+            'token': token, 'cmd': 'search',
+            'q': f'opened:"{de_fmt}..{ate_fmt}"',
+            'cols': 'ixBug,sTitle,fOpen,dtClosed,events',
+            'max': '500',
+        }, timeout=90)
+        resp.raise_for_status()
+        root = _ET.fromstring(resp.text)
+        hoje = datetime.now(timezone.utc).date()
+        resultado = []
+
+        for case in root.findall('.//case'):
+            fog_id = (case.findtext('ixBug') or '').strip()
+            titulo = (case.findtext('sTitle') or '').strip()
+            is_open = (case.findtext('fOpen') or '').strip() == 'true'
+            dt_closed_str = (case.findtext('dtClosed') or '').strip()
+            try:
+                dt_closed = datetime.fromisoformat(dt_closed_str.replace('Z', '+00:00')).date() if dt_closed_str else hoje
+            except Exception:
+                dt_closed = hoje
+            data_fim_caso = hoje if is_open else dt_closed
+
+            assigned = []
+            for ev in case.findall('.//event'):
+                if (ev.findtext('sVerb') or '').strip() != 'Assigned':
+                    continue
+                dt_str = (ev.findtext('dt') or '').strip()
+                desc = (ev.findtext('evtDescription') or '').strip()
+                try:
+                    dt_ev = datetime.fromisoformat(dt_str.replace('Z', '+00:00')).date()
+                except Exception:
+                    continue
+                m = _re.search(r'Designado para (.+?) por ', desc)
+                if not m:
+                    continue
+                nome_ev = m.group(1).strip()
+                pnome = nome_ev.split()[0] if ' ' in nome_ev else nome_ev
+                assigned.append({'dt': dt_ev, 'nome': nome_ev, 'pnome': pnome, 'pos': len(assigned)})
+
+            if not assigned:
+                continue
+            if not any(e['pnome'] == colaborador for e in assigned):
+                continue
+
+            assigned.sort(key=lambda e: (e['dt'], e['pos']))
+            etapas = []
+            for i, ev in enumerate(assigned):
+                proximo = assigned[i + 1]['dt'] if i + 1 < len(assigned) else data_fim_caso
+                dias = max(0, (proximo - ev['dt']).days)
+                em_aberto = is_open and i + 1 >= len(assigned)
+                etapas.append({'p': ev['pnome'], 'n': ev['nome'], 'i': ev['dt'].isoformat(), 'd': dias, 'a': em_aberto})
+
+            merged: list[dict] = []
+            for e in etapas:
+                if merged and merged[-1]['p'] == e['p']:
+                    merged[-1]['d'] += e['d']
+                    merged[-1]['a'] = e['a']
+                else:
+                    merged.append(dict(e))
+
+            resultado.append({'id': fog_id, 't': titulo, 'ab': is_open, 'e': merged})
+
+        _jornada_colab_cache[cache_key] = (_time.monotonic(), resultado)
+        return resultado
+    except Exception as exc:
+        _log.warning('Erro jornada colaborador %s: %s', colaborador, exc)
+        return []
+
+
+@app.route('/api/fogbugz/jornada')
+@_requer_login
+def api_fogbugz_jornada():
+    colaborador = request.args.get('colaborador', '').strip()
+    de = request.args.get('de', '')
+    ate = request.args.get('ate', '')
+    if not colaborador or not de or not ate:
+        return jsonify({'erro': 'Parâmetros obrigatórios: colaborador, de, ate'}), 400
+    if colaborador not in _COLABORADORES_JORNADA:
+        return jsonify({'erro': f'Colaborador inválido: {colaborador}'}), 400
+    fogs = _buscar_jornada_colaborador(colaborador, de, ate)
+    return jsonify({'colaborador': colaborador, 'de': de, 'ate': ate, 'fogs': fogs})
+
+
 # ── Inicialização ─────────────────────────────────────────────────────────────
 # Banco sempre. Relógio na tela só se o processo separado ainda não estiver no ar.
 

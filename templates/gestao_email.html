@@ -1062,6 +1062,45 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
 .fog-rk-num   { font-size: 0.75rem; font-weight: 700; color: var(--text); text-align: center }
 .fog-rk-antigo { font-size: 0.6875rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0 }
 .fog-rk-dias  { font-size: 0.8125rem; font-weight: 800; text-align: right }
+/* ── Jornada por Colaborador ──────────────────────────────────────────────── */
+.jcol-filtros{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:1.25rem}
+.jcol-input{padding:6px 10px;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--text);font-size:.84rem}
+.jcol-lbl{font-size:.82rem;color:var(--muted)}
+.jcol-btn{padding:6px 18px;border-radius:7px;background:var(--accent);color:#fff;font-size:.84rem;font-weight:600;border:none;cursor:pointer}
+.jcol-btn:hover{opacity:.9}
+.jcol-placeholder{padding:40px;text-align:center;color:var(--muted);font-size:.9rem}
+.jcol-cards{display:flex;gap:12px;margin-bottom:1.25rem;flex-wrap:wrap}
+.jcol-card{flex:1;min-width:130px;padding:14px 18px;border-radius:10px;border:1px solid var(--border);border-left:3px solid var(--border);background:var(--surface);cursor:pointer;transition:.15s}
+.jcol-card:hover,.jcol-card.ativo{border-left-color:var(--accent);background:rgba(163,209,51,.05)}
+.jcol-card.ambar:hover,.jcol-card.ambar.ativo{border-left-color:#f59e0b;background:rgba(245,158,11,.05)}
+.jcol-card.azul:hover,.jcol-card.azul.ativo{border-left-color:#3b82f6;background:rgba(59,130,246,.05)}
+.jcol-card-num{font-size:1.7rem;font-weight:700;color:var(--text);line-height:1.1}
+.jcol-card-lbl{font-size:.8rem;color:var(--muted);margin-top:4px}
+.jcol-graf-wrap{border:1px solid var(--border);border-radius:10px;background:var(--surface);padding:16px 20px;margin-bottom:1.25rem}
+.jcol-graf-titulo{font-size:.875rem;font-weight:700;color:var(--text);margin-bottom:10px}
+.jcol-graf-leg{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.jcol-chip{display:inline-flex;align-items:center;gap:5px;font-size:.78rem;color:var(--muted);cursor:pointer;padding:2px 8px;border-radius:20px;border:1px solid var(--border)}
+.jcol-chip:hover,.jcol-chip.ativo{border-color:var(--accent);color:var(--text)}
+.jcol-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.jcol-grafico{display:flex;align-items:flex-end;gap:6px;overflow-x:auto;padding-bottom:8px;min-height:60px}
+.jcol-bar-grp{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:40px}
+.jcol-bar-stk{display:flex;flex-direction:column-reverse;width:26px;gap:1px;align-items:stretch}
+.jcol-bar-lbl{font-size:.68rem;color:var(--muted);white-space:nowrap}
+.jcol-fog-card{border:1px solid var(--border);border-radius:10px;background:var(--surface);margin-bottom:10px;overflow:hidden}
+.jcol-fog-hd{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border)}
+.jcol-fog-id{font-size:.78rem;font-weight:700;color:var(--muted);flex-shrink:0}
+.jcol-fog-titulo{font-size:.875rem;font-weight:600;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.jcol-fog-bd{padding:10px 14px}
+.jcol-scroll{overflow-x:auto;padding-bottom:4px}
+.jcol-etapas{display:flex;align-items:center;gap:5px;width:max-content;padding:2px 0}
+.jcol-et{display:flex;flex-direction:column;align-items:center;padding:4px 9px;border-radius:7px;border:1px solid var(--border);background:var(--accent-bg);min-width:62px;text-align:center;gap:1px}
+.jcol-et.colab{border-color:var(--accent);background:rgba(163,209,51,.1)}
+.jcol-et.atual{border-color:#3b82f6;background:rgba(59,130,246,.08)}
+.jcol-et-nome{font-size:11px;font-weight:600;color:var(--text);white-space:nowrap}
+.jcol-et-dias{font-size:12px;font-weight:700;color:var(--muted)}
+.jcol-et.colab .jcol-et-dias{color:var(--accent)}
+.jcol-et.atual .jcol-et-dias{color:#3b82f6}
+.jcol-seta{color:var(--muted);font-size:12px;flex-shrink:0;padding:0 2px}
 </style>
 </head>
 <body>
@@ -1122,6 +1161,10 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
         <button class="nav-item" data-pagina="fog-evolucao" onclick="navegar(this)">
           <span class="nav-ico">📊</span>
           <span class="nav-txt">Evolução</span>
+        </button>
+        <button class="nav-item" data-pagina="fog-jornada-colab" onclick="navegar(this)">
+          <span class="nav-ico">🗺️</span>
+          <span class="nav-txt">Jornada por Colaborador</span>
         </button>
       </div>
     </div>
@@ -2208,6 +2251,69 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
 
     </section>
 
+    <!-- ─── Jornada por Colaborador ──────────────────────────────────────── -->
+    <section class="page" id="pag-fog-jornada-colab" hidden>
+
+      <div class="page-header" style="margin-bottom:0.75rem">
+        <div class="page-header-left">
+          <h1 class="page-titulo">Jornada por Colaborador</h1>
+          <p class="page-sub">Todos os FOGs que passaram pela mão de cada colaborador — o que aconteceu com cada um e quanto tempo ficou.</p>
+        </div>
+        <button class="btn-fullscreen" onclick="toggleFullscreen()" title="Tela cheia">⛶</button>
+      </div>
+
+      <div class="jcol-filtros">
+        <select id="jcol-select" class="jcol-input">
+          <option value="">Colaborador…</option>
+          <option value="Fabio">Fabio</option>
+          <option value="Luiz">Luiz</option>
+          <option value="Antonio">Antonio</option>
+          <option value="Bruno">Bruno</option>
+          <option value="Daniela">Daniela</option>
+        </select>
+        <span class="jcol-lbl">De</span>
+        <input type="date" id="jcol-de" class="jcol-input">
+        <span class="jcol-lbl">Até</span>
+        <input type="date" id="jcol-ate" class="jcol-input">
+        <button class="jcol-btn" onclick="buscarJornadaColab()">Buscar</button>
+      </div>
+
+      <div id="jcol-msg" class="jcol-placeholder">Selecione um colaborador e o período para visualizar a jornada dos FOGs.</div>
+
+      <div id="jcol-resultado" hidden>
+
+        <div class="jcol-cards">
+          <div class="jcol-card" id="jcol-c-total" onclick="jcolFiltrar('total')">
+            <div class="jcol-card-num" id="jcol-n-total">0</div>
+            <div class="jcol-card-lbl" id="jcol-l-total">Passaram por —</div>
+          </div>
+          <div class="jcol-card ambar" id="jcol-c-passou" onclick="jcolFiltrar('passou')">
+            <div class="jcol-card-num" id="jcol-n-passou">0</div>
+            <div class="jcol-card-lbl">Passou adiante</div>
+          </div>
+          <div class="jcol-card azul" id="jcol-c-ainda" onclick="jcolFiltrar('ainda')">
+            <div class="jcol-card-num" id="jcol-n-ainda">0</div>
+            <div class="jcol-card-lbl" id="jcol-l-ainda">Com — hoje</div>
+          </div>
+        </div>
+
+        <div class="jcol-graf-wrap">
+          <div class="jcol-graf-titulo">FOGs por mês de chegada ao colaborador</div>
+          <div class="jcol-graf-leg">
+            <span class="jcol-chip" id="jcol-chip-azul" onclick="jcolFiltrar('ainda')"><span class="jcol-dot" style="background:#3b82f6"></span>Com ele hoje</span>
+            <span class="jcol-chip" id="jcol-chip-ambar" onclick="jcolFiltrar('passou')"><span class="jcol-dot" style="background:#f59e0b"></span>Passou adiante</span>
+            <span class="jcol-chip" id="jcol-chip-verde" onclick="jcolFiltrar('final')"><span class="jcol-dot" style="background:#10b981"></span>Finalizado</span>
+            <span class="jcol-chip" id="jcol-chip-total" onclick="jcolFiltrar('total')">Todos</span>
+          </div>
+          <div class="jcol-grafico" id="jcol-barras"></div>
+        </div>
+
+        <div id="jcol-lista"></div>
+
+      </div>
+
+    </section>
+
   </main>
 </div>
 
@@ -2461,6 +2567,7 @@ function navegar(btn) {
     'fog-casos':          'FOGBUGZ · Lista de Casos',
     'fog-kpis':           'FOGBUGZ · Visão Consolidada',
     'fog-evolucao':       'FOGBUGZ · Evolução',
+    'fog-jornada-colab':  'FOGBUGZ · Jornada por Colaborador',
   };
   const titulosAdmin = {
     'coletor':      'Administração · E-mail · Buscar e-mails agora',
@@ -2486,6 +2593,7 @@ function navegar(btn) {
   if (pag === 'notificacoes') { _notifCarregar(); }
   if (pag !== 'admin') { _pararAutoRefreshLog(); }
   if (pag === 'fog-evolucao') { carregarFogEvo(); }
+  if (pag === 'fog-jornada-colab') { _jcolInicializar(); }
 
   if (pag === 'fog-casos') {
     if (!_keepFogFiltros) {
@@ -4533,7 +4641,8 @@ const _USR_TELAS = [
   ['bloqueados',       'E-MAILS · Bloqueadas por Regras',  'Conversas descartadas pelos filtros automáticos — não entram na classificação.'],
   ['fog-kpis',         'FOGBUGZ · Visão Consolidada',      'Visão consolidada por status, responsável, casos mais antigos e parados há quantos dias.'],
   ['fog-casos',        'FOGBUGZ · Lista de Casos',         'Listagem de casos por projeto, responsável e status.'],
-  ['fog-evolucao',     'FOGBUGZ · Evolução',               'Tendências de casos ao longo do tempo — aberturas, fechamentos, projetos e áreas.'],
+  ['fog-evolucao',          'FOGBUGZ · Evolução',                'Tendências de casos ao longo do tempo — aberturas, fechamentos, projetos e áreas.'],
+  ['fog-jornada-colab',     'FOGBUGZ · Jornada por Colaborador', 'FOGs que passaram pela mão de cada colaborador, com jornada visual e distribuição de tempo.'],
   ['admin',            'Administração · E-mail',           'Busca, histórico, relógio, regra de dias e situação da busca. (Administrador)'],
   ['notificacoes',     'Administração · Notificações',     'O que é, ligada ou desligada, e quais grupos recebem. (Administrador)'],
   ['usuarios',         'Administração · Usuários e Perfis','Quem entra e o perfil. (Administrador)'],
@@ -4544,8 +4653,8 @@ let _usrDados = [
 ];
 let _permissoes = {
   operador:       ['classificados','historico'],
-  gestor:         ['classificados','historico','nao-classificados','bloqueados','fog-casos','fog-kpis'],
-  administrador:  ['classificados','historico','nao-classificados','bloqueados','fog-casos','fog-kpis','admin','notificacoes','usuarios'],
+  gestor:         ['classificados','historico','nao-classificados','bloqueados','fog-casos','fog-kpis','fog-jornada-colab'],
+  administrador:  ['classificados','historico','nao-classificados','bloqueados','fog-casos','fog-kpis','fog-jornada-colab','admin','notificacoes','usuarios'],
 };
 let _usrAbaAtiva = 'usuarios';
 let _usrModalId   = null;
@@ -5285,6 +5394,158 @@ async function toggleJornada(fogId) {
     content.innerHTML = '<span style="color:#ef4444;font-size:12px">Erro ao carregar jornada.</span>';
   }
 }
+
+// ── Jornada por Colaborador ───────────────────────────────────────────────────
+let _jcolDados = null, _jcolFiltroAtivo = 'total';
+const _jcMeses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+function _jcolInicializar() {
+  const ate = document.getElementById('jcol-ate');
+  const de  = document.getElementById('jcol-de');
+  if (ate && !ate.value) {
+    const hoje = new Date();
+    ate.value = hoje.toISOString().slice(0,10);
+    const seis = new Date(hoje); seis.setMonth(hoje.getMonth() - 6);
+    de.value = seis.toISOString().slice(0,10);
+  }
+}
+
+async function buscarJornadaColab() {
+  const colab = document.getElementById('jcol-select').value;
+  const de    = document.getElementById('jcol-de').value;
+  const ate   = document.getElementById('jcol-ate').value;
+  const msg   = document.getElementById('jcol-msg');
+  const res   = document.getElementById('jcol-resultado');
+  if (!colab) { msg.textContent = 'Selecione um colaborador.'; msg.hidden = false; res.hidden = true; return; }
+  if (!de || !ate) { msg.textContent = 'Preencha o período.'; msg.hidden = false; res.hidden = true; return; }
+  msg.textContent = 'Buscando FOGs no FogBugz — pode levar alguns segundos…';
+  msg.hidden = false; res.hidden = true;
+  try {
+    const r = await fetch(`/api/fogbugz/jornada?colaborador=${encodeURIComponent(colab)}&de=${de}&ate=${ate}`);
+    if (!r.ok) { const e = await r.json().catch(()=>{}); msg.textContent = (e && e.erro) || 'Erro ao buscar.'; return; }
+    _jcolDados = await r.json();
+    _jcolFiltroAtivo = 'total';
+    _jcolRenderizar();
+    msg.hidden = true; res.hidden = false;
+  } catch(e) {
+    msg.textContent = 'Erro de conexão ao buscar dados.';
+  }
+}
+
+function _jcolClassif(fog, pessoa) {
+  if (!fog.ab) return 'final';
+  const last = fog.e[fog.e.length - 1];
+  if (last && last.p === pessoa && last.a) return 'ainda';
+  return 'passou';
+}
+
+function _jcolRenderizar() {
+  if (!_jcolDados) return;
+  const { colaborador: colab, fogs } = _jcolDados;
+  const nTotal  = fogs.length;
+  const nPassou = fogs.filter(f => _jcolClassif(f, colab) === 'passou').length;
+  const nAinda  = fogs.filter(f => _jcolClassif(f, colab) === 'ainda').length;
+  document.getElementById('jcol-n-total').textContent  = nTotal;
+  document.getElementById('jcol-n-passou').textContent = nPassou;
+  document.getElementById('jcol-n-ainda').textContent  = nAinda;
+  document.getElementById('jcol-l-total').textContent  = `Passaram por ${colab}`;
+  document.getElementById('jcol-l-ainda').textContent  = `Com ${colab} hoje`;
+  ['total','passou','ainda'].forEach(t => {
+    document.getElementById('jcol-c-' + t)?.classList.toggle('ativo', _jcolFiltroAtivo === t);
+  });
+  const mapaChip = {azul:'ainda', ambar:'passou', verde:'final', total:'total'};
+  Object.entries(mapaChip).forEach(([k,v]) => {
+    document.getElementById('jcol-chip-' + k)?.classList.toggle('ativo', _jcolFiltroAtivo === v);
+  });
+  _jcolRenderGrafico(fogs, colab);
+  _jcolRenderLista(fogs, colab, _jcolFiltroAtivo);
+}
+
+function jcolFiltrar(tipo) {
+  _jcolFiltroAtivo = tipo;
+  _jcolRenderizar();
+}
+
+function _jcolRenderGrafico(fogs, colab) {
+  const porMes = {};
+  fogs.forEach(f => {
+    const et = f.e.find(e => e.p === colab);
+    if (!et) return;
+    const mes = et.i.slice(0,7);
+    if (!porMes[mes]) porMes[mes] = {ainda:0,passou:0,final:0};
+    porMes[mes][_jcolClassif(f, colab)]++;
+  });
+  const meses = Object.keys(porMes).sort();
+  if (!meses.length) { document.getElementById('jcol-barras').innerHTML = ''; return; }
+  const maxV = Math.max(...meses.map(m => porMes[m].ainda + porMes[m].passou + porMes[m].final), 1);
+  const ALT = 120;
+  document.getElementById('jcol-barras').innerHTML = meses.map(m => {
+    const d = porMes[m];
+    const tot = d.ainda + d.passou + d.final;
+    const altTot = Math.max(Math.round((tot/maxV)*ALT), tot>0?4:0);
+    const hA = tot > 0 ? Math.round((d.ainda/tot)*altTot) : 0;
+    const hP = tot > 0 ? Math.round((d.passou/tot)*altTot) : 0;
+    const hF = Math.max(altTot - hA - hP, d.final>0?3:0);
+    const [yr, mo] = m.split('-');
+    const lbl = _jcMeses[+mo-1] + (meses.length > 12 ? ` ${yr.slice(2)}` : '');
+    const segs = [
+      hA ? `<div style="height:${hA}px;background:#3b82f6;border-radius:2px"></div>` : '',
+      hP ? `<div style="height:${hP}px;background:#f59e0b;border-radius:2px"></div>` : '',
+      hF ? `<div style="height:${hF}px;background:#10b981;border-radius:2px"></div>` : '',
+    ].filter(Boolean).join('');
+    return `<div class="jcol-bar-grp" title="${lbl}: ${tot} FOG(s)">
+      <div class="jcol-bar-stk" style="display:flex;flex-direction:column-reverse;width:26px;gap:1px;align-items:stretch">${segs}</div>
+      <div class="jcol-bar-lbl">${lbl}</div>
+    </div>`;
+  }).join('');
+}
+
+function _jcolRenderLista(fogs, colab, filtro) {
+  const _esc = s => (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const lista = filtro === 'total' ? fogs : fogs.filter(f => _jcolClassif(f, colab) === filtro);
+  if (!lista.length) {
+    document.getElementById('jcol-lista').innerHTML = '<div class="jcol-placeholder">Nenhum FOG encontrado para este filtro.</div>';
+    return;
+  }
+  const corClassif = {ainda:'#3b82f6', passou:'#f59e0b', final:'#10b981'};
+  const textoClassif = {ainda:'Com ele hoje', passou:'Passou adiante', final:'Finalizado'};
+  document.getElementById('jcol-lista').innerHTML = lista.map(fog => {
+    const classif  = _jcolClassif(fog, colab);
+    const cor      = corClassif[classif];
+    const badgeTxt = textoClassif[classif];
+    const totDias  = fog.e.reduce((s,e)=>s+e.d,0);
+    const etapasHtml = fog.e.map((e,i) => {
+      let cls = 'jcol-et';
+      if (e.p === colab) cls += ' colab';
+      if (e.a) cls += ' atual';
+      const seta = i < fog.e.length-1 ? '<span class="jcol-seta">→</span>' : '';
+      const data = e.i ? `<span style="font-size:9px;color:var(--muted)">${e.i.slice(8,10)}/${e.i.slice(5,7)}</span>` : '';
+      return `<div class="${cls}">
+        <span class="jcol-et-nome">${_esc(e.p)}</span>${data}
+        <span class="jcol-et-dias">${e.d}d</span>
+      </div>${seta}`;
+    }).join('');
+    const distHtml = totDias > 0
+      ? fog.e.map(e => {
+          const w = Math.max(Math.round((e.d/totDias)*100), e.d>0?2:0);
+          const bg = e.p === colab ? 'var(--accent)' : 'var(--border)';
+          return `<div style="flex:${w};background:${bg};height:100%"></div>`;
+        }).join('')
+      : '';
+    return `<div class="jcol-fog-card">
+      <div class="jcol-fog-hd">
+        <span class="jcol-fog-id">#${_esc(fog.id)}</span>
+        <span class="jcol-fog-titulo" title="${_esc(fog.t)}">${_esc(fog.t)}</span>
+        <span style="font-size:.7rem;font-weight:600;padding:2px 8px;border-radius:20px;flex-shrink:0;background:${cor}22;color:${cor}">${_esc(badgeTxt)}</span>
+      </div>
+      <div class="jcol-fog-bd">
+        <div class="jcol-scroll"><div class="jcol-etapas">${etapasHtml}</div></div>
+        ${totDias>0 ? `<div style="display:flex;height:5px;border-radius:3px;overflow:hidden;margin-top:8px">${distHtml}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 function _renderJornadaFog(fog) {
   const _esc = s => (s || '').replace(/[&<>"']/g,
