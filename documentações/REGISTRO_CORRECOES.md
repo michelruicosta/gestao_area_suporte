@@ -2,6 +2,24 @@
 
 ---
 
+### 10/09 — FEAT: Tela "Jornada do FOG por Colaborador" implementada (aprovada por Fabio 10/09/2026)
+
+**🔎 Em miúdos:** nova tela no sistema que mostra todos os FOGs que passaram pela mão de cada colaborador (Fabio, Luiz, Antonio, Bruno, Daniela), com jornada visual de quem tocou em cada caso e quanto tempo ficou com cada pessoa.
+
+**O que foi feito:**
+- Rota Flask `/api/fogbugz/jornada`: busca todos os FOGs abertos no período, filtra os que passaram pelo colaborador via eventos `sVerb=Assigned`, monta a jornada de etapas, retorna JSON com cache de 10 min
+- Seção completa em `gestao_email.html`: seletor de colaborador, período (De/Até), 3 cards de contagem (total / passou adiante / com ele hoje), gráfico CSS empilhado por mês, lista de FOGs com jornada visual conectada e barra de distribuição de tempo
+- JS: `_jcolInicializar`, `buscarJornadaColab`, `_jcolClassif`, `_jcolRenderizar`, `jcolFiltrar`, `_jcolRenderGrafico`, `_jcolRenderLista`
+- Acesso concedido a `gestor` e `administrador`; registrado em `_USR_TELAS`
+
+**Arquivos modificados:** `scripts/servidor_telas.py`, `templates/gestao_email.html`
+
+**Commit:** `62fe8a8 feat(fog): Jornada por Colaborador — nova tela com jornada visual por colaborador`
+
+**Validação:** ✅ `pytest tests/ -q`: **656 passed**, zero regressões.
+
+---
+
 ### 10/09 — Padrão 2 parcial (Finaud→Cliente): §8.8a — "aguardo de liberação" supera "retornaremos em breve"
 
 **🔎 Em miúdos:** quando a Finaud dizia "Retornaremos em breve" mas estava esperando o cliente liberar algo (ex.: "permanecemos no aguardo da liberação das parametrizações"), o sistema marcava como Aguardando Finaud. Agora marca corretamente como Aguardando Cliente.

@@ -12,6 +12,7 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
+| 10/09 | Jornada por Colaborador: nova tela FOG completa implementada e deployada | abaixo |
 | 10/09 | Portal: botão copiar senha temporária — tentativa user-select:all → revertida | abaixo |
 | 10/09 | Script testar_status_ia.py criado — Fase 1 pronta para rodar | abaixo |
 | 10/09 | Teste de IA — planejamento e análise de 1.629 threads para validação de status | abaixo |
@@ -64,6 +65,50 @@
 >
 > **Regra:** este arquivo guarda as **3 sessões mais recentes**. O `/fechar` acrescenta a
 > linha nova aqui e move a 4ª sessão para o arquivo.
+
+---
+
+## 📓 Diário da sessão (2026-09-10 quarta sessão) — Jornada por Colaborador: nova tela FOG implementada
+
+### O que foi feito
+
+1. **Item 🔴 URGENTE do PENDENCIAS.md** — "Jornada do FOG por Colaborador" (aprovado por Fabio 10/09/2026).
+
+2. **Rota Flask `/api/fogbugz/jornada`** em `scripts/servidor_telas.py`:
+   - Busca todos os FOGs por período (`opened:"de..ate"`, max 500)
+   - Filtra pelo colaborador via eventos `sVerb=Assigned` (regex "Designado para X por Y")
+   - Monta jornada de etapas com dias por pessoa (merged para mesma pessoa consecutiva)
+   - Cache 10 min por `(colaborador, de, ate)` para evitar chamadas repetidas
+   - Colaboradores: Fabio, Luiz, Antonio, Bruno, Daniela
+
+3. **Seção completa em `templates/gestao_email.html`**:
+   - CSS: 30+ classes `.jcol-*` (cards, gráfico, jornada visual, barra de distribuição)
+   - HTML: filtros, 3 cards de resumo, gráfico CSS empilhado por mês, lista de FOGs
+   - JS: `_jcolInicializar`, `buscarJornadaColab`, `_jcolClassif`, `_jcolRenderizar`, `jcolFiltrar`, `_jcolRenderGrafico`, `_jcolRenderLista`
+   - Menu lateral: item "🗺️ Jornada por Colaborador" na seção FOGBUGZ
+   - Permissões: `gestor` e `administrador`; registrado em `_USR_TELAS`
+
+4. **pytest:** 656 passed ✅, zero regressões.
+5. **Commit:** `62fe8a8 feat(fog): Jornada por Colaborador — nova tela com jornada visual por colaborador`
+6. **Push + deploy na VPS.**
+
+### Estado atual
+
+**pytest:** 656 passed ✅.
+**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅.
+**PENDENCIAS.md:** item 🔴 URGENTE removido (feature entregue).
+
+### Próximo passo
+
+🟡 **Rodar a Fase 1 do teste de IA** — `python scripts/testar_status_ia.py --fase 1` (custo ~$0,36; requer OPENAI_API_KEY).
+
+**Pendências que continuam:**
+- 🔴 Fix status — "Concluída" quando Finaud perguntou algo ao cliente (executar APÓS o teste de IA)
+- 🔴 Threads irmãs — 11 grupos com thread Concluída + pendente no mesmo caso
+- 🟡 Modal — Cenário 2b (COSIF citada 2×) e `white-space: nowrap` na coluna Valor
+- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
+
+Último /fechar: 2026-09-10 — memórias revisadas ✅
 
 ---
 
