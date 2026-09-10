@@ -1118,10 +1118,6 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
           <span class="nav-ico">📊</span>
           <span class="nav-txt">Evolução</span>
         </button>
-        <button class="nav-item" data-pagina="fog-colaboradores" onclick="navegar(this)">
-          <span class="nav-ico">👤</span>
-          <span class="nav-txt">Por Colaborador</span>
-        </button>
       </div>
     </div>
 
@@ -1861,7 +1857,6 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
         <button class="email-tab" data-pagina="fog-kpis" onclick="navegar(this)">Visão Consolidada</button>
         <button class="email-tab ativa" data-pagina="fog-casos" onclick="navegar(this)">Lista de Casos</button>
         <button class="email-tab" data-pagina="fog-evolucao" onclick="navegar(this)">Evolução</button>
-        <button class="email-tab" data-pagina="fog-colaboradores" onclick="navegar(this)">Por Colaborador</button>
       </div>
 
       <div class="page-header" style="margin-bottom:0.75rem">
@@ -2044,7 +2039,6 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
         <button class="email-tab ativa" data-pagina="fog-kpis" onclick="navegar(this)">Visão Consolidada</button>
         <button class="email-tab" data-pagina="fog-casos" onclick="navegar(this)">Lista de Casos</button>
         <button class="email-tab" data-pagina="fog-evolucao" onclick="navegar(this)">Evolução</button>
-        <button class="email-tab" data-pagina="fog-colaboradores" onclick="navegar(this)">Por Colaborador</button>
       </div>
 
       <div class="page-header" style="margin-bottom:0.75rem">
@@ -2151,7 +2145,6 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
         <button class="email-tab" data-pagina="fog-kpis" onclick="navegar(this)">Visão Consolidada</button>
         <button class="email-tab" data-pagina="fog-casos" onclick="navegar(this)">Lista de Casos</button>
         <button class="email-tab ativa" data-pagina="fog-evolucao" onclick="navegar(this)">Evolução</button>
-        <button class="email-tab" data-pagina="fog-colaboradores" onclick="navegar(this)">Por Colaborador</button>
       </div>
 
       <div class="page-header" style="margin-bottom:0.75rem">
@@ -2206,48 +2199,6 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
       <!-- Conteúdo dinâmico -->
       <div id="fog-evo-corpo">
         <div class="fevo-loading">Carregando dados…</div>
-      </div>
-
-    </section>
-
-    <!-- ── Página FOG: Por Colaborador ──────────────────────────────── -->
-    <section class="page" id="pag-fog-colaboradores">
-
-      <div class="email-tabbar">
-        <button class="email-tab" data-pagina="fog-kpis" onclick="navegar(this)">Visão Consolidada</button>
-        <button class="email-tab" data-pagina="fog-casos" onclick="navegar(this)">Lista de Casos</button>
-        <button class="email-tab" data-pagina="fog-evolucao" onclick="navegar(this)">Evolução</button>
-        <button class="email-tab ativa" data-pagina="fog-colaboradores" onclick="navegar(this)">Por Colaborador</button>
-      </div>
-
-      <div class="page-header" style="margin-bottom:0.75rem">
-        <div class="page-header-left">
-          <h1 class="page-titulo">Jornada dos Casos</h1>
-          <p class="page-subtitulo">Como cada FOG passou pelos colaboradores — quem teve, por quanto tempo e onde o tempo foi maior</p>
-        </div>
-      </div>
-
-      <!-- Filtros -->
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap">
-        <span style="font-size:0.82rem;color:var(--muted)">Período de abertura do caso</span>
-        <label class="dt-field" onclick="_abrirCal('fogcolab-dt-inicio',event)">
-          <span class="dt-ico">📅</span>
-          <span class="dt-disp" id="fogcolab-dt-inicio-disp">01/01/2026</span>
-          <input type="hidden" id="fogcolab-dt-inicio" class="dt-inp" value="">
-        </label>
-        <span class="dt-sep">→</span>
-        <label class="dt-field" onclick="_abrirCal('fogcolab-dt-fim',event)">
-          <span class="dt-ico">📅</span>
-          <span class="dt-disp" id="fogcolab-dt-fim-disp">hoje</span>
-          <input type="hidden" id="fogcolab-dt-fim" class="dt-inp" value="">
-        </label>
-        <button class="btn-aplicar-dt" onclick="fogColabBuscar()">Buscar</button>
-      </div>
-
-      <!-- Corpo dinâmico -->
-      <div id="fogcolab-corpo">
-        <div class="fevo-loading" style="display:none" id="fogcolab-loading">Buscando dados do FogBugz…</div>
-        <div id="fogcolab-lista"></div>
       </div>
 
     </section>
@@ -2505,7 +2456,6 @@ function navegar(btn) {
     'fog-casos':          'FOGBUGZ · Lista de Casos',
     'fog-kpis':           'FOGBUGZ · Visão Consolidada',
     'fog-evolucao':       'FOGBUGZ · Evolução',
-    'fog-colaboradores':  'FOGBUGZ · Por Colaborador',
   };
   const titulosAdmin = {
     'coletor':      'Administração · E-mail · Buscar e-mails agora',
@@ -2531,7 +2481,7 @@ function navegar(btn) {
   if (pag === 'notificacoes') { _notifCarregar(); }
   if (pag !== 'admin') { _pararAutoRefreshLog(); }
   if (pag === 'fog-evolucao') { carregarFogEvo(); }
-  if (pag === 'fog-colaboradores') { fogColabIniciar(); }
+
   if (pag === 'fog-casos') {
     if (!_keepFogFiltros) {
       _fogUrgenciaFiltro = '';
@@ -5274,56 +5224,7 @@ function _vgFiltrar() {
   </tr>`).join('');
 }
 
-// ── FOG Por Colaborador ───────────────────────────────────────────────────────
-let _fogColabDados = [];
-let _fogColabCarregado = false;
-
-function fogColabIniciar() {
-  if (_fogColabCarregado) return;
-  const hoje = new Date().toISOString().slice(0, 10);
-  const iniEl = document.getElementById('fogcolab-dt-inicio');
-  const fimEl = document.getElementById('fogcolab-dt-fim');
-  if (iniEl && !iniEl.value) {
-    iniEl.value = hoje.slice(0, 4) + '-01-01';
-    document.getElementById('fogcolab-dt-inicio-disp').textContent = '01/01/' + hoje.slice(0, 4);
-  }
-  if (fimEl && !fimEl.value) {
-    fimEl.value = hoje;
-    document.getElementById('fogcolab-dt-fim-disp').textContent = _fogColabFmtDt(hoje);
-  }
-  fogColabBuscar();
-}
-
-function _fogColabFmtDt(iso) {
-  if (!iso) return '—';
-  const [y, m, d] = iso.split('-');
-  return `${d}/${m}/${y}`;
-}
-
-async function fogColabBuscar() {
-  const ini = document.getElementById('fogcolab-dt-inicio').value;
-  const fim = document.getElementById('fogcolab-dt-fim').value;
-  if (!ini || !fim) return;
-  const load = document.getElementById('fogcolab-loading');
-  const lista = document.getElementById('fogcolab-lista');
-  load.style.display = 'block';
-  lista.innerHTML = '';
-  try {
-    const r = await fetch(`/api/fog-jornadas?inicio=${ini}&fim=${fim}`);
-    _fogColabDados = await r.json();
-    _fogColabCarregado = true;
-    fogColabRender();
-  } catch(e) {
-    lista.innerHTML = '<p style="color:var(--muted);padding:1rem">Erro ao buscar dados do FogBugz.</p>';
-  } finally {
-    load.style.display = 'none';
-  }
-}
-
 // ── Jornada inline na Lista de Casos ─────────────────────────────────
-const esc = s => (s || '').replace(/[&<>"']/g,
-  c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function primeiroNome(nome) { return (nome || '').split(' ')[0]; }
 
 let _precarregTimer = null;
 function _agendarPrecarregamento() {
@@ -5434,99 +5335,6 @@ function _renderJornadaFog(fog) {
   </div>`;
 }
 
-function fogColabRender() {
-  const lista = document.getElementById('fogcolab-lista');
-  if (!_fogColabDados.length) {
-    lista.innerHTML = '<p style="color:var(--muted);padding:1rem">Nenhum dado encontrado para o período.</p>';
-    return;
-  }
-  const esc = s => (s || '').replace(/[&<>"']/g,
-    c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-
-  function primeiroNome(nome) {
-    return (nome || '').split(' ')[0];
-  }
-
-  function estiloEtapa(e) {
-    if (e.gargalo && !e.em_aberto)
-      return { bg: 'rgba(239,68,68,.1)', borda: '#ef4444', cor: '#ef4444' };
-    if (e.em_aberto)
-      return { bg: 'rgba(59,130,246,.08)', borda: 'var(--accent)', cor: 'var(--accent)' };
-    if (e.dias >= 60)
-      return { bg: 'rgba(239,68,68,.06)', borda: '#fca5a5', cor: '#dc2626' };
-    if (e.dias >= 20)
-      return { bg: 'rgba(245,158,11,.07)', borda: '#fcd34d', cor: '#b45309' };
-    return { bg: 'var(--bg)', borda: 'var(--border)', cor: 'var(--muted)' };
-  }
-
-  lista.innerHTML = _fogColabDados.map(fog => {
-    const statusStyle = fog.status === 'Ativo'
-      ? 'background:#EAF3DE;color:#3B6D11'
-      : 'background:#f1f5f9;color:#64748b';
-
-    const etapasHtml = fog.etapas.map((e, i) => {
-      const st  = estiloEtapa(e);
-      const seta = i < fog.etapas.length - 1
-        ? `<span style="color:var(--muted);font-size:13px;flex-shrink:0;padding:0 2px">→</span>` : '';
-      const semAtuDu = fog.dias_sem_atualizacao || 0;
-      const semAtuCor = semAtuDu >= 60 ? '#ef4444' : semAtuDu >= 20 ? '#f97316' : 'var(--muted)';
-      const semAtuHtml = e.em_aberto && semAtuDu > 0
-        ? `<span style="font-size:9px;color:${semAtuCor}">sem atualização ${semAtuDu}du</span>`
-        : '';
-      const rodape = e.gargalo && !e.em_aberto
-        ? `<span style="font-size:9px;color:#ef4444;letter-spacing:.3px">⚠ gargalo</span>`
-        : e.em_aberto
-          ? `<span style="font-size:9px;color:var(--accent)">● atual</span>${semAtuHtml}`
-          : '';
-      const label = (e.passagens || 1) > 1
-        ? `${esc(primeiroNome(e.nome))} (${e.passagens}×)`
-        : esc(primeiroNome(e.nome));
-      return `<div style="display:inline-flex;flex-direction:column;align-items:center;
-          padding:5px 11px;border-radius:8px;border:1px solid ${st.borda};
-          background:${st.bg};min-width:76px;text-align:center;gap:1px">
-        <span style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap">${label}</span>
-        <span style="font-size:12px;font-weight:700;color:${st.cor}">${e.dias}d</span>
-        ${rodape}
-      </div>${seta}`;
-    }).join('');
-
-    // Totalizador: soma dias por pessoa em ordem decrescente
-    const totais = {};
-    fog.etapas.forEach(e => {
-      const p = primeiroNome(e.nome);
-      totais[p] = (totais[p] || 0) + e.dias;
-    });
-    const totalizadorHtml = Object.entries(totais)
-      .sort((a, b) => b[1] - a[1])
-      .map(([nome, dias]) => `<span>${esc(nome)} <strong>${dias}d</strong></span>`)
-      .join('<span style="color:var(--border);margin:0 4px">·</span>');
-
-    const fogLink = `https://finaud.fogbugz.com/f/cases/${esc(fog.id)}`;
-
-    return `<div style="background:var(--surface);border:1px solid var(--border);
-        border-radius:10px;padding:.875rem 1.125rem;margin-bottom:8px">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:.625rem;flex-wrap:wrap">
-        <span style="font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap">#${esc(fog.id)}</span>
-        <span style="flex:1;font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
-              title="${esc(fog.titulo)}">${esc(fog.titulo)}</span>
-        <span style="padding:2px 8px;border-radius:9px;font-size:11px;font-weight:600;${statusStyle};flex-shrink:0">${esc(fog.status)}</span>
-        <span style="font-size:12px;color:var(--muted);white-space:nowrap;flex-shrink:0">${fog.total_dias} dias total</span>
-        <a href="${fogLink}" target="_blank"
-           style="padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;
-                  background:var(--accent);color:#fff;text-decoration:none;flex-shrink:0;white-space:nowrap"
-           title="Abrir caso no FogBugz">Abrir ↗</a>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-        ${etapasHtml}
-      </div>
-      <div style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--border);
-                  font-size:11px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px;align-items:center">
-        <span style="font-weight:600;margin-right:2px">Total por pessoa:</span>
-        ${totalizadorHtml}
-      </div>
-    </div>`;
-  }).join('');
-}
 </script>
 </body>
 </html>
