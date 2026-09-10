@@ -1139,6 +1139,9 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
 .jcol-arr{color:var(--muted);font-size:18px;margin:0 2px;flex-shrink:0;margin-bottom:20px;align-self:flex-start;padding-top:10px}
 .jcol-badge-mini{font-size:9px;font-weight:700;text-transform:uppercase;border-radius:10px;padding:1px 6px;margin-top:2px;border:1px solid}
 .jcol-badge-cur{color:#B45309;background:#FFFBEB;border-color:#FDE68A}
+.jcol-av-garg{border-color:#E55;background:#3B1515;color:#F87171}
+.jcol-garg-badge{font-size:9px;font-weight:700;text-transform:uppercase;color:#E55;background:#3B1515;border:1px solid #7F1D1D;border-radius:10px;padding:1px 6px;margin-top:2px}
+.jcol-pass{font-size:9px;color:var(--muted);margin-top:1px}
 /* distribuição por pessoa */
 .jcol-dist-wrap{padding:12px 18px 14px;border-top:1px solid var(--border)}
 .jcol-dist-ttl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:10px}
@@ -5580,11 +5583,11 @@ function _jcolClassif(fog, pessoa) {
 
 function _jcolMesclar(etapas) {
   if (!etapas.length) return [];
-  const m = [{...etapas[0]}];
+  const m = [{...etapas[0], pass:1}];
   for (let i = 1; i < etapas.length; i++) {
     const pr = m[m.length-1], cr = etapas[i];
-    if (cr.p === pr.p) { pr.d += cr.d; if (cr.a) pr.a = true; }
-    else m.push({...cr});
+    if (cr.p === pr.p) { pr.d += cr.d; pr.pass++; if (cr.a) pr.a = true; }
+    else m.push({...cr, pass:1});
   }
   return m;
 }
@@ -5621,22 +5624,23 @@ function _jcolRenderGrafico(fogs, colab) {
     const et = f.e.find(e => e.p === colab);
     if (!et) return;
     const mes = et.i.slice(0,7);
-    if (!porMes[mes]) porMes[mes] = {ainda:0,passou:0,final:0};
-    porMes[mes][_jcolClassif(f, colab)]++;
+    const classif = _jcolClassif(f, colab);
+    if (classif === 'final') return;
+    if (!porMes[mes]) porMes[mes] = {ainda:0,passou:0};
+    porMes[mes][classif]++;
   });
   const meses = Object.keys(porMes).sort();
   const card = document.getElementById('jcol-chart-mensal');
   if (!meses.length) { card.innerHTML = ''; return; }
-  const maxV = Math.max(...meses.map(m => porMes[m].ainda + porMes[m].passou + porMes[m].final), 1);
+  const maxV = Math.max(...meses.map(m => porMes[m].ainda + porMes[m].passou), 1);
   const H = 72;
   const bars = meses.map(m => {
     const d = porMes[m];
-    const tot = d.ainda + d.passou + d.final;
+    const tot = d.ainda + d.passou;
     const pxTot = Math.round((tot/maxV)*H);
     const segs = [
       d.ainda  ? `<div class="jcol-sbar-s jcol-s-ainda" style="height:${Math.round((d.ainda/maxV)*H)}px"></div>` : '',
       d.passou ? `<div class="jcol-sbar-s jcol-s-passou" style="height:${Math.round((d.passou/maxV)*H)}px"></div>` : '',
-      d.final  ? `<div class="jcol-sbar-s jcol-s-final"  style="height:${Math.round((d.final/maxV)*H)}px"></div>` : '',
     ].filter(Boolean).join('');
     const [yr, mo] = m.split('-');
     const lbl = _jcMeses[+mo-1] + '/' + yr.slice(2);
@@ -5674,14 +5678,17 @@ function _jcolRenderLista(fogs, colab, filtro) {
       let avCls = 'jcol-av';
       let nnCls = 'jcol-nn';
       let ndCls = 'jcol-nd';
-      if (isHi && e.a) { avCls += ' jcol-av-hi-cur'; ndCls += ' jcol-nd-cur'; }
-      else if (isHi)   { avCls += ' jcol-av-hi'; nnCls += ' jcol-nn-hi'; }
-      else if (e.a)    { avCls += ' jcol-av-cur'; ndCls += ' jcol-nd-cur'; }
+      if (isHi && e.a)       { avCls += ' jcol-av-hi-cur'; ndCls += ' jcol-nd-cur'; }
+      else if (isHi)         { avCls += ' jcol-av-hi'; nnCls += ' jcol-nn-hi'; }
+      else if (e.a)          { avCls += ' jcol-av-cur'; ndCls += ' jcol-nd-cur'; }
+      else if (isGarg)       { avCls += ' jcol-av-garg'; }
       const iniciais = _esc(e.p.slice(0,2).toUpperCase());
-      const dtLabel  = e.a
+      const dtLabel   = e.a
         ? `<div class="jcol-ndt">desde ${ini2(e.i)}</div>`
         : `<div class="jcol-ndt">${ini2(e.i)}</div>`;
-      const curBadge  = e.a ? `<div class="jcol-badge-mini jcol-badge-cur">atual</div>` : '';
+      const curBadge  = e.a              ? `<div class="jcol-badge-mini jcol-badge-cur">atual</div>` : '';
+      const gargBadge = isGarg && !e.a  ? `<div class="jcol-garg-badge">mais longo</div>` : '';
+      const passLabel = e.pass > 1      ? `<div class="jcol-pass">↩${e.pass}×</div>` : '';
       const arr = i < merged.length-1 ? '<div class="jcol-arr">›</div>' : '';
       return `<div class="jcol-step">
         <div class="jcol-node">
@@ -5689,7 +5696,7 @@ function _jcolRenderLista(fogs, colab, filtro) {
           <div class="${nnCls}">${_esc(e.p)}</div>
           ${dtLabel}
           <div class="${ndCls}">${e.d}d</div>
-          ${curBadge}
+          ${passLabel}${curBadge}${gargBadge}
         </div>
       </div>${arr}`;
     }).join('');
