@@ -12,9 +12,11 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
+| 10/09 | Portal: botão copiar senha temporária — tentativa user-select:all → revertida | abaixo |
+| 10/09 | Script testar_status_ia.py criado — Fase 1 pronta para rodar | abaixo |
 | 10/09 | Teste de IA — planejamento e análise de 1.629 threads para validação de status | abaixo |
 | 09/09 | Modal: De/Para unificados — regras por tipo de remetente; deploy e validação em produção | abaixo |
-| 09/09 | Coletor de colaboradores — verificação pós-deploy do fix Message-ID/In-Reply-To | abaixo |
+| 09/09 | Coletor de colaboradores — verificação pós-deploy do fix Message-ID/In-Reply-To | arquivo |
 | 09/09 | Contaminação cruzada DRM 2060: investigação, restauração e prevenção | arquivo |
 | 09/09 | Sentry: guia interativo + fix UndefinedError media_dias | arquivo |
 | 09/09 | Modal — Cenário 3: listas com marcadores implementadas e publicadas na VPS | arquivo |
@@ -62,6 +64,43 @@
 >
 > **Regra:** este arquivo guarda as **3 sessões mais recentes**. O `/fechar` acrescenta a
 > linha nova aqui e move a 4ª sessão para o arquivo.
+
+---
+
+## 📓 Diário da sessão (2026-09-10 terceira sessão) — Portal: botão copiar senha temporária
+
+### O que foi feito
+
+1. **Pedido:** Michel enviou captura do e-mail de recuperação de acesso do portal e pediu um botão "Copiar senha temporária".
+
+2. **Limitação técnica explicada** — e-mail HTML não executa JavaScript. O Clipboard API (que copia para o clipboard) depende de JS, que todos os clientes de e-mail bloqueiam por segurança. Não há como fazer "clicou → copiou automaticamente" dentro de um e-mail.
+
+3. **Alternativa proposta e aprovada** — `user-select:all` + cursor:pointer na célula da senha: um clique seleciona tudo, Ctrl+C copia. Texto "clique para selecionar" como instrução. Michel escolheu esta opção.
+
+4. **Implementado, commitado e deployado** — commit `60701ef` em `portal_finaudapps`. Deploy na VPS via git pull + restart `finaud-portal-auth-api`. Serviço: active ✅.
+
+5. **Revertido por decisão do Michel** — Michel não gostou do efeito. Preferiu manter o visual original sem o auxílio intermediário. Revert commitado (`2686071`) e deployado imediatamente.
+
+6. **Nenhuma mudança no Gestão Área Suporte** — toda a sessão foi no projeto `portal_finaudapps`.
+
+### Estado atual
+
+**pytest:** 656 passed ✅ (sem alteração nesta sessão).
+**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅.
+**Portal:** visual do e-mail voltou ao original; serviço active ✅.
+
+### Próximo passo
+
+🟡 **Rodar a Fase 1** — `python scripts/testar_status_ia.py --fase 1` (custo estimado ~$0,36; requer OPENAI_API_KEY). Analisar o CSV e decidir se o prompt está correto antes de partir para a Fase 2.
+
+**Pendências que continuam:**
+- 🔴 Fix status — "Concluída" quando Finaud perguntou algo ao cliente (executar APÓS o teste de IA)
+- 🔴 Threads irmãs — 11 grupos com thread Concluída + pendente no mesmo caso
+- 🟡 Modal — Cenário 2b (COSIF citada 2×) e `white-space: nowrap` na coluna Valor
+- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
+- ⚠️ Código não-commitado (Jornada ▼): `servidor_telas.py` staged + `gestao_email.html` + `tests/test_servidor_telas.py` — commitar em outro chat
+
+Último /fechar: 2026-09-10 — memórias revisadas ✅
 
 ---
 
@@ -183,42 +222,6 @@ Ver PENDENCIAS.md → item "🟡 INVESTIGAR — Teste de IA para validar status"
 - 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
 
 Último /fechar: 2026-09-09 20:00 — memórias revisadas ✅
-
----
-
-## 📓 Diário da sessão (2026-09-09) — Coletor de colaboradores: verificação pós-deploy do fix Message-ID/In-Reply-To
-
-### O que foi feito
-
-Sessão retomada após compactação de contexto — estado verificado e confirmado íntegro.
-
-1. **Estado confirmado** — coletor ativo com fix Message-ID/In-Reply-To ✅, 653 testes passando, produção ativa.
-
-2. **Como os testes foram feitos** — explicado para Michel: 20 testes unitários pytest cobrindo `_construir_indice_mid`, `_thread_por_reply` e `_ja_existe`; validação com dados reais (Gmail das 6 caixas): 84 mensagens novas em 45 threads, sem contaminação.
-
-3. **Como ver na tela** — orientado: buscar "Trustee" ou "DRM - 2060", thread Trustee DTVM deve ter 2 mensagens. Identificados dados da thread: assunto "ENC: BANCO CENTRAL - COMUNICACAO DE INCONSISTENCIA NO DRM - 2060", data 01/09/2026.
-
-4. **Confirmação visual** — Michel abriu a thread na tela do sistema e confirmou: De: Miguel Santos → Para: Igor Menezes Costa (`icosta.ext@trusteedtvm.com.br`), data 01/09/2026, conteúdo correto (pedido do COS4060). BUG CRÍTICO encerrado e confirmado na tela ✅.
-
-5. **Nenhuma alteração de código nesta sessão.**
-
-### Estado atual
-
-**pytest:** 653 passed ✅.
-**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅.
-**Coletor de colaboradores:** ATIVO com fix Message-ID/In-Reply-To ✅.
-**BUG CRÍTICO DRM 2060:** resolvido e confirmado na tela por Michel ✅.
-
-### Próximo passo
-
-🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
-
-**Pendências que continuam:**
-- 🟡 Modal — acabamentos menores: Cenário 2b (COSIF citada 2× perde espaços duplos) e `white-space: nowrap` na coluna Valor
-- 🟡 Passo C — tela de manutenção de regras
-- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
-
-Último /fechar: 2026-09-09 18:30 — memórias revisadas ✅
 
 ---
 <!-- fim das 3 sessões recentes -->

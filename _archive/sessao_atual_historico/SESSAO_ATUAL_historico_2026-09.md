@@ -6,6 +6,42 @@
 
 ---
 
+## 📓 Diário da sessão (2026-09-09) — Coletor de colaboradores: verificação pós-deploy do fix Message-ID/In-Reply-To
+
+### O que foi feito
+
+Sessão retomada após compactação de contexto — estado verificado e confirmado íntegro.
+
+1. **Estado confirmado** — coletor ativo com fix Message-ID/In-Reply-To ✅, 653 testes passando, produção ativa.
+
+2. **Como os testes foram feitos** — explicado para Michel: 20 testes unitários pytest cobrindo `_construir_indice_mid`, `_thread_por_reply` e `_ja_existe`; validação com dados reais (Gmail das 6 caixas): 84 mensagens novas em 45 threads, sem contaminação.
+
+3. **Como ver na tela** — orientado: buscar "Trustee" ou "DRM - 2060", thread Trustee DTVM deve ter 2 mensagens. Identificados dados da thread: assunto "ENC: BANCO CENTRAL - COMUNICACAO DE INCONSISTENCIA NO DRM - 2060", data 01/09/2026.
+
+4. **Confirmação visual** — Michel abriu a thread na tela do sistema e confirmou: De: Miguel Santos → Para: Igor Menezes Costa (`icosta.ext@trusteedtvm.com.br`), data 01/09/2026, conteúdo correto (pedido do COS4060). BUG CRÍTICO encerrado e confirmado na tela ✅.
+
+5. **Nenhuma alteração de código nesta sessão.**
+
+### Estado atual
+
+**pytest:** 653 passed ✅.
+**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅.
+**Coletor de colaboradores:** ATIVO com fix Message-ID/In-Reply-To ✅.
+**BUG CRÍTICO DRM 2060:** resolvido e confirmado na tela por Michel ✅.
+
+### Próximo passo
+
+🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
+
+**Pendências que continuam:**
+- 🟡 Modal — acabamentos menores: Cenário 2b (COSIF citada 2× perde espaços duplos) e `white-space: nowrap` na coluna Valor
+- 🟡 Passo C — tela de manutenção de regras
+- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
+
+Último /fechar: 2026-09-09 18:30 — memórias revisadas ✅
+
+---
+
 ## 📓 Diário da sessão (2026-09-09) — Contaminação cruzada DRM 2060: investigação, restauração e prevenção
 
 ### O que foi feito
