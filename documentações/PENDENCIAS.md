@@ -35,11 +35,36 @@ Alinhar os controles de filtro de período da aba Evolução do FogBugz com os d
 
 ---
 
-## 🟡 MELHORIA — Encerramento automático quando Finaud não faz pergunta (identificado em 02/09/2026)
+## 🔴 FIX — Status errado quando Finaud pergunta algo ao cliente (identificado em 09/09/2026)
 
-Hoje, quando a Finaud responde ao cliente sem fazer uma pergunta (ex: entrega de arquivo, informativo, confirmação), o thread fica em "Aguardando Cliente" até o cliente responder — o que nem sempre acontece. Michel definiu a regra: **thread só fica em "Aguardando Cliente" quando a Finaud fez uma pergunta explícita.** Nos demais casos (entrega, informativo, sem pergunta), classificar direto como Concluída sem aguardar o cliente.
+### O problema observado
 
-Afeta todos os threads (não só BACEN). Requer testes dedicados antes de implementar.
+Thread "Doc 4111 - 04-09-2026" (e outros): Miguel Santos respondeu ao cliente
+com uma pergunta/solicitação, mas o sistema exibiu status **"Concluída"** em vez
+de **"Aguardando Cliente"**. O mesmo ocorre no sentido inverso: quando Finaud
+entrega um arquivo ou dá um informativo sem perguntar nada, o thread fica como
+**"Aguardando Cliente"** quando deveria ser **"Concluída"**.
+
+### Causa
+
+`_determinar_status()` em `scripts/servidor_telas.py` olha só **quem enviou a
+última mensagem** — não analisa o conteúdo. Quando a Finaud envia por último,
+o sistema não sabe se foi uma pergunta (→ aguardar cliente) ou uma entrega final
+(→ concluída).
+
+### O que fazer
+
+1. Criar `_tem_pergunta_acao(texto)` — detecta verbos de pedido, "?", "por favor",
+   "aguardo", "poderia", "necessito" etc. no texto da última mensagem.
+2. Em `_determinar_status()`: se última mensagem é da Finaud **e** `_tem_pergunta_acao`
+   → "Aguardando Cliente"; se última mensagem é da Finaud **e não** `_tem_pergunta_acao`
+   → "Concluída".
+3. Testar com amostra de 20+ threads antes de aplicar em produção.
+4. Rodar sobre todas as threads para recalcular os status.
+
+### Impacto estimado
+
+Afeta todos os threads. Requer testes dedicados — **não implementar sem amostra validada**.
 
 ---
 
