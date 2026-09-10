@@ -1106,6 +1106,8 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
 .jcol-chart-body{display:flex;align-items:flex-end;gap:6px;height:120px;padding-bottom:28px;position:relative;border-bottom:1px solid var(--border)}
 .jcol-chart-col{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;min-width:28px;cursor:pointer;transition:opacity .15s}
 .jcol-chart-col:hover{opacity:.8}
+.jcol-chart-body.jcol-tem-ativo .jcol-chart-col:not(.jcol-col-ativo){opacity:.3}
+.jcol-chart-col.jcol-col-ativo .jcol-sbar{box-shadow:0 0 0 2px white;border-radius:3px 3px 0 0}
 .jcol-sbar{display:flex;flex-direction:column-reverse;width:100%;border-radius:3px 3px 0 0;overflow:hidden;min-height:3px}
 .jcol-sbar-s{width:100%;transition:height .2s}
 .jcol-s-ainda{background:var(--accent)}.jcol-s-passou{background:#F59E0B}.jcol-s-final{background:#10b981}
@@ -1117,6 +1119,23 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
 .jcol-leg-chip.l-passou{color:#B45309;border-color:#F59E0B}
 .jcol-leg-chip.l-final{color:#0A7550;border-color:#10b981;opacity:.4;cursor:not-allowed}
 .jcol-leg-chip.inativo{opacity:.3}
+[data-theme="escuro"] .jcol-av-hi{border-color:#2563EB;background:#1E3A5F;color:#93C5FD}
+[data-theme="escuro"] .jcol-nn-hi{color:#93C5FD}
+[data-theme="escuro"] .jcol-av-cur{border-color:#78350F;background:#2D1E00;color:#FCD34D}
+[data-theme="escuro"] .jcol-av-hi-cur{border-color:#78350F;background:#2D1E00;color:#FCD34D}
+[data-theme="escuro"] .jcol-nd-cur{color:#FCD34D}
+[data-theme="escuro"] .jcol-badge-mini.jcol-badge-cur{color:#FCD34D;background:#2D1E00;border-color:#78350F}
+[data-theme="escuro"] .jcol-badge-ab{color:#F87171;background:#3B1515;border-color:#7F1D1D}
+[data-theme="escuro"] .jcol-badge-fc{color:#34D399;background:#0D2E1F;border-color:#065F46}
+[data-theme="escuro"] .jcol-fid{color:#93C5FD;background:#1E3A5F}
+[data-theme="escuro"] .jcol-dist-name-hi{color:#F87171}
+[data-theme="escuro"] .jcol-dist-fill-hi{background:#F87171}
+[data-theme="escuro"] .jcol-dist-days-hi{color:#F87171}
+[data-theme="escuro"] .jcol-si.ativo{border-color:#3B82F6;background:#1E3A5F;box-shadow:0 0 0 2px #3B82F6}
+[data-theme="escuro"] .jcol-leg-chip.l-ainda{color:#93C5FD;border-color:#3B82F6}
+[data-theme="escuro"] .jcol-leg-chip.l-passou{color:#FCD34D;border-color:#F59E0B}
+[data-theme="escuro"] .jcol-s-ainda{background:#3B82F6}
+[data-theme="escuro"] .jcol-s-passou{background:#F59E0B}
 /* FOG cards */
 .jcol-fog-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:12px;overflow:hidden}
 .jcol-fog-head{display:flex;align-items:center;gap:10px;padding:13px 18px;background:var(--surface2);border-bottom:1px solid var(--border)}
@@ -2434,7 +2453,6 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
               <div class="jcol-sd2">é o responsável atual pelo caso</div>
             </div>
           </div>
-          <p class="jcol-note">⚠️ Casos encerrados não aparecem aqui — o FogBugz não registra o encerramento de forma que consigamos identificar via API.</p>
         </div>
 
         <!-- Gráfico mensal -->
@@ -5566,6 +5584,8 @@ document.addEventListener('click', () => {
   if (list) list.hidden = true;
 });
 let _jcolDados = null, _jcolFiltroAtivo = 'total';
+let _jcolLegsAtivas = new Set(['ainda','passou']);
+let _jcolMesFiltro  = null;
 const _jcMeses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
 function _jcolInicializar() {
@@ -5642,13 +5662,63 @@ function _jcolRenderizar() {
   ['total','passou','ainda'].forEach(t => {
     document.getElementById('jcol-c-' + t)?.classList.toggle('ativo', _jcolFiltroAtivo === t);
   });
+  _jcolLegsAtivas.add('ainda'); _jcolLegsAtivas.add('passou');
+  _jcolMesFiltro = null;
   _jcolRenderGrafico(fogs, colab);
-  _jcolRenderLista(fogs, colab, _jcolFiltroAtivo);
+  _jcolAplicarFiltros();
 }
 
 function jcolFiltrar(tipo) {
   _jcolFiltroAtivo = tipo;
-  _jcolRenderizar();
+  if (tipo === 'total')  { _jcolLegsAtivas.add('ainda'); _jcolLegsAtivas.add('passou'); }
+  if (tipo === 'passou') { _jcolLegsAtivas.clear(); _jcolLegsAtivas.add('passou'); }
+  if (tipo === 'ainda')  { _jcolLegsAtivas.clear(); _jcolLegsAtivas.add('ainda'); }
+  _jcolSyncCards();
+  _jcolSyncLegChips();
+  _jcolAplicarFiltros();
+}
+function _jcolToggleLeg(leg) {
+  if (leg === 'final') return;
+  if (_jcolLegsAtivas.has(leg)) {
+    if (_jcolLegsAtivas.size > 1) _jcolLegsAtivas.delete(leg);
+  } else {
+    _jcolLegsAtivas.add(leg);
+  }
+  const tA = _jcolLegsAtivas.has('ainda'), tP = _jcolLegsAtivas.has('passou');
+  _jcolFiltroAtivo = (tA && tP) ? 'total' : tP ? 'passou' : 'ainda';
+  _jcolSyncCards();
+  _jcolSyncLegChips();
+  _jcolAplicarFiltros();
+}
+function _jcolFiltrarMes(key) {
+  _jcolMesFiltro = _jcolMesFiltro === key ? null : key;
+  document.querySelectorAll('.jcol-chart-col').forEach(el =>
+    el.classList.toggle('jcol-col-ativo', !!_jcolMesFiltro && el.dataset.mes === _jcolMesFiltro));
+  document.querySelector('.jcol-chart-body')?.classList.toggle('jcol-tem-ativo', !!_jcolMesFiltro);
+  _jcolAplicarFiltros();
+}
+function _jcolSyncCards() {
+  ['total','passou','ainda'].forEach(t =>
+    document.getElementById('jcol-c-' + t)?.classList.toggle('ativo', _jcolFiltroAtivo === t));
+}
+function _jcolSyncLegChips() {
+  document.querySelectorAll('#pag-fog-jornada-colab .jcol-leg-chip').forEach(el => {
+    if (el.dataset.leg === 'final') return;
+    el.classList.toggle('inativo', !_jcolLegsAtivas.has(el.dataset.leg));
+  });
+  ['ainda','passou'].forEach(l =>
+    document.querySelectorAll('.jcol-ls-' + l).forEach(el =>
+      el.style.display = _jcolLegsAtivas.has(l) ? '' : 'none'));
+}
+function _jcolAplicarFiltros() {
+  if (!_jcolDados) return;
+  const { colaborador: colab, fogs } = _jcolDados;
+  let lista = fogs;
+  if (_jcolFiltroAtivo === 'passou') lista = lista.filter(f => _jcolClassif(f, colab) === 'passou');
+  if (_jcolFiltroAtivo === 'ainda')  lista = lista.filter(f => _jcolClassif(f, colab) === 'ainda');
+  if (_jcolMesFiltro) lista = lista.filter(f => f.e.some(e => e.p === colab && e.i.startsWith(_jcolMesFiltro)));
+  if (_jcolLegsAtivas.size < 2) lista = lista.filter(f => _jcolLegsAtivas.has(_jcolClassif(f, colab)));
+  _jcolRenderLista(lista, colab, _jcolFiltroAtivo);
 }
 
 function _jcolRenderGrafico(fogs, colab) {
@@ -5672,12 +5742,12 @@ function _jcolRenderGrafico(fogs, colab) {
     const tot = d.ainda + d.passou;
     const pxTot = Math.round((tot/maxV)*H);
     const segs = [
-      d.ainda  ? `<div class="jcol-sbar-s jcol-s-ainda" style="height:${Math.round((d.ainda/maxV)*H)}px"></div>` : '',
-      d.passou ? `<div class="jcol-sbar-s jcol-s-passou" style="height:${Math.round((d.passou/maxV)*H)}px"></div>` : '',
+      d.ainda  ? `<div class="jcol-sbar-s jcol-s-ainda jcol-ls-ainda" style="height:${Math.round((d.ainda/maxV)*H)}px"></div>` : '',
+      d.passou ? `<div class="jcol-sbar-s jcol-s-passou jcol-ls-passou" style="height:${Math.round((d.passou/maxV)*H)}px"></div>` : '',
     ].filter(Boolean).join('');
     const [yr, mo] = m.split('-');
     const lbl = _jcMeses[+mo-1] + '/' + yr.slice(2);
-    return `<div class="jcol-chart-col" title="${lbl}: ${tot} FOG(s)">
+    return `<div class="jcol-chart-col" data-mes="${m}" onclick="_jcolFiltrarMes('${m}')" title="${lbl}: ${tot} FOG(s)">
       <div class="jcol-chart-cnt">${tot}</div>
       <div class="jcol-sbar" style="height:${Math.max(pxTot,3)}px">${segs}</div>
       <div class="jcol-chart-lbl">${lbl}</div>
@@ -5686,9 +5756,9 @@ function _jcolRenderGrafico(fogs, colab) {
   card.innerHTML = `<div class="jcol-chart-ttl">Casos que chegaram a ${colab} por mês</div>
     <div class="jcol-chart-body">${bars}</div>
     <div class="jcol-chart-legend">
-      <button class="jcol-leg-chip l-ainda" onclick="jcolFiltrar('ainda')">Com ele hoje</button>
-      <button class="jcol-leg-chip l-passou" onclick="jcolFiltrar('passou')">Passou adiante</button>
-      <button class="jcol-leg-chip l-final" disabled title="Não disponível via API">Finalizado <span style="font-size:9px;font-weight:400">· não disponível</span></button>
+      <button class="jcol-leg-chip l-ainda" data-leg="ainda" onclick="_jcolToggleLeg('ainda')">Com ele hoje</button>
+      <button class="jcol-leg-chip l-passou" data-leg="passou" onclick="_jcolToggleLeg('passou')">Passou adiante</button>
+      <button class="jcol-leg-chip l-final" data-leg="final" disabled title="Não disponível via API">Finalizado <span style="font-size:9px;font-weight:400">· não disponível</span></button>
     </div>`;
 }
 
