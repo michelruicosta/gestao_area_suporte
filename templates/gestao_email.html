@@ -2308,9 +2308,17 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
           <option value="Daniela">Daniela</option>
         </select>
         <span class="jcol-lbl">De</span>
-        <input type="date" id="jcol-de" class="jcol-input">
+        <label class="dt-field" onclick="_abrirCal('jcol-de',event)">
+          <span class="dt-ico">📅</span>
+          <span class="dt-disp vazio" id="jcol-de-disp">dd/mm/aaaa</span>
+          <input type="hidden" id="jcol-de" class="dt-inp">
+        </label>
         <span class="jcol-lbl">Até</span>
-        <input type="date" id="jcol-ate" class="jcol-input">
+        <label class="dt-field" onclick="_abrirCal('jcol-ate',event)">
+          <span class="dt-ico">📅</span>
+          <span class="dt-disp vazio" id="jcol-ate-disp">dd/mm/aaaa</span>
+          <input type="hidden" id="jcol-ate" class="dt-inp">
+        </label>
         <button class="jcol-btn" onclick="buscarJornadaColab()">Buscar</button>
       </div>
 
@@ -5459,9 +5467,15 @@ function _jcolInicializar() {
   const de  = document.getElementById('jcol-de');
   if (ate && !ate.value) {
     const hoje = new Date();
-    ate.value = hoje.toISOString().slice(0,10);
+    const fmtISO  = d => d.toISOString().slice(0,10);
+    const fmtDisp = d => `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
     const seis = new Date(hoje); seis.setMonth(hoje.getMonth() - 6);
-    de.value = seis.toISOString().slice(0,10);
+    ate.value = fmtISO(hoje);
+    de.value  = fmtISO(seis);
+    const ateDisp = document.getElementById('jcol-ate-disp');
+    const deDisp  = document.getElementById('jcol-de-disp');
+    if (ateDisp) { ateDisp.textContent = fmtDisp(hoje); ateDisp.classList.remove('vazio'); }
+    if (deDisp)  { deDisp.textContent  = fmtDisp(seis); deDisp.classList.remove('vazio'); }
   }
 }
 
