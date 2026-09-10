@@ -1068,8 +1068,16 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
 .jcol-fg{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:12px;align-items:end}
 @media(max-width:600px){.jcol-fg{grid-template-columns:1fr 1fr}.jcol-fg-btn-wrap{grid-column:1/-1}}
 .jcol-fg-lbl{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:5px}
-.jcol-fg-sel{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:.875rem;color:var(--text);background:var(--surface2);outline:none;-webkit-appearance:none;appearance:none;color-scheme:dark}
-.jcol-fg-sel:focus{border-color:var(--accent)}
+.jcol-cdd{position:relative;width:100%}
+.jcol-cdd-btn{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:.875rem;color:var(--text);background:var(--surface2);cursor:pointer;display:flex;align-items:center;gap:8px;box-sizing:border-box;text-align:left;font-family:inherit}
+.jcol-cdd-btn:focus{border-color:var(--accent);outline:none}
+.jcol-cdd-txt{flex:1;font-size:.875rem}
+.jcol-cdd-txt.ph{color:var(--muted)}
+.jcol-cdd-arr{opacity:.5;flex-shrink:0}
+.jcol-cdd-list{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,.3)}
+.jcol-cdd-opt{padding:9px 12px;font-size:.875rem;color:var(--text);cursor:pointer;transition:background .1s}
+.jcol-cdd-opt:hover{background:var(--accent-bg);color:var(--accent)}
+.jcol-cdd-opt.sel{color:var(--accent);font-weight:600;background:var(--accent-bg)}
 .jcol-fg .dt-field{width:100%;padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);display:flex;align-items:center;gap:6px;cursor:pointer;box-sizing:border-box}
 .jcol-fg .dt-field:hover{border-color:var(--accent)}
 .jcol-fg .dt-disp{font-size:.875rem;flex:1;width:auto;white-space:nowrap}
@@ -2358,14 +2366,21 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
         <div class="jcol-fg">
           <div>
             <label class="jcol-fg-lbl">Colaborador</label>
-            <select id="jcol-select" class="jcol-fg-sel">
-              <option value="">Selecione…</option>
-              <option value="Fabio">Fabio</option>
-              <option value="Luiz">Luiz</option>
-              <option value="Antonio">Antonio</option>
-              <option value="Bruno">Bruno</option>
-              <option value="Daniela">Daniela</option>
-            </select>
+            <input type="hidden" id="jcol-select">
+            <div class="jcol-cdd" id="jcol-cdd-wrap">
+              <button type="button" class="jcol-cdd-btn" onclick="_jcolCddToggle(event)">
+                <span class="jcol-cdd-txt ph" id="jcol-cdd-txt">Selecione…</span>
+                <svg class="jcol-cdd-arr" width="10" height="6" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="currentColor"/></svg>
+              </button>
+              <div class="jcol-cdd-list" id="jcol-cdd-list" hidden>
+                <div class="jcol-cdd-opt" data-val="" onclick="_jcolCddSel('','Selecione…')">Selecione…</div>
+                <div class="jcol-cdd-opt" data-val="Fabio" onclick="_jcolCddSel('Fabio','Fabio')">Fabio</div>
+                <div class="jcol-cdd-opt" data-val="Luiz" onclick="_jcolCddSel('Luiz','Luiz')">Luiz</div>
+                <div class="jcol-cdd-opt" data-val="Antonio" onclick="_jcolCddSel('Antonio','Antonio')">Antonio</div>
+                <div class="jcol-cdd-opt" data-val="Bruno" onclick="_jcolCddSel('Bruno','Bruno')">Bruno</div>
+                <div class="jcol-cdd-opt" data-val="Daniela" onclick="_jcolCddSel('Daniela','Daniela')">Daniela</div>
+              </div>
+            </div>
           </div>
           <div>
             <label class="jcol-fg-lbl">De</label>
@@ -5533,6 +5548,23 @@ async function toggleJornada(fogId) {
 }
 
 // ── Jornada por Colaborador ───────────────────────────────────────────────────
+function _jcolCddToggle(e) {
+  e.stopPropagation();
+  const list = document.getElementById('jcol-cdd-list');
+  if (list) list.hidden = !list.hidden;
+}
+function _jcolCddSel(val, txt) {
+  document.getElementById('jcol-select').value = val;
+  const el = document.getElementById('jcol-cdd-txt');
+  if (el) { el.textContent = txt; el.classList.toggle('ph', !val); }
+  document.querySelectorAll('.jcol-cdd-opt').forEach(o => o.classList.toggle('sel', o.dataset.val === val && !!val));
+  const list = document.getElementById('jcol-cdd-list');
+  if (list) list.hidden = true;
+}
+document.addEventListener('click', () => {
+  const list = document.getElementById('jcol-cdd-list');
+  if (list) list.hidden = true;
+});
 let _jcolDados = null, _jcolFiltroAtivo = 'total';
 const _jcMeses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
