@@ -2,6 +2,27 @@
 
 ---
 
+### 10/09 — Padrão 2 parcial (Finaud→Cliente): §8.8a — "aguardo de liberação" supera "retornaremos em breve"
+
+**🔎 Em miúdos:** quando a Finaud dizia "Retornaremos em breve" mas estava esperando o cliente liberar algo (ex.: "permanecemos no aguardo da liberação das parametrizações"), o sistema marcava como Aguardando Finaud. Agora marca corretamente como Aguardando Cliente.
+
+**Problema:** na lógica Finaud→Cliente sem arquivo, `_FRASES_AGUARDANDO_FINAUD_ATIVA` era checada antes de `_FRASES_SOLICITA_EXTRATO`. Quando o texto tinha "no aguardo" (solicita_extrato) + "retornaremos em breve" (aguardando_finaud_ativa), o AF ganhava mesmo que a bola estivesse com o cliente.
+
+**Correção — 1 mudança em `scripts/banco_threads.py`:**
+Reordenamento no bloco "sem arquivo real" (Finaud→Cliente): `_FRASES_SOLICITA_EXTRATO` é checado **antes** de `_FRASES_AGUARDANDO_FINAUD_ATIVA`. Semântica: em Finaud→Cliente, se há pedido/espera explícita do cliente, a bola está com o cliente — o "retornaremos" é cortesia de acompanhamento, não indica pendência da Finaud.
+
+**Decisões de negócio registradas:**
+- Arquivo entregue pela Finaud (DDR/DRM/DLO) + cliente ainda precisa transmitir ao BACEN → **Concluída** (responsabilidade da Finaud termina na entrega)
+- "Retornaremos em breve" + esperando cliente liberar dados/parametrizações → **Aguardando Cliente**
+
+**Casos corrigidos:** casos 2 e 7 do Grupo A (divergencias_v2.json). Casos 1, 3, 9, 12 já estavam corretos (código = Concluída = decisão do Michel).
+
+**Validação:** ✅ `pytest tests/ -q`: **656 passed** (2 testes novos), zero regressões.
+
+**Spec:** §8.8 adicionada em `documentações/ESPECIFICACAO_NOVA_ARQUITETURA.md`.
+
+---
+
 ### 10/09 — Padrão 1 (Finaud→Finaud): lógica §8.7 implementada — 10 de 21 casos corrigidos
 
 **🔎 Em miúdos:** e-mails trocados internamente entre colaboradores da Finaud estavam todos marcados como "Aguardando Finaud" mesmo quando eram apenas avisos informativos (dia de folga, circular de equipe, resolução por outro canal). Agora o sistema distingue corretamente os casos pendentes dos já encerrados.

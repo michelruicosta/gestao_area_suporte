@@ -1025,10 +1025,11 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
             return 'Concluída', 'Finaud concluiu a solicitação'
         if any(f in texto_flat for f in _FRASES_CONCLUSIVAS_FINAUD + _termos_db('Finaud concluiu a solicitação')):
             return 'Concluída', 'Finaud concluiu a solicitação'
-        if any(f in texto_lower for f in _FRASES_AGUARDANDO_FINAUD_ATIVA + _termos_db('Finaud prometeu retornar')):
-            return 'Aguardando Finaud', 'Finaud prometeu retornar'
+        # §8.8a: solicitação/espera explícita do cliente supera "retornaremos em breve"
         if any(f in texto_flat for f in _FRASES_SOLICITA_EXTRATO):
             return 'Aguardando Cliente', _motivo_ag_cli
+        if any(f in texto_lower for f in _FRASES_AGUARDANDO_FINAUD_ATIVA + _termos_db('Finaud prometeu retornar')):
+            return 'Aguardando Finaud', 'Finaud prometeu retornar'
         if any(f in texto_lower for f in _FRASES_ORIENTACAO_TECNICA):
             return 'Aguardando Cliente', _motivo_ag_cli
         if any(f in texto_lower for f in _FRASES_REUNIAO):

@@ -911,6 +911,32 @@ def test_interno_circular_nao_vira_af_por_instrucao():
     assert bt._determinar_status(msgs)[0] == 'Concluída'
 
 
+# ── §8.8a — Padrão 2 parcial: "retornaremos" + aguardo de liberação do cliente ──
+
+def test_finaud_cliente_aguardo_liberacao_supera_retornaremos():
+    """§8.8a: 'no aguardo da liberação' vence 'retornaremos em breve' → Ag. Cliente."""
+    msgs = [_msg(
+        FINAUD,
+        assunto='PR 07/2026',
+        corpo='Prezado Pedro, bom dia. Permanecemos no aguardo da liberação das parametrizações sistêmicas. Retornaremos em breve.',
+        destinatarios='pedro@bancox.com.br',
+    )]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Cliente'
+
+
+def test_finaud_cliente_aguardo_calculos_supera_retornaremos():
+    """§8.8a: 'no aguardo da liberação dos cálculos' + 'Retornaremos' → Ag. Cliente."""
+    msgs = [_msg(
+        FINAUD,
+        assunto='DLO 07/2026',
+        corpo='Prezada Liliane, bom dia. Permanecemos no aguardo da liberação dos cálculos dos relatórios DLO e DLI. Retornaremos em breve.',
+        destinatarios='liliane@bancox.com.br',
+    )]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Cliente'
+
+
 def test_regressao_so_imagens_nao_e_arquivo_entregavel():
     """Regressão §8.6: forward com só imagens inline não é sub-caso 1a → Aguardando Cliente."""
     msgs = [_msg(

@@ -8,6 +8,102 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ---
 
+## 🔴 URGENTE — Implementar "Jornada do FOG por Colaborador" no sistema (aprovado 10/09/2026)
+
+### O que é
+
+Nova tela no sistema de produção que mostra todos os FOGs que passaram pela mão de cada colaborador, o que aconteceu com cada um e quanto tempo ficou. Aprovada por Fabio Silva Ferreira após validação do protótipo em 10/09/2026.
+
+### Protótipo aprovado
+
+- **Artefato Claude:** `https://claude.ai/code/artifact/6141c356-ad51-4e76-98d7-0de363bea1b0`
+- **Arquivo local:** `C:\Users\Bruna\AppData\Local\Temp\claude\D--02-Finaud-Projetos-ativos-gestao-area-suporte\a2e2919e-c391-4355-8cb4-d597a8301af7\scratchpad\relatorio_colaborador_mockup.html`
+- O arquivo local tem o código completo (HTML + CSS + JS) — é o ponto de partida para a implementação
+
+### O que existe no protótipo (já validado, não refazer)
+
+**Filtro:** Colaborador (select) + Data De + Data Até + botão Buscar
+
+**3 cards de resumo (sincronizados com o gráfico):**
+1. "Passaram por X" — total de FOGs no período (filtra todos)
+2. "Passou adiante" — FOGs que o colaborador encaminhou (filtra só esses)
+3. "Com X hoje" — FOGs onde ele é o responsável atual (filtra só esses)
+
+**Gráfico de barras empilhadas por mês:**
+- Eixo X = mês em que o FOG chegou ao colaborador pela primeira vez
+- 3 categorias por barra: Azul (Com ele hoje) | Âmbar (Passou adiante) | Verde (Finalizado — desabilitado, FogBugz não registra encerramento)
+- Chips de legenda clicáveis — filtram tanto o gráfico quanto os cards e a lista de FOGs
+- Cards e chips são **sincronizados**: clicar em um reflete no outro
+
+**Lista de FOGs:** card por FOG com:
+- Cabeçalho: número do FOG + título + badge "Em aberto" / "Finalizado"
+- Jornada visual (bolinhas conectadas): cada pessoa que tocou no caso, destacando o colaborador filtrado (azul) e o responsável atual (âmbar)
+- Distribuição de tempo: barra proporcional com dias por pessoa
+- **Scrollbar horizontal personalizada (JS)** nas jornadas longas — não usar CSS nativo (não funciona no iframe do Claude)
+
+**Nota de rodapé:** "Casos encerrados não aparecem aqui — o FogBugz não registra o encerramento de forma que consigamos identificar via API."
+
+### Lógica de classificação de cada FOG (função `_classif`)
+
+```javascript
+function _classif(fog, pessoa) {
+  // fog.ab = true (aberto) / false (fechado)
+  // fog.e = array de etapas {p: nome, i: data_inicio, d: dias, a: ativo}
+  if (!fog.ab) return 'final';           // FOG fechado → verde (não ocorre na prática)
+  const last = fog.e[fog.e.length - 1];  // última etapa
+  if (last && last.p === pessoa && last.a) return 'ainda';  // ainda com ele
+  return 'passou';                        // passou adiante
+}
+```
+
+### API do FogBugz — como buscar
+
+```
+URL: https://finaud.fogbugz.com/api.asp
+Token: variável de ambiente FOGBUGZ_TOKEN (já no .env da VPS)
+```
+
+**Busca de FOGs que envolveram o colaborador:**
+```
+cmd=search
+q=assignedto:"NOME" opened:"DD/MM/AAAA..DD/MM/AAAA"
+cols=ixBug,sTitle,fOpen,events
+max=500
+```
+
+**Montar a jornada a partir dos eventos:**
+- Filtrar eventos com `sVerb = "Assigned"` (ou equivalente em português)
+- Cada evento tem: data (`dt`), descrição (`evtDescription` — ex.: "Designado para Fabio por Luiz")
+- Parsear "Designado para NOME por OUTRO" com regex
+- Ordenar por data → sequência de etapas
+- Um FOG "envolveu" o colaborador se aparece em qualquer etapa do histórico
+
+**Colaboradores cadastrados:** Fabio, Luiz, Antonio, Bruno, Daniela (primeiros nomes, case-sensitive como no FogBugz)
+
+### O que fazer no próximo chat
+
+| # | Tarefa | Arquivo |
+|---|---|---|
+| 1 | Criar rota Flask `/fogbugz/jornada` que chama a API do FogBugz e retorna JSON | `scripts/servidor_telas.py` |
+| 2 | Criar template `jornada_colaborador.html` baseado no protótipo aprovado | `templates/jornada_colaborador.html` |
+| 3 | Adicionar link "Jornada por Colaborador" na seção FOGBUGZ do menu lateral | `templates/gestao_email.html` |
+| 4 | Substituir o array `DADOS` fixo do protótipo pela chamada à rota Flask real | novo template |
+| 5 | Manter as scrollbars JS do protótipo (CSS nativo não funciona no iframe do Claude) | novo template |
+| 6 | Rodar pytest + commit + push + deploy | — |
+
+### Onde fica no menu
+
+Seção **FOGBUGZ** → novo item **"Jornada por Colaborador"** (abaixo dos itens existentes: Visão Consolidada, Lista de Casos, Evolução)
+
+### Atenção ao implementar
+
+- O protótipo tinha dados **fixos** (14 FOGs hardcoded). A tela real busca da API do FogBugz dinamicamente
+- A busca pode ser lenta — considerar loading state
+- O FogBugz não tem API de "casos fechados por colaborador" com histórico de etapas — todos os 14 FOGs do protótipo eram `ab:true` (abertos). Badge "Finalizado" existe no código mas na prática não aparece
+- A data no filtro deve ser "data em que o FOG chegou ao colaborador" (não data de abertura do FOG)
+
+---
+
 ## 🟡 RESUMO SEMANAL — Identificar empresas sem nome nos cards Retorno Bacen (10/09/2026)
 
 No Resumo Semanal, vários cards de CADOC exibem "Sem empresa identificada (N)" porque o banco de dados não tem o nome da empresa linkado àquelas threads. São threads onde o assunto do e-mail não contém o nome da empresa de forma legível para o sistema.
@@ -46,36 +142,45 @@ Alinhar os controles de filtro de período da aba Evolução do FogBugz com os d
 
 ---
 
-## 🔴 FIX — Status errado quando Finaud pergunta algo ao cliente (identificado em 09/09/2026)
+## 🔴 FIX — Padrão 2 (Finaud→Cliente): 16 casos "fix claro" ainda pendentes (identificado em 10/09/2026)
 
-### O problema observado
+### Progresso atual
 
-Thread "Doc 4111 - 04-09-2026" (e outros): Miguel Santos respondeu ao cliente
-com uma pergunta/solicitação, mas o sistema exibiu status **"Concluída"** em vez
-de **"Aguardando Cliente"**. O mesmo ocorre no sentido inverso: quando Finaud
-entrega um arquivo ou dá um informativo sem perguntar nada, o thread fica como
-**"Aguardando Cliente"** quando deveria ser **"Concluída"**.
+- ✅ **Casos 2 e 7** (Padrão 2 parcial): "retornaremos em breve" + "no aguardo da liberação" → AC. Corrigido em 10/09/2026. Veja REGISTRO.
+- ✅ **Casos 1, 3, 9, 12**: código já retorna Concluída — confirmado como correto por Michel em 10/09/2026.
+- ⏳ **16 casos "fix claro"** (abaixo): ainda retornam AF, deveriam ser AC ou Concluída.
 
-### Causa
+### Os 16 casos restantes (Grupo A, divergencias_v2.json)
 
-`_determinar_status()` em `scripts/servidor_telas.py` olha só **quem enviou a
-última mensagem** — não analisa o conteúdo. Quando a Finaud envia por último,
-o sistema não sabe se foi uma pergunta (→ aguardar cliente) ou uma entrega final
-(→ concluída).
+| # | Assunto | Código atual | Deveria | Causa |
+|---|---|---|---|---|
+| 4 | Re: Remitly CC - 4010/4016 | AF | Co | Acuse de recebimento ("Recebido. Obrigada.") |
+| 5 | Re: Remitly CC - 4010 - 07 | AF | Co | Acuse de recebimento ("Recebido. Obrigada!") |
+| 6 | Re: VIS - ENVIAR CADOC e DDR | AF | Co | "estarei colocando" captura AF, mas é aviso de processamento |
+| 8 | 4111 - dia 25, 26/08 | AF | AC | Pergunta direta ao cliente ("poderia encaminhar?") sem arquivo |
+| 10 | 4111 - dia 31/08 | AF | AC | Idem caso 8 |
+| 11 | Relatórios DLO, DLI e DRM 08 | AF | AC | Pedido de documentos ("peço a gentileza de encaminhar") |
+| 13 | 4111 - dia 31/08 e 01/09 | AF | AC | Idem caso 8 |
+| 14 | Relatórios DLO, DLI e DRM (2) | AF | AC | Idem caso 11 |
+| 16 | Erro no DLI e DLO | AF | AC | Instruções ao cliente ("calcule", "gere") sem `?` |
+| 17 | Wise DDR 01.09 | AF | AC | "aguarda o aceite" — cliente precisa agir |
+| 18 | 4010, 4060 e planilha LEC (1) | AF | AC | Pergunta direta ("poderiam encaminhar?") |
+| 20 | 4111 — dia 31/08 a 08/09 | AF | AC | Idem caso 8 |
+| 21 | DDR 2011 - 03/09 | AF | AC | Arquivo presente na thread real (sem arquivo no JSON) |
+| 22 | 4010, 4060 e planilha LEC (2) | AF | AC | Idem caso 18 |
+
+**Casos 15 e 19:** já corretos (código = AC). Não precisam de fix.
 
 ### O que fazer
 
-1. Criar `_tem_pergunta_acao(texto)` — detecta verbos de pedido, "?", "por favor",
-   "aguardo", "poderia", "necessito" etc. no texto da última mensagem.
-2. Em `_determinar_status()`: se última mensagem é da Finaud **e** `_tem_pergunta_acao`
-   → "Aguardando Cliente"; se última mensagem é da Finaud **e não** `_tem_pergunta_acao`
-   → "Concluída".
-3. Testar com amostra de 20+ threads antes de aplicar em produção.
-4. Rodar sobre todas as threads para recalcular os status.
+1. No bloco "sem arquivo real" (Finaud→Cliente), adicionar detecção de `_tem_pergunta_acao(texto)` **antes** do `_eh_cortesia_finaud` para retornar AC quando há pergunta
+2. Adicionar detecção de "aguarda o aceite" e variações como sinal AC
+3. Casos 4, 5, 6 (acuse de recebimento): investigar por que `_eh_cortesia_finaud` + len==1 retorna AF — deveria ser Concluída
+4. Testar cada fix com pytest antes de commitar
 
 ### Impacto estimado
 
-Afeta todos os threads. Requer testes dedicados — **não implementar sem amostra validada**.
+Afeta threads Finaud→Cliente sem arquivo. Requer testes por subgrupo antes de commitar.
 
 ---
 

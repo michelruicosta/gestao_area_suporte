@@ -1259,7 +1259,30 @@ Quando nenhum sinal claro indica conclusão nem pendência, é mais seguro assum
 **Prefixos de assunto informativos (`_ASSUNTOS_INFORMATIVOS`):**
 `'divulgação'`, `'boas-vindas'`, `'comunicado de saída'`, `'comunicado de saída'`, `'aviso de'`, `'informativo:'`, `'fyi:'`.
 
-> **Implementado em 10/09/2026.** Validado contra 21 casos reais do Padrão 1 (e-mails Finaud→Finaud em `divergencias_v2.json`). 648 testes passando.
+> **Implementado em 10/09/2026.** Validado contra 21 casos reais do Padrão 1 (e-mails Finaud→Finaud em `divergencias_v2.json`). 654 testes passando.
+
+---
+
+### 8.8 Regras adicionais — Finaud → Cliente sem arquivo (Padrão 2 parcial)
+
+**Quando se aplica:** último e-mail é da Finaud para o cliente, sem arquivo real entregável, no caminho sem arquivo real do §8.2/§8.3.
+
+| Etapa | Condição | Status | Motivo exibido |
+|---|---|---|---|
+| **§8.8a** | Corpo contém solicitação/espera explícita do cliente (`_FRASES_SOLICITA_EXTRATO`: "no aguardo", "solicito ", "vou precisar", etc.) — verificada **antes** de `_FRASES_AGUARDANDO_FINAUD_ATIVA` | Aguardando Cliente | motivo padrão AC |
+| Demais etapas | Sem frase de solicita_extrato → continua fluxo normal: frases AF-ativa, orientação técnica, reunião, cortesia, default AC | (variável) | (variável) |
+
+**§8.8a — Por que SOLICITA_EXTRATO supera AGUARDANDO_FINAUD_ATIVA:**
+Um e-mail pode conter tanto "no aguardo da liberação" (cliente precisa agir) quanto "Retornaremos em breve" (Finaud se compromete a dar retorno). Na direção Finaud→Cliente, se há uma solicitação explícita de dado ou ação do cliente, a bola está com o cliente — o "retornaremos em breve" é apenas uma cortesia de acompanhamento, não indica que a Finaud ainda precisa fazer algo antes. *(Confirmado por Michel, 10/09/2026.)*
+
+**Decisões de negócio confirmadas por Michel (10/09/2026):**
+
+| Situação | Status correto |
+|---|---|
+| Finaud entregou arquivo (ZIP/DDR/DRM/DLO) e o cliente ainda precisa transmitir ao BACEN | **Concluída** — a responsabilidade da Finaud termina na entrega; a transmissão ao BACEN é obrigação do cliente |
+| Finaud diz "retornaremos em breve" mas está aguardando que o cliente libere dados/parametrizações | **Aguardando Cliente** — a bola está com o cliente, não com a Finaud |
+
+> **Implementado em 10/09/2026.** Validado contra casos 2 e 7 do Grupo A (`divergencias_v2.json`). 656 testes passando.
 
 ---
 
