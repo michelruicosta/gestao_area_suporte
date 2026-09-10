@@ -5709,6 +5709,12 @@ function _jcolSyncLegChips() {
   ['ainda','passou'].forEach(l =>
     document.querySelectorAll('.jcol-ls-' + l).forEach(el =>
       el.style.display = _jcolLegsAtivas.has(l) ? '' : 'none'));
+  document.querySelectorAll('#pag-fog-jornada-colab .jcol-chart-col').forEach(col => {
+    const a = _jcolLegsAtivas.has('ainda')  ? (parseInt(col.dataset.ainda)  || 0) : 0;
+    const p = _jcolLegsAtivas.has('passou') ? (parseInt(col.dataset.passou) || 0) : 0;
+    const cnt = col.querySelector('.jcol-chart-cnt');
+    if (cnt) cnt.textContent = a + p;
+  });
 }
 function _jcolAplicarFiltros() {
   if (!_jcolDados) return;
@@ -5747,7 +5753,7 @@ function _jcolRenderGrafico(fogs, colab) {
     ].filter(Boolean).join('');
     const [yr, mo] = m.split('-');
     const lbl = _jcMeses[+mo-1] + '/' + yr.slice(2);
-    return `<div class="jcol-chart-col" data-mes="${m}" onclick="_jcolFiltrarMes('${m}')" title="${lbl}: ${tot} FOG(s)">
+    return `<div class="jcol-chart-col" data-mes="${m}" data-ainda="${d.ainda}" data-passou="${d.passou}" onclick="_jcolFiltrarMes('${m}')" title="${lbl}: ${tot} FOG(s)">
       <div class="jcol-chart-cnt">${tot}</div>
       <div class="jcol-sbar" style="height:${Math.max(pxTot,3)}px">${segs}</div>
       <div class="jcol-chart-lbl">${lbl}</div>
