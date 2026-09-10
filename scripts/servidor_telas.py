@@ -61,6 +61,10 @@ from aviso_fog_suporte import (
     normalizar_notificacao_fog,
     verificar_e_enviar_fog_suporte,
 )
+from resumo_semanal import (
+    normalizar_resumo_semanal,
+    verificar_e_enviar_resumo_semanal,
+)
 from paths import criar_log, CACHE_IMAGENS_DIR, CACHE_THREADS_DIR
 from portal_sso import COOKIE_AUDITORIA, COOKIE_PORTAL, usuario_pelos_cookies
 import monitor_erros
@@ -299,6 +303,32 @@ def _agendar_vigia_fog_suporte() -> None:
         'interval',
         minutes=_INTERVALO_VIGIA_MIN,
         id='vigia_fog_suporte',
+        replace_existing=True,
+    )
+
+
+def _job_resumo_semanal():
+    """Verifica se hoje é o dia configurado e envia o resumo semanal de retornos BACEN."""
+    try:
+        cfg = _ler_config()
+        novo, _enviou = verificar_e_enviar_resumo_semanal(
+            cfg,
+            admin_email=_ADMIN_EMAIL,
+        )
+        if novo.get('resumo_semanal_ultimo_envio') != cfg.get('resumo_semanal_ultimo_envio'):
+            _salvar_config(novo)
+    except Exception:
+        _log.exception('Vigia resumo semanal BACEN — falhou.')
+
+
+def _agendar_resumo_semanal() -> None:
+    if _scheduler.get_job('vigia_resumo_semanal'):
+        return
+    _scheduler.add_job(
+        _job_resumo_semanal,
+        'interval',
+        minutes=_INTERVALO_VIGIA_MIN,
+        id='vigia_resumo_semanal',
         replace_existing=True,
     )
 
@@ -1213,6 +1243,7 @@ def api_admin_config_get():
     cfg.pop('senha_hash', None)
     cfg['notificacoes'] = normalizar_notificacoes(cfg.get('notificacoes'))
     cfg['notif_fog_suporte'] = normalizar_notificacao_fog(cfg.get('notif_fog_suporte'))
+    cfg['resumo_semanal']    = normalizar_resumo_semanal(cfg.get('resumo_semanal'))
     ultimo_ts = _ultimo_refresh_ts  # fallback: agendador interno
     logs = bt.ler_log_coletas(limite=1)
     if logs:
@@ -1242,11 +1273,14 @@ def api_admin_config_post():
         cfg['notificacoes'] = normalizar_notificacoes(dados.get('notificacoes'))
     if 'notif_fog_suporte' in dados:
         cfg['notif_fog_suporte'] = normalizar_notificacao_fog(dados.get('notif_fog_suporte'))
+    if 'resumo_semanal' in dados:
+        cfg['resumo_semanal'] = normalizar_resumo_semanal(dados.get('resumo_semanal'))
     _salvar_config(cfg)
     _reagendar_coleta(cfg['intervalo_coleta_min'])
     visivel = {k: v for k, v in cfg.items() if k != 'senha_hash'}
-    visivel['notificacoes'] = normalizar_notificacoes(visivel.get('notificacoes'))
+    visivel['notificacoes']   = normalizar_notificacoes(visivel.get('notificacoes'))
     visivel['notif_fog_suporte'] = normalizar_notificacao_fog(visivel.get('notif_fog_suporte'))
+    visivel['resumo_semanal'] = normalizar_resumo_semanal(visivel.get('resumo_semanal'))
     return jsonify({'ok': True, 'config': visivel})
 
 
@@ -1757,6 +1791,7 @@ if _deve_ligar_agendador_na_tela():
     )
     _agendar_vigia_busca()
     _agendar_vigia_fog_suporte()
+    _agendar_resumo_semanal()
     if not _scheduler.running:
         _scheduler.start()
         _log.info(
