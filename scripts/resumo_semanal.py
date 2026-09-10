@@ -1,4 +1,4 @@
-"""Resumo semanal de retornos BACEN — enviado toda segunda-feira para grupos configurados."""
+"""Resumo semanal — Gestão Área Suporte. Enviado toda segunda-feira para grupos configurados."""
 from __future__ import annotations
 
 import html as html_lib
@@ -8,16 +8,21 @@ import os
 import re
 import smtplib
 import sqlite3
+import xml.etree.ElementTree as ET
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+
+import requests
 
 _log = logging.getLogger(__name__)
 
 _NOTIF_ID      = 'resumo_semanal'
 _GRUPOS_NOTIF  = ('administrador', 'gestor', 'operador')
-_ASSUNTO_EMAIL = 'Gestão Área Suporte — Resumo Semanal Retorno BACEN'
+_ASSUNTO_EMAIL = 'Gestão Área Suporte — Resumo Semanal'
+_FOGBUGZ_URL   = 'https://finaud.fogbugz.com/api.asp'
+_FOGBUGZ_FILTER = '218'
 _BG_HEADER     = '#3333A8'
 _BG_GRAD       = '#1e1e72'
 _VERDE         = '#8DC63F'
@@ -221,6 +226,54 @@ def buscar_dados_bacen() -> dict:
     }
 
 
+def _dias_uteis(inicio: date, fim: date) -> int:
+    """Dias úteis (seg–sex) entre duas datas, sem contar o dia inicial."""
+    if not inicio or not fim or fim <= inicio:
+        return 0
+    total = 0
+    dia = inicio + timedelta(days=1)
+    while dia <= fim:
+        if dia.weekday() < 5:
+            total += 1
+        dia += timedelta(days=1)
+    return total
+
+
+def buscar_dados_fog_semanal(token: str) -> list[dict]:
+    """Retorna casos FOG em aberto agrupados por responsável, ordenados por total desc."""
+    if not token:
+        return []
+    hoje = datetime.now(timezone.utc).date()
+    try:
+        requests.get(_FOGBUGZ_URL, params={
+            'token': token, 'cmd': 'setCurrentFilter', 'sFilter': _FOGBUGZ_FILTER,
+        }, timeout=10)
+        resp = requests.get(_FOGBUGZ_URL, params={
+            'token': token,
+            'cmd': 'search',
+            'q': 'status:open',
+            'cols': 'ixBug,sPersonAssignedTo,dtLastUpdated',
+        }, timeout=30)
+        root = ET.fromstring(resp.text)
+        por_pessoa: dict[str, dict] = {}
+        for case in root.findall('.//case'):
+            pessoa = (case.findtext('sPersonAssignedTo') or '').strip() or 'Sem responsável'
+            dt_str = (case.findtext('dtLastUpdated') or '').strip()
+            try:
+                dt_upd = datetime.fromisoformat(dt_str.replace('Z', '+00:00')).date()
+                dias = _dias_uteis(dt_upd, hoje)
+            except Exception:
+                dias = 0
+            if pessoa not in por_pessoa:
+                por_pessoa[pessoa] = {'responsavel': pessoa, 'total': 0, 'max_dias': 0}
+            por_pessoa[pessoa]['total'] += 1
+            por_pessoa[pessoa]['max_dias'] = max(por_pessoa[pessoa]['max_dias'], dias)
+        return sorted(por_pessoa.values(), key=lambda x: x['total'], reverse=True)
+    except Exception:
+        _log.exception('Resumo FOG semanal: erro ao buscar no FogBugz')
+        return []
+
+
 # ── HTML do e-mail ────────────────────────────────────────────────────────────
 
 def _chip_recorrente() -> str:
@@ -306,11 +359,46 @@ def _secao_html(titulo: str, n: int, grupos: dict[str, list[str]], cor_status: s
   </td></tr>"""
 
 
+def _fog_dias_badge(dias: int) -> str:
+    if dias >= 60:
+        bg, cor = '#fff1f2', '#be123c'
+    elif dias >= 30:
+        bg, cor = '#fff7ed', '#c2410c'
+    else:
+        bg, cor = '#f0f0ff', '#3333A8'
+    return (
+        f'<span style="display:inline-block;padding:3px 10px;border-radius:4px;'
+        f'font-size:12px;font-weight:700;background:{bg};color:{cor};">'
+        f'{dias} dias</span>'
+    )
+
+
+def _fog_linhas_html(dados_fog: list[dict]) -> str:
+    if not dados_fog:
+        return '<tr><td colspan="3" style="padding:16px;text-align:center;color:#64748b;font-size:13px;">Sem dados disponíveis.</td></tr>'
+    linhas = []
+    for p in dados_fog:
+        nome   = html_lib.escape(p['responsavel'])
+        total  = p['total']
+        dias   = p['max_dias']
+        badge  = _fog_dias_badge(dias)
+        linhas.append(
+            f'<tr style="border-bottom:1px solid #e8edf5;">'
+            f'<td style="padding:10px 14px;font-size:13px;font-weight:600;color:#1e1e72;">{nome}</td>'
+            f'<td style="padding:10px 14px;text-align:right;font-size:15px;font-weight:800;'
+            f'color:{"#be123c" if total > 10 else "#1e1e72"};font-variant-numeric:tabular-nums;">{total}</td>'
+            f'<td style="padding:10px 14px;text-align:right;">{badge}</td>'
+            f'</tr>'
+        )
+    return ''.join(linhas)
+
+
 def montar_html_resumo_semanal(
     nome: str,
     dados: dict,
     data_envio: str,
     dia_semana_label: str,
+    dados_fog: list[dict] | None = None,
 ) -> str:
     total   = dados.get('total', 0)
     cliente = dados.get('cliente', 0)
@@ -318,6 +406,7 @@ def montar_html_resumo_semanal(
     por_st  = dados.get('por_status', {})
     grp_cli = por_st.get('Aguardando Cliente', {})
     grp_fin = por_st.get('Aguardando Finaud', {})
+    fog_total = sum(p['total'] for p in (dados_fog or []))
 
     saudacao = f'Olá, <b>{html_lib.escape(nome)}</b>,' if nome else 'Olá,'
     d_seg    = html_lib.escape(data_envio)
@@ -327,9 +416,11 @@ def montar_html_resumo_semanal(
     sec_finaud  = _secao_html('Aguardando Finaud',  finaud,  grp_fin, '#3333A8')
 
     if total == 0:
-        corpo = '<tr><td style="padding:32px;text-align:center;color:#64748b;font-size:14px;">Nenhum retorno BACEN em aberto esta semana.</td></tr>'
+        corpo_bacen = '<tr><td style="padding:32px;text-align:center;color:#64748b;font-size:14px;">Nenhum retorno BACEN em aberto esta semana.</td></tr>'
     else:
-        corpo = sec_cliente + sec_finaud
+        corpo_bacen = sec_cliente + sec_finaud
+
+    fog_linhas = _fog_linhas_html(dados_fog or [])
 
     return f"""<!DOCTYPE html>
 <html lang="pt-BR">
@@ -350,8 +441,8 @@ def montar_html_resumo_semanal(
     <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:{_VERDE};text-transform:uppercase;margin-bottom:10px;">
       GESTÃO ÁREA SUPORTE
     </div>
-    <div style="font-size:22px;font-weight:700;color:#ffffff;line-height:1.3;">
-      Resumo Semanal — Retorno BACEN
+    <div style="font-size:24px;font-weight:700;color:#ffffff;line-height:1.2;">
+      Resumo Semanal
     </div>
     <div style="font-size:13px;color:#c8c8e8;margin-top:6px;">
       Referência: semana encerrada em {d_seg}
@@ -360,48 +451,87 @@ def montar_html_resumo_semanal(
 
   <!-- Saudação -->
   <tr><td style="padding:24px 32px 0;color:#1e1e72;font-size:14.5px;line-height:1.65;">
-    <p style="margin:0 0 14px;">{saudacao}</p>
-    <p style="margin:0;">
-      Segue o consolidado dos retornos do BACEN em aberto nesta {dia_seg}.
+    <p style="margin:0 0 8px;">{saudacao}</p>
+    <p style="margin:0;color:#475569;">
+      Segue o consolidado da área de suporte nesta {dia_seg}.
     </p>
   </td></tr>
 
-  <!-- Totalizadores -->
-  <tr><td style="padding:16px 32px 0;">
+  <!-- Destaques — 4 tiles -->
+  <tr><td style="padding:20px 32px 0;">
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
       <tr>
-        <td style="width:33%;padding:0 6px 0 0;">
-          <div style="background:#f0f0ff;border:1px solid #c8c8e8;border-radius:8px;padding:14px;text-align:center;">
-            <div style="font-size:28px;font-weight:900;color:#3333A8;line-height:1;">{total}</div>
-            <div style="font-size:11px;color:#64748b;margin-top:4px;font-weight:600;">EM ABERTO</div>
+        <td style="width:25%;padding:0 5px 0 0;">
+          <div style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:14px 10px;text-align:center;">
+            <div style="font-size:26px;font-weight:900;color:#3333A8;line-height:1;font-variant-numeric:tabular-nums;">{total}</div>
+            <div style="font-size:10px;color:#6b7a9a;margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">BACEN em aberto</div>
           </div>
         </td>
-        <td style="width:33%;padding:0 3px;">
-          <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:14px;text-align:center;">
-            <div style="font-size:28px;font-weight:900;color:#92400e;line-height:1;">{cliente}</div>
-            <div style="font-size:11px;color:#92400e;margin-top:4px;font-weight:600;">AG. CLIENTE</div>
+        <td style="width:25%;padding:0 5px;">
+          <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:14px 10px;text-align:center;">
+            <div style="font-size:26px;font-weight:900;color:#b45309;line-height:1;font-variant-numeric:tabular-nums;">{cliente}</div>
+            <div style="font-size:10px;color:#92400e;margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Ag. Cliente</div>
           </div>
         </td>
-        <td style="width:33%;padding:0 0 0 6px;">
-          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px;text-align:center;">
-            <div style="font-size:28px;font-weight:900;color:#1d4ed8;line-height:1;">{finaud}</div>
-            <div style="font-size:11px;color:#1d4ed8;margin-top:4px;font-weight:600;">AG. FINAUD</div>
+        <td style="width:25%;padding:0 5px;">
+          <div style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:14px 10px;text-align:center;">
+            <div style="font-size:26px;font-weight:900;color:#4338CA;line-height:1;font-variant-numeric:tabular-nums;">{finaud}</div>
+            <div style="font-size:10px;color:#4338CA;margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;opacity:.85;">Ag. Finaud</div>
+          </div>
+        </td>
+        <td style="width:25%;padding:0 0 0 5px;">
+          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px 10px;text-align:center;">
+            <div style="font-size:26px;font-weight:900;color:#15803d;line-height:1;font-variant-numeric:tabular-nums;">{fog_total}</div>
+            <div style="font-size:10px;color:#166534;margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">FOG em aberto</div>
           </div>
         </td>
       </tr>
     </table>
   </td></tr>
 
-  {corpo}
+  <!-- Separador BACEN -->
+  <tr><td style="padding:24px 32px 0;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:13px;font-weight:700;color:#a04800;text-transform:uppercase;letter-spacing:.08em;">Retorno BACEN</span>
+      <div style="flex:1;height:1px;background:#e2e8f0;"></div>
+    </div>
+  </td></tr>
 
-  <!-- Nota rodapé -->
-  <tr><td style="padding:20px 32px 0;">
-    <div style="background:#f0f0ff;border:1px solid #c8c8e8;border-left:4px solid {_VERDE};
-                border-radius:8px;padding:12px 16px;font-size:12.5px;color:#64748b;line-height:1.55;">
-      Relatório automático gerado toda <b>{dia_seg}</b> com base na situação dos casos no sistema.
+  {corpo_bacen}
+
+  <!-- Nota BACEN -->
+  <tr><td style="padding:16px 32px 0;">
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid {_VERDE};
+                border-radius:0 6px 6px 0;padding:10px 14px;font-size:12px;color:#64748b;line-height:1.5;">
       A badge <span style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:700;
       padding:1px 6px;border-radius:99px;">recorrente</span> indica empresa que aparece mais de uma vez no mesmo grupo CADOC.
     </div>
+  </td></tr>
+
+  <!-- Separador FOG -->
+  <tr><td style="padding:24px 32px 0;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:13px;font-weight:700;color:#1c2b4a;text-transform:uppercase;letter-spacing:.08em;">FogBugz — casos em aberto</span>
+      <div style="flex:1;height:1px;background:#e2e8f0;"></div>
+    </div>
+  </td></tr>
+
+  <!-- Tabela FOG -->
+  <tr><td style="padding:12px 32px 0;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
+           style="border:1px solid #c8c8e8;border-radius:8px;overflow:hidden;border-collapse:collapse;">
+      <thead>
+        <tr style="background:#f1f5f9;border-bottom:2px solid #c8c8e8;">
+          <th style="padding:9px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#6b7a9a;text-align:left;">Responsável</th>
+          <th style="padding:9px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#6b7a9a;text-align:right;">Em aberto</th>
+          <th style="padding:9px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#6b7a9a;text-align:right;">Parado há (dias úteis)</th>
+        </tr>
+      </thead>
+      <tbody>{fog_linhas}</tbody>
+    </table>
+    <p style="font-size:10.5px;color:#94a3b8;margin-top:8px;font-style:italic;">
+      "Parado há" = dias úteis desde a última atualização no FogBugz. Dados de {d_seg}.
+    </p>
   </td></tr>
 
   <!-- Rodapé -->
@@ -409,9 +539,9 @@ def montar_html_resumo_semanal(
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
       <tr>
         <td style="font-size:11.5px;color:#8899bb;line-height:1.5;">
-          Este e-mail foi enviado automaticamente pelo sistema
-          <b style="color:#3333A8;">Gestão Área Suporte</b>.<br>
-          Para parar de receber, acesse Notificações no sistema.
+          Enviado toda {dia_seg}.<br>
+          E-mails: gestao.db · FogBugz: API finaud.fogbugz.com<br>
+          <span style="color:#b0bdd4;">Para parar de receber, acesse Notificações no sistema.</span>
         </td>
         <td align="right" valign="bottom">
           <div style="font-size:14px;font-weight:900;color:{_VERDE};letter-spacing:1px;">finaud</div>
@@ -509,12 +639,15 @@ def verificar_e_enviar_resumo_semanal(
 
     dados = buscar_dados_bacen()
     if not dados or dados.get('total', 0) == 0:
-        _log.info('Resumo BACEN: nenhum caso em aberto — e-mail não enviado.')
+        _log.info('Resumo semanal: nenhum caso BACEN em aberto — e-mail não enviado.')
         return cfg, False
+
+    fog_token = cfg.get('fogbugz_token') or os.environ.get('FOGBUGZ_TOKEN', '')
+    dados_fog = buscar_dados_fog_semanal(fog_token)
 
     destinos = _destinatarios(cfg_notif['grupos'], admin_email, cfg.get('usuarios'))
     if not destinos:
-        _log.warning('Resumo BACEN: notificação ligada mas sem destinatários configurados.')
+        _log.warning('Resumo semanal: notificação ligada mas sem destinatários configurados.')
         return cfg, False
 
     dia_label  = _DIAS_SEMANA[cfg_notif.get('dia_semana', 0)]
@@ -524,7 +657,7 @@ def verificar_e_enviar_resumo_semanal(
     algum = False
     for destino in destinos:
         nome_dest = (destino.split('@')[0].split('.')[0] or '').capitalize()
-        html = montar_html_resumo_semanal(nome_dest, dados, data_envio, dia_label)
+        html = montar_html_resumo_semanal(nome_dest, dados, data_envio, dia_label, dados_fog)
         if fn_enviar(destino, html):
             algum = True
 
