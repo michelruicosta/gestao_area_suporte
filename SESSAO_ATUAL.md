@@ -12,6 +12,7 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
+| 10/09 | Jornada: melhorias visuais + filtros bidirecionais + fix label gráfico | abaixo |
 | 10/09 | Jornada por Colaborador: nova tela FOG completa implementada e deployada | abaixo |
 | 10/09 | Portal: botão copiar senha temporária — tentativa user-select:all → revertida | abaixo |
 | 10/09 | Script testar_status_ia.py criado — Fase 1 pronta para rodar | abaixo |
@@ -65,6 +66,44 @@
 >
 > **Regra:** este arquivo guarda as **3 sessões mais recentes**. O `/fechar` acrescenta a
 > linha nova aqui e move a 4ª sessão para o arquivo.
+
+---
+
+## 📓 Diário da sessão (2026-09-10 quinta sessão) — Jornada: melhorias visuais + fix label gráfico
+
+### O que foi feito
+
+1. **Dropdown customizado** — `<select>` nativo exibia popup branco no tema escuro (Windows/Chrome). Substituído por `<div>` customizado (`.jcol-cdd-*`) que respeita as variáveis de tema.
+
+2. **Barras verdes removidas** — casos encerrados no FogBugz (`fog.ab = false`) geravam segmentos verdes no gráfico. Fix: skip de `'final'` em `_jcolRenderGrafico()`.
+
+3. **Gargalo badge + contador de passagens** — nó da pessoa com mais dias num FOG ganha badge "mais longo" (borda vermelha); repassagens mostram `↩N×`.
+
+4. **Removido alerta "Casos encerrados não aparecem aqui"** — parágrafo removido do HTML.
+
+5. **Cores dark mode** — overrides `[data-theme="escuro"]` para todas as classes `.jcol-*` correspondendo ao artefato de referência (azul `#1E3A5F`/`#93C5FD`, âmbar `#2D1E00`/`#FCD34D`).
+
+6. **Filtros bidirecionais** — clicar card → atualiza gráfico + lista; clicar barra → destaca mês + filtra lista; chips de legenda → toggleam segmentos. State: `_jcolLegsAtivas`, `_jcolMesFiltro`. Funções: `_jcolToggleLeg`, `_jcolFiltrarMes`, `_jcolSyncCards`, `_jcolSyncLegChips`, `_jcolAplicarFiltros`. Deploy: commit `798bb80`.
+
+7. **Fix label do gráfico** — ao filtrar por segmento ("Passou adiante" = 9), o número acima da barra ficava travado em 10. Fix: `data-ainda`/`data-passou` no elemento; `_jcolSyncLegChips()` recalcula e reescreve o label. Commit `816656c`.
+
+### Estado atual
+
+**pytest:** sem alteração de testes nesta sessão (656 passed ✅).
+**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅. Commits `798bb80` e `816656c` publicados.
+**Jornada por Colaborador:** 100% completa — visual igual ao artefato, filtros bidirecionais funcionando, label correto.
+
+### Próximo passo
+
+🟡 **Rodar a Fase 1 do teste de IA** — `python scripts/testar_status_ia.py --fase 1` (custo ~$0,36; requer OPENAI_API_KEY).
+
+**Pendências que continuam:**
+- 🔴 Fix status — "Concluída" quando Finaud perguntou algo ao cliente (executar APÓS o teste de IA)
+- 🔴 Threads irmãs — 11 grupos com thread Concluída + pendente no mesmo caso
+- 🟡 Modal — Cenário 2b (COSIF citada 2×) e `white-space: nowrap` na coluna Valor
+- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
+
+Último /fechar: 2026-09-10 — memórias revisadas ✅
 
 ---
 
@@ -228,45 +267,6 @@ Ver PENDENCIAS.md → item "🟡 INVESTIGAR — Teste de IA para validar status"
 - 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
 
 Último /fechar: 2026-09-10 — memórias revisadas ✅
-
----
-
-## 📓 Diário da sessão (2026-09-09) — Modal: De/Para unificados — regras por tipo de remetente; deploy e validação em produção
-
-### O que foi feito
-
-1. **Retomada de sessão anterior** — implementação das regras De/Para já estava commitada em `60cd962`; restavam os arquivos de documentação.
-
-2. **Entrada no REGISTRO_CORRECOES.md** (09/09 19:00) — problema (7 padrões de De/Para incorretos em 323 msgs), correção (`_primeiro_externo`, `_eh_cliente_remetente`, `_resolver_de`, `_resolver_para`), validação (653 testes, 0 regressões, 0 campos vazios).
-
-3. **Commit `3e712ef`** — `spec_display_modal.md` (nova seção De/Para), `PENDENCIAS.md` (item removido), `REGISTRO_CORRECOES.md` (entrada de correção).
-
-4. **Push e deploy na VPS** — `git pull` aplicou 11 arquivos; serviço `gestao-suporte`: active ✅.
-
-5. **Validação visual em produção** — dois threads verificados:
-   - "ERRO NA ENTREGA DLO E DLI - INTERCAM": De: Andrea Inacio → Para: Grupo Financeiro ✅
-   - "Doc 4111 - 04-09-2026": De: Miguel Santos → Para: Henrique - Fair Corretora ✅
-   Campo "Para" não mostra mais `suporte@finaud.com.br` quando colaborador Finaud responde ao cliente.
-
-6. **Segunda inconsistência registrada** — status "Concluída" quando Finaud perguntou ao cliente (Miguel Santos no Doc 4111). Item 🟡 elevado a 🔴 com causa raiz, exemplo real e 4 passos. Commit `9aa72c8` + push.
-
-### Estado atual
-
-**pytest:** 653 passed ✅.
-**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅. Commits `3e712ef` e `9aa72c8` publicados.
-**De/Para no modal:** regras unificadas por tipo de remetente — em produção e validado ✅.
-
-### Próximo passo
-
-🔴 **Fix status** — "Concluída" quando Finaud perguntou algo ao cliente. Ver PENDENCIAS.md — criar `_tem_pergunta_acao()` + atualizar `_determinar_status()` + testar amostra de 20+ threads antes de aplicar em produção. Chat dedicado.
-
-**Pendências que continuam:**
-- 🔴 Threads irmãs — 11 grupos com thread Concluída + pendente no mesmo caso
-- 🟡 Modal — Cenário 2b (COSIF citada 2× perde espaços duplos) e `white-space: nowrap` na coluna Valor
-- 🟡 Passo C — tela de manutenção de regras
-- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
-
-Último /fechar: 2026-09-09 20:00 — memórias revisadas ✅
 
 ---
 <!-- fim das 3 sessões recentes -->

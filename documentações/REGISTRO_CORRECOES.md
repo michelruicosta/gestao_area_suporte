@@ -2,6 +2,49 @@
 
 ---
 
+### 10/09 — FIX: Label do gráfico Jornada não atualizava ao filtrar por segmento
+
+**🔎 Em miúdos:** ao clicar no card "Passou adiante" (9 casos), a barra do gráfico escondia corretamente o segmento azul ("Com ele hoje"), mas o número acima da barra continuava mostrando 10 (total fixo). Agora o número se atualiza junto com o filtro.
+
+**Problema:** o HTML do gráfico rendia o contador (`jcol-chart-cnt`) com o total calculado no momento da renderização e nunca o atualizava. A função `_jcolSyncLegChips()` escondia os segmentos via CSS mas não tocava no label.
+
+**Correção — `templates/gestao_email.html`:**
+1. Adicionado `data-ainda="${d.ainda}" data-passou="${d.passou}"` em cada coluna do gráfico, para guardar a contagem por segmento
+2. Em `_jcolSyncLegChips()`: após mostrar/esconder segmentos, loop sobre todas as colunas somando `data-ainda` e `data-passou` conforme os segmentos ativos e reescrevendo o `textContent` do `.jcol-chart-cnt`
+
+**Commit:** `816656c fix(jornada): atualizar label do gráfico ao filtrar por segmento`
+**Deploy:** VPS `gestao-suporte.finaudapps.com.br` — active ✅
+**Validação:** ✅ Confirmado por Michel em produção (label 9 ao filtrar "Passou adiante").
+
+---
+
+### 10/09 — FEAT: Melhorias visuais e filtros bidirecionais na Jornada por Colaborador
+
+**🔎 Em miúdos:** após a entrega inicial da Jornada, Michel pediu que ficasse idêntica ao artefato de referência — mesmas cores no tema escuro, sem barras verdes, filtros cruzados entre cards e gráfico, e sem alerta desnecessário no topo.
+
+**O que foi feito (commit `798bb80`):**
+
+1. **Dropdown customizado** — `<select>` nativo aparecia com popup branco no tema escuro do Windows/Chrome mesmo com `color-scheme: dark`. Solução: substituído por `<div>` customizado (`.jcol-cdd-*`). O `<input type="hidden" id="jcol-select">` mantém compatibilidade com `buscarJornadaColab()`.
+
+2. **Barras verdes removidas** — casos com `fog.ab = false` (encerrados no FogBugz) eram classificados como `'final'` e criavam segmentos verdes no gráfico. Fix: skip de casos `'final'` em `_jcolRenderGrafico()` via `return` antecipado.
+
+3. **Gargalo badge e contador de passagens** — nó da pessoa que ficou mais tempo num FOG ganha badge "mais longo" (borda vermelha). Quando a mesma pessoa aparece em etapas não consecutivas, o nó mostra `↩N×`.
+
+4. **Removido alerta** — parágrafo `⚠️ Casos encerrados não aparecem aqui...` removido do HTML.
+
+5. **Cores dark mode** — adicionados overrides `[data-theme="escuro"]` para todas as classes `.jcol-*` correspondendo ao artefato:
+   - `jcol-av-hi` → border `#2563EB`, bg `#1E3A5F`, color `#93C5FD`
+   - `jcol-av-cur` / `jcol-av-hi-cur` → border `#78350F`, bg `#2D1E00`, color `#FCD34D`
+   - Badges, distribuição, fog-id, card ativo, legend chips
+
+6. **Filtros bidirecionais** — clicar nos cards atualiza o gráfico e a lista; clicar numa barra do gráfico destaca aquele mês e filtra; chips de legenda toggleam segmentos. Estado: `_jcolLegsAtivas` (Set), `_jcolMesFiltro` (string|null). Funções: `_jcolToggleLeg()`, `_jcolFiltrarMes()`, `_jcolSyncCards()`, `_jcolSyncLegChips()`, `_jcolAplicarFiltros()`.
+
+**Arquivo modificado:** `templates/gestao_email.html`
+**Deploy:** VPS `gestao-suporte.finaudapps.com.br` — active ✅
+**Validação:** ✅ Confirmado por Michel em produção (cores, filtros e sem verde).
+
+---
+
 ### 10/09 — Padrão 2 fix claro (Finaud→Cliente): Fix1 "tudo bem" + Fix2 "calcule/gere" — 13 casos corrigidos
 
 **🔎 Em miúdos:** e-mails da Finaud que começavam com "Tudo bem?" após a saudação eram classificados como Aguardando Finaud porque o sistema interpretava "Tudo bem?" como a única frase real do e-mail. Agora "Tudo bem?" / "Tudo bom?" são filtrados como saudação, e o pedido real que vem depois é classificado corretamente como Aguardando Cliente.
