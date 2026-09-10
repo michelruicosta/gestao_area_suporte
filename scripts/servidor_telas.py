@@ -1518,7 +1518,7 @@ def _buscar_fog_colaboradores(inicio: str, fim: str) -> list[dict]:
             'token': token,
             'cmd': 'search',
             'q': q_str,
-            'cols': 'ixBug,sTitle,fOpen,dtOpened,dtClosed,events',
+            'cols': 'ixBug,sTitle,fOpen,dtOpened,dtClosed,dtLastUpdated,events',
         }, timeout=120)
         resp.raise_for_status()
         root = _ET.fromstring(resp.text)
@@ -1536,6 +1536,13 @@ def _buscar_fog_colaboradores(inicio: str, fim: str) -> list[dict]:
             except Exception:
                 dt_closed = hoje
             data_fim_caso = hoje if is_open else dt_closed
+            dt_upd_str = (case.findtext('dtLastUpdated') or '').strip()
+            try:
+                dt_upd = datetime.fromisoformat(dt_upd_str.replace('Z', '+00:00')).date()
+                dias_sem_atualizacao = contar_dias_uteis(dt_upd, hoje)
+            except Exception:
+                dt_upd = None
+                dias_sem_atualizacao = 0
 
             assigned = []
             for ev in case.findall('.//event'):
@@ -1568,6 +1575,8 @@ def _buscar_fog_colaboradores(inicio: str, fim: str) -> list[dict]:
                 if fog_id not in colaboradores[nome]:
                     colaboradores[nome][fog_id] = {
                         'id': fog_id, 'titulo': titulo, 'status': status,
+                        'dtLastUpdated': dt_upd.isoformat() if dt_upd else None,
+                        'dias_sem_atualizacao': dias_sem_atualizacao,
                         'atribuicoes': [], 'total_dias': 0,
                     }
                 fog_entry = colaboradores[nome][fog_id]
@@ -1619,10 +1628,12 @@ def _pivotar_por_fog(colaboradores: list[dict]) -> list[dict]:
             fog_id = fog['id']
             if fog_id not in fogs:
                 fogs[fog_id] = {
-                    'id':     fog_id,
-                    'titulo': fog['titulo'],
-                    'status': fog['status'],
-                    'etapas': [],
+                    'id':                  fog_id,
+                    'titulo':              fog['titulo'],
+                    'status':              fog['status'],
+                    'dtLastUpdated':       fog.get('dtLastUpdated'),
+                    'dias_sem_atualizacao': fog.get('dias_sem_atualizacao', 0),
+                    'etapas':              [],
                 }
             for atr in fog['atribuicoes']:
                 fogs[fog_id]['etapas'].append({

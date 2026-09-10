@@ -554,6 +554,25 @@ def test_pivotar_por_fog_nao_mescla_nao_consecutivas():
     assert nomes == ['Fabio', 'Suporte', 'Fabio']
 
 
+def test_pivotar_por_fog_passa_dtlastupdated():
+    """_pivotar_por_fog deve repassar dtLastUpdated e dias_sem_atualizacao do fog de entrada."""
+    from servidor_telas import _pivotar_por_fog
+    colaboradores = [
+        {
+            'nome': 'Luiz',
+            'fogs': [{'id': '42', 'titulo': 'Teste', 'status': 'Ativo',
+                      'dtLastUpdated': '2026-07-05',
+                      'dias_sem_atualizacao': 67,
+                      'atribuicoes': [{'posicao': 0, 'inicio': '2026-07-05', 'fim': None,
+                                       'dias': 67, 'em_aberto': True}]}],
+        },
+    ]
+    resultado = _pivotar_por_fog(colaboradores)
+    fog = resultado[0]
+    assert fog.get('dtLastUpdated') == '2026-07-05'
+    assert fog.get('dias_sem_atualizacao') == 67
+
+
 # ── Ranking Visão Consolidada ─────────────────────────────────────────────────
 
 def test_ranking_media_dias_calculada():

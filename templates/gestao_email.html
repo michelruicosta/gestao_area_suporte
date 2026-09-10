@@ -5321,10 +5321,15 @@ function fogColabRender() {
       const st  = estiloEtapa(e);
       const seta = i < fog.etapas.length - 1
         ? `<span style="color:var(--muted);font-size:13px;flex-shrink:0;padding:0 2px">→</span>` : '';
+      const semAtuDu = fog.dias_sem_atualizacao || 0;
+      const semAtuCor = semAtuDu >= 60 ? '#ef4444' : semAtuDu >= 20 ? '#f97316' : 'var(--muted)';
+      const semAtuHtml = e.em_aberto && semAtuDu > 0
+        ? `<span style="font-size:9px;color:${semAtuCor}">sem atualização ${semAtuDu}du</span>`
+        : '';
       const rodape = e.gargalo && !e.em_aberto
         ? `<span style="font-size:9px;color:#ef4444;letter-spacing:.3px">⚠ gargalo</span>`
         : e.em_aberto
-          ? `<span style="font-size:9px;color:var(--accent)">● atual</span>`
+          ? `<span style="font-size:9px;color:var(--accent)">● atual</span>${semAtuHtml}`
           : '';
       const label = (e.passagens || 1) > 1
         ? `${esc(primeiroNome(e.nome))} (${e.passagens}×)`
