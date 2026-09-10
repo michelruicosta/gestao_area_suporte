@@ -12,9 +12,11 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
+| 09/09 | Modal: De/Para unificados — regras por tipo de remetente; deploy e validação em produção | abaixo |
+| 09/09 | Coletor de colaboradores — verificação pós-deploy do fix Message-ID/In-Reply-To | abaixo |
 | 09/09 | Contaminação cruzada DRM 2060: investigação, restauração e prevenção | abaixo |
-| 09/09 | Sentry: guia interativo + fix UndefinedError media_dias | abaixo |
-| 09/09 | Modal — Cenário 3: listas com marcadores implementadas e publicadas na VPS | abaixo |
+| 09/09 | Sentry: guia interativo + fix UndefinedError media_dias | arquivo |
+| 09/09 | Modal — Cenário 3: listas com marcadores implementadas e publicadas na VPS | arquivo |
 | 08/09 | Tabela COSIF no modal: validação do Cenário 2 + registro Cenários 1–2 + Cenário 3 aberto | arquivo |
 | 08/09 | Sentry monitoring + 3 otimizações de performance | arquivo |
 | 08/09 | Fix: campo Para — colaborador @finaud em vez de suporte | arquivo |
@@ -62,6 +64,81 @@
 
 ---
 
+## 📓 Diário da sessão (2026-09-09) — Modal: De/Para unificados — regras por tipo de remetente; deploy e validação em produção
+
+### O que foi feito
+
+1. **Retomada de sessão anterior** — implementação das regras De/Para já estava commitada em `60cd962`; restavam os arquivos de documentação.
+
+2. **Entrada no REGISTRO_CORRECOES.md** (09/09 19:00) — problema (7 padrões de De/Para incorretos em 323 msgs), correção (`_primeiro_externo`, `_eh_cliente_remetente`, `_resolver_de`, `_resolver_para`), validação (653 testes, 0 regressões, 0 campos vazios).
+
+3. **Commit `3e712ef`** — `spec_display_modal.md` (nova seção De/Para), `PENDENCIAS.md` (item removido), `REGISTRO_CORRECOES.md` (entrada de correção).
+
+4. **Push e deploy na VPS** — `git pull` aplicou 11 arquivos; serviço `gestao-suporte`: active ✅.
+
+5. **Validação visual em produção** — dois threads verificados:
+   - "ERRO NA ENTREGA DLO E DLI - INTERCAM": De: Andrea Inacio → Para: Grupo Financeiro ✅
+   - "Doc 4111 - 04-09-2026": De: Miguel Santos → Para: Henrique - Fair Corretora ✅
+   Campo "Para" não mostra mais `suporte@finaud.com.br` quando colaborador Finaud responde ao cliente.
+
+6. **Segunda inconsistência registrada** — status "Concluída" quando Finaud perguntou ao cliente (Miguel Santos no Doc 4111). Item 🟡 elevado a 🔴 com causa raiz, exemplo real e 4 passos. Commit `9aa72c8` + push.
+
+### Estado atual
+
+**pytest:** 653 passed ✅.
+**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅. Commits `3e712ef` e `9aa72c8` publicados.
+**De/Para no modal:** regras unificadas por tipo de remetente — em produção e validado ✅.
+
+### Próximo passo
+
+🔴 **Fix status** — "Concluída" quando Finaud perguntou algo ao cliente. Ver PENDENCIAS.md — criar `_tem_pergunta_acao()` + atualizar `_determinar_status()` + testar amostra de 20+ threads antes de aplicar em produção. Chat dedicado.
+
+**Pendências que continuam:**
+- 🔴 Threads irmãs — 11 grupos com thread Concluída + pendente no mesmo caso
+- 🟡 Modal — Cenário 2b (COSIF citada 2× perde espaços duplos) e `white-space: nowrap` na coluna Valor
+- 🟡 Passo C — tela de manutenção de regras
+- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
+
+Último /fechar: 2026-09-09 20:00 — memórias revisadas ✅
+
+---
+
+## 📓 Diário da sessão (2026-09-09) — Coletor de colaboradores: verificação pós-deploy do fix Message-ID/In-Reply-To
+
+### O que foi feito
+
+Sessão retomada após compactação de contexto — estado verificado e confirmado íntegro.
+
+1. **Estado confirmado** — coletor ativo com fix Message-ID/In-Reply-To ✅, 653 testes passando, produção ativa.
+
+2. **Como os testes foram feitos** — explicado para Michel: 20 testes unitários pytest cobrindo `_construir_indice_mid`, `_thread_por_reply` e `_ja_existe`; validação com dados reais (Gmail das 6 caixas): 84 mensagens novas em 45 threads, sem contaminação.
+
+3. **Como ver na tela** — orientado: buscar "Trustee" ou "DRM - 2060", thread Trustee DTVM deve ter 2 mensagens. Identificados dados da thread: assunto "ENC: BANCO CENTRAL - COMUNICACAO DE INCONSISTENCIA NO DRM - 2060", data 01/09/2026.
+
+4. **Confirmação visual** — Michel abriu a thread na tela do sistema e confirmou: De: Miguel Santos → Para: Igor Menezes Costa (`icosta.ext@trusteedtvm.com.br`), data 01/09/2026, conteúdo correto (pedido do COS4060). BUG CRÍTICO encerrado e confirmado na tela ✅.
+
+5. **Nenhuma alteração de código nesta sessão.**
+
+### Estado atual
+
+**pytest:** 653 passed ✅.
+**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅.
+**Coletor de colaboradores:** ATIVO com fix Message-ID/In-Reply-To ✅.
+**BUG CRÍTICO DRM 2060:** resolvido e confirmado na tela por Michel ✅.
+
+### Próximo passo
+
+🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
+
+**Pendências que continuam:**
+- 🟡 Modal — acabamentos menores: Cenário 2b (COSIF citada 2× perde espaços duplos) e `white-space: nowrap` na coluna Valor
+- 🟡 Passo C — tela de manutenção de regras
+- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
+
+Último /fechar: 2026-09-09 18:30 — memórias revisadas ✅
+
+---
+
 ## 📓 Diário da sessão (2026-09-09) — Contaminação cruzada DRM 2060: investigação, restauração e prevenção
 
 ### O que foi feito
@@ -96,79 +173,6 @@
 - 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
 
 Último /fechar: 2026-09-09 17:00 — memórias revisadas ✅
-
----
-
-## 📓 Diário da sessão (2026-09-09) — Sentry: guia interativo + fix UndefinedError media_dias
-
-### O que foi feito
-
-1. **Guia interativo do Sentry** — artifact publicado em claude.ai com 6 abas (Erros, Rastreamento, Perfis, Logs, Relógio, Proteção de Dados), cada uma seguindo a estrutura âncora simples → conceito técnico → consequência prática → o que fazer. Dados reais do projeto (4,81s, nomes das rotas, filtros LGPD).
-
-2. **Fix: `UndefinedError 'dict object' has no attribute 'media_dias'`** — Sentry capturou o erro às 13h21 de hoje na rota `index` (`gestao_email.html`, linha 2104).
-   - **Causa:** template tinha coluna "Média/caso" usando `p.media_dias` no ranking FOG, mas `servidor_telas.py` não calculava esse campo no dict. As mudanças estavam no working tree não commitado; o servidor em produção rodava `a5521b5` (commit anterior) sem o campo.
-   - **Correção:** `media_dias` adicionado ao dict do ranking em `index()` (`servidor_telas.py`, linha 663); template com coluna "Média/caso" + grid 6 colunas + ordenação; teste `test_ranking_media_dias_calculada` adicionado.
-   - **642 testes passando ✅**. Commit `32fb917`, push e deploy na VPS — tela + agendador ativos.
-
-### Estado atual
-
-**pytest:** 642 passed ✅.
-**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅. Commit `32fb917` publicado.
-
-### Próximo passo
-
-🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
-
-**Pendências que continuam:**
-- 🟡 Modal — acabamentos menores: Cenário 2b (COSIF citada 2× perde espaços duplos) e `white-space: nowrap` na coluna Valor
-- 🟡 Passo C — tela de manutenção de regras
-- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
-
-Último /fechar: 2026-09-09 14:45 — memórias revisadas ✅
-
----
-
-## 📓 Diário da sessão (2026-09-09) — Modal: Cenário 3 — listas com marcadores implementadas e publicadas
-
-### O que foi feito
-
-Sessão dedicada ao **Cenário 3 da leitura inteligente**: detecção automática de listas com marcadores (`-`, `*`, `•`, `N.`, `N)`) no texto das mensagens do modal, renderizando `<ul>`/`<ol>` em vez de texto plano.
-
-1. **Pesquisa na base local** — varridos os 153 threads com listas no banco (`corpo_texto`): padrão traço (`- item`), asterisco Outlook (`  *   item`), numerada (`1. texto`). Falsos positivos identificados: URLs nos itens, traço no meio de frase, menos de 3 itens, item >300 chars.
-
-2. **Implementação em `templates/gestao_email.html`:**
-   - CSS adicionado: `.msg-lista` e `.msg-lista li` (~linha 661)
-   - Nova função `_listaMarcadores(texto)` inserida após `_tabelaEspacos`:
-     - Detecta ≥3 itens consecutivos (linhas em branco entre itens são toleradas)
-     - Exclui URLs nos itens e itens >300 chars
-     - Retorna HTML com `.msg-tcampos-badge` + `<ul>`/`<ol class="msg-lista">` + toggle "Ver texto original"
-   - 5 call sites encadeados: `m.texto_novo` (×2), `m.corpo_encaminhado`, `m.historico_citado`, `m.corpo`
-
-3. **Validação Node.js** — 6 casos reais: 4 devem detectar (ul seguido, ul com blanks, ol numerada), 2 devem ignorar (URLs, só 2 itens). Resultado: **6/6 ✅**.
-
-4. **pytest:** 640 passed ✅ (zero regressões).
-
-5. **Teste na UI:** Michel pesquisou "Posição de Câmbio corretora" na Visão Geral → thread `1a010965b497ec0f` → badge "📋 Lista detectada" apareceu, `<ul>` renderizado, toggle funcionou.
-
-6. **Commit, push e deploy na VPS:** commit `a5521b5`, serviço `gestao-suporte` active ✅. Site responde normalmente em `gestao-suporte.finaudapps.com.br`.
-
-### Estado atual
-
-**pytest:** 640 passed ✅.
-**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅. Commit `a5521b5` publicado.
-
-### Próximo passo
-
-🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
-
-**Pendências que continuam:**
-- 🟡 Modal — acabamentos menores: Cenário 2b (COSIF citada 2× perde espaços duplos) e `white-space: nowrap` na coluna Valor
-- 🟡 Passo C — tela de manutenção de regras
-- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
-
-Último /fechar: 2026-09-09 — memórias revisadas ✅
-
----
 
 ---
 <!-- fim das 3 sessões recentes -->

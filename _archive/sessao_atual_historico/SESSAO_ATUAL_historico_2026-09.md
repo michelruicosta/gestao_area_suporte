@@ -6,6 +6,48 @@
 
 ---
 
+## 📓 Diário da sessão (2026-09-09) — Modal: Cenário 3 — listas com marcadores implementadas e publicadas
+
+### O que foi feito
+
+Sessão dedicada ao **Cenário 3 da leitura inteligente**: detecção automática de listas com marcadores (`-`, `*`, `•`, `N.`, `N)`) no texto das mensagens do modal, renderizando `<ul>`/`<ol>` em vez de texto plano.
+
+1. **Pesquisa na base local** — varridos os 153 threads com listas no banco (`corpo_texto`): padrão traço (`- item`), asterisco Outlook (`  *   item`), numerada (`1. texto`). Falsos positivos identificados: URLs nos itens, traço no meio de frase, menos de 3 itens, item >300 chars.
+
+2. **Implementação em `templates/gestao_email.html`:**
+   - CSS adicionado: `.msg-lista` e `.msg-lista li` (~linha 661)
+   - Nova função `_listaMarcadores(texto)` inserida após `_tabelaEspacos`:
+     - Detecta ≥3 itens consecutivos (linhas em branco entre itens são toleradas)
+     - Exclui URLs nos itens e itens >300 chars
+     - Retorna HTML com `.msg-tcampos-badge` + `<ul>`/`<ol class="msg-lista">` + toggle "Ver texto original"
+   - 5 call sites encadeados: `m.texto_novo` (×2), `m.corpo_encaminhado`, `m.historico_citado`, `m.corpo`
+
+3. **Validação Node.js** — 6 casos reais: 4 devem detectar (ul seguido, ul com blanks, ol numerada), 2 devem ignorar (URLs, só 2 itens). Resultado: **6/6 ✅**.
+
+4. **pytest:** 640 passed ✅ (zero regressões).
+
+5. **Teste na UI:** Michel pesquisou "Posição de Câmbio corretora" na Visão Geral → thread `1a010965b497ec0f` → badge "📋 Lista detectada" apareceu, `<ul>` renderizado, toggle funcionou.
+
+6. **Commit, push e deploy na VPS:** commit `a5521b5`, serviço `gestao-suporte` active ✅. Site responde normalmente em `gestao-suporte.finaudapps.com.br`.
+
+### Estado atual
+
+**pytest:** 640 passed ✅.
+**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅. Commit `a5521b5` publicado.
+
+### Próximo passo
+
+🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
+
+**Pendências que continuam:**
+- 🟡 Modal — acabamentos menores: Cenário 2b (COSIF citada 2× perde espaços duplos) e `white-space: nowrap` na coluna Valor
+- 🟡 Passo C — tela de manutenção de regras
+- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
+
+Último /fechar: 2026-09-09 — memórias revisadas ✅
+
+---
+
 ## 📓 Diário da sessão (2026-09-08) — Tabela COSIF no modal: validação do Cenário 2 + registro + Cenário 3 aberto
 
 ### O que foi feito
@@ -347,5 +389,34 @@ Duas sessões encadeadas (a segunda retomou da primeira, que esgotou o contexto)
 **Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅. Commits `a7cf548`, `055aa7b`, `64c43d6` publicados.
 
 Último /fechar: 2026-09-08 23:00 — memórias revisadas ✅
+
+---
+
+## 📓 Diário da sessão (2026-09-09) — Sentry: guia interativo + fix UndefinedError media_dias
+
+### O que foi feito
+
+1. **Guia interativo do Sentry** — artifact publicado em claude.ai com 6 abas (Erros, Rastreamento, Perfis, Logs, Relógio, Proteção de Dados), cada uma seguindo a estrutura âncora simples → conceito técnico → consequência prática → o que fazer. Dados reais do projeto (4,81s, nomes das rotas, filtros LGPD).
+
+2. **Fix: `UndefinedError 'dict object' has no attribute 'media_dias'`** — Sentry capturou o erro às 13h21 de hoje na rota `index` (`gestao_email.html`, linha 2104).
+   - **Causa:** template tinha coluna "Média/caso" usando `p.media_dias` no ranking FOG, mas `servidor_telas.py` não calculava esse campo no dict. As mudanças estavam no working tree não commitado; o servidor em produção rodava `a5521b5` (commit anterior) sem o campo.
+   - **Correção:** `media_dias` adicionado ao dict do ranking em `index()` (`servidor_telas.py`, linha 663); template com coluna "Média/caso" + grid 6 colunas + ordenação; teste `test_ranking_media_dias_calculada` adicionado.
+   - **642 testes passando ✅**. Commit `32fb917`, push e deploy na VPS — tela + agendador ativos.
+
+### Estado atual
+
+**pytest:** 642 passed ✅.
+**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅. Commit `32fb917` publicado.
+
+### Próximo passo
+
+🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
+
+**Pendências que continuam:**
+- 🟡 Modal — acabamentos menores: Cenário 2b (COSIF citada 2× perde espaços duplos) e `white-space: nowrap` na coluna Valor
+- 🟡 Passo C — tela de manutenção de regras
+- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
+
+Último /fechar: 2026-09-09 14:45 — memórias revisadas ✅
 
 ---
