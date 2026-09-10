@@ -956,7 +956,7 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
 .fog-leg-sq  { display: inline-block; width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0 }
 
 .fog-tbl-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden }
-.fog-cols { grid-template-columns: 4px 88px 52px 1fr 110px 82px 130px 100px 128px 58px }
+.fog-cols { grid-template-columns: 4px 88px 52px 1fr 110px 82px 130px 100px 128px 120px }
 .fog-tbl-head {
   display: grid; align-items: center; padding: 0 16px; height: 36px;
   border-bottom: 1px solid var(--border); background: var(--bg);
@@ -983,13 +983,25 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
 .fog-cell-atualiz { padding: 0 6px }
 .fog-atualiz-label { font-size: 0.5625rem; color: var(--muted); margin-bottom: 1px }
 .fog-atualiz-num   { font-size: 0.875rem; font-weight: 800; line-height: 1.2 }
-.fog-cell-btn   { display: flex; justify-content: center }
+.fog-cell-btn   { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px }
 .fog-btn-open   {
   font-size: 0.625rem; font-weight: 700; color: var(--accent);
   border: 1px solid rgba(51,51,168,.25); border-radius: 5px; padding: 4px 10px;
-  background: rgba(51,51,168,.06); text-decoration: none; transition: all .12s;
+  background: rgba(51,51,168,.06); text-decoration: none; transition: all .12s; white-space: nowrap;
 }
 .fog-btn-open:hover { background: var(--accent); color: #fff }
+.fog-btn-jornada {
+  font-size: 0.625rem; font-weight: 700; color: var(--muted);
+  border: 1px solid var(--border); border-radius: 5px; padding: 4px 8px;
+  background: transparent; cursor: pointer; transition: all .12s; white-space: nowrap;
+}
+.fog-btn-jornada:hover, .fog-btn-jornada.aberto { color: var(--accent); border-color: rgba(51,51,168,.25); background: rgba(51,51,168,.06); }
+.fog-jornada-panel {
+  border-bottom: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  background: var(--bg);
+  padding: .75rem 1rem .75rem 1.25rem;
+}
 
 .fog-kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 22px }
 .fog-kpi {
@@ -2007,8 +2019,17 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
               <a class="fog-btn-open"
                  href="https://finaud.fogbugz.com/f/cases/{{ t.id|default('') }}"
                  target="_blank">Abrir ↗</a>
+              {% if not is_fechado %}
+              <button class="fog-btn-jornada" id="btn-jornada-{{ t.id }}"
+                      onclick="toggleJornada('{{ t.id }}')">Jornada ▼</button>
+              {% endif %}
             </div>
           </div>
+          {% if not is_fechado %}
+          <div class="fog-jornada-panel" id="jornada-panel-{{ t.id }}" hidden>
+            <div id="jornada-content-{{ t.id }}"></div>
+          </div>
+          {% endif %}
         {% else %}
           <div style="padding:32px;text-align:center;color:var(--muted);font-size:13px">Nenhum caso encontrado.</div>
         {% endfor %}
@@ -4438,6 +4459,12 @@ function fogFiltrar() {
       if (_fogUrgenciaFiltro === 'concluido' && st !== 'fechado')                       ok = false;
     }
     r.style.display = ok ? '' : 'none';
+    if (!ok) {
+      const fp = document.getElementById('jornada-panel-' + r.dataset.id);
+      if (fp) fp.hidden = true;
+      const fb = document.getElementById('btn-jornada-' + r.dataset.id);
+      if (fb) { fb.classList.remove('aberto'); fb.textContent = 'Jornada ▼'; }
+    }
     if (ok) vis++;
   });
   const tv = document.getElementById('fog-totalVis');
@@ -4495,7 +4522,13 @@ function _fogAplicarOrdem() {
     if (col === 'id' || col === 'dias') return (Number(va) - Number(vb)) * dir;
     return va.localeCompare(vb, 'pt-BR') * dir;
   });
-  rows.forEach(r => body.appendChild(r));
+  rows.forEach(r => {
+    body.appendChild(r);
+    // Mantém o painel de jornada logo após sua linha
+    const panel = document.getElementById('jornada-panel-' + r.dataset.id);
+    if (panel) body.appendChild(panel);
+  });
+  _agendarPrecarregamento();
 }
 
 function fogReset() {
@@ -5285,6 +5318,120 @@ async function fogColabBuscar() {
   } finally {
     load.style.display = 'none';
   }
+}
+
+// ── Jornada inline na Lista de Casos ─────────────────────────────────
+const esc = s => (s || '').replace(/[&<>"']/g,
+  c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function primeiroNome(nome) { return (nome || '').split(' ')[0]; }
+
+let _precarregTimer = null;
+function _agendarPrecarregamento() {
+  clearTimeout(_precarregTimer);
+  _precarregTimer = setTimeout(_precarregarJornadas, 1500);
+}
+async function _precarregarJornadas() {
+  const visiveis = [...document.querySelectorAll('#fogBody .fog-tbl-row')]
+    .filter(r => r.style.display !== 'none')
+    .slice(0, 15)
+    .map(r => r.dataset.id)
+    .filter(Boolean);
+  for (const fogId of visiveis) {
+    const content = document.getElementById('jornada-content-' + fogId);
+    if (!content || content.dataset.loaded) continue;
+    try {
+      const r = await fetch('/api/fog-jornada/' + fogId);
+      if (r.ok) {
+        const fog = await r.json();
+        content.innerHTML = _renderJornadaFog(fog);
+        content.dataset.loaded = '1';
+      }
+    } catch(e) {}
+    await new Promise(res => setTimeout(res, 400));
+  }
+}
+
+async function toggleJornada(fogId) {
+  const panel  = document.getElementById('jornada-panel-' + fogId);
+  const btn    = document.getElementById('btn-jornada-' + fogId);
+  const content = document.getElementById('jornada-content-' + fogId);
+  if (!panel) return;
+
+  const abrindo = panel.hidden;
+  panel.hidden = !abrindo;
+  if (btn) { btn.classList.toggle('aberto', abrindo); btn.textContent = abrindo ? 'Jornada ▲' : 'Jornada ▼'; }
+  if (!abrindo) return;
+
+  if (content.dataset.loaded) return;
+  content.innerHTML = '<span style="color:var(--muted);font-size:12px;display:block;padding:.25rem 0">A carregar jornada…</span>';
+
+  try {
+    const r = await fetch('/api/fog-jornada/' + fogId);
+    if (r.status === 404) {
+      content.innerHTML = '<span style="color:var(--muted);font-size:12px">Sem histórico de atribuições para este caso.</span>';
+      return;
+    }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const fog = await r.json();
+    content.innerHTML = _renderJornadaFog(fog);
+    content.dataset.loaded = '1';
+  } catch(e) {
+    content.innerHTML = '<span style="color:#ef4444;font-size:12px">Erro ao carregar jornada.</span>';
+  }
+}
+
+function _renderJornadaFog(fog) {
+  const _esc = s => (s || '').replace(/[&<>"']/g,
+    c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const _pnome = nome => (nome || '').split(' ')[0];
+  const etapasHtml = fog.etapas.map((e, i) => {
+    let bg, borda, cor;
+    if (e.gargalo && !e.em_aberto) { bg='rgba(239,68,68,.1)'; borda='#ef4444'; cor='#ef4444'; }
+    else if (e.em_aberto)           { bg='rgba(59,130,246,.08)'; borda='var(--accent)'; cor='var(--accent)'; }
+    else                            { bg='var(--accent-bg)'; borda='var(--border)'; cor='var(--muted)'; }
+
+    const seta = i < fog.etapas.length - 1
+      ? `<span style="color:var(--muted);font-size:13px;flex-shrink:0;padding:0 2px">→</span>` : '';
+    const semAtuDu  = fog.dias_sem_atualizacao || 0;
+    const semAtuCor = semAtuDu >= 60 ? '#ef4444' : semAtuDu >= 20 ? '#f97316' : 'var(--muted)';
+    const semAtuHtml = e.em_aberto && semAtuDu > 0
+      ? `<span style="font-size:9px;color:${semAtuCor}">sem atualização ${semAtuDu}du</span>` : '';
+    const rodape = e.gargalo && !e.em_aberto
+      ? `<span style="font-size:9px;color:#ef4444;letter-spacing:.3px">⚠ gargalo</span>`
+      : e.em_aberto
+        ? `<span style="font-size:9px;color:var(--accent)">● atual</span>${semAtuHtml}`
+        : '';
+    const passagens = e.passagens || 1;
+    const nomeLabel = _esc(_pnome(e.nome));
+    const cardTitle = passagens > 1 ? ` title="Atribuído ${passagens} vezes nesta etapa"` : '';
+    const passagemBadge = passagens > 1
+      ? `<span style="font-size:9px;font-weight:500;color:var(--muted);margin-left:2px">↩${passagens}×</span>` : '';
+    const dataInicio = e.inicio
+      ? `<span style="font-size:9px;color:var(--muted)">${e.inicio.slice(8,10)}/${e.inicio.slice(5,7)}</span>` : '';
+    return `<div${cardTitle} style="display:inline-flex;flex-direction:column;align-items:center;
+        padding:5px 11px;border-radius:8px;border:1px solid ${borda};
+        background:${bg};min-width:76px;text-align:center;gap:1px">
+      <span style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap">${nomeLabel}${passagemBadge}</span>
+      ${dataInicio}
+      <span style="font-size:12px;font-weight:700;color:${cor}">${e.dias}d</span>
+      ${rodape}
+    </div>${seta}`;
+  }).join('');
+
+  const totais = {};
+  fog.etapas.forEach(e => { const p = _pnome(e.nome); totais[p] = (totais[p] || 0) + e.dias; });
+  const totalizadorHtml = Object.entries(totais)
+    .sort((a, b) => b[1] - a[1])
+    .map(([nome, dias]) => `<span>${_esc(nome)} <strong>${dias}d</strong></span>`)
+    .join('<span style="color:var(--border);margin:0 4px">·</span>');
+
+  return `<div>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:.5rem">${etapasHtml}</div>
+    <div style="font-size:11px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px;align-items:center;
+                border-top:1px solid var(--border);padding-top:.375rem">
+      <span style="font-weight:600;margin-right:2px">Total por pessoa:</span>${totalizadorHtml}
+    </div>
+  </div>`;
 }
 
 function fogColabRender() {

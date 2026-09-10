@@ -429,6 +429,16 @@ def test_fog_colaboradores_rota_existe():
     assert resp.status_code in (302, 200), 'rota /api/fog-colaboradores não existe'
 
 
+def test_fog_jornada_caso_rota_existe():
+    client = app.test_client()
+    resp = client.get('/api/fog-jornada/8156', follow_redirects=False)
+    assert resp.status_code in (302, 200, 404), 'rota /api/fog-jornada/<id> não existe'
+
+
+def test_fog_jornada_caso_funcao_definida():
+    assert hasattr(st, '_buscar_jornada_caso'), '_buscar_jornada_caso não definida'
+
+
 def test_fog_colaboradores_funcao_definida():
     import inspect
     assert hasattr(st, '_buscar_fog_colaboradores')

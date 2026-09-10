@@ -87,6 +87,7 @@ def _exigir_secret_key() -> str:
 
 
 app.secret_key = _exigir_secret_key()
+app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 # ── Gmail service (imagens inline) ────────────────────────────────────────────
 # Usa threading.local() para que cada thread Flask tenha sua própria conexão
@@ -1684,6 +1685,130 @@ def api_fog_jornadas():
     inicio = request.args.get('inicio', hoje.replace(month=1, day=1).isoformat())
     fim    = request.args.get('fim',    hoje.isoformat())
     return jsonify(_pivotar_por_fog(_buscar_fog_colaboradores(inicio, fim)))
+
+
+_jornada_cache: dict = {}  # fog_id -> (timestamp, resultado)
+_JORNADA_CACHE_TTL = 600   # 10 minutos
+
+
+def _buscar_jornada_caso(fog_id: str) -> dict | None:
+    """Busca a jornada de um único caso pelo ID — sem filtro de período."""
+    import re as _re
+    import time as _time
+    agora = _time.monotonic()
+    cached = _jornada_cache.get(str(fog_id))
+    if cached and agora - cached[0] < _JORNADA_CACHE_TTL:
+        return cached[1]
+
+    token = os.environ.get('FOGBUGZ_TOKEN', '')
+    if not token:
+        return None
+    url = 'https://finaud.fogbugz.com/api.asp'
+    try:
+        resp = requests.get(url, params={
+            'token': token,
+            'cmd': 'search',
+            'q': f'ixBug:{fog_id}',
+            'cols': 'ixBug,sTitle,fOpen,dtOpened,dtClosed,dtLastUpdated,events',
+        }, timeout=30)
+        resp.raise_for_status()
+        root = _ET.fromstring(resp.text)
+        hoje = datetime.now(timezone.utc).date()
+        for case in root.findall('.//case'):
+            if (case.findtext('ixBug') or '').strip() != str(fog_id):
+                continue
+            titulo  = (case.findtext('sTitle')  or '').strip()
+            is_open = (case.findtext('fOpen')   or '').strip() == 'true'
+            status  = 'Ativo' if is_open else 'Fechado'
+            dt_closed_str = (case.findtext('dtClosed') or '').strip()
+            try:
+                dt_closed = datetime.fromisoformat(dt_closed_str.replace('Z', '+00:00')).date() if dt_closed_str else hoje
+            except Exception:
+                dt_closed = hoje
+            data_fim_caso = hoje if is_open else dt_closed
+            dt_upd_str = (case.findtext('dtLastUpdated') or '').strip()
+            try:
+                dt_upd = datetime.fromisoformat(dt_upd_str.replace('Z', '+00:00')).date()
+                dias_sem_atualizacao = contar_dias_uteis(dt_upd, hoje)
+            except Exception:
+                dt_upd = None
+                dias_sem_atualizacao = 0
+
+            assigned = []
+            for ev in case.findall('.//event'):
+                if (ev.findtext('sVerb') or '').strip() != 'Assigned':
+                    continue
+                dt_str = (ev.findtext('dt') or '').strip()
+                desc   = (ev.findtext('evtDescription') or '').strip()
+                try:
+                    dt_ev = datetime.fromisoformat(dt_str.replace('Z', '+00:00')).date()
+                except Exception:
+                    continue
+                m = _re.search(r'Designado para (.+?) por ', desc)
+                if not m:
+                    continue
+                assigned.append({'dt': dt_ev, 'nome': m.group(1).strip(), 'pos': len(assigned)})
+
+            if not assigned:
+                return None
+            assigned.sort(key=lambda e: (e['dt'], e['pos']))
+
+            etapas = []
+            for i, ev in enumerate(assigned):
+                proximo   = assigned[i + 1]['dt'] if i + 1 < len(assigned) else data_fim_caso
+                dias      = max(0, (proximo - ev['dt']).days)
+                em_aberto = is_open and i + 1 >= len(assigned)
+                etapas.append({
+                    'nome':      ev['nome'],
+                    'posicao':   i,
+                    'inicio':    ev['dt'].isoformat(),
+                    'fim':       None if em_aberto else proximo.isoformat(),
+                    'dias':      dias,
+                    'em_aberto': em_aberto,
+                    'gargalo':   False,
+                    'passagens': 1,
+                })
+
+            # Mescla consecutivas e marca gargalo
+            merged: list[dict] = []
+            for e in etapas:
+                if merged and merged[-1]['nome'] == e['nome']:
+                    prev = merged[-1]
+                    prev['dias'] += e['dias']
+                    prev['fim'] = e['fim']
+                    prev['em_aberto'] = e['em_aberto']
+                    prev['passagens'] += 1
+                else:
+                    merged.append(dict(e))
+            if len(merged) >= 2:
+                max_dias = max(e['dias'] for e in merged)
+                if max_dias > 0:
+                    for e in merged:
+                        e['gargalo'] = e['dias'] == max_dias
+
+            resultado = {
+                'id':                   fog_id,
+                'titulo':               titulo,
+                'status':               status,
+                'dtLastUpdated':        dt_upd.isoformat() if dt_upd else None,
+                'dias_sem_atualizacao': dias_sem_atualizacao,
+                'total_dias':           sum(e['dias'] for e in merged),
+                'etapas':               merged,
+            }
+            _jornada_cache[str(fog_id)] = (_time.monotonic(), resultado)
+            return resultado
+    except Exception as e:
+        _log.warning('Erro ao buscar jornada do caso %s: %s', fog_id, e)
+    return None
+
+
+@app.route('/api/fog-jornada/<fog_id>')
+@_requer_login
+def api_fog_jornada_caso(fog_id):
+    resultado = _buscar_jornada_caso(fog_id)
+    if resultado is None:
+        return jsonify({'erro': 'sem histórico'}), 404
+    return jsonify(resultado)
 
 
 # ── Inicialização ─────────────────────────────────────────────────────────────
