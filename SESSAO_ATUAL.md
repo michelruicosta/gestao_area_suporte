@@ -72,6 +72,35 @@
 
 ---
 
+## 📓 Diário da sessão (2026-09-11 segunda sessão) — Validação de Status: protocolo + Bloco 1
+
+### O que foi feito
+
+1. **Protocolo de validação definido e gravado** — 3 blocos com regras claras de transição, monitoramento e tratamento de achados fora do escopo. Gravado em `PENDENCIAS.md` e `documentações/validacao_status_suspeitos.md`.
+
+2. **Bloco 1 executado** — script de levantamento rodou no banco `data/gestao.db`. Universo: 145 threads Aguardando Finaud + 27 Aguardando Cliente (ativas). Resultado: **22 suspeitos** encontrados.
+   - Tipo A (AF, Finaud enviou por último): 21 casos
+   - Tipo B (AC, cliente enviou por último): 1 caso
+
+3. **Achado fora do escopo** — 364 threads ativas sem `status_workflow` definido. Registrado no `PENDENCIAS.md` para investigar separadamente.
+
+### Próximo passo
+
+**Bloco 2 — revisar os 22 suspeitos com Michel.** Abrir chat novo, rodar `/iniciar`, ir direto para `documentações/validacao_status_suspeitos.md`. Apresentar cada caso um a um: Michel responde "correto" ou "erro". Nada é alterado sem resposta de Michel.
+
+**Pendências que continuam (ordem de prioridade):**
+- 🟡 **PRÓXIMA TAREFA: Bloco 2 da Validação** — 22 suspeitos em `documentações/validacao_status_suspeitos.md` aguardam revisão de Michel
+- ⚠️ **Investigar:** 364 threads ativas sem status_workflow — o que são e por que não têm status
+- 🔴 Threads irmãs — 11 grupos com thread Concluída + pendente no mesmo caso
+- 🟡 Padrão 2 — retomar em chat novo com protocolo correto
+- 🟡 Resumo Semanal — 24 casos "Sem empresa identificada"
+- 🟡 Teste de IA — rodar `testar_status_ia.py --fase 1`
+- 🟡 Modal — Cenário 2b + `white-space: nowrap`
+
+Último /fechar: 2026-09-11 — memórias revisadas ✅
+
+---
+
 ## 📓 Diário da sessão (2026-09-11) — Resumo Semanal: e-mail idêntico ao artefato
 
 ### O que foi feito
@@ -91,6 +120,7 @@
 Deploy concluído — e-mail validado por Michel. Próxima segunda-feira o resumo semanal sairá automaticamente com o novo template. Na próxima sexta o snapshot capturará os dados, habilitando os deltas e a narrativa por categoria CADOC.
 
 **Pendências que continuam (ordem de prioridade cruzada com PENDENCIAS.md):**
+- 🟡 **PRÓXIMA TAREFA: Validação de status** — protocolo gravado em `PENDENCIAS.md` e `documentações/validacao_status_suspeitos.md`. Abrir chat novo e executar Bloco 1 (levantamento automático dos suspeitos)
 - 🔴 Threads irmãs — 11 grupos com thread Concluída + pendente no mesmo caso (revisar um a um com Michel)
 - 🟡 Padrão 2 — retomar em chat novo com protocolo correto (Fix1+Fix2 prontos, aguarda OK)
 - 🟡 Padrão "@colega pode verificar?" — analisar caso Sefer manualmente

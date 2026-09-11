@@ -2,6 +2,27 @@
 
 ---
 
+### 11/09 — DOCS(validacao): protocolo de validação de status gravado + Bloco 1 executado
+
+**🔎 Em miúdos:** definimos um protocolo em 3 blocos para revisar se os status das threads (Aguardando Finaud, Aguardando Cliente, Concluída) estão certos. O protocolo foi gravado em arquivo para não se perder entre chats. O Bloco 1 (levantamento automático) foi executado e encontrou 22 casos suspeitos para revisar com Michel.
+
+**O que foi feito:**
+- Protocolo dos 3 blocos gravado em `documentações/PENDENCIAS.md` (seção VALIDAÇÃO)
+- Arquivo de trabalho criado: `documentações/validacao_status_suspeitos.md`
+- Script de levantamento criado e rodado (`bloco1_levantamento.py` no scratchpad)
+- Universo analisado: 145 threads Aguardando Finaud + 27 threads Aguardando Cliente (ativas)
+
+**Suspeitos encontrados:**
+- Tipo A — Aguardando Finaud, mas Finaud enviou por último: **21 casos**
+- Tipo B — Aguardando Cliente, mas cliente enviou por último: **1 caso**
+- Tipos C e D: nenhum caso
+
+**Achado fora do escopo:** 364 threads ativas sem `status_workflow` definido — registrado no PENDENCIAS.md para tratar separadamente.
+
+**Validação:** ⚠️ VALIDAÇÃO PENDENTE — 22 suspeitos aguardam revisão de Michel no Bloco 2.
+
+---
+
 ### 11/09 — FIX(pipeline): e-mails de colaboradores faltando + pipeline unificado em 5 etapas
 
 **🔎 Em miúdos:** threads que tinham respostas de colaboradores (ex.: Andrea, Rodrigo) fora do canal principal ficavam com status errado — a Finaud aparecia como quem falou por último, mas na verdade o cliente tinha respondido depois. Isso acontecia porque os e-mails dos colaboradores nunca eram buscados. A correção passou por três passos técnicos e uma reorganização do pipeline automático.

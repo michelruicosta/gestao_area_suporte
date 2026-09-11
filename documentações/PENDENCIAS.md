@@ -8,22 +8,57 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ---
 
-## 🟡 VALIDAÇÃO — Tela E-mails: Classificação e Status (a abrir em próximo chat)
+## 🟡 VALIDAÇÃO — Tela E-mails: Classificação e Status
 
-**O que é:** percorrer todos os itens visíveis na tela "E-mails — Classificação e Status" e validar se o status (AF / AC / Concluída) e a categoria (DDR, DLO, REMITLY etc.) de cada thread estão corretos.
+**O que é:** confirmar que o status (AF / AC / Concluída) e a categoria (DDR, DLO, REMITLY etc.) de cada thread ativa estão corretos no banco, após o recálculo de 1.028 threads em 11/09/2026.
 
-**Por que agora:** após o recálculo de 1.028 threads (11/09/2026) e o pipeline unificado de 5 etapas, é o momento certo de confirmar que o banco reflete a realidade.
+**Arquivo de trabalho:** `documentações/validacao_status_suspeitos.md` — lista de suspeitos com estado de cada caso (⬜ aguarda Michel · ✅ correto · ❌ erro).
 
-**Como faremos — metodologia em 4 etapas:**
+---
 
-1. **Listar:** gerar lista de todas as threads ativas com status + categoria + remetente da última mensagem + data
-2. **Executar:** cruzar automaticamente os campos — ex.: status AC mas último remetente é o cliente → suspeito; categoria DDR mas assunto não tem sinal DDR → suspeito. Gerar lista de divergências
-3. **Revisar com Michel:** apresentar os casos suspeitos um a um. Michel decide: correto (falso alarme) ou erro (corrigir)
-4. **Corrigir + remover:** aplicar as correções aprovadas, registrar no REGISTRO_CORRECOES.md e remover esta pendência
+### Protocolo — 3 blocos (acordado com Michel em 11/09/2026)
 
-**Escopo:** threads com `status_workflow` = AF ou AC e `inativa_desde` IS NULL (ativas). Concluídas em amostra menor.
+**Bloco 1 — Levantamento (Claude executa, ~15 min)**
+Claude consulta o banco, extrai todas as threads ativas (AF e AC com `inativa_desde` IS NULL) e cruza os campos suspeitos:
+- Status AF mas última msg é da Finaud → deveria ser AC
+- Status AC mas última msg é do cliente → deveria ser AF
+- Status Concluída mas há msg recente do cliente sem resposta
+- Categoria sem sinal detectável no assunto
 
-**Próximo passo:** abrir chat novo e rodar a etapa 1 (script de listagem + cruzamento automático).
+Resultado salvo em `documentações/validacao_status_suspeitos.md`. Ao terminar, Claude escreve no chat:
+> ✅ **Bloco 1 concluído — X suspeitos encontrados. Faça `/fechar` e abra chat novo para o Bloco 2.**
+
+**Bloco 2 — Revisão com Michel (um caso por vez)**
+Cada suspeito aparece no chat assim:
+> **Caso N de X** · Thread: "..." · Status atual: AF · Última msg: Pedro (Finaud), 03/09 · Suspeita: Finaud enviou por último → deveria ser AC · **Correto ou erro?**
+
+Michel responde. Claude marca no arquivo e avança. Nada é alterado sem resposta de Michel.
+Ao terminar: > ✅ **Bloco 2 concluído — X erros confirmados. Faça `/fechar` e abra chat novo para o Bloco 3.**
+
+**Bloco 3 — Correção (Claude executa com aprovação)**
+Para cada erro: mostra o que vai alterar → aguarda OK de Michel → corrige o banco → registra no `REGISTRO_CORRECOES.md` → commit + push com OK.
+
+---
+
+### Se surgir achado fora do escopo
+
+| Nível | Situação | O que Claude faz |
+|---|---|---|
+| Pequeno | Não muda o trabalho atual | Anota no `PENDENCIAS.md` e continua |
+| Médio | Impacta outra pendência mas não invalida o Bloco 1 | Avisa Michel e pergunta se continua |
+| Grande | Invalida o Bloco 1 ou exige decisão antes de continuar | Para tudo, apresenta opções, aguarda Michel decidir |
+
+---
+
+**Estado atual:** ✅ Bloco 1 concluído (11/09/2026) · 22 suspeitos em `documentações/validacao_status_suspeitos.md` · **Próximo chat: executar Bloco 2** (revisar os 22 casos com Michel um a um).
+
+---
+
+### ⚠️ Achado do Bloco 1 — 364 threads ativas sem status definido
+
+Durante o levantamento, foram encontradas 364 threads com `inativa_desde = None` mas `status_workflow = None`. O sistema não calculou o status dessas threads. Causa não investigada ainda.
+
+**Próximo passo:** investigar em chat dedicado — o que são essas threads, por que não têm status e se precisam de recálculo.
 
 ---
 
