@@ -8,6 +8,25 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ---
 
+## 🟡 VALIDAÇÃO — Tela E-mails: Classificação e Status (a abrir em próximo chat)
+
+**O que é:** percorrer todos os itens visíveis na tela "E-mails — Classificação e Status" e validar se o status (AF / AC / Concluída) e a categoria (DDR, DLO, REMITLY etc.) de cada thread estão corretos.
+
+**Por que agora:** após o recálculo de 1.028 threads (11/09/2026) e o pipeline unificado de 5 etapas, é o momento certo de confirmar que o banco reflete a realidade.
+
+**Como faremos — metodologia em 4 etapas:**
+
+1. **Listar:** gerar lista de todas as threads ativas com status + categoria + remetente da última mensagem + data
+2. **Executar:** cruzar automaticamente os campos — ex.: status AC mas último remetente é o cliente → suspeito; categoria DDR mas assunto não tem sinal DDR → suspeito. Gerar lista de divergências
+3. **Revisar com Michel:** apresentar os casos suspeitos um a um. Michel decide: correto (falso alarme) ou erro (corrigir)
+4. **Corrigir + remover:** aplicar as correções aprovadas, registrar no REGISTRO_CORRECOES.md e remover esta pendência
+
+**Escopo:** threads com `status_workflow` = AF ou AC e `inativa_desde` IS NULL (ativas). Concluídas em amostra menor.
+
+**Próximo passo:** abrir chat novo e rodar a etapa 1 (script de listagem + cruzamento automático).
+
+---
+
 ## 🟡 RESUMO SEMANAL — Identificar empresas sem nome nos cards Retorno Bacen (10/09/2026)
 
 No Resumo Semanal, vários cards de CADOC exibem "Sem empresa identificada (N)" porque o banco de dados não tem o nome da empresa linkado àquelas threads. São threads onde o assunto do e-mail não contém o nome da empresa de forma legível para o sistema.
@@ -165,7 +184,7 @@ Quando funcionários da Finaud respondem a clientes **sem incluir suporte@finaud
 
 ### Implementado (02/09/2026) — Gap 1 e Gap 2 cobertos
 
-`scripts/coletor_enviados_colaboradores.py` — lê Enviados e Recebidos dos 6 colaboradores do `config.json` (Andrea, Monica, Pedro, Flávio, Sarah, Rodrigo) e adiciona mensagens novas às threads **já existentes** no banco. Roda às 6h dentro do pipeline. Nunca cria threads novas.
+`scripts/coletor_enviados_colaboradores.py` — lê Enviados e Recebidos dos 6 colaboradores do `config.json` (Andrea, Monica, Pedro, Flávio, Sarah, Rodrigo) e adiciona mensagens novas às threads **já existentes** no banco. Roda a cada ciclo de coleta (junto com o Gmail, a cada hora). Nunca cria threads novas.
 
 ### Pendente — Gap 3: conversas completamente paralelas
 
