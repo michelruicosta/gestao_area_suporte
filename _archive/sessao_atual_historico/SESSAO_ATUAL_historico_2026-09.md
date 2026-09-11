@@ -6,6 +6,36 @@
 
 ---
 
+## 📓 Diário da sessão (2026-09-10 quarta sessão) — Jornada por Colaborador: nova tela FOG implementada
+
+### O que foi feito
+
+1. **Item 🔴 URGENTE do PENDENCIAS.md** — "Jornada do FOG por Colaborador" (aprovado por Fabio 10/09/2026).
+
+2. **Rota Flask `/api/fogbugz/jornada`** em `scripts/servidor_telas.py`:
+   - Busca todos os FOGs por período (`opened:"de..ate"`, max 500)
+   - Filtra pelo colaborador via eventos `sVerb=Assigned` (regex "Designado para X por Y")
+   - Monta jornada de etapas com dias por pessoa (merged para mesma pessoa consecutiva)
+   - Cache 10 min por `(colaborador, de, ate)` para evitar chamadas repetidas
+   - Colaboradores: Fabio, Luiz, Antonio, Bruno, Daniela
+
+3. **Seção completa em `templates/gestao_email.html`**:
+   - CSS: 30+ classes `.jcol-*` (cards, gráfico, jornada visual, barra de distribuição)
+   - HTML: filtros, 3 cards de resumo, gráfico CSS empilhado por mês, lista de FOGs
+   - JS: `_jcolInicializar`, `buscarJornadaColab`, `_jcolClassif`, `_jcolRenderizar`, `jcolFiltrar`, `_jcolRenderGrafico`, `_jcolRenderLista`
+   - Menu lateral: item "🗺️ Jornada por Colaborador" na seção FOGBUGZ
+   - Permissões: `gestor` e `administrador`; registrado em `_USR_TELAS`
+
+4. **pytest:** 656 passed ✅, zero regressões.
+5. **Commit:** `62fe8a8 feat(fog): Jornada por Colaborador — nova tela com jornada visual por colaborador`
+6. **Push + deploy na VPS.**
+
+### Estado ao fechar
+
+**pytest:** 656 passed ✅. **Produção:** ativa ✅. **PENDENCIAS.md:** item 🔴 URGENTE removido.
+
+---
+
 ## 📓 Diário da sessão (2026-09-09) — Coletor de colaboradores: verificação pós-deploy do fix Message-ID/In-Reply-To
 
 ### O que foi feito

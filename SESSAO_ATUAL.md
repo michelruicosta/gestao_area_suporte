@@ -12,9 +12,10 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
+| 10/09 | prospeccao_finaud: tela Flask separada Bacen/Receita + ingestão 26 estados | abaixo |
 | 10/09 | Padrão 2 (Finaud→Cliente): tentativa Fix1+Fix2 → revertida por protocolo | abaixo |
 | 10/09 | Jornada: melhorias visuais + filtros bidirecionais + fix label gráfico | abaixo |
-| 10/09 | Jornada por Colaborador: nova tela FOG completa implementada e deployada | abaixo |
+| 10/09 | Jornada por Colaborador: nova tela FOG completa implementada e deployada | arquivo |
 | 10/09 | Portal: botão copiar senha temporária — tentativa user-select:all → revertida | arquivo |
 | 10/09 | Script testar_status_ia.py criado — Fase 1 pronta para rodar | arquivo |
 | 10/09 | Teste de IA — planejamento e análise de 1.629 threads para validação de status | arquivo |
@@ -67,6 +68,49 @@
 >
 > **Regra:** este arquivo guarda as **3 sessões mais recentes**. O `/fechar` acrescenta a
 > linha nova aqui e move a 4ª sessão para o arquivo.
+
+---
+
+## 📓 Diário da sessão (2026-09-10 sétima sessão) — prospeccao_finaud: tela Flask separada Bacen/Receita
+
+### O que foi feito
+
+1. **Separação arquitetural completa** — a tela de prospecção misturava dados do Bacen e da Receita Federal. Michel identificou o problema e solicitou reconstrução com fontes completamente independentes.
+
+2. **`servidor_prospeccao.py` reescrito** (Flask, porta 8006):
+   - Rota `/api/bacen/*` — lê exclusivamente `data/bacen.db` (5.142 instituições reguladas, Brasil inteiro); filtros: UF, segmento, tipo, nome
+   - Rota `/api/receita/*` — lê exclusivamente `data/uf/{UF}/contatos.db` (Garimpo); filtros: UF, segmento, porte, nome
+   - Nenhuma consulta cruza os dois bancos
+
+3. **`prospeccao.html` reescrito** — duas abas independentes:
+   - "Bacen IF.data": 2.372 instituições ativas (período 202606), colunas Nome / CNPJ Raiz / Segmento / Tipo / UF / Município
+   - "Receita Federal": empresas por UF baixada, colunas Nome / CNPJ / Segmento / Cidade / Porte / Email / Telefone / Score
+   - Cada aba tem badge com total, paginação e botão Excel próprios
+
+4. **Fix `_carregar_bacen()`** — chave primária mudou de `cnpj_raiz` (CNPJ do líder do conglomerado) para `cod_inst` (CNPJ da própria instituição). Resultado: 5.142 chaves localizáveis vs. 657 anteriores. Aplicado em `cruzar_bacen.py` e no servidor.
+
+5. **Ingestão de 26 estados iniciada** — `ingestar_receita.py` + loop de `gerar_leads.py` para todos os estados fora do DF. Um único download de ~6,7 GB da Receita cobre todos. Rodando em background com log em `data/ingestao_todos.log`.
+
+6. **Commit e push** — `a8e34b8` em `michelruicosta/prospeccao_finaud` (branch master). ✅
+
+### Estado atual
+
+**Bacen:** 2.372 instituições ativas visíveis, filtros funcionando, export Excel OK.
+**Receita DF:** 9.048 empresas setor financeiro, filtros e export OK.
+**Receita outros estados:** ingestão em andamento em background.
+
+### Próximo passo
+
+⏳ **Aguardar conclusão da ingestão dos 26 estados** (`data/ingestao_todos.log`). Quando terminar, todos os estados aparecerão automaticamente no dropdown UF da aba Receita Federal — sem reiniciar o servidor.
+
+**Pendências gestao_area_suporte que continuam:**
+- 🔴 Fix status — "Concluída" quando Finaud perguntou algo ao cliente
+- 🔴 Threads irmãs — 11 grupos com thread Concluída + pendente no mesmo caso
+- 🟡 Padrão 2 — retomar em chat novo com protocolo correto
+- 🟡 Modal — Cenário 2b e `white-space: nowrap` na coluna Valor
+- 🟡 Teste de IA — rodar `testar_status_ia.py --fase 1`
+
+Último /fechar: 2026-09-10 — memórias revisadas ✅
 
 ---
 
@@ -151,48 +195,6 @@ Ver PENDENCIAS.md → "🟡 FIX — Padrão 2".
 Último /fechar: 2026-09-10 — memórias revisadas ✅
 
 ---
-
-## 📓 Diário da sessão (2026-09-10 quarta sessão) — Jornada por Colaborador: nova tela FOG implementada
-
-### O que foi feito
-
-1. **Item 🔴 URGENTE do PENDENCIAS.md** — "Jornada do FOG por Colaborador" (aprovado por Fabio 10/09/2026).
-
-2. **Rota Flask `/api/fogbugz/jornada`** em `scripts/servidor_telas.py`:
-   - Busca todos os FOGs por período (`opened:"de..ate"`, max 500)
-   - Filtra pelo colaborador via eventos `sVerb=Assigned` (regex "Designado para X por Y")
-   - Monta jornada de etapas com dias por pessoa (merged para mesma pessoa consecutiva)
-   - Cache 10 min por `(colaborador, de, ate)` para evitar chamadas repetidas
-   - Colaboradores: Fabio, Luiz, Antonio, Bruno, Daniela
-
-3. **Seção completa em `templates/gestao_email.html`**:
-   - CSS: 30+ classes `.jcol-*` (cards, gráfico, jornada visual, barra de distribuição)
-   - HTML: filtros, 3 cards de resumo, gráfico CSS empilhado por mês, lista de FOGs
-   - JS: `_jcolInicializar`, `buscarJornadaColab`, `_jcolClassif`, `_jcolRenderizar`, `jcolFiltrar`, `_jcolRenderGrafico`, `_jcolRenderLista`
-   - Menu lateral: item "🗺️ Jornada por Colaborador" na seção FOGBUGZ
-   - Permissões: `gestor` e `administrador`; registrado em `_USR_TELAS`
-
-4. **pytest:** 656 passed ✅, zero regressões.
-5. **Commit:** `62fe8a8 feat(fog): Jornada por Colaborador — nova tela com jornada visual por colaborador`
-6. **Push + deploy na VPS.**
-
-### Estado atual
-
-**pytest:** 656 passed ✅.
-**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅.
-**PENDENCIAS.md:** item 🔴 URGENTE removido (feature entregue).
-
-### Próximo passo
-
-🟡 **Rodar a Fase 1 do teste de IA** — `python scripts/testar_status_ia.py --fase 1` (custo ~$0,36; requer OPENAI_API_KEY).
-
-**Pendências que continuam:**
-- 🔴 Fix status — "Concluída" quando Finaud perguntou algo ao cliente (executar APÓS o teste de IA)
-- 🔴 Threads irmãs — 11 grupos com thread Concluída + pendente no mesmo caso
-- 🟡 Modal — Cenário 2b (COSIF citada 2×) e `white-space: nowrap` na coluna Valor
-- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
-
-Último /fechar: 2026-09-10 — memórias revisadas ✅
 
 ---
 <!-- fim das 3 sessões recentes -->

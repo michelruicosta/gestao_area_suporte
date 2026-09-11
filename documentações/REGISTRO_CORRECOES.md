@@ -2,6 +2,43 @@
 
 ---
 
+### 10/09 — FEAT (prospeccao_finaud): tela Flask com Bacen e Receita completamente separados
+
+**🔎 Em miúdos:** a tela de prospecção misturava dados do Bacen e da Receita Federal na mesma visão, o que confundia a análise. Agora cada fonte tem sua própria aba, seus próprios filtros e sua própria tabela — sem cruzamento algum.
+
+**Problema:** a arquitetura original cruzava `bacen.db` com `contatos.db` (Receita) em uma única tela com três abas ("Todas / Reguladas Bacen / Não reguladas"), exibindo dados misturados.
+
+**Causa raiz:** decisão de design inicial equivocada — fontes de natureza distinta (regulatório vs. cadastral) tratadas como complementares em vez de independentes.
+
+**Correção — `prospeccao_finaud/`:**
+- `scripts/servidor_prospeccao.py` reescrito: rotas `/api/bacen/*` e `/api/receita/*` totalmente independentes; nenhuma consulta cruza os dois bancos
+- `templates/prospeccao.html` reescrito: duas abas — "Bacen IF.data" (2.372 instituições reguladas, Brasil inteiro) e "Receita Federal" (empresas por UF baixada); cada aba tem filtros, tabela, paginação e exportação Excel próprios
+- Pipeline de ingestão iniciado para os 26 estados restantes (1 download nacional ~6,7 GB → `ingestar_receita.py` + `gerar_leads.py` por UF)
+
+**Commit:** `a8e34b8 feat(prospeccao): tela Flask com Bacen e Receita separados`
+**Repositório:** `michelruicosta/prospeccao_finaud` (branch master)
+**Validação:** ✅ Bacen exibe 2.372 instituições (período 202606); Receita exibe 9.048 empresas do DF no setor financeiro.
+
+---
+
+### 10/09 — FIX (prospeccao_finaud): `_carregar_bacen()` — `cod_inst` como chave primária do dicionário
+
+**🔎 Em miúdos:** ao buscar "Western Union" na tela, o sistema não encontrava a Western Union Corretora porque ela tem um CNPJ diferente do banco líder do conglomerado. O dicionário era montado pelo CNPJ do líder, não pelo da própria instituição.
+
+**Problema:** somente 657 de 5.867 instituições eram localizáveis (as que eram líderes de conglomerado). Subsidiárias com CNPJ próprio ficavam invisíveis.
+
+**Causa raiz:** `_carregar_bacen()` usava `cnpj_raiz` (CNPJ do líder do conglomerado) como única chave do dicionário. Várias subsidiárias compartilham o mesmo `cnpj_raiz`, sobrescrevendo umas às outras; e a busca pelo CNPJ da subsidiária não encontrava nada.
+
+**Correção — `scripts/cruzar_bacen.py` e `scripts/servidor_prospeccao.py`:**
+- Chave primária passa a ser `cod_inst` (CNPJ da própria instituição, quando numérico de 8 dígitos)
+- `cnpj_raiz` é inserido apenas como fallback, se ainda não estiver no dicionário
+- Resultado: 5.142 chaves vs. 657 anteriores
+
+**Commit:** `a8e34b8` (mesma entrega)
+**Validação:** ✅ Western Union Corretora localizada; Intercam (SP, sem filial no DF) corretamente ausente na aba Receita DF.
+
+---
+
 ### 10/09 — FIX: Label do gráfico Jornada não atualizava ao filtrar por segmento
 
 **🔎 Em miúdos:** ao clicar no card "Passou adiante" (9 casos), a barra do gráfico escondia corretamente o segmento azul ("Com ele hoje"), mas o número acima da barra continuava mostrando 10 (total fixo). Agora o número se atualiza junto com o filtro.

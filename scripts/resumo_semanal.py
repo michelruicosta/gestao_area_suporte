@@ -281,11 +281,16 @@ def buscar_fog_encerrados_semana(token: str) -> int:
     corte = datetime.now(timezone.utc).date() - timedelta(days=7)
     corte_str = corte.isoformat()
     try:
+        # Seta o filtro antes de buscar (mesma lógica dos casos abertos)
+        requests.get(_FOGBUGZ_URL, params={
+            'token': token, 'cmd': 'setCurrentFilter', 'sFilter': _FOGBUGZ_FILTER,
+        }, timeout=10)
         resp = requests.get(_FOGBUGZ_URL, params={
             'token': token,
             'cmd': 'search',
-            'q': f'status:closed resolved:">={corte_str}"',
+            'q': f'status:closed closed:">={corte_str}"',
             'cols': 'ixBug,dtClosed',
+            'max': '500',
         }, timeout=30)
         root = ET.fromstring(resp.text)
         total = 0
