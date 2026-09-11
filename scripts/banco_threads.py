@@ -1049,6 +1049,21 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         return 'Aguardando Cliente', _motivo_ag_cli
 
     # Remetente externo (cliente)
+    # §8.9-BCC: nenhum lado visível é Finaud → Finaud estava em Bcc (cópia oculta)
+    # O protocolo de e-mail apaga o campo Bcc antes da entrega — o coletor não consegue vê-lo.
+    # Se nem De nem Para nem Cc contêm @finaud/@finaudtec, a Finaud só monitorou; sem ação pendente.
+    def _algum_finaud_em(campo: str) -> bool:
+        emails = re.findall(r'<([^>]+)>', campo)
+        if not emails:
+            emails = [e.strip() for e in re.split(r'[,;]', campo) if e.strip()]
+        return any(_eh_finaud_addr(e) for e in emails)
+
+    # Campo Para deve ser não-vazio: vazio significa "não capturado", não "BCC confirmado"
+    if (destinatario.strip()
+            and not _algum_finaud_em(destinatario)
+            and not _algum_finaud_em(cc_campo)):
+        return 'Concluída', 'Finaud em Bcc — sem ação pendente'
+
     # §8.8-BACEN: comunicado oficial do BACEN encaminhado por qualquer cliente → Finaud analisa
     # Cobre: inconsistência DRM, problema de qualidade, aviso de atraso, variação relevante,
     # não preenchimento, reiteração — independente do remetente (não só BANVOX).
