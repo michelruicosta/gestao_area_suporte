@@ -274,6 +274,75 @@ def buscar_dados_fog_semanal(token: str) -> list[dict]:
         return []
 
 
+def buscar_fog_encerrados_semana(token: str) -> int:
+    """Conta casos FOG encerrados nos últimos 7 dias via FogBugz API."""
+    if not token:
+        return 0
+    corte = datetime.now(timezone.utc).date() - timedelta(days=7)
+    corte_str = corte.isoformat()
+    try:
+        resp = requests.get(_FOGBUGZ_URL, params={
+            'token': token,
+            'cmd': 'search',
+            'q': f'status:closed resolved:">={corte_str}"',
+            'cols': 'ixBug,dtClosed',
+        }, timeout=30)
+        root = ET.fromstring(resp.text)
+        total = 0
+        for case in root.findall('.//case'):
+            dt_str = (case.findtext('dtClosed') or '').strip()
+            if not dt_str:
+                continue
+            try:
+                dt_closed = datetime.fromisoformat(dt_str.replace('Z', '+00:00')).date()
+                if dt_closed >= corte:
+                    total += 1
+            except Exception:
+                pass
+        return total
+    except Exception:
+        _log.exception('FOG encerrados semana: erro ao buscar no FogBugz')
+        return 0
+
+
+def buscar_movimento_semanal() -> dict:
+    """Conta threads encerradas e novas na última semana (últimos 7 dias).
+
+    Datas no banco no formato DD/MM/YYYY HH:MM — converte via substr para comparação ISO.
+    """
+    banco = _caminho_banco()
+    if not os.path.exists(banco):
+        return {'encerradas': 0, 'recebidas': 0, 'saldo': 0}
+    try:
+        conn = sqlite3.connect(banco)
+        data_iso = (
+            "substr(data_ultima_msg,7,4)||'-'||substr(data_ultima_msg,4,2)||'-'||substr(data_ultima_msg,1,2)"
+        )
+        data_prim_iso = (
+            "substr(data_primeira_msg,7,4)||'-'||substr(data_primeira_msg,4,2)||'-'||substr(data_primeira_msg,1,2)"
+        )
+        (enc,) = conn.execute(
+            f"""
+            SELECT COUNT(*) FROM threads
+            WHERE status_workflow = 'Concluída'
+              AND data_ultima_msg IS NOT NULL AND data_ultima_msg != ''
+              AND {data_iso} >= date('now','-7 days')
+            """,
+        ).fetchone()
+        (rec,) = conn.execute(
+            f"""
+            SELECT COUNT(*) FROM threads
+            WHERE data_primeira_msg IS NOT NULL AND data_primeira_msg != ''
+              AND {data_prim_iso} >= date('now','-7 days')
+            """,
+        ).fetchone()
+        conn.close()
+        return {'encerradas': enc, 'recebidas': rec, 'saldo': enc - rec}
+    except Exception:
+        _log.exception('Resumo semanal: falha ao buscar movimento semanal.')
+        return {'encerradas': 0, 'recebidas': 0, 'saldo': 0}
+
+
 # ── HTML do e-mail ────────────────────────────────────────────────────────────
 
 def _chip_recorrente() -> str:
@@ -452,6 +521,54 @@ def _chips_movimento_html(cadoc_deltas: dict[str, int]) -> str:
     return ''.join(blocos)
 
 
+def _gerar_narrativa(
+    movimento: dict,
+    finaud: int,
+    fog_encerrados: int,
+    deltas: dict | None = None,
+) -> str:
+    """Gera o parágrafo narrativo do resumo com base em números reais."""
+    enc = movimento.get('encerradas', 0)
+    rec = movimento.get('recebidas', 0)
+    saldo = enc - rec
+
+    if enc == 0 and rec == 0:
+        return ''
+
+    plural_enc = 's' if enc != 1 else ''
+    plural_rec = 's' if rec != 1 else ''
+
+    if saldo > 0:
+        saldo_txt = f'<b>{saldo}</b> a mais do que as {rec} recebidas'
+    elif saldo < 0:
+        saldo_txt = f'<b>{abs(saldo)}</b> a menos do que as {rec} recebidas'
+    else:
+        saldo_txt = f'exatamente o mesmo número de threads recebidas (<b>{rec}</b>)'
+
+    linha1 = (
+        f'Nesta semana, <b>{enc}</b> thread{plural_enc} foram encerradas'
+        f' — {saldo_txt}.'
+    )
+
+    linha2 = ''
+    if finaud > 0:
+        plural_fin = 's' if finaud != 1 else ''
+        linha2 = (
+            f' Das threads abertas do BACEN, <b>{finaud}</b> caso{plural_fin}'
+            f' aguardam retorno da Finaud.'
+        )
+
+    linha3 = ''
+    if fog_encerrados > 0:
+        plural_fog = 's' if fog_encerrados != 1 else ''
+        linha3 = (
+            f' No FogBugz, <b>{fog_encerrados}</b> caso{plural_fog}'
+            f' foram encerrados na semana.'
+        )
+
+    return linha1 + linha2 + linha3
+
+
 def montar_html_resumo_semanal(
     nome: str,
     dados: dict,
@@ -459,6 +576,8 @@ def montar_html_resumo_semanal(
     dia_semana_label: str,
     dados_fog: list[dict] | None = None,
     deltas: dict | None = None,
+    movimento: dict | None = None,
+    fog_encerrados: int = 0,
 ) -> str:
     total   = dados.get('total', 0)
     cliente = dados.get('cliente', 0)
@@ -467,6 +586,11 @@ def montar_html_resumo_semanal(
     grp_cli = por_st.get('Aguardando Cliente', {})
     grp_fin = por_st.get('Aguardando Finaud', {})
     fog_total = sum(p['total'] for p in (dados_fog or []))
+
+    mv       = movimento or {}
+    enc      = mv.get('encerradas', 0)
+    rec      = mv.get('recebidas',  0)
+    saldo    = enc - rec
 
     saudacao = f'Olá, <b>{html_lib.escape(nome)}</b>,' if nome else 'Olá,'
     d_seg    = html_lib.escape(data_envio)
@@ -484,12 +608,43 @@ def montar_html_resumo_semanal(
 
     # Deltas — só exibe quando snapshot disponível
     d = deltas or {}
-    delta_bacen = _delta_html(d.get('bacen'))
-    delta_ac    = _delta_html(d.get('ac'))
-    delta_af    = _delta_html(d.get('af'))
-    delta_fog   = _delta_html(d.get('fog'))
-    chips_mvmt  = _chips_movimento_html(d.get('cadoc', {}))
-    secao_mvmt  = ''
+    delta_af  = _delta_html(d.get('af'))
+    delta_fog = _delta_html(d.get('fog'))
+
+    # Tile 1 — saldo encerradas vs recebidas
+    if saldo > 0:
+        tile1_num = f'+{saldo}'
+        tile1_cor_num = '#15803d'
+        tile1_bg  = '#f0fdf4'
+        tile1_bor = '#bbf7d0'
+    elif saldo < 0:
+        tile1_num = str(saldo)
+        tile1_cor_num = '#be123c'
+        tile1_bg  = '#fff1f2'
+        tile1_bor = '#fecdd3'
+    else:
+        tile1_num = '0'
+        tile1_cor_num = '#475569'
+        tile1_bg  = '#f8fafc'
+        tile1_bor = '#cbd5e1'
+    tile1_sub = f'<div style="font-size:9.5px;color:#64748b;margin-top:3px;">de {enc} enc. / {rec} rec.</div>' if enc or rec else ''
+
+    # Narrativa
+    narrativa_txt = _gerar_narrativa(mv, finaud, fog_encerrados, d)
+    secao_narrativa = ''
+    if narrativa_txt:
+        secao_narrativa = f"""
+  <tr><td style="padding:16px 32px 0;">
+    <p style="margin:0;font-size:13.5px;color:#334155;line-height:1.7;
+              background:#f8fafc;border-left:3px solid {_VERDE};
+              border-radius:0 6px 6px 0;padding:12px 16px;">
+      {narrativa_txt}
+    </p>
+  </td></tr>"""
+
+    # Seção "O que aconteceu nos e-mails" — narrativa + chips por categoria
+    chips_mvmt = _chips_movimento_html(d.get('cadoc', {}))
+    secao_mvmt = ''
     if chips_mvmt:
         secao_mvmt = f"""
   <tr><td style="padding:20px 32px 0;">
@@ -535,22 +690,23 @@ def montar_html_resumo_semanal(
     </p>
   </td></tr>
 
+  {secao_narrativa}
+
   <!-- Destaques — 4 tiles -->
   <tr><td style="padding:20px 32px 0;">
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
       <tr>
         <td style="width:25%;padding:0 5px 0 0;">
-          <div style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:14px 10px;text-align:center;">
-            <div style="font-size:26px;font-weight:900;color:#3333A8;line-height:1;font-variant-numeric:tabular-nums;">{total}</div>
-            <div style="font-size:10px;color:#6b7a9a;margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">BACEN em aberto</div>
-            {delta_bacen}
+          <div style="background:{tile1_bg};border:1px solid {tile1_bor};border-radius:8px;padding:14px 10px;text-align:center;">
+            <div style="font-size:26px;font-weight:900;color:{tile1_cor_num};line-height:1;font-variant-numeric:tabular-nums;">{tile1_num}</div>
+            <div style="font-size:10px;color:#6b7a9a;margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Enc. a mais</div>
+            {tile1_sub}
           </div>
         </td>
         <td style="width:25%;padding:0 5px;">
-          <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:14px 10px;text-align:center;">
-            <div style="font-size:26px;font-weight:900;color:#b45309;line-height:1;font-variant-numeric:tabular-nums;">{cliente}</div>
-            <div style="font-size:10px;color:#92400e;margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Ag. Cliente</div>
-            {delta_ac}
+          <div style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:14px 10px;text-align:center;">
+            <div style="font-size:26px;font-weight:900;color:#3333A8;line-height:1;font-variant-numeric:tabular-nums;">{enc}</div>
+            <div style="font-size:10px;color:#6b7a9a;margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Encerramentos</div>
           </div>
         </td>
         <td style="width:25%;padding:0 5px;">
@@ -562,8 +718,8 @@ def montar_html_resumo_semanal(
         </td>
         <td style="width:25%;padding:0 0 0 5px;">
           <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px 10px;text-align:center;">
-            <div style="font-size:26px;font-weight:900;color:#15803d;line-height:1;font-variant-numeric:tabular-nums;">{fog_total}</div>
-            <div style="font-size:10px;color:#166534;margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">FOG em aberto</div>
+            <div style="font-size:26px;font-weight:900;color:#15803d;line-height:1;font-variant-numeric:tabular-nums;">{fog_encerrados}</div>
+            <div style="font-size:10px;color:#166534;margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">FOG encerrados</div>
             {delta_fog}
           </div>
         </td>
@@ -726,8 +882,10 @@ def verificar_e_enviar_resumo_semanal(
         _log.info('Resumo semanal: nenhum caso BACEN em aberto — e-mail não enviado.')
         return cfg, False
 
-    fog_token = cfg.get('fogbugz_token') or os.environ.get('FOGBUGZ_TOKEN', '')
-    dados_fog = buscar_dados_fog_semanal(fog_token)
+    fog_token      = cfg.get('fogbugz_token') or os.environ.get('FOGBUGZ_TOKEN', '')
+    dados_fog      = buscar_dados_fog_semanal(fog_token)
+    fog_enc        = buscar_fog_encerrados_semana(fog_token)
+    movimento      = buscar_movimento_semanal()
 
     # Tentar carregar snapshot da sexta anterior para calcular deltas
     from snapshot_semanal import carregar_ultimo_snapshot, calcular_deltas
@@ -750,7 +908,10 @@ def verificar_e_enviar_resumo_semanal(
     algum = False
     for destino in destinos:
         nome_dest = (destino.split('@')[0].split('.')[0] or '').capitalize()
-        html = montar_html_resumo_semanal(nome_dest, dados, data_envio, dia_label, dados_fog, deltas)
+        html = montar_html_resumo_semanal(
+            nome_dest, dados, data_envio, dia_label,
+            dados_fog, deltas, movimento, fog_enc,
+        )
         if fn_enviar(destino, html):
             algum = True
 
