@@ -2,6 +2,20 @@
 
 ---
 
+### 11/09 — FIX(busca): Visão Geral não encontrava assuntos com pontuação (ex.: dois-pontos)
+
+**🔎 Em miúdos:** ao buscar "REMITLY Regulatory Reporting" na Visão Geral, o sistema retornava zero resultados — mesmo a thread existindo no banco. O problema era que o assunto real é "REMITLY: Regulatory Reporting (01/09/2026)" (com dois-pontos), e a busca procurava a frase inteira como se fosse um bloco único.
+
+**Problema:** a função `_vgFiltrar()` no JavaScript da tela usava `.includes(q)` — busca de substring exata. A query `"REMITLY Regulatory Reporting"` não existe literalmente em `"REMITLY: Regulatory Reporting (…)"` porque o dois-pontos quebra a sequência.
+
+**Correção:** alterado `templates/gestao_email.html` — busca passou a dividir a query em palavras individuais (`q.split(/\s+/)`) e verificar se cada palavra aparece no assunto. Antes: `assunto.includes(q)`. Depois: `q.split(/\s+/).every(w => assunto.includes(w))`.
+
+**Impacto:** busca mais permissiva — nunca deixa de encontrar o que antes encontrava; passa a encontrar casos com pontuação entre palavras.
+
+**Validação:** ✅ Testado por Michel na tela de produção — "REMITLY Regulatory Reporting" encontrou a thread corretamente. Commit `125028c`, deploy na VPS `gestao-suporte.finaudapps.com.br`.
+
+---
+
 ### 11/09 — FIX(status): REMITLY Regulatory Reporting — AC travado em vez de AF
 
 **🔎 Em miúdos:** a thread da Remitly sobre Regulatory Reporting ficou marcada como "Aguardando Cliente" quando na verdade era a Finaud que precisava responder. A cliente Lidiane cobrou resposta três vezes sem retorno e o status continuava errado na tela.
