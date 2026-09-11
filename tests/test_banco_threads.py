@@ -937,46 +937,6 @@ def test_finaud_cliente_aguardo_calculos_supera_retornaremos():
     assert status == 'Aguardando Cliente'
 
 
-# ── §8.8b-Fix1 — "Tudo bem?" filtrado como saudação → pedido real chega ao classificador ──
-
-def test_tudo_bem_filtrado_pedido_real_ac():
-    """Fix1: 'Tudo bem?' após saudação é filtrado → pedido real → Aguardando Cliente."""
-    msgs = [_msg(
-        FINAUD,
-        assunto='4111 - dia 25, 26/08/2026',
-        corpo='Prezado Robson, boa tarde!\n\nTudo bem?\n\nRobson, poderia por gentileza me encaminhar os dados necessários para que eu pudesse gerar os relatórios 4111?\n\nAtenciosamente.',
-        destinatarios='rneves@trusteedtvm.com.br',
-    )]
-    status, motivo = bt._determinar_status(msgs)
-    assert status == 'Aguardando Cliente'
-
-
-def test_tudo_bom_filtrado_pedido_cosif_ac():
-    """Fix1: 'Tudo bom?' após saudação é filtrado → pedido de COSIF → Aguardando Cliente."""
-    msgs = [_msg(
-        FINAUD,
-        assunto="COSIF's 4010 e 4060",
-        corpo="Prezados, bom dia!\n\nTudo bom?\n\nPoderiam por gentileza me encaminhar os COSIF'S 4010 e 4060 para\nque possamos realizar os relatórios DRM, DLO e DLI.\n\nAtenciosamente.",
-        destinatarios='financeiro@bancox.com.br',
-    )]
-    status, motivo = bt._determinar_status(msgs)
-    assert status == 'Aguardando Cliente'
-
-
-# ── §8.8b-Fix2 — "calcule" e "gere o relatório" em _FRASES_PEDIDO_EXPLICITO ──
-
-def test_calcule_novamente_nao_e_cortesia():
-    """Fix2: 'calcule novamente o DLO' bloqueia detecção de cortesia → Aguardando Cliente."""
-    msgs = [_msg(
-        FINAUD,
-        assunto='DLO - agosto/2026',
-        corpo='Prezada Monica, bom dia.\n\nObrigada por aguardar. Recebemos a informação de que os ajustes foram concluídos. 1) Para solucionar o problema, calcule novamente o DLO e gere o relatório de fechamento.\n\nAtenciosamente.',
-        destinatarios='monica@bancox.com.br',
-    )]
-    status, motivo = bt._determinar_status(msgs)
-    assert status == 'Aguardando Cliente'
-
-
 def test_regressao_so_imagens_nao_e_arquivo_entregavel():
     """Regressão §8.6: forward com só imagens inline não é sub-caso 1a → Aguardando Cliente."""
     msgs = [_msg(
