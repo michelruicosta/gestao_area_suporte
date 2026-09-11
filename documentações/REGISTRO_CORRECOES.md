@@ -2,6 +2,22 @@
 
 ---
 
+### 11/09 — FIX(status): REMITLY Regulatory Reporting — AC travado em vez de AF
+
+**🔎 Em miúdos:** a thread da Remitly sobre Regulatory Reporting ficou marcada como "Aguardando Cliente" quando na verdade era a Finaud que precisava responder. A cliente Lidiane cobrou resposta três vezes sem retorno e o status continuava errado na tela.
+
+**Problema:** a Msg 5 (Andrea, Finaud, perguntando ao Rodrigo internamente "pode verificar?") fixou o status como AC — "Finaud fez pergunta, aguarda resposta". Depois a Lidiane (Remitly) voltou nas Msgs 6 e 7 cobrando retorno, mas o status no banco não foi recalculado — ficou travado no AC da Msg 5.
+
+**Thread:** `1a057cdbdc73c6cf` — REMITLY: Regulatory Reporting (01/09/2026) — 7 mensagens.
+
+**Correção:** recalculado `_determinar_status()` com as 7 mensagens atuais. Último remetente = Lidiane (Remitly, cliente) perguntando por direcionamento → **Aguardando Finaud** | "Cliente fez pergunta — aguarda resposta da Finaud".
+
+**Identificado via:** validação cruzada status × remetente_ultima_msg (11/09/2026).
+
+**Validação:** ✅ `pytest tests/ -q`: 656 passed, zero regressões. Status corrigido diretamente no banco.
+
+---
+
 ### 10/09 — FIX(status): §8.9-BCC — threads sem Finaud no De/Para marcadas como Concluída
 
 **🔎 Em miúdos:** quatro e-mails chegaram no sistema em que a Finaud estava em cópia oculta (Bcc) — um campo que o protocolo de e-mail apaga antes de entregar, tornando-o invisível para o coletor. Sem a Finaud visível no De ou Para, o sistema tratava o remetente externo como "cliente esperando resposta" e marcava Aguardando Finaud incorretamente. Agora o sistema detecta esse padrão e marca Concluída automaticamente.
