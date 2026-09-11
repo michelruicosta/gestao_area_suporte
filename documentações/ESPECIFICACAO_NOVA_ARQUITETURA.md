@@ -1286,6 +1286,29 @@ Um e-mail pode conter tanto "no aguardo da liberação" (cliente precisa agir) q
 
 ---
 
+### 8.9 Finaud em Bcc — nenhum lado visível é Finaud
+
+**Quando se aplica:** o remetente da última mensagem não é `@finaud`/`@finaudtec`, E o campo Para é **não-vazio** e também não contém nenhum endereço Finaud, E o campo Cc igualmente não contém Finaud.
+
+**Por que acontece:** quando alguém envia um e-mail colocando `suporte@finaud.com.br` apenas em Bcc (cópia oculta), o protocolo de e-mail apaga o campo Bcc antes de entregar — o coletor (Gmail API) não tem acesso a esse campo. O e-mail chega na caixa de coleta e entra no sistema, mas os campos De e Para registram apenas as partes visíveis, sem nenhum endereço Finaud.
+
+**Regra:** se o campo Para é não-vazio e não contém `@finaud`/`@finaudtec`, e o Cc também não contém, a Finaud estava em Bcc e não tem ação pendente.
+
+> ⚠️ **Campo Para vazio não dispara esta regra.** Vazio significa "campo não capturado", não "Bcc confirmado". Threads com Para vazio continuam sendo processadas pelas regras anteriores.
+
+| Condição | Status | Motivo exibido |
+|---|---|---|
+| Para não-vazio, sem Finaud no Para nem no Cc | Concluída | "Finaud em Bcc — sem ação pendente" |
+
+**Exemplos reais identificados (10/09/2026):**
+- Contadora de terceiro (IGNIS) enviou ao cliente (Atual Câmbio) sobre balancete CADOC, com Finaud em Bcc para acompanhar
+- Funcionário do cliente (CV INVESTIMENTOS) encaminhou aviso de atraso do BACEN internamente, com Finaud em Bcc
+- Cliente (Braza Bank) confirmou transmissão do DRL ao BACEN enviando para si mesmo (cópia pessoal), com Finaud em Bcc
+
+> **Implementado em 10/09/2026.** `scripts/banco_threads.py` — helper `_algum_finaud_em()` + regra §8.9-BCC. 656 testes passando.
+
+---
+
 ## 9. Modelo de Rastreamento — duas camadas
 
 **Decisão confirmada por Michel (27/07/2026)**

@@ -2,6 +2,32 @@
 
 ---
 
+### 10/09 — FIX(status): §8.9-BCC — threads sem Finaud no De/Para marcadas como Concluída
+
+**🔎 Em miúdos:** quatro e-mails chegaram no sistema em que a Finaud estava em cópia oculta (Bcc) — um campo que o protocolo de e-mail apaga antes de entregar, tornando-o invisível para o coletor. Sem a Finaud visível no De ou Para, o sistema tratava o remetente externo como "cliente esperando resposta" e marcava Aguardando Finaud incorretamente. Agora o sistema detecta esse padrão e marca Concluída automaticamente.
+
+**Problema:** `_determinar_status()` em `scripts/banco_threads.py` usava apenas o remetente da última mensagem para decidir a ramificação. Se o remetente não era `@finaud`, caía em "Remetente externo (cliente)" e aplicava as regras de AF/AC — sem verificar se a Finaud sequer estava no campo Para ou Cc. Threads onde a Finaud foi copiada em Bcc chegavam com Para = endereço do cliente, sem nenhum Finaud visível, e eram classificadas como AF por padrão.
+
+**Causa raiz:** o protocolo de e-mail apaga o cabeçalho Bcc antes de entregar a mensagem ao destinatário. O Gmail API (e portanto o coletor) não tem acesso a esse campo. A função não tinha regra para o cenário "nenhum lado visível é Finaud".
+
+**Correção — `scripts/banco_threads.py`:**
+- Nova regra §8.9-BCC inserida no início da seção "Remetente externo (cliente)", antes do check §8.8-BACEN (que senão capturaria thread 2 antes da nova regra)
+- Condição: campo Para é não-vazio E não contém `@finaud.com.br`/`@finaudtec.com.br` E Cc também não contém → retorna `'Concluída', 'Finaud em Bcc — sem ação pendente'`
+- Campo Para vazio **não** dispara a regra: vazio significa "não capturado", não "BCC confirmado"
+- Helper `_algum_finaud_em(campo)` verifica se qualquer endereço do campo é Finaud
+
+**4 threads afetadas no banco:**
+- `19f667fc558cf283` ATUAL CORRETORA — corrigida AF → Concluída ✅
+- `19f4b3baf67943ec` Fw: BANCO CENTRAL AVISO DE ATRASO CV — corrigida AF → Concluída ✅
+- `19f3d30a7e19a779` DRL - REF 06.2026 Braza — já estava Concluída, sem alteração
+- `1a06bbe01dd3891d` Aguardando o seu pagamento (spam) — já estava Concluída, sem alteração
+
+**Validação:** ✅ `pytest tests/ -q`: **656 passed**, zero regressões. Simulação confirmou exatamente 4 threads afetadas, nenhuma a mais.
+**Commit:** `3e22306 fix(status): Finaud em Bcc — threads sem Finaud no De/Para marcadas como Concluída`
+**Spec:** §8.9 adicionado em `ESPECIFICACAO_NOVA_ARQUITETURA.md`
+
+---
+
 ### 10/09 — FEAT (prospeccao_finaud): tela Flask com Bacen e Receita completamente separados
 
 **🔎 Em miúdos:** a tela de prospecção misturava dados do Bacen e da Receita Federal na mesma visão, o que confundia a análise. Agora cada fonte tem sua própria aba, seus próprios filtros e sua própria tabela — sem cruzamento algum.
