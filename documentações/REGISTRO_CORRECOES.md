@@ -2,6 +2,23 @@
 
 ---
 
+### 11/09 — FEAT(resumo-semanal): e-mail idêntico ao artefato + caixa BACEN encerrados
+
+**🔎 Em miúdos:** o e-mail semanal agora tem o mesmo texto e estrutura visual do artefato de referência (545b597b). O texto segue o mesmo template de frases, a caixa de BACEN ganhou uma 4ª caixa verde com os casos encerrados esta semana, e o filtro do FogBugz foi corrigido para mostrar só casos abertos a partir de 2025.
+
+**Problema:** (1) o texto gerado pelo sistema usava frases diferentes das do artefato; (2) a seção BACEN mostrava 3 caixas mas não indicava quantos foram fechados na semana; (3) a tabela FogBugz trazia 1176 casos (histórico todo) em vez de ~83 (desde 2025).
+
+**Correção:**
+- `_gerar_narrativa()`: reescrita para seguir exatamente o template do artefato ("Esta semana, a equipe encerrou/recebeu X casos…")
+- `_o_que_aconteceu_corpo()`: mesmo estilo narrativo do artefato, com e sem snapshot
+- `_bacen_totais_html()`: 4ª caixa verde "Encerrados esta semana"
+- `buscar_bacen_encerrados_semana()`: nova função SQL — conta RETORNO_BACEN com status_workflow = 'Concluída' nos últimos 7 dias
+- `buscar_dados_fog_semanal()`: query corrigida de `status:open` para `status:open opened:"2025/01/01..today"` (alinhado com a tela)
+
+**Validação:** ✅ Michel validou o e-mail recebido · 656 testes passando · deploy VPS ativo
+
+---
+
 ### 11/09 — FIX(busca): Visão Geral não encontrava assuntos com pontuação (ex.: dois-pontos)
 
 **🔎 Em miúdos:** ao buscar "REMITLY Regulatory Reporting" na Visão Geral, o sistema retornava zero resultados — mesmo a thread existindo no banco. O problema era que o assunto real é "REMITLY: Regulatory Reporting (01/09/2026)" (com dois-pontos), e a busca procurava a frase inteira como se fosse um bloco único.

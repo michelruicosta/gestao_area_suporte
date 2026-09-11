@@ -12,6 +12,7 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
+| 11/09 | Resumo Semanal: e-mail idêntico ao artefato + caixa BACEN encerrados + fix FOG filter | abaixo |
 | 10/09 | prospeccao_finaud: tela Flask separada Bacen/Receita + ingestão 26 estados | abaixo |
 | 10/09 | Padrão 2 (Finaud→Cliente): tentativa Fix1+Fix2 → revertida por protocolo | abaixo |
 | 10/09 | Jornada: melhorias visuais + filtros bidirecionais + fix label gráfico | abaixo |
@@ -68,6 +69,33 @@
 >
 > **Regra:** este arquivo guarda as **3 sessões mais recentes**. O `/fechar` acrescenta a
 > linha nova aqui e move a 4ª sessão para o arquivo.
+
+---
+
+## 📓 Diário da sessão (2026-09-11) — Resumo Semanal: e-mail idêntico ao artefato
+
+### O que foi feito
+
+1. **Template HTML reescrito** — e-mail agora tem layout e texto idênticos ao artefato 545b597b: tiles 2×2 com fundo cinza (#f7f8fa), seção "O que aconteceu nos e-mails", cards BACEN por grupo, separadores HR.
+
+2. **Texto narrativo corrigido** — `_gerar_narrativa()` e `_o_que_aconteceu_corpo()` reescritas para seguir exatamente o template de frases do artefato ("Esta semana, a equipe encerrou/recebeu X casos…"). Antes usava frases diferentes ("Nesta semana, N threads foram encerradas…").
+
+3. **4ª caixa BACEN — "Encerrados esta semana"** — nova função `buscar_bacen_encerrados_semana()` conta RETORNO_BACEN com status_workflow = 'Concluída' nos últimos 7 dias. Caixa verde exibida ao lado das 3 existentes. Número também aparece no texto narrativo.
+
+4. **Fix filtro FogBugz** — `buscar_dados_fog_semanal()` usava `status:open` (trazia 1176 casos, histórico todo). Corrigido para `status:open opened:"2025/01/01..today"`, alinhado com a tela (resultado: ~83 casos, igual à visão consolidada).
+
+5. **Testes, commit, push e deploy** — 656 passando · commit `d7ea78a` · VPS ativa.
+
+### Próximo passo
+
+Deploy concluído — e-mail validado por Michel. Próxima segunda-feira o resumo semanal será enviado automaticamente com o novo template. Na próxima sexta o snapshot capturará os dados, habilitando os deltas e a narrativa por categoria CADOC.
+
+**Pendências gestao_area_suporte que continuam:**
+- 🔴 Fix status — "Concluída" quando Finaud perguntou algo ao cliente
+- 🔴 Threads irmãs — 11 grupos com thread Concluída + pendente no mesmo caso
+- 🟡 Padrão 2 — retomar em chat novo com protocolo correto
+- 🟡 Modal — Cenário 2b e `white-space: nowrap` na coluna Valor
+- 🟡 Teste de IA — rodar `testar_status_ia.py --fase 1`
 
 ---
 
