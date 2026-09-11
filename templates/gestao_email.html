@@ -5498,7 +5498,7 @@ function _vgFiltrar() {
   const ct = document.getElementById('vg-cat').value;
   const dt = (document.getElementById('vg-data').value || '').trim();
   const rows = _vgDados.filter(t =>
-    (!q  || (t.assunto || '').toLowerCase().includes(q)) &&
+    (!q  || q.split(/\s+/).every(w => (t.assunto || '').toLowerCase().includes(w))) &&
     (!st || t.status    === st) &&
     (!ct || (ct === '__SEM_RETORNO__' ? t.sem_retorno : t.categoria === ct)) &&
     (!dt || t.data_iso  === dt)
