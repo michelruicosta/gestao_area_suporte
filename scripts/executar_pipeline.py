@@ -51,7 +51,9 @@ def executar() -> None:
     log.info('PIPELINE GESTÃO ÁREA SUPORTE  —  %s', agora)
     log.info(_linha('═'))
 
-    # ── Etapa 1: Coleta ───────────────────────────────────────────────────────
+    cfg = ler_config()
+
+    # ── Etapa 1: Coleta Gmail ─────────────────────────────────────────────────
     log.info(_linha())
     log.info('ETAPA 1 — Coleta de e-mails (Gmail)')
     log.info(_linha())
@@ -65,18 +67,62 @@ def executar() -> None:
     dur1 = time.time() - t1
     log.info('Etapa 1 concluída em %.1fs', dur1)
 
-    # ── Etapa 2: Classificação ─────────────────────────────────────────────────
+    # ── Etapa 2: Coleta colaboradores ─────────────────────────────────────────
     log.info(_linha())
-    log.info('ETAPA 2 — Classificação de threads')
+    log.info('ETAPA 2 — Coleta de respostas dos colaboradores')
     log.info(_linha())
     t2 = time.time()
+    try:
+        r_col = coletar_colaboradores()
+        log.info('Colaboradores — %d mensagens novas em %d threads.',
+                 r_col['mensagens_novas'], r_col['threads_atualizadas'])
+    except Exception as e:
+        log.error('Falha no coletor de colaboradores (não fatal): %s', e)
+    dur2 = time.time() - t2
+    log.info('Etapa 2 concluída em %.1fs', dur2)
+
+    # ── Etapa 3: Classificação de categorias ──────────────────────────────────
+    log.info(_linha())
+    log.info('ETAPA 3 — Classificação de threads')
+    log.info(_linha())
+    t3 = time.time()
     try:
         contagens = classificar_banco()
     except Exception as e:
         log.error('ERRO FATAL na classificação: %s', e)
         sys.exit(1)
-    dur2 = time.time() - t2
-    log.info('Etapa 2 concluída em %.1fs', dur2)
+    dur3 = time.time() - t3
+    log.info('Etapa 3 concluída em %.1fs', dur3)
+
+    # ── Etapa 4: Recalcular status (AF / AC / Concluída) ──────────────────────
+    log.info(_linha())
+    log.info('ETAPA 4 — Recálculo de status')
+    log.info(_linha())
+    t4 = time.time()
+    try:
+        n_status = bt.recalcular_status_todos()
+        log.info('Status recalculado para %d threads.', n_status)
+    except Exception as e:
+        log.error('Falha no recálculo de status (não fatal): %s', e)
+    dur4 = time.time() - t4
+    log.info('Etapa 4 concluída em %.1fs', dur4)
+
+    # ── Etapa 5: Arquivar threads inativas ────────────────────────────────────
+    log.info(_linha())
+    log.info('ETAPA 5 — Arquivar threads inativas (Sem Retorno)')
+    log.info(_linha())
+    t5 = time.time()
+    try:
+        dias_af = int(cfg.get('dias_sr_af', 30))
+        dias_ac = int(cfg.get('dias_sr_ac', 60))
+        contagens_sr = bt.arquivar_threads_inativas(dias_af=dias_af, dias_ac=dias_ac)
+        total_sr = contagens_sr['af'] + contagens_sr['ac']
+        log.info('Sem Retorno — arquivadas %d thread(s): %d AF, %d AC.',
+                 total_sr, contagens_sr['af'], contagens_sr['ac'])
+    except Exception as e:
+        log.error('Falha no arquivamento de inativas (não fatal): %s', e)
+    dur5 = time.time() - t5
+    log.info('Etapa 5 concluída em %.1fs', dur5)
 
     # ── Resumo final ──────────────────────────────────────────────────────────
     dur_total = time.time() - inicio
@@ -101,9 +147,19 @@ def ler_config() -> dict:
 
 
 def rodar_coleta_ciclo() -> None:
-    """Uma passada: Gmail → classificar → reavaliar automáticos. Usada pelo relógio e pela tela."""
+    """Uma passada completa: Gmail → colaboradores → categorias → status → arquiva inativas."""
     log.info('Coleta automática — início.')
+    cfg = ler_config()
+
     log_id = coletar()
+
+    try:
+        r_col = coletar_colaboradores()
+        log.info('Colaboradores — %d mensagens novas em %d threads.',
+                 r_col['mensagens_novas'], r_col['threads_atualizadas'])
+    except Exception as e:
+        log.error('Falha no coletor de colaboradores: %s', e)
+
     contagens = classificar_banco()
     reavaliar_automaticos()
     if log_id:
@@ -113,48 +169,26 @@ def rodar_coleta_ciclo() -> None:
             contagens.get('descartes', 0),
             contagens.get('revisao', 0),
         )
+
+    try:
+        n_status = bt.recalcular_status_todos()
+        log.info('Status recalculado para %d threads.', n_status)
+    except Exception as e:
+        log.error('Falha no recálculo de status: %s', e)
+
+    try:
+        dias_af = int(cfg.get('dias_sr_af', 30))
+        dias_ac = int(cfg.get('dias_sr_ac', 60))
+        contagens_sr = bt.arquivar_threads_inativas(dias_af=dias_af, dias_ac=dias_ac)
+        total_sr = contagens_sr['af'] + contagens_sr['ac']
+        if total_sr:
+            log.info('Sem Retorno — arquivadas %d thread(s): %d AF, %d AC.',
+                     total_sr, contagens_sr['af'], contagens_sr['ac'])
+    except Exception as e:
+        log.error('Falha no arquivamento de inativas: %s', e)
+
     log.info('Coleta automática — fim.')
 
-
-def rodar_sem_retorno() -> None:
-    """Arquiva threads paradas (todo dia às 6h no modo --agendar)."""
-    cfg = ler_config()
-    dias_af = int(cfg.get('dias_sr_af', 30))
-    dias_ac = int(cfg.get('dias_sr_ac', 60))
-
-    # Etapa 0: coleta caixas dos colaboradores
-    try:
-        r_col = coletar_colaboradores()
-        log.info('Colaboradores — %d mensagens novas em %d threads.',
-                 r_col['mensagens_novas'], r_col['threads_atualizadas'])
-    except Exception as e:
-        log.error('Falha no coletor de colaboradores: %s', e)
-
-    log.info('Sem Retorno — iniciando (AF=%d dias, AC=%d dias).', dias_af, dias_ac)
-    try:
-        contagens = bt.arquivar_threads_inativas(dias_af=dias_af, dias_ac=dias_ac)
-        total = contagens['af'] + contagens['ac']
-        mensagem = f"Arquivadas {total} thread(s): {contagens['af']} AF, {contagens['ac']} AC."
-        bt.registrar_coleta(
-            tipo='sem_retorno',
-            threads_proc=total,
-            erros=0,
-            duracao_seg=0,
-            status='concluida',
-            mensagem=mensagem,
-        )
-        log.info('Sem Retorno — %s', mensagem)
-    except Exception as e:
-        bt.registrar_coleta(
-            tipo='sem_retorno',
-            threads_proc=0,
-            erros=1,
-            duracao_seg=0,
-            status='erro',
-            mensagem=str(e),
-        )
-        log.exception('Sem Retorno — falhou: %s', e)
-        raise
 
 
 _intervalo_aplicado: int | None = None
@@ -209,14 +243,6 @@ def ligar_agendador():
     bt.criar_banco()
     _AGENDADOR = BackgroundScheduler(daemon=False)
     _aplicar_intervalo_coleta(_AGENDADOR)
-    _AGENDADOR.add_job(
-        rodar_sem_retorno,
-        'cron',
-        hour=6,
-        minute=0,
-        id='sem_retorno_diario',
-        replace_existing=True,
-    )
     _AGENDADOR.add_job(
         lambda: _aplicar_intervalo_coleta(_AGENDADOR),
         'interval',
