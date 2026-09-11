@@ -1619,11 +1619,13 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
 
             <div>
               <label style="display:block;font-weight:600;margin-bottom:0.4rem">
-                Busca + classificação de e-mails
+                Ciclo automático de e-mails
               </label>
               <p style="font-size:0.82rem;color:var(--muted);margin:0 0 0.6rem">
-                De quanto em quanto tempo a busca de e-mails roda sozinha.
-                Use 0 para desativar o automático. Só e-mails — Fog não entra nesta tela.
+                De quanto em quanto tempo o ciclo completo roda sozinho: busca Gmail,
+                busca caixas dos colaboradores, classifica categorias, recalcula
+                status (AF / AC / Concluída) e arquiva inativas.
+                Use 0 para desativar. Fog não entra nesta tela.
               </p>
               <div style="display:flex;align-items:center;gap:0.75rem">
                 <input type="number" id="cfg-intervalo-coleta" min="0" max="1440" step="5"
@@ -1645,7 +1647,8 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
           <h2 style="margin:0 0 0.5rem">Regras de Sem Retorno</h2>
           <p style="font-size:0.82rem;color:var(--muted);margin:0 0 1.5rem">
             Threads sem resposta por mais do que o limite abaixo são movidas automaticamente
-            para a categoria <strong>SEM RETORNO</strong>. O processo roda uma vez por dia às 06h.
+            para a categoria <strong>SEM RETORNO</strong>. O processo roda a cada ciclo de coleta,
+            junto com a busca automática de e-mails.
             Quando chegar uma resposta nova, a thread volta para a categoria original.
           </p>
           <div style="display:flex;flex-direction:column;gap:1.5rem;max-width:480px">

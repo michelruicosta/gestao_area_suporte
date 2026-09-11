@@ -2,6 +2,50 @@
 
 ---
 
+### 11/09 — FIX(pipeline): e-mails de colaboradores faltando + pipeline unificado em 5 etapas
+
+**🔎 Em miúdos:** threads que tinham respostas de colaboradores (ex.: Andrea, Rodrigo) fora do canal principal ficavam com status errado — a Finaud aparecia como quem falou por último, mas na verdade o cliente tinha respondido depois. Isso acontecia porque os e-mails dos colaboradores nunca eram buscados. A correção passou por três passos técnicos e uma reorganização do pipeline automático.
+
+**Problema (causa raiz):**
+1. A VPS coletou threads antes de gravar os IDs internos de e-mail (Message-IDs). Sem esses IDs, o coletor de colaboradores não conseguia cruzar as mensagens externas com as threads do banco — e 91% das threads abertas ficaram sem IDs gravados.
+2. Sem cruzamento, os e-mails que chegaram nas caixas dos colaboradores (fora do canal suporte@) nunca foram importados.
+3. O status (AF/AC/Concluída) era calculado logo após a coleta do Gmail — antes de buscar os colaboradores. Mesmo quando o pipeline rodava completo, o status era calculado com um quadro incompleto de mensagens.
+
+**Correção — 3 passos + redesenho:**
+
+**Passo 1** — `scripts/atualizar_message_ids.py --aplicar` *(sessão anterior)*
+Varrreu todas as threads ativas no banco e gravou os Message-IDs faltantes consultando o Gmail API.
+Resultado: 1.056 threads atualizadas · 1.673 Message-IDs gravados.
+
+**Passo 2** — `scripts/coletor_enviados_colaboradores.py --dias 80`
+Buscou 80 dias de histórico nas caixas dos colaboradores e cruzou com as threads do banco via Message-ID.
+Resultado: 218 mensagens novas encontradas · 145 threads atualizadas (incluindo REMITLY: 7 msgs, AF).
+
+**Passo 3** — `scripts/recalcular_status.py` (script pontual, rodado na VPS)
+Recalculou o status de todas as threads ativas com o quadro completo de mensagens.
+Resultado: 1.028 threads reavaliadas.
+
+**Redesenho do pipeline — `scripts/executar_pipeline.py`:**
+Antes: ciclo automático rodava Gmail + classificar categorias. O coletor de colaboradores rodava separado, uma vez por dia às 06h.
+Depois: ciclo único de 5 etapas, rodando junto a cada ciclo de coleta:
+1. Coleta Gmail
+2. Coleta caixas dos colaboradores (não fatal — falha não interrompe o ciclo)
+3. Classifica categorias
+4. Recalcula status (AF / AC / Concluída) — **sempre após** ter todas as mensagens
+5. Arquiva threads inativas (Sem Retorno)
+
+Removido: `rodar_sem_retorno()` e o job diário das 06h no agendador.
+Commit: `6bb7ace feat(pipeline): unificar 5 etapas em ciclo único por hora`.
+
+**Correções de tela — `templates/gestao_email.html` + `scripts/servidor_telas.py`:**
+- Texto "O processo roda uma vez por dia às 06h" → "O processo roda a cada ciclo de coleta, junto com a busca automática de e-mails." (seção Sem Retorno)
+- Label "Busca + classificação de e-mails" → "Ciclo automático de e-mails" com descrição dos 5 passos
+- Botão "Buscar e-mails agora": rota `/api/admin/coletar` chamava só Gmail + classificar; corrigida para chamar `rodar_coleta_ciclo()` — agora manual e automático são idênticos
+
+**Validação:** ✅ 656 testes passando · REMITLY confirmado 7 msgs / AF no banco VPS · recálculo aplicado em 1.028 threads
+
+---
+
 ### 11/09 — FEAT(resumo-semanal): e-mail idêntico ao artefato + caixa BACEN encerrados
 
 **🔎 Em miúdos:** o e-mail semanal agora tem o mesmo texto e estrutura visual do artefato de referência (545b597b). O texto segue o mesmo template de frases, a caixa de BACEN ganhou uma 4ª caixa verde com os casos encerrados esta semana, e o filtro do FogBugz foi corrigido para mostrar só casos abertos a partir de 2025.

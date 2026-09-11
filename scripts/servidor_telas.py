@@ -1164,17 +1164,8 @@ def api_admin_coletar():
         _ultimo_refresh_ts = time.time()
         try:
             sys.path.insert(0, _SCRIPTS_DIR)
-            from coletor_gmail import coletar
-            from classificador_regras import classificar_banco
-            log_id = coletar()
-            contagens = classificar_banco()
-            if log_id:
-                bt.atualizar_classif_coleta(
-                    log_id,
-                    contagens.get('principal', 0),
-                    contagens.get('descartes', 0),
-                    contagens.get('revisao', 0),
-                )
+            from executar_pipeline import rodar_coleta_ciclo
+            rodar_coleta_ciclo()
         except Exception as e:
             _ultimo_erro_coleta = str(e)
             _log.exception('Coleta falhou: %s', e)

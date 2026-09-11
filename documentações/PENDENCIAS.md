@@ -8,17 +8,6 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ---
 
-## 🟡 STATUS — Padrão "@colega pode verificar?" com cliente copiado no Para (11/09/2026)
-
-**Padrão identificado na thread REMITLY (1a057cdbdc73c6cf):**
-Na Msg 5, Andrea (Finaud) enviou para Rafael Robles (cliente Remitly) + Rodrigo (Finaud) perguntando internamente "@Rodrigo, pode verificar por gentileza?". O sistema vê "Finaud enviou para cliente" e calcula AC — mas a pergunta era para o colega Rodrigo, não para o cliente. Se a thread tivesse terminado ali, o status seria AC (errado) em vez de AF.
-
-**Escopo levantado:** 9 threads AC com última msg Finaud→(Finaud+cliente). Análise inicial indicou que 8 são AC legítimos (Finaud realmente escreveu para o cliente). O caso Sefer/Doc 2011-LIM (`19f8f79994b1100c`) é suspeito — Alison parece escrever para Rodrigo (Finaud) com clientes no Para.
-
-**Próximo passo:** analisar manualmente o caso Sefer para confirmar se é AF ou AC. Se confirmado como padrão recorrente, avaliar se cabe regra automática ou revisão pontual.
-
----
-
 ## 🟡 RESUMO SEMANAL — Identificar empresas sem nome nos cards Retorno Bacen (10/09/2026)
 
 No Resumo Semanal, vários cards de CADOC exibem "Sem empresa identificada (N)" porque o banco de dados não tem o nome da empresa linkado àquelas threads. São threads onde o assunto do e-mail não contém o nome da empresa de forma legível para o sistema.
