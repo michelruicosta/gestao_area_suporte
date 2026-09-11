@@ -226,6 +226,31 @@ def buscar_dados_bacen() -> dict:
     }
 
 
+def buscar_bacen_encerrados_semana() -> int:
+    """Conta threads RETORNO_BACEN concluídas nos últimos 7 dias."""
+    banco = _caminho_banco()
+    if not os.path.exists(banco):
+        return 0
+    try:
+        conn = sqlite3.connect(banco)
+        n = conn.execute(
+            """
+            SELECT COUNT(*) FROM threads
+            WHERE categoria = 'RETORNO_BACEN'
+              AND status_workflow = 'Concluída'
+              AND (
+                substr(data_ultima_msg,7,4)||'-'||substr(data_ultima_msg,4,2)||'-'||substr(data_ultima_msg,1,2)
+                >= date('now','-7 days')
+              )
+            """
+        ).fetchone()[0]
+        conn.close()
+        return n
+    except Exception:
+        _log.exception('Resumo BACEN encerrados: falha ao ler banco.')
+        return 0
+
+
 def _dias_uteis(inicio: date, fim: date) -> int:
     """Dias úteis (seg–sex) entre duas datas, sem contar o dia inicial."""
     if not inicio or not fim or fim <= inicio:
@@ -251,7 +276,7 @@ def buscar_dados_fog_semanal(token: str) -> list[dict]:
         resp = requests.get(_FOGBUGZ_URL, params={
             'token': token,
             'cmd': 'search',
-            'q': 'status:open',
+            'q': 'status:open opened:"2025/01/01..today"',
             'cols': 'ixBug,sPersonAssignedTo,dtLastUpdated',
         }, timeout=30)
         root = ET.fromstring(resp.text)
@@ -551,25 +576,30 @@ def _cbadge_email(cadoc: str) -> str:
     )
 
 
-def _bacen_totais_html(total: int, cliente: int, finaud: int) -> str:
+def _bacen_totais_html(total: int, cliente: int, finaud: int, encerrados: int = 0) -> str:
     return (
         f'<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0"'
         f' style="margin-bottom:18px;">'
         f'<tr>'
-        f'<td style="width:33%;padding-right:8px;">'
+        f'<td style="width:25%;padding-right:7px;">'
         f'<div style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:6px;padding:10px 12px;">'
         f'<div style="font-size:22px;font-weight:800;color:#1c2b4a;font-variant-numeric:tabular-nums;">{total}</div>'
         f'<div style="font-size:10.5px;font-weight:600;color:#6b7a9a;margin-top:2px;">Total em aberto</div>'
         f'</div></td>'
-        f'<td style="width:33%;padding-right:8px;">'
+        f'<td style="width:25%;padding-right:7px;">'
         f'<div style="background:#fffbeb;border:1px solid #fcd38d;border-radius:6px;padding:10px 12px;">'
         f'<div style="font-size:22px;font-weight:800;color:#b45309;font-variant-numeric:tabular-nums;">{cliente}</div>'
         f'<div style="font-size:10.5px;font-weight:600;color:#b45309;opacity:.85;margin-top:2px;">Aguardando cliente</div>'
         f'</div></td>'
-        f'<td style="width:33%;">'
+        f'<td style="width:25%;padding-right:7px;">'
         f'<div style="background:#f0f4ff;border:1px solid #c7d2fe;border-radius:6px;padding:10px 12px;">'
         f'<div style="font-size:22px;font-weight:800;color:#4338CA;font-variant-numeric:tabular-nums;">{finaud}</div>'
         f'<div style="font-size:10.5px;font-weight:600;color:#4338CA;opacity:.85;margin-top:2px;">Aguardando Finaud</div>'
+        f'</div></td>'
+        f'<td style="width:25%;">'
+        f'<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:10px 12px;">'
+        f'<div style="font-size:22px;font-weight:800;color:#16a34a;font-variant-numeric:tabular-nums;">{encerrados}</div>'
+        f'<div style="font-size:10.5px;font-weight:600;color:#16a34a;opacity:.85;margin-top:2px;">Encerrados esta semana</div>'
         f'</div></td>'
         f'</tr></table>'
     )
@@ -642,55 +672,98 @@ def _o_que_aconteceu_corpo(
     deltas: dict | None,
     fog_encerrados: int,
 ) -> str:
+    """Gera o corpo da seção 'O que aconteceu nos e-mails'.
+
+    Com snapshot (deltas): narrativa de mudanças por categoria CADOC.
+    Sem snapshot: parágrafo sobre o estado atual da semana, no mesmo estilo.
+    """
     enc     = movimento.get('encerradas', 0)
     rec     = movimento.get('recebidas',  0)
     saldo   = enc - rec
     total   = dados.get('total', 0)
     cliente = dados.get('cliente', 0)
     finaud  = dados.get('finaud', 0)
+    d       = deltas or {}
 
-    partes: list[str] = []
-    if enc or rec:
-        if saldo > 0:
-            tendencia = (
-                f'a equipe encerrou <b style="color:#16a34a;">{saldo} casos a mais</b>'
-                f' do que recebeu'
-            )
-        elif saldo < 0:
-            tendencia = (
-                f'a fila cresceu <b style="color:#a04800;">{abs(saldo)} casos</b>'
-                f' além do que foi resolvido'
-            )
-        else:
-            tendencia = f'o volume de encerramentos igualou o de entradas (<b>{enc}</b>)'
-        partes.append(
-            f'Foram recebidas <b>{rec}</b> threads e encerradas <b>{enc}</b> — {tendencia}.'
-        )
+    p = lambda txt: f'<p style="margin:0 0 10px;font-size:13.5px;line-height:1.75;color:#1c2b4a;">{txt}</p>'
 
+    _pos = 'color:#16a34a;font-weight:700'
+    _neg = 'color:#a04800;font-weight:700'
+    _blu = 'color:#4338CA;font-weight:700'
+
+    def b(txt, style): return f'<b style="{style}">{txt}</b>'
+
+    if d.get('cadoc'):
+        # Com snapshot — narrativa de mudanças por CADOC
+        cadoc_d = d['cadoc']
+        melhorou = [(k, v) for k, v in cadoc_d.items() if v < 0]
+        piorou   = [(k, v) for k, v in cadoc_d.items() if v > 0]
+        melhorou.sort(key=lambda x: x[1])
+        piorou.sort(key=lambda x: x[1], reverse=True)
+
+        parags = []
+        if melhorou:
+            itens = ', '.join(
+                f'{b(k, _pos)} ({b(abs(v), _pos)} a menos)'
+                for k, v in melhorou
+            )
+            parags.append(p(f'Fila em queda: {itens}.'))
+        if piorou:
+            itens = ', '.join(
+                f'{b(k, _neg)} ({b(v, _neg)} a mais)'
+                for k, v in piorou
+            )
+            parags.append(p(f'Merece atenção: {itens}.'))
+
+        af_d = d.get('af')
+        if af_d is not None and af_d != 0:
+            direcao = b('caiu', _pos) if af_d < 0 else b('cresceu', _neg)
+            parags.append(p(
+                f'A fila que aguarda a Finaud {direcao} '
+                f'{b(abs(af_d), _pos if af_d < 0 else _neg)} casos em relação à semana anterior.'
+            ))
+
+        return ''.join(parags) if parags else ''
+
+    # Sem snapshot — descreve a semana com os dados disponíveis, no mesmo estilo do artefato
+    parags = []
+
+    if saldo > 0:
+        parags.append(p(
+            f'A equipe encerrou {b(saldo, _pos)} casos a mais do que recebeu esta semana '
+            f'— foram {b(enc, _pos)} encerramentos para {b(rec, _blu)} entradas.'
+        ))
+    elif saldo < 0:
+        parags.append(p(
+            f'A equipe recebeu {b(abs(saldo), _neg)} casos a mais do que encerrou esta semana '
+            f'— foram {b(rec, _neg)} entradas para {b(enc, _blu)} encerramentos.'
+        ))
+    else:
+        parags.append(p(
+            f'Encerramentos e entradas empataram esta semana: {b(enc, _blu)} de cada lado.'
+        ))
+
+    atencoes = []
     if total > 0:
-        partes.append(
-            f'No Retorno BACEN, há <b>{total}</b> casos em aberto: '
-            f'<b>{cliente}</b> aguardam resposta dos clientes e <b>{finaud}</b> aguardam a Finaud.'
+        atencoes.append(
+            f'{b("Retorno Bacen", _neg)} com {b(total, _neg)} casos abertos, '
+            f'sendo {b(cliente, _neg)} aguardando resposta dos clientes'
         )
-
-    if fog_encerrados > 0:
+    if fog_encerrados == 0:
+        atencoes.append(f'o {b("FogBugz", _neg)} sem nenhum encerramento na semana')
+    else:
         plural = 's' if fog_encerrados != 1 else ''
-        partes.append(
-            f'No FogBugz, <b>{fog_encerrados}</b> caso{plural} foram encerrados na semana.'
+        atencoes.append(
+            f'o {b("FogBugz", _pos)} com {b(fog_encerrados, _pos)} encerramento{plural} na semana'
         )
 
-    if not partes:
-        return ''
+    if atencoes:
+        if len(atencoes) == 2:
+            parags.append(p(f'Dois pontos para acompanhar: {atencoes[0]}, e {atencoes[1]}.'))
+        else:
+            parags.append(p(f'Um ponto para acompanhar: {atencoes[0]}.'))
 
-    texto = ' '.join(partes)
-    nota  = ''
-    if not deltas:
-        nota = (
-            '<div style="font-size:11px;color:#94a3b8;margin-top:10px;font-style:italic;">'
-            'Comparação por categoria com a semana anterior estará disponível a partir da próxima segunda-feira.'
-            '</div>'
-        )
-    return f'<div style="font-size:13.5px;line-height:1.75;color:#1c2b4a;">{texto}</div>{nota}'
+    return ''.join(parags)
 
 
 def _gerar_narrativa(
@@ -698,47 +771,72 @@ def _gerar_narrativa(
     finaud: int,
     fog_encerrados: int,
     deltas: dict | None = None,
+    dados: dict | None = None,
+    bacen_encerrados: int = 0,
 ) -> str:
-    """Gera o parágrafo narrativo do resumo com base em números reais."""
-    enc = movimento.get('encerradas', 0)
-    rec = movimento.get('recebidas', 0)
+    """Parágrafo de abertura — mesmo template de frase do artefato, com dados reais."""
+    enc   = movimento.get('encerradas', 0)
+    rec   = movimento.get('recebidas',  0)
     saldo = enc - rec
+    d     = deltas or {}
+    bg    = dados or {}
+    total   = bg.get('total', 0)
+    cliente = bg.get('cliente', 0)
 
     if enc == 0 and rec == 0:
         return ''
 
-    plural_enc = 's' if enc != 1 else ''
-    plural_rec = 's' if rec != 1 else ''
+    _pos = 'color:#16a34a;font-weight:700'
+    _neg = 'color:#a04800;font-weight:700'
+    _blu = 'color:#4338CA;font-weight:700'
+    def b(txt, style): return f'<b style="{style}">{txt}</b>'
 
+    # Frase 1 — resultado da semana (igual ao artefato)
     if saldo > 0:
-        saldo_txt = f'<b>{saldo}</b> a mais do que as {rec} recebidas'
-    elif saldo < 0:
-        saldo_txt = f'<b>{abs(saldo)}</b> a menos do que as {rec} recebidas'
+        f1 = f'a equipe encerrou {b(f"{saldo} casos a mais", _pos)} do que recebeu'
     else:
-        saldo_txt = f'exatamente o mesmo número de threads recebidas (<b>{rec}</b>)'
+        f1 = f'a equipe recebeu {b(f"{abs(saldo)} casos a mais", _neg)} do que encerrou'
+    parte1 = f'Esta semana, {f1}.'
 
-    linha1 = (
-        f'Nesta semana, <b>{enc}</b> thread{plural_enc} foram encerradas'
-        f' — {saldo_txt}.'
-    )
+    # Frase 2 — fila Finaud (com ou sem delta)
+    af_delta = d.get('af')
+    if af_delta is not None:
+        af_ant = finaud - af_delta
+        direcao = 'caiu' if af_delta < 0 else 'subiu'
+        parte2 = (
+            f' A fila que aguarda a Finaud {direcao} de '
+            f'{b(af_ant, _blu)} para {b(finaud, _blu)}.'
+        )
+    else:
+        parte2 = f' A fila que aguarda a Finaud está em {b(finaud, _blu)} casos.'
 
-    linha2 = ''
-    if finaud > 0:
-        plural_fin = 's' if finaud != 1 else ''
-        linha2 = (
-            f' Das threads abertas do BACEN, <b>{finaud}</b> caso{plural_fin}'
-            f' aguardam retorno da Finaud.'
+    # Frase 3 — pontos de atenção (BACEN + FOG), mesmo padrão do artefato
+    atencoes = []
+    if total > 0:
+        bacen_txt = (
+            f'{b("Retorno Bacen", _neg)} com {b(total, _neg)} casos abertos '
+            f'({b(cliente, _neg)} aguardando cliente'
+        )
+        if bacen_encerrados > 0:
+            plural = 's' if bacen_encerrados != 1 else ''
+            bacen_txt += f', {b(bacen_encerrados, _pos)} encerrado{plural} esta semana'
+        bacen_txt += ')'
+        atencoes.append(bacen_txt)
+    if fog_encerrados == 0:
+        atencoes.append(f'o {b("FogBugz", _neg)} sem nenhum encerramento na semana')
+    else:
+        plural = 's' if fog_encerrados != 1 else ''
+        atencoes.append(
+            f'o {b("FogBugz", _pos)} com {b(fog_encerrados, _pos)} encerramento{plural} na semana'
         )
 
-    linha3 = ''
-    if fog_encerrados > 0:
-        plural_fog = 's' if fog_encerrados != 1 else ''
-        linha3 = (
-            f' No FogBugz, <b>{fog_encerrados}</b> caso{plural_fog}'
-            f' foram encerrados na semana.'
-        )
+    parte3 = ''
+    if len(atencoes) == 2:
+        parte3 = f' Dois pontos para acompanhar: {atencoes[0]}, e {atencoes[1]}.'
+    elif atencoes:
+        parte3 = f' Um ponto para acompanhar: {atencoes[0]}.'
 
-    return linha1 + linha2 + linha3
+    return parte1 + parte2 + parte3
 
 
 def montar_html_resumo_semanal(
@@ -769,8 +867,11 @@ def montar_html_resumo_semanal(
     dia_seg  = html_lib.escape(dia_semana_label)
     d = deltas or {}
 
+    # ── BACEN encerrados esta semana ──────────────────────────────────────────
+    bacen_enc = buscar_bacen_encerrados_semana()
+
     # ── Narrativa (parágrafo antes dos tiles) ─────────────────────────────────
-    narrativa_txt = _gerar_narrativa(mv, finaud, fog_encerrados, d)
+    narrativa_txt = _gerar_narrativa(mv, finaud, fog_encerrados, d, dados, bacen_enc)
 
     # ── Tiles 2×2 ─────────────────────────────────────────────────────────────
     if saldo > 0:
@@ -801,7 +902,7 @@ def montar_html_resumo_semanal(
         )
 
     # ── Seção BACEN ───────────────────────────────────────────────────────────
-    bacen_totais = _bacen_totais_html(total, cliente, finaud)
+    bacen_totais = _bacen_totais_html(total, cliente, finaud, bacen_enc)
     if total == 0:
         bacen_corpo = (
             '<div style="padding:24px;text-align:center;color:#6b7a9a;font-size:14px;">'
