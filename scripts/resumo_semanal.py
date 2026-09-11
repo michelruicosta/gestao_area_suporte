@@ -526,6 +526,173 @@ def _chips_movimento_html(cadoc_deltas: dict[str, int]) -> str:
     return ''.join(blocos)
 
 
+# ── Badge de CADOC colorido (inline CSS para e-mail) ─────────────────────────
+
+_CBADGE_ESTILOS: dict[str, str] = {
+    'DRM 2060':          'background:#fff4e8;color:#7c2d00;border:1px solid #fcd38d;',
+    'DLO 2061':          'background:#fef3c7;color:#78350f;border:1px solid #fde68a;',
+    'DDR 2011':          'background:#f0fdf4;color:#14532d;border:1px solid #bbf7d0;',
+    'LIM 2061':          'background:#f0f4ff;color:#312e81;border:1px solid #c7d2fe;',
+    'DLI 2062':          'background:#fdf4ff;color:#6b21a8;border:1px solid #e9d5ff;',
+    'COSIF 4111':        'background:#fef9c3;color:#713f12;border:1px solid #fde68a;',
+    'COSIF 4010/4016':   'background:#fef9c3;color:#713f12;border:1px solid #fde68a;',
+    'DRL 2160':          'background:#f0f9ff;color:#0c4a6e;border:1px solid #bae6fd;',
+    'Atraso em remessa': 'background:#fafafa;color:#52525b;border:1px solid #d4d4d8;',
+    'Outros':            'background:#fafafa;color:#52525b;border:1px solid #d4d4d8;',
+}
+
+
+def _cbadge_email(cadoc: str) -> str:
+    estilo = _CBADGE_ESTILOS.get(cadoc, 'background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;')
+    return (
+        f'<span style="display:inline-block;padding:2px 8px;border-radius:4px;'
+        f'font-size:11px;font-weight:700;white-space:nowrap;{estilo}">'
+        f'{html_lib.escape(cadoc)}</span>'
+    )
+
+
+def _bacen_totais_html(total: int, cliente: int, finaud: int) -> str:
+    return (
+        f'<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0"'
+        f' style="margin-bottom:18px;">'
+        f'<tr>'
+        f'<td style="width:33%;padding-right:8px;">'
+        f'<div style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:6px;padding:10px 12px;">'
+        f'<div style="font-size:22px;font-weight:800;color:#1c2b4a;font-variant-numeric:tabular-nums;">{total}</div>'
+        f'<div style="font-size:10.5px;font-weight:600;color:#6b7a9a;margin-top:2px;">Total em aberto</div>'
+        f'</div></td>'
+        f'<td style="width:33%;padding-right:8px;">'
+        f'<div style="background:#fffbeb;border:1px solid #fcd38d;border-radius:6px;padding:10px 12px;">'
+        f'<div style="font-size:22px;font-weight:800;color:#b45309;font-variant-numeric:tabular-nums;">{cliente}</div>'
+        f'<div style="font-size:10.5px;font-weight:600;color:#b45309;opacity:.85;margin-top:2px;">Aguardando cliente</div>'
+        f'</div></td>'
+        f'<td style="width:33%;">'
+        f'<div style="background:#f0f4ff;border:1px solid #c7d2fe;border-radius:6px;padding:10px 12px;">'
+        f'<div style="font-size:22px;font-weight:800;color:#4338CA;font-variant-numeric:tabular-nums;">{finaud}</div>'
+        f'<div style="font-size:10.5px;font-weight:600;color:#4338CA;opacity:.85;margin-top:2px;">Aguardando Finaud</div>'
+        f'</div></td>'
+        f'</tr></table>'
+    )
+
+
+def _bacen_cards_email(
+    grupos: dict[str, list[str]],
+    cor_borda: str,
+    cor_pill_bg: str,
+    cor_pill_txt: str,
+    cor_pill_bor: str,
+) -> str:
+    cards: list[str] = []
+    for cadoc in _CADOC_ORDER:
+        empresas = grupos.get(cadoc)
+        if not empresas:
+            continue
+        descricao = html_lib.escape(_CADOC_INFO.get(cadoc, ''))
+        n = len(empresas)
+        contagem: dict[str, int] = defaultdict(int)
+        for e in empresas:
+            contagem[e.lower()] += 1
+        itens: list[str] = []
+        vistos: set[str] = set()
+        for emp in empresas:
+            chave = emp.lower()
+            if chave in vistos:
+                continue
+            vistos.add(chave)
+            esc = html_lib.escape(emp)
+            if contagem[chave] > 1:
+                rec_badge = (
+                    f'<span style="display:inline-block;padding:1px 6px;border-radius:10px;'
+                    f'font-size:10px;font-weight:700;background:#fff4e8;color:#a04800;'
+                    f'border:1px solid #fcd38d;">{contagem[chave]}×</span>'
+                )
+                itens.append(f'{esc}&nbsp;{rec_badge}')
+            else:
+                itens.append(esc)
+        empresas_txt = ' &nbsp;·&nbsp; '.join(itens)
+        badge = _cbadge_email(cadoc)
+        cards.append(
+            f'<table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0"'
+            f' style="border:1px solid #e8edf5;border-left:3px solid {cor_borda};'
+            f'border-radius:7px;margin-bottom:8px;">'
+            f'<tr><td style="background:#f8fafc;padding:9px 12px;border-bottom:1px solid #e8edf5;">'
+            f'<table width="100%" border="0" cellspacing="0" cellpadding="0"><tr>'
+            f'<td style="vertical-align:top;padding-right:10px;">'
+            f'{badge}'
+            f'<div style="font-size:11.5px;color:#475569;line-height:1.4;margin-top:4px;">{descricao}</div>'
+            f'</td>'
+            f'<td style="text-align:right;white-space:nowrap;vertical-align:top;">'
+            f'<span style="display:inline-block;min-width:36px;padding:4px 10px;border-radius:20px;'
+            f'font-size:14px;font-weight:800;text-align:center;font-variant-numeric:tabular-nums;'
+            f'background:{cor_pill_bg};color:{cor_pill_txt};border:1px solid {cor_pill_bor};">{n}</span>'
+            f'</td>'
+            f'</tr></table>'
+            f'</td></tr>'
+            f'<tr><td style="padding:8px 12px;font-size:12.5px;color:#1c2b4a;line-height:1.7;">'
+            f'{empresas_txt}'
+            f'</td></tr>'
+            f'</table>'
+        )
+    return ''.join(cards)
+
+
+def _o_que_aconteceu_corpo(
+    movimento: dict,
+    dados: dict,
+    deltas: dict | None,
+    fog_encerrados: int,
+) -> str:
+    enc     = movimento.get('encerradas', 0)
+    rec     = movimento.get('recebidas',  0)
+    saldo   = enc - rec
+    total   = dados.get('total', 0)
+    cliente = dados.get('cliente', 0)
+    finaud  = dados.get('finaud', 0)
+
+    partes: list[str] = []
+    if enc or rec:
+        if saldo > 0:
+            tendencia = (
+                f'a equipe encerrou <b style="color:#16a34a;">{saldo} casos a mais</b>'
+                f' do que recebeu'
+            )
+        elif saldo < 0:
+            tendencia = (
+                f'a fila cresceu <b style="color:#a04800;">{abs(saldo)} casos</b>'
+                f' além do que foi resolvido'
+            )
+        else:
+            tendencia = f'o volume de encerramentos igualou o de entradas (<b>{enc}</b>)'
+        partes.append(
+            f'Foram recebidas <b>{rec}</b> threads e encerradas <b>{enc}</b> — {tendencia}.'
+        )
+
+    if total > 0:
+        partes.append(
+            f'No Retorno BACEN, há <b>{total}</b> casos em aberto: '
+            f'<b>{cliente}</b> aguardam resposta dos clientes e <b>{finaud}</b> aguardam a Finaud.'
+        )
+
+    if fog_encerrados > 0:
+        plural = 's' if fog_encerrados != 1 else ''
+        partes.append(
+            f'No FogBugz, <b>{fog_encerrados}</b> caso{plural} foram encerrados na semana.'
+        )
+
+    if not partes:
+        return ''
+
+    texto = ' '.join(partes)
+    nota  = ''
+    if not deltas:
+        nota = (
+            '<div style="font-size:11px;color:#94a3b8;margin-top:10px;font-style:italic;">'
+            'Comparação por categoria com a semana anterior estará disponível a partir da próxima segunda-feira.'
+            '</div>'
+        )
+    return f'<div style="font-size:13.5px;line-height:1.75;color:#1c2b4a;">{texto}</div>{nota}'
+
+
 def _gerar_narrativa(
     movimento: dict,
     finaud: int,
@@ -592,184 +759,195 @@ def montar_html_resumo_semanal(
     grp_fin = por_st.get('Aguardando Finaud', {})
     fog_total = sum(p['total'] for p in (dados_fog or []))
 
-    mv       = movimento or {}
-    enc      = mv.get('encerradas', 0)
-    rec      = mv.get('recebidas',  0)
-    saldo    = enc - rec
+    mv    = movimento or {}
+    enc   = mv.get('encerradas', 0)
+    rec   = mv.get('recebidas',  0)
+    saldo = enc - rec
 
-    saudacao = f'Olá, <b>{html_lib.escape(nome)}</b>,' if nome else 'Olá,'
+    nome_esc = html_lib.escape(nome) if nome else ''
     d_seg    = html_lib.escape(data_envio)
     dia_seg  = html_lib.escape(dia_semana_label)
-
-    sec_cliente = _secao_html('Aguardando Cliente', cliente, grp_cli, '#f59e0b')
-    sec_finaud  = _secao_html('Aguardando Finaud',  finaud,  grp_fin, '#3333A8')
-
-    if total == 0:
-        corpo_bacen = '<tr><td style="padding:32px;text-align:center;color:#64748b;font-size:14px;">Nenhum retorno BACEN em aberto esta semana.</td></tr>'
-    else:
-        corpo_bacen = sec_cliente + sec_finaud
-
-    fog_linhas = _fog_linhas_html(dados_fog or [])
-
-    # Deltas — só exibe quando snapshot disponível
     d = deltas or {}
-    delta_af  = _delta_html(d.get('af'))
-    delta_fog = _delta_html(d.get('fog'))
 
-    # Tile 1 — saldo encerradas vs recebidas
-    if saldo > 0:
-        tile1_num = f'+{saldo}'
-        tile1_cor_num = '#15803d'
-        tile1_bg  = '#f0fdf4'
-        tile1_bor = '#bbf7d0'
-    elif saldo < 0:
-        tile1_num = str(saldo)
-        tile1_cor_num = '#be123c'
-        tile1_bg  = '#fff1f2'
-        tile1_bor = '#fecdd3'
-    else:
-        tile1_num = '0'
-        tile1_cor_num = '#475569'
-        tile1_bg  = '#f8fafc'
-        tile1_bor = '#cbd5e1'
-    tile1_sub = f'<div style="font-size:9.5px;color:#64748b;margin-top:3px;">de {enc} enc. / {rec} rec.</div>' if enc or rec else ''
-
-    # Narrativa
+    # ── Narrativa (parágrafo antes dos tiles) ─────────────────────────────────
     narrativa_txt = _gerar_narrativa(mv, finaud, fog_encerrados, d)
-    secao_narrativa = ''
-    if narrativa_txt:
-        secao_narrativa = f"""
-  <tr><td style="padding:16px 32px 0;">
-    <p style="margin:0;font-size:13.5px;color:#334155;line-height:1.7;
-              background:#f8fafc;border-left:3px solid {_VERDE};
-              border-radius:0 6px 6px 0;padding:12px 16px;">
-      {narrativa_txt}
-    </p>
-  </td></tr>"""
 
-    # Seção "O que aconteceu nos e-mails" — narrativa + chips por categoria
+    # ── Tiles 2×2 ─────────────────────────────────────────────────────────────
+    if saldo > 0:
+        t1_val, t1_cor = f'+{saldo}', '#16a34a'
+        t1_sub = '<div style="font-size:11px;font-weight:600;color:#16a34a;margin-top:2px;">▼ do que na semana anterior</div>'
+    elif saldo < 0:
+        t1_val, t1_cor = str(saldo), '#a04800'
+        t1_sub = '<div style="font-size:11px;font-weight:600;color:#a04800;margin-top:2px;">▲ do que na semana anterior</div>'
+    else:
+        t1_val, t1_cor = '0', '#475569'
+        t1_sub = '<div style="font-size:11px;color:#94a3b8;margin-top:2px;">sem variação</div>'
+    if enc or rec:
+        t1_sub += f'<div style="font-size:10px;color:#94a3b8;margin-top:1px;">de {enc} enc. / {rec} rec.</div>'
+
+    af_delta_html = _delta_html(d.get('af'))
+    fog_delta_html = _delta_html(d.get('fog'))
+    t4_cor = '#a04800' if fog_encerrados == 0 else '#16a34a'
+
+    # ── "O que aconteceu nos e-mails" ─────────────────────────────────────────
+    oqae_corpo = _o_que_aconteceu_corpo(mv, dados, deltas, fog_encerrados)
     chips_mvmt = _chips_movimento_html(d.get('cadoc', {}))
-    secao_mvmt = ''
+    secao_chips = ''
     if chips_mvmt:
-        secao_mvmt = f"""
-  <tr><td style="padding:20px 32px 0;">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-      <span style="font-size:13px;font-weight:700;color:#1c2b4a;text-transform:uppercase;letter-spacing:.08em;">Movimento por categoria</span>
-      <div style="flex:1;height:1px;background:#e2e8f0;"></div>
-    </div>
-    {chips_mvmt}
-  </td></tr>"""
+        secao_chips = (
+            f'<div style="margin-top:16px;padding-top:14px;border-top:1px solid #e8edf5;">'
+            f'<div style="font-size:12px;font-weight:700;color:#1c2b4a;margin-bottom:8px;">Movimento por categoria</div>'
+            f'{chips_mvmt}</div>'
+        )
+
+    # ── Seção BACEN ───────────────────────────────────────────────────────────
+    bacen_totais = _bacen_totais_html(total, cliente, finaud)
+    if total == 0:
+        bacen_corpo = (
+            '<div style="padding:24px;text-align:center;color:#6b7a9a;font-size:14px;">'
+            'Nenhum retorno BACEN em aberto esta semana.</div>'
+        )
+    else:
+        cards_cli = _bacen_cards_email(grp_cli, '#f59e0b', '#fffbeb', '#b45309', '#fcd38d')
+        cards_fin = _bacen_cards_email(grp_fin, '#6366f1', '#eef2ff', '#4338CA', '#c7d2fe')
+        grupo_cli = ''
+        if cliente > 0:
+            plural = 's' if cliente != 1 else ''
+            grupo_cli = (
+                f'<div style="font-size:12px;font-weight:700;text-transform:uppercase;'
+                f'letter-spacing:.08em;padding:6px 10px;border-radius:5px;margin-bottom:8px;'
+                f'background:#fffbeb;color:#b45309;border:1px solid #fde68a;">'
+                f'Aguardando cliente — o cliente precisa responder'
+                f'<span style="font-size:11px;font-weight:500;opacity:.75;margin-left:6px;">'
+                f'{cliente} caso{plural}</span></div>'
+                + cards_cli
+            )
+        grupo_fin = ''
+        if finaud > 0:
+            plural = 's' if finaud != 1 else ''
+            grupo_fin = (
+                f'<div style="font-size:12px;font-weight:700;text-transform:uppercase;'
+                f'letter-spacing:.08em;padding:6px 10px;border-radius:5px;'
+                f'margin-top:16px;margin-bottom:8px;'
+                f'background:#eef2ff;color:#4338CA;border:1px solid #c7d2fe;">'
+                f'Aguardando Finaud — a Finaud precisa agir'
+                f'<span style="font-size:11px;font-weight:500;opacity:.75;margin-left:6px;">'
+                f'{finaud} caso{plural}</span></div>'
+                + cards_fin
+            )
+        bacen_corpo = grupo_cli + grupo_fin
+
+    # ── FOG ───────────────────────────────────────────────────────────────────
+    fog_linhas = _fog_linhas_html(dados_fog or [])
 
     return f"""<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>{html_lib.escape(_ASSUNTO_EMAIL)}</title>
+  <title>Gestão Área Suporte — Resumo Semanal</title>
 </head>
-<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#f1f5f9;">
-<tr><td align="center" style="padding:32px 12px;">
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="640"
-       style="max-width:640px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden;
-              box-shadow:0 4px 20px rgba(15,23,42,.08);border:1px solid #c8c8e8;">
+<body style="margin:0;padding:24px 12px 48px;background:#f7f8fa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#1c2b4a;">
 
-  <!-- Cabeçalho -->
-  <tr><td style="background:linear-gradient(135deg,{_BG_HEADER} 0%,{_BG_GRAD} 100%);padding:28px 32px 24px;">
-    <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:{_VERDE};text-transform:uppercase;margin-bottom:10px;">
-      GESTÃO ÁREA SUPORTE
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width:720px;margin:0 auto;">
+<tr><td>
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
+       style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 12px rgba(0,0,0,.08);">
+
+  <!-- CABEÇALHO -->
+  <tr><td style="background:#4338CA;padding:28px 32px 24px;">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:rgba(255,255,255,.55);margin-bottom:6px;">
+      Gestão Área Suporte
     </div>
-    <div style="font-size:24px;font-weight:700;color:#ffffff;line-height:1.2;">
+    <div style="font-size:26px;font-weight:800;color:#ffffff;letter-spacing:-.02em;line-height:1.15;">
       Resumo Semanal
     </div>
-    <div style="font-size:13px;color:#c8c8e8;margin-top:6px;">
-      Referência: semana encerrada em {d_seg}
+    <div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:8px;">
+      Retorno Bacen: posição em {d_seg}
     </div>
   </td></tr>
 
-  <!-- Saudação -->
-  <tr><td style="padding:24px 32px 0;color:#1e1e72;font-size:14.5px;line-height:1.65;">
-    <p style="margin:0 0 8px;">{saudacao}</p>
-    <p style="margin:0;color:#475569;">
-      Segue o consolidado da área de suporte nesta {dia_seg}.
-    </p>
-  </td></tr>
+  <!-- SAUDAÇÃO + NARRATIVA -->
+  <tr><td style="padding:28px 32px 0;">
+    <div style="font-size:15px;margin-bottom:14px;">
+      Olá, <b style="color:#4338CA;">{nome_esc}</b>,
+    </div>
+    <div style="font-size:15px;line-height:1.7;color:#1c2b4a;margin-bottom:20px;">
+      {narrativa_txt}
+    </div>
 
-  {secao_narrativa}
-
-  <!-- Destaques — 4 tiles -->
-  <tr><td style="padding:20px 32px 0;">
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+    <!-- DESTAQUES 2×2 -->
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
+           style="background:#f7f8fa;border:1px solid #dde2ec;border-radius:7px;margin-bottom:0;">
       <tr>
-        <td style="width:25%;padding:0 5px 0 0;">
-          <div style="background:{tile1_bg};border:1px solid {tile1_bor};border-radius:8px;padding:14px 10px;text-align:center;">
-            <div style="font-size:26px;font-weight:900;color:{tile1_cor_num};line-height:1;font-variant-numeric:tabular-nums;">{tile1_num}</div>
-            <div style="font-size:10px;color:#6b7a9a;margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Enc. a mais</div>
-            {tile1_sub}
-          </div>
+        <td style="padding:14px 18px 7px;width:50%;vertical-align:top;">
+          <div style="font-size:22px;font-weight:800;color:{t1_cor};font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1;">{t1_val}</div>
+          <div style="font-size:11px;color:#6b7a9a;font-weight:500;margin-top:3px;">Casos encerrados a mais</div>
+          {t1_sub}
         </td>
-        <td style="width:25%;padding:0 5px;">
-          <div style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:14px 10px;text-align:center;">
-            <div style="font-size:26px;font-weight:900;color:#3333A8;line-height:1;font-variant-numeric:tabular-nums;">{enc}</div>
-            <div style="font-size:10px;color:#6b7a9a;margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Encerramentos</div>
-          </div>
+        <td style="padding:14px 18px 7px;width:50%;vertical-align:top;">
+          <div style="font-size:22px;font-weight:800;color:#16a34a;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1;">{enc}</div>
+          <div style="font-size:11px;color:#6b7a9a;font-weight:500;margin-top:3px;">Novos encerramentos</div>
+          <div style="font-size:11px;font-weight:600;color:#16a34a;margin-top:2px;">concluídos esta semana</div>
         </td>
-        <td style="width:25%;padding:0 5px;">
-          <div style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:14px 10px;text-align:center;">
-            <div style="font-size:26px;font-weight:900;color:#4338CA;line-height:1;font-variant-numeric:tabular-nums;">{finaud}</div>
-            <div style="font-size:10px;color:#4338CA;margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;opacity:.85;">Ag. Finaud</div>
-            {delta_af}
-          </div>
+      </tr>
+      <tr>
+        <td style="padding:7px 18px 14px;width:50%;vertical-align:top;border-top:1px solid #e8edf5;">
+          <div style="font-size:22px;font-weight:800;color:#4338CA;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1;">{finaud}</div>
+          <div style="font-size:11px;color:#6b7a9a;font-weight:500;margin-top:3px;">Aguardando Finaud</div>
+          {af_delta_html}
         </td>
-        <td style="width:25%;padding:0 0 0 5px;">
-          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px 10px;text-align:center;">
-            <div style="font-size:26px;font-weight:900;color:#15803d;line-height:1;font-variant-numeric:tabular-nums;">{fog_encerrados}</div>
-            <div style="font-size:10px;color:#166534;margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">FOG encerrados</div>
-            {delta_fog}
-          </div>
+        <td style="padding:7px 18px 14px;width:50%;vertical-align:top;border-top:1px solid #e8edf5;">
+          <div style="font-size:22px;font-weight:800;color:{t4_cor};font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1;">{fog_encerrados}</div>
+          <div style="font-size:11px;color:#6b7a9a;font-weight:500;margin-top:3px;">FogBugz — encerrados</div>
+          {fog_delta_html}
         </td>
       </tr>
     </table>
   </td></tr>
 
-  <!-- Separador BACEN -->
+  <!-- HR -->
+  <tr><td style="padding:24px 32px 0;"><div style="border-top:1px solid #dde2ec;"></div></td></tr>
+
+  <!-- O QUE ACONTECEU NOS E-MAILS -->
+  <tr><td style="padding:20px 32px 24px;">
+    <div style="font-size:13px;font-weight:700;color:#1c2b4a;margin-bottom:10px;">
+      O que aconteceu nos e-mails
+      <span style="display:inline-block;width:60px;height:1px;background:#dde2ec;vertical-align:middle;margin-left:10px;"></span>
+    </div>
+    {oqae_corpo}
+    {secao_chips}
+  </td></tr>
+
+  <!-- HR -->
+  <tr><td style="padding:0 32px;"><div style="border-top:1px solid #dde2ec;"></div></td></tr>
+
+  <!-- RETORNO BACEN -->
   <tr><td style="padding:24px 32px 0;">
-    <div style="display:flex;align-items:center;gap:8px;">
-      <span style="font-size:13px;font-weight:700;color:#a04800;text-transform:uppercase;letter-spacing:.08em;">Retorno BACEN</span>
-      <div style="flex:1;height:1px;background:#e2e8f0;"></div>
+    <div style="font-size:13px;font-weight:700;color:#a04800;margin-bottom:14px;">
+      Retorno Bacen
+      <span style="display:inline-block;width:60px;height:1px;background:#dde2ec;vertical-align:middle;margin-left:10px;"></span>
     </div>
+    {bacen_totais}
+    {bacen_corpo}
   </td></tr>
 
-  {corpo_bacen}
+  <!-- HR -->
+  <tr><td style="padding:24px 32px 8px;"><div style="border-top:1px solid #dde2ec;"></div></td></tr>
 
-  {secao_mvmt}
-
-  <!-- Nota BACEN -->
-  <tr><td style="padding:16px 32px 0;">
-    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid {_VERDE};
-                border-radius:0 6px 6px 0;padding:10px 14px;font-size:12px;color:#64748b;line-height:1.5;">
-      A badge <span style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:700;
-      padding:1px 6px;border-radius:99px;">recorrente</span> indica empresa que aparece mais de uma vez no mesmo grupo CADOC.
+  <!-- FOGBUGZ -->
+  <tr><td style="padding:0 32px 0;">
+    <div style="font-size:13px;font-weight:700;color:#1c2b4a;margin-bottom:12px;">
+      FogBugz — Casos em aberto ({fog_total} no total)
+      <span style="display:inline-block;width:40px;height:1px;background:#dde2ec;vertical-align:middle;margin-left:10px;"></span>
     </div>
-  </td></tr>
-
-  <!-- Separador FOG -->
-  <tr><td style="padding:24px 32px 0;">
-    <div style="display:flex;align-items:center;gap:8px;">
-      <span style="font-size:13px;font-weight:700;color:#1c2b4a;text-transform:uppercase;letter-spacing:.08em;">FogBugz — casos em aberto</span>
-      <div style="flex:1;height:1px;background:#e2e8f0;"></div>
-    </div>
-  </td></tr>
-
-  <!-- Tabela FOG -->
-  <tr><td style="padding:12px 32px 0;">
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
-           style="border:1px solid #c8c8e8;border-radius:8px;overflow:hidden;border-collapse:collapse;">
+           style="border-collapse:collapse;border:1px solid #dde2ec;border-radius:7px;overflow:hidden;">
       <thead>
-        <tr style="background:#f1f5f9;border-bottom:2px solid #c8c8e8;">
-          <th style="padding:9px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#6b7a9a;text-align:left;">Responsável</th>
-          <th style="padding:9px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#6b7a9a;text-align:right;">Em aberto</th>
-          <th style="padding:9px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#6b7a9a;text-align:right;">Parado há (dias úteis)</th>
+        <tr style="background:#f7f8fa;border-bottom:2px solid #dde2ec;">
+          <th style="padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#6b7a9a;text-align:left;">Responsável</th>
+          <th style="padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#6b7a9a;text-align:right;">Em aberto</th>
+          <th style="padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#6b7a9a;text-align:right;">Parado há (dias úteis)</th>
         </tr>
       </thead>
       <tbody>{fog_linhas}</tbody>
@@ -779,17 +957,16 @@ def montar_html_resumo_semanal(
     </p>
   </td></tr>
 
-  <!-- Rodapé -->
-  <tr><td style="padding:20px 32px 24px;border-top:1px solid #c8c8e8;margin-top:20px;">
+  <!-- RODAPÉ -->
+  <tr><td style="padding:16px 32px;border-top:1px solid #dde2ec;margin-top:8px;">
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
       <tr>
-        <td style="font-size:11.5px;color:#8899bb;line-height:1.5;">
+        <td style="font-size:10.5px;color:#6b7a9a;line-height:1.5;">
           Enviado toda {dia_seg}.<br>
-          E-mails: gestao.db · FogBugz: API finaud.fogbugz.com<br>
-          <span style="color:#b0bdd4;">Para parar de receber, acesse Notificações no sistema.</span>
+          E-mails: gestao.db · FogBugz: finaud.fogbugz.com
         </td>
-        <td align="right" valign="bottom">
-          <div style="font-size:14px;font-weight:900;color:{_VERDE};letter-spacing:1px;">finaud</div>
+        <td align="right" valign="middle">
+          <span style="font-size:14px;font-weight:900;color:{_VERDE};letter-spacing:1px;">finaud</span>
         </td>
       </tr>
     </table>
