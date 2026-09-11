@@ -88,14 +88,17 @@
 
 ### Próximo passo
 
-Deploy concluído — e-mail validado por Michel. Próxima segunda-feira o resumo semanal será enviado automaticamente com o novo template. Na próxima sexta o snapshot capturará os dados, habilitando os deltas e a narrativa por categoria CADOC.
+Deploy concluído — e-mail validado por Michel. Próxima segunda-feira o resumo semanal sairá automaticamente com o novo template. Na próxima sexta o snapshot capturará os dados, habilitando os deltas e a narrativa por categoria CADOC.
 
-**Pendências gestao_area_suporte que continuam:**
-- 🔴 Fix status — "Concluída" quando Finaud perguntou algo ao cliente
-- 🔴 Threads irmãs — 11 grupos com thread Concluída + pendente no mesmo caso
-- 🟡 Padrão 2 — retomar em chat novo com protocolo correto
-- 🟡 Modal — Cenário 2b e `white-space: nowrap` na coluna Valor
-- 🟡 Teste de IA — rodar `testar_status_ia.py --fase 1`
+**Pendências que continuam (ordem de prioridade cruzada com PENDENCIAS.md):**
+- 🔴 Threads irmãs — 11 grupos com thread Concluída + pendente no mesmo caso (revisar um a um com Michel)
+- 🟡 Padrão 2 — retomar em chat novo com protocolo correto (Fix1+Fix2 prontos, aguarda OK)
+- 🟡 Padrão "@colega pode verificar?" — analisar caso Sefer manualmente
+- 🟡 Resumo Semanal — identificar empresas "Sem empresa identificada" (24 casos nos cards BACEN)
+- 🟡 Teste de IA — rodar `testar_status_ia.py --fase 1` antes de qualquer fix de status
+- 🟡 Modal — Cenário 2b + `white-space: nowrap` na coluna Valor
+
+Último /fechar: 2026-09-11 — memórias revisadas ✅
 
 ---
 

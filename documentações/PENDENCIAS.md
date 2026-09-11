@@ -1,10 +1,21 @@
 # PENDÊNCIAS — Gestão Área Suporte
 
-**Atualizado:** 2026-09-10
+**Atualizado:** 2026-09-11
 **Organização:** por etapa que bloqueia — reorganizado em 03/08/2026 para seguir as fases sem brechas.
 **Regra:** este arquivo lista **só o que ainda falta** (aberto / aguardando decisão / backlog).
 Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada no
 `REGISTRO_CORRECOES.md` — nesta ordem: primeiro grava no REGISTRO, depois remove daqui.
+
+---
+
+## 🟡 STATUS — Padrão "@colega pode verificar?" com cliente copiado no Para (11/09/2026)
+
+**Padrão identificado na thread REMITLY (1a057cdbdc73c6cf):**
+Na Msg 5, Andrea (Finaud) enviou para Rafael Robles (cliente Remitly) + Rodrigo (Finaud) perguntando internamente "@Rodrigo, pode verificar por gentileza?". O sistema vê "Finaud enviou para cliente" e calcula AC — mas a pergunta era para o colega Rodrigo, não para o cliente. Se a thread tivesse terminado ali, o status seria AC (errado) em vez de AF.
+
+**Escopo levantado:** 9 threads AC com última msg Finaud→(Finaud+cliente). Análise inicial indicou que 8 são AC legítimos (Finaud realmente escreveu para o cliente). O caso Sefer/Doc 2011-LIM (`19f8f79994b1100c`) é suspeito — Alison parece escrever para Rodrigo (Finaud) com clientes no Para.
+
+**Próximo passo:** analisar manualmente o caso Sefer para confirmar se é AF ou AC. Se confirmado como padrão recorrente, avaliar se cabe regra automática ou revisão pontual.
 
 ---
 
