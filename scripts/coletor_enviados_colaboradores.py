@@ -213,17 +213,20 @@ def _salvar(thread: dict) -> None:
 
 # ── Coleta ────────────────────────────────────────────────────────────────────
 
-def coletar_colaboradores() -> dict:
+def coletar_colaboradores(simular: bool = False, dias_override: int | None = None) -> dict:
     """
     Para cada colaborador, busca mensagens enviadas e recebidas de externos
     nos últimos N dias. Para cada mensagem encontrada, localiza a thread
     correta pelo cabeçalho In-Reply-To/References (Message-ID exato) — sem
     usar assunto. Se não encontrar correspondência no banco, descarta.
     Nunca cria threads novas.
+
+    simular=True  → não salva nada, só imprime o relatório do que seria feito.
+    dias_override → sobrepõe o valor do config.json (útil para cobertura estendida).
     """
     cfg           = _ler_config()
     colaboradores = cfg.get('colaboradores_suporte', [])
-    dias          = int(cfg.get('dias_coleta_colaboradores', 30))
+    dias          = dias_override if dias_override is not None else int(cfg.get('dias_coleta_colaboradores', 30))
 
     if not colaboradores:
         log.info('Nenhum colaborador em colaboradores_suporte — nada a fazer.')
@@ -234,11 +237,14 @@ def coletar_colaboradores() -> dict:
     threads_banco = _carregar_threads()
     indice_mid    = _construir_indice_mid(threads_banco)
 
-    log.info('Banco: %d threads | %d message-ids indexados | %d colaboradores | últimos %d dias',
-             len(threads_banco), len(indice_mid), len(colaboradores), dias)
+    modo_txt = 'SIMULAÇÃO (sem --aplicar, nada será salvo)' if simular else 'APLICAR'
+    log.info('Banco: %d threads | %d message-ids indexados | %d colaboradores | últimos %d dias | modo: %s',
+             len(threads_banco), len(indice_mid), len(colaboradores), dias, modo_txt)
 
     threads_mod: dict[str, dict] = {}
     total_novas = 0
+    # stats por colaborador (só para simulação)
+    stats_colab: dict[str, int] = {c: 0 for c in colaboradores}
 
     for colaborador in colaboradores:
         log.info('Verificando: %s', colaborador)
@@ -285,6 +291,7 @@ def coletar_colaboradores() -> dict:
                 thread['mensagens'].sort(key=_chave_data)
                 threads_mod[tid] = thread
                 total_novas += 1
+                stats_colab[colaborador] = stats_colab.get(colaborador, 0) + 1
                 log.info('  + thread %s | %s | %s',
                          tid, detalhe.get('remetente', '')[:45], detalhe.get('data', ''))
 
@@ -292,11 +299,33 @@ def coletar_colaboradores() -> dict:
 
         time.sleep(0.1)
 
-    for thread in threads_mod.values():
-        _salvar(thread)
-
-    log.info('Concluído — %d threads atualizadas, %d mensagens novas.',
-             len(threads_mod), total_novas)
+    if simular:
+        # ── Relatório de simulação ────────────────────────────────────────────
+        print(f'\n{"="*65}')
+        print(f'  SIMULAÇÃO — Coletor de Colaboradores ({dias} dias)')
+        print(f'{"="*65}')
+        print(f'  Message-IDs indexados no banco : {len(indice_mid):4d}')
+        print(f'  Threads que receberiam msgs    : {len(threads_mod):4d}')
+        print(f'  Mensagens que seriam adicionadas: {total_novas:4d}')
+        print(f'\n  Por colaborador:')
+        for colab, qtd in stats_colab.items():
+            nome = colab.split('@')[0]
+            print(f'    {nome:<22}: {qtd} mensagem(ns)')
+        print(f'\n  Threads que seriam alteradas:')
+        for tid, t in sorted(threads_mod.items(),
+                              key=lambda x: len(x[1]['mensagens']), reverse=True)[:20]:
+            assunto = (t.get('assunto') or '')[:55]
+            orig = len(threads_banco[tid]['mensagens'])
+            novo = len(t['mensagens'])
+            print(f'    {assunto:<55} {orig} → {novo} msgs')
+        if len(threads_mod) > 20:
+            print(f'    ... e mais {len(threads_mod) - 20} threads')
+        print()
+    else:
+        for thread in threads_mod.values():
+            _salvar(thread)
+        log.info('Concluído — %d threads atualizadas, %d mensagens novas.',
+                 len(threads_mod), total_novas)
 
     return {
         'colaboradores'      : len(colaboradores),
@@ -306,7 +335,17 @@ def coletar_colaboradores() -> dict:
 
 
 if __name__ == '__main__':
-    r = coletar_colaboradores()
-    print(f"\nColaboradores verificados  : {r['colaboradores']}")
-    print(f"Mensagens novas adicionadas: {r['mensagens_novas']}")
-    print(f"Threads atualizadas        : {r['threads_atualizadas']}")
+    import argparse
+    parser = argparse.ArgumentParser(description='Coleta mensagens dos colaboradores de suporte.')
+    parser.add_argument('--simular', action='store_true',
+                        help='Mostra o que seria feito sem salvar nada no banco')
+    parser.add_argument('--dias', type=int, default=None,
+                        help='Sobrepõe o número de dias do config.json (ex: --dias 80)')
+    args = parser.parse_args()
+
+    r = coletar_colaboradores(simular=args.simular, dias_override=args.dias)
+
+    if not args.simular:
+        print(f"\nColaboradores verificados  : {r['colaboradores']}")
+        print(f"Mensagens novas adicionadas: {r['mensagens_novas']}")
+        print(f"Threads atualizadas        : {r['threads_atualizadas']}")
