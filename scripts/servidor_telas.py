@@ -65,6 +65,10 @@ from resumo_semanal import (
     normalizar_resumo_semanal,
     verificar_e_enviar_resumo_semanal,
 )
+from snapshot_semanal import (
+    normalizar_snapshot_semanal,
+    verificar_e_capturar_snapshot,
+)
 from paths import criar_log, CACHE_IMAGENS_DIR, CACHE_THREADS_DIR
 from portal_sso import COOKIE_AUDITORIA, COOKIE_PORTAL, usuario_pelos_cookies
 import monitor_erros
@@ -329,6 +333,29 @@ def _agendar_resumo_semanal() -> None:
         'interval',
         minutes=_INTERVALO_VIGIA_MIN,
         id='vigia_resumo_semanal',
+        replace_existing=True,
+    )
+
+
+def _job_snapshot_semanal():
+    """Captura o estado toda sexta-feira para habilitar deltas no resumo de segunda."""
+    try:
+        cfg = _ler_config()
+        novo, capturou = verificar_e_capturar_snapshot(cfg)
+        if capturou:
+            _salvar_config(novo)
+    except Exception:
+        _log.exception('Vigia snapshot semanal — falhou.')
+
+
+def _agendar_snapshot_semanal() -> None:
+    if _scheduler.get_job('vigia_snapshot_semanal'):
+        return
+    _scheduler.add_job(
+        _job_snapshot_semanal,
+        'interval',
+        minutes=_INTERVALO_VIGIA_MIN,
+        id='vigia_snapshot_semanal',
         replace_existing=True,
     )
 
@@ -1792,6 +1819,7 @@ if _deve_ligar_agendador_na_tela():
     _agendar_vigia_busca()
     _agendar_vigia_fog_suporte()
     _agendar_resumo_semanal()
+    _agendar_snapshot_semanal()
     if not _scheduler.running:
         _scheduler.start()
         _log.info(

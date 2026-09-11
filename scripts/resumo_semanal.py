@@ -393,12 +393,72 @@ def _fog_linhas_html(dados_fog: list[dict]) -> str:
     return ''.join(linhas)
 
 
+def _delta_html(delta: int | None, invertido: bool = False) -> str:
+    """Renderiza ▼▲ delta abaixo de um tile. invertido=True quando queda é ruim."""
+    if delta is None:
+        return ''
+    if delta == 0:
+        return '<div style="font-size:10px;color:#94a3b8;margin-top:3px;">sem variação</div>'
+    queda = delta < 0
+    bom   = queda if not invertido else not queda
+    cor   = '#16a34a' if bom else '#a04800'
+    seta  = '▼' if queda else '▲'
+    abs_d = abs(delta)
+    return (
+        f'<div style="font-size:10px;font-weight:600;color:{cor};margin-top:3px;">'
+        f'{seta} {abs_d} da semana anterior</div>'
+    )
+
+
+def _chips_movimento_html(cadoc_deltas: dict[str, int]) -> str:
+    if not cadoc_deltas:
+        return ''
+    caindo  = [(c, d) for c, d in cadoc_deltas.items() if d < 0]
+    subindo = [(c, d) for c, d in cadoc_deltas.items() if d > 0]
+    caindo.sort(key=lambda x: x[1])   # mais negativo primeiro
+    subindo.sort(key=lambda x: x[1], reverse=True)
+
+    def chip_ok(cadoc: str, delta: int) -> str:
+        return (
+            f'<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 9px;'
+            f'border-radius:4px;font-size:12px;font-weight:600;border:1px solid #a7f3d0;'
+            f'background:#e8f8f0;color:#16a34a;white-space:nowrap;margin:3px 3px 0 0;">'
+            f'{html_lib.escape(cadoc)} '
+            f'<span style="font-size:11px;opacity:.7;font-weight:500;">▼{abs(delta)}</span></span>'
+        )
+
+    def chip_attn(cadoc: str, delta: int) -> str:
+        return (
+            f'<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 9px;'
+            f'border-radius:4px;font-size:12px;font-weight:600;border:1px solid #fcd38d;'
+            f'background:#fff4e8;color:#a04800;white-space:nowrap;margin:3px 3px 0 0;">'
+            f'{html_lib.escape(cadoc)} '
+            f'<span style="font-size:11px;opacity:.7;font-weight:500;">▲{delta}</span></span>'
+        )
+
+    blocos = []
+    if caindo:
+        chips = ''.join(chip_ok(c, d) for c, d in caindo)
+        blocos.append(
+            f'<div style="font-size:12px;color:#475569;margin-bottom:4px;">Fila caindo:</div>'
+            f'<div style="display:flex;flex-wrap:wrap;">{chips}</div>'
+        )
+    if subindo:
+        chips = ''.join(chip_attn(c, d) for c, d in subindo)
+        blocos.append(
+            f'<div style="font-size:12px;color:#475569;margin-top:10px;margin-bottom:4px;">Merece atenção:</div>'
+            f'<div style="display:flex;flex-wrap:wrap;">{chips}</div>'
+        )
+    return ''.join(blocos)
+
+
 def montar_html_resumo_semanal(
     nome: str,
     dados: dict,
     data_envio: str,
     dia_semana_label: str,
     dados_fog: list[dict] | None = None,
+    deltas: dict | None = None,
 ) -> str:
     total   = dados.get('total', 0)
     cliente = dados.get('cliente', 0)
@@ -421,6 +481,24 @@ def montar_html_resumo_semanal(
         corpo_bacen = sec_cliente + sec_finaud
 
     fog_linhas = _fog_linhas_html(dados_fog or [])
+
+    # Deltas — só exibe quando snapshot disponível
+    d = deltas or {}
+    delta_bacen = _delta_html(d.get('bacen'))
+    delta_ac    = _delta_html(d.get('ac'))
+    delta_af    = _delta_html(d.get('af'))
+    delta_fog   = _delta_html(d.get('fog'))
+    chips_mvmt  = _chips_movimento_html(d.get('cadoc', {}))
+    secao_mvmt  = ''
+    if chips_mvmt:
+        secao_mvmt = f"""
+  <tr><td style="padding:20px 32px 0;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+      <span style="font-size:13px;font-weight:700;color:#1c2b4a;text-transform:uppercase;letter-spacing:.08em;">Movimento por categoria</span>
+      <div style="flex:1;height:1px;background:#e2e8f0;"></div>
+    </div>
+    {chips_mvmt}
+  </td></tr>"""
 
     return f"""<!DOCTYPE html>
 <html lang="pt-BR">
@@ -465,24 +543,28 @@ def montar_html_resumo_semanal(
           <div style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:14px 10px;text-align:center;">
             <div style="font-size:26px;font-weight:900;color:#3333A8;line-height:1;font-variant-numeric:tabular-nums;">{total}</div>
             <div style="font-size:10px;color:#6b7a9a;margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">BACEN em aberto</div>
+            {delta_bacen}
           </div>
         </td>
         <td style="width:25%;padding:0 5px;">
           <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:14px 10px;text-align:center;">
             <div style="font-size:26px;font-weight:900;color:#b45309;line-height:1;font-variant-numeric:tabular-nums;">{cliente}</div>
             <div style="font-size:10px;color:#92400e;margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Ag. Cliente</div>
+            {delta_ac}
           </div>
         </td>
         <td style="width:25%;padding:0 5px;">
           <div style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:14px 10px;text-align:center;">
             <div style="font-size:26px;font-weight:900;color:#4338CA;line-height:1;font-variant-numeric:tabular-nums;">{finaud}</div>
             <div style="font-size:10px;color:#4338CA;margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;opacity:.85;">Ag. Finaud</div>
+            {delta_af}
           </div>
         </td>
         <td style="width:25%;padding:0 0 0 5px;">
           <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px 10px;text-align:center;">
             <div style="font-size:26px;font-weight:900;color:#15803d;line-height:1;font-variant-numeric:tabular-nums;">{fog_total}</div>
             <div style="font-size:10px;color:#166534;margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">FOG em aberto</div>
+            {delta_fog}
           </div>
         </td>
       </tr>
@@ -498,6 +580,8 @@ def montar_html_resumo_semanal(
   </td></tr>
 
   {corpo_bacen}
+
+  {secao_mvmt}
 
   <!-- Nota BACEN -->
   <tr><td style="padding:16px 32px 0;">
@@ -645,6 +729,15 @@ def verificar_e_enviar_resumo_semanal(
     fog_token = cfg.get('fogbugz_token') or os.environ.get('FOGBUGZ_TOKEN', '')
     dados_fog = buscar_dados_fog_semanal(fog_token)
 
+    # Tentar carregar snapshot da sexta anterior para calcular deltas
+    from snapshot_semanal import carregar_ultimo_snapshot, calcular_deltas
+    snapshot = carregar_ultimo_snapshot(antes_de=agora.date().isoformat())
+    deltas = calcular_deltas(snapshot, dados, dados_fog) if snapshot else None
+    if snapshot:
+        _log.info('Resumo semanal: snapshot de %s carregado para deltas.', snapshot.get('data'))
+    else:
+        _log.info('Resumo semanal: sem snapshot anterior — deltas não exibidos.')
+
     destinos = _destinatarios(cfg_notif['grupos'], admin_email, cfg.get('usuarios'))
     if not destinos:
         _log.warning('Resumo semanal: notificação ligada mas sem destinatários configurados.')
@@ -657,7 +750,7 @@ def verificar_e_enviar_resumo_semanal(
     algum = False
     for destino in destinos:
         nome_dest = (destino.split('@')[0].split('.')[0] or '').capitalize()
-        html = montar_html_resumo_semanal(nome_dest, dados, data_envio, dia_label, dados_fog)
+        html = montar_html_resumo_semanal(nome_dest, dados, data_envio, dia_label, dados_fog, deltas)
         if fn_enviar(destino, html):
             algum = True
 
