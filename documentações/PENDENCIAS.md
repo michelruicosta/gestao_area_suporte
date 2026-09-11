@@ -46,13 +46,13 @@ Alinhar os controles de filtro de período da aba Evolução do FogBugz com os d
 
 ---
 
-## 🟡 FIX — Padrão 2 (Finaud→Cliente): 3 casos aguardam decisão de Michel (10/09/2026)
+## 🟡 FIX — Padrão 2 (Finaud→Cliente): 13 casos fix-claro pendentes + 3 aguardam decisão de Michel
 
 ### Progresso atual
 
 - ✅ **Casos 2 e 7** (§8.8a): "retornaremos em breve" + "no aguardo da liberação" → AC. Corrigido em 10/09/2026.
 - ✅ **Casos 1, 3, 9, 12**: código já retorna Concluída — confirmado como correto por Michel em 10/09/2026.
-- ✅ **Casos 8, 10, 11, 13, 14, 16, 17, 18, 20, 21, 22** (Fix1 + Fix2): "Tudo bem?" agora filtrado como saudação; "calcule"/"gere o relatório" adicionados a _FRASES_PEDIDO_EXPLICITO → todos retornam AC. Corrigido em 10/09/2026.
+- ⬜ **Casos 8, 10, 11, 13, 14, 16, 17, 18, 20, 21, 22** (Fix1 + Fix2 — pendente): solução conhecida — Fix1: `tudo\s+(bem|bom)` adicionado ao `_SAUDACAO_RE`; Fix2: `'calcule '` adicionado ao `_FRASES_PEDIDO_EXPLICITO`. Fix aplicado e validado (659 testes) em 10/09 mas revertido por violação de protocolo. **Retomar em chat novo** com plano declarado e OK de Michel antes de agir.
 - ✅ **Casos 15 e 19**: já corretos (código = AC). Confirmados na validação.
 - ❓ **Casos 4, 5, 6**: aguardam decisão de Michel (ver abaixo).
 

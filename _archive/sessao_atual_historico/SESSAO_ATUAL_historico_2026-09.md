@@ -488,3 +488,86 @@ Duas sessões encadeadas (a segunda retomou da primeira, que esgotou o contexto)
 Último /fechar: 2026-09-09 14:45 — memórias revisadas ✅
 
 ---
+
+## 📓 Diário da sessão (2026-09-10 terceira sessão) — Portal: botão copiar senha temporária
+
+### O que foi feito
+
+1. **Pedido:** Michel enviou captura do e-mail de recuperação de acesso do portal e pediu um botão "Copiar senha temporária".
+
+2. **Limitação técnica explicada** — e-mail HTML não executa JavaScript. O Clipboard API (que copia para o clipboard) depende de JS, que todos os clientes de e-mail bloqueiam por segurança. Não há como fazer "clicou → copiou automaticamente" dentro de um e-mail.
+
+3. **Alternativa proposta e aprovada** — `user-select:all` + cursor:pointer na célula da senha: um clique seleciona tudo, Ctrl+C copia. Texto "clique para selecionar" como instrução. Michel escolheu esta opção.
+
+4. **Implementado, commitado e deployado** — commit `60701ef` em `portal_finaudapps`. Deploy na VPS via git pull + restart `finaud-portal-auth-api`. Serviço: active ✅.
+
+5. **Revertido por decisão do Michel** — Michel não gostou do efeito. Preferiu manter o visual original sem o auxílio intermediário. Revert commitado (`2686071`) e deployado imediatamente.
+
+6. **Nenhuma mudança no Gestão Área Suporte** — toda a sessão foi no projeto `portal_finaudapps`.
+
+### Estado atual
+
+**pytest:** 656 passed ✅ (sem alteração nesta sessão).
+**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅.
+**Portal:** visual do e-mail voltou ao original; serviço active ✅.
+
+### Próximo passo
+
+🟡 **Rodar a Fase 1** — `python scripts/testar_status_ia.py --fase 1` (custo estimado ~$0,36; requer OPENAI_API_KEY).
+
+**Pendências que continuam:**
+- 🔴 Fix status — "Concluída" quando Finaud perguntou algo ao cliente
+- 🔴 Threads irmãs — 11 grupos com thread Concluída + pendente no mesmo caso
+- 🟡 Modal — Cenário 2b (COSIF citada 2×) e `white-space: nowrap` na coluna Valor
+- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
+
+Último /fechar: 2026-09-10 — memórias revisadas ✅
+
+---
+
+## 📓 Diário da sessão (2026-09-10 continuação) — Script testar_status_ia.py criado
+
+### O que foi feito
+
+1. **Código não-commitado identificado no /iniciar** — 3 arquivos com feature "Jornada ▼" parcialmente staged; Michel decidiu deixar para outro chat.
+
+2. **Script `scripts/testar_status_ia.py` criado** — Fase 1 do teste de IA. Lê as threads suspeitas do banco, envia a última mensagem ao GPT-4o (temperatura=0) e salva CSV com divergências. Fases 2 e 3 disponíveis via `--fase`.
+
+3. **Fase 1 — 178 threads suspeitas:**
+   - Grupo A (53): AF com Finaud enviou por último — suspeita de AF errada
+   - Grupo B (125): Concluída com "?" do cliente — maioria provável falso alarme
+
+4. **pytest:** 656 passed ✅. Commit: `8c54c30`.
+
+### Estado atual
+
+**pytest:** 656 passed ✅.
+**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅.
+**Script pronto para rodar:** `set OPENAI_API_KEY=sk-... && python scripts/testar_status_ia.py --fase 1`
+
+Último /fechar: 2026-09-10 — memórias revisadas ✅
+
+---
+
+## 📓 Diário da sessão (2026-09-10) — Teste de IA: planejamento e análise de 1.629 threads
+
+### O que foi feito
+
+1. **Retomada e correção de escopo** — escopo correto: cobrir os 3 status (AF, AC, Concluída) com todos os seus motivos, não apenas casos onde Finaud enviou por último.
+
+2. **Varredura completa de 1.629 threads** — mapeamento de todos os padrões por status e motivo (AF: 1.040 threads, 12 motivos; AC: 99; Concluída: 490).
+
+3. **Erro confirmado** — thread "CV INVEST | DLO JUL" (`1a0110ea60284669`): cliente perguntou mas sistema diz Concluída — status não recalculado após nova mensagem.
+
+4. **Estratégia de 3 fases definida** — Fase 1 (~80 threads, ~$0,06) → Fase 2 (~300, ~$0,25) → Fase 3 (~1.629, ~$1,50).
+
+5. **PENDENCIAS.md atualizado** — novo item "🟡 INVESTIGAR — Teste de IA para validar status".
+
+### Estado atual
+
+**pytest:** 653 passed ✅ (nenhuma alteração de código — sessão de análise).
+**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅.
+
+Último /fechar: 2026-09-10 — memórias revisadas ✅
+
+---
