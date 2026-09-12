@@ -204,6 +204,31 @@ O grupo mais grave é **"BANCO CENTRAL - COMUNICACAO DE INCONSISTENCIA NO DRM - 
 
 ---
 
+## 🟡 INVESTIGAR — Mensagem original não capturada em replies internos Finaud→Finaud (identificado em 11/09/2026)
+
+### O problema
+
+Durante o Bloco 2 da validação de status, a thread "Re: Pasta Activetrades" (`1a086f8b61ee17da`) tinha apenas **1 mensagem** no banco — o reply de Fernando Souza (Finaud/Tecnologia) para Miguel Santos (Finaud/suporte) às 13:20 de 09/09/2026. A mensagem original do Miguel às 13:10 **não foi capturada**.
+
+O assunto começa com "Re:" — é uma resposta — mas o banco não tem o original. Isso significa que o coletor capturou o reply mas não a mensagem que o iniciou.
+
+### Por que importa
+
+- Threads com mensagem original ausente têm status calculado só a partir do reply → pode gerar status errado.
+- Se o padrão se repete em outras threads, há mais casos com dados incompletos no banco.
+
+### O que investigar
+
+1. Quantas outras threads ativas têm "Re:" no assunto mas apenas 1 mensagem no banco?
+2. Por que o reply foi capturado mas o original não? (caixa de coleta, roteamento, timing?)
+3. Para a thread específica: o que o Miguel perguntou? O status atual (Concluída) está correto?
+
+### Quando fazer
+
+Chat dedicado.
+
+---
+
 ## 🟡 Monitorar caixas dos colaboradores para captura completa (identificado em 01/09/2026)
 
 ### O problema original

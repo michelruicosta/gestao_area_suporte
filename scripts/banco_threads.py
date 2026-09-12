@@ -237,6 +237,7 @@ _FRASES_CONCLUSIVAS_FINAUD = (
     'procedemos com',
     'informo que foi encaminhado', 'informamos que foi encaminhado',
     'foi encaminhado ao bc', 'foi encaminhado ao bacen',
+    'foi encaminhado e aguarda o aceite',  # Fix W: Wise DDR — "arquivo foi encaminhado e aguarda o aceite [no portal]"
     'enviamos', 'acabamos de enviar', 'foi enviado', 'ok, enviado',
     'já está disponível', 'ja esta disponivel',
     'transmitimos a versão', 'transmitimos o arquivo', 'transmitimos a remessa',
@@ -308,6 +309,9 @@ _FRASES_PEDIDO_EXPLICITO = (
     'poderia encaminhar por gentileza',
     'pode encaminhar por gentileza',
     'por gentileza, encaminhe',
+    'poderia por gentileza',  # "poderia por gentileza me encaminhar/enviar/..."
+    'poderia por favor',      # variante com "por favor" em vez de "por gentileza"
+    'peço a gentileza',       # "Peço a gentileza de encaminhar/enviar/..."
     'solicito ',        # forma singular: "solicito também os balanços", "solicito que envie"
     'vou precisar',    # "vou precisar dos COSIFs", "vou precisar que você"
     'no aguardo',      # Fix S: "No aguardo." = Finaud está aguardando resposta do cliente → AC
@@ -322,6 +326,9 @@ _FRASES_SOLICITA_EXTRATO = (
     'poderia encaminhar por gentileza',
     'pode encaminhar por gentileza',
     'por gentileza, encaminhe',
+    'poderia por gentileza',
+    'poderia por favor',
+    'peço a gentileza',
     'solicito ',
     'vou precisar',
     'no aguardo',
@@ -362,7 +369,7 @@ _FRASES_REUNIAO = (
 )
 
 _SAUDACAO_RE = re.compile(
-    r'^(prezad[ao]s?|bom\s+dia|boa\s+tarde|boa\s+noite|ol[aá]|caro|cara)\b',
+    r'^(prezad[ao]s?|bom\s+dia|boa\s+tarde|boa\s+noite|ol[aá]|caro|cara|tudo\s+bem)\b',
     re.IGNORECASE,
 )
 

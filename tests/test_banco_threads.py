@@ -559,6 +559,26 @@ def test_status_finaud_notificacao_foi_encaminhado_bacen():
     assert bt._determinar_status(msgs)[0] == 'Concluída'
 
 
+def test_status_wise_ddr_encaminhado_aguarda_aceite():
+    """Fix W: Wise DDR — 'foi encaminhado e aguarda o aceite' → Concluída (aceite ocorre no portal externo).
+    Reproduz padrão Sarah Sá: 'O arquivo do dia XX foi encaminhado e aguarda o aceite.'
+    """
+    corpo = (
+        'Prezada Mariana, bom dia!\r\n\r\n'
+        'Tudo bem?\r\n\r\n'
+        'O arquivo do dia 01/09 foi encaminhado e aguarda o aceite.\r\n'
+        'Segue o aceite do dia 31/08.\r\n\r\n'
+        'Desde já agradeço e permaneço à disposição.\r\n\r\n'
+        'Atenciosamente,\r\nSarah Sá'
+    )
+    msgs = [
+        _msg(CLIENTE, corpo='Bom dia Sarah, segue a DDR referente ao dia 01.09.'),
+        _msg(FINAUD, corpo=corpo),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída', f'Esperado Concluída, got: {status} | {motivo}'
+
+
 def test_status_finaud_sem_sinal_encerramento():
     """Finaud respondeu mas sem sinal de encerramento → Aguardando Cliente."""
     msgs = [_msg(FINAUD, corpo='Verificamos aqui, precisamos de mais informações.')]
