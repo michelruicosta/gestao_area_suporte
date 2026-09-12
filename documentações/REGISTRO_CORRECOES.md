@@ -23,6 +23,32 @@
 
 ---
 
+### 12/09 — FIX(status): Fix Y e Fix Z — regras de código para os casos 8 e 18
+
+**🔎 Em miúdos:** dois status estavam sendo corrigidos na mão diretamente no banco de dados — o que é errado, porque o sistema recalcula tudo a cada hora e desfaz a correção manual. A solução certa é escrever regras no código para que o algoritmo chegue sozinho ao status correto.
+
+**Problema 1 — Caso 8 "Erro no DLI e DLO" (Fix Y):**
+- A Andrea Inacio (Finaud) respondeu a Monica (cliente, que tinha enviado um arquivo com erros) com: "Obrigada por aguardar. 1) Calcule novamente o DLO... transmita ao BC..."
+- O algoritmo via que a mensagem começava com "Obrigada" → considerava cortesia pura → olhava a mensagem anterior (Monica com arquivo) → retornava Aguardando Finaud (errado).
+- Correto: a bola está com Monica (cliente), que precisa calcular e retransmitir → Aguardando Cliente.
+
+**Problema 2 — Caso 18 "Sistema com erro" (Fix Z):**
+- Rodrigo Tiberio (Finaud) disse: "O sistema já se encontra disponível."
+- O código tinha `'já está disponível'` mas não `'já se encontra disponível'` → retornava Aguardando Cliente (errado).
+- Correto: Finaud informou que o problema foi resolvido → Concluída.
+
+**Correção Fix Y:** antes de verificar cortesia, o algoritmo agora checa se a mensagem da Finaud contém instruções técnicas ao cliente (calcule, transmita, corrija, gere o relatório, para solucionar...). Se sim → Aguardando Cliente diretamente, sem entrar na lógica de cortesia.
+
+**Correção Fix Z:** adicionadas as variantes `'já se encontra disponível'` e `'ja se encontra disponivel'` à lista `_FRASES_CONCLUSIVAS_FINAUD`.
+
+**Arquivo:** `scripts/banco_threads.py` — Fix Y após linha `_FRASES_REUNIAO` check; Fix Z em `_FRASES_CONCLUSIVAS_FINAUD`.
+
+**Contexto:** correções manuais diretas no banco não devem ser feitas sem a regra de código correspondente — o recálculo horário as desfaz. Michel explicitou isso em 11/09: "Nossa você como IA nem deveria ter corrigido somente o dado sem as regras."
+
+**Validação:** ✅ 662 testes passando · 0 regressões · 4 novos testes (Fix Y e Fix Z)
+
+---
+
 ### 11/09 21:30 — FIX(status): Fix X — avisos de leitura automáticos ignorados no cálculo de status
 
 **🔎 Em miúdos:** quando o servidor do cliente enviava um aviso de leitura automático (confirmando que leu um e-mail da Finaud), o sistema interpretava isso como "Finaud enviou por último" e marcava a thread como Aguardando Cliente — errado, porque o cliente ainda não tinha respondido de verdade.

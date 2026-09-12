@@ -240,6 +240,7 @@ _FRASES_CONCLUSIVAS_FINAUD = (
     'foi encaminhado e aguarda o aceite',  # Fix W: Wise DDR — "arquivo foi encaminhado e aguarda o aceite [no portal]"
     'enviamos', 'acabamos de enviar', 'foi enviado', 'ok, enviado',
     'já está disponível', 'ja esta disponivel',
+    'já se encontra disponível', 'ja se encontra disponivel',  # Fix Z: "O sistema já se encontra disponível" (Rodrigo)
     'transmitimos a versão', 'transmitimos o arquivo', 'transmitimos a remessa',
     'estamos acompanhando o processamento',
     'estamos acompanhando os processamentos',
@@ -1054,6 +1055,19 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
         if any(f in texto_lower for f in _FRASES_ORIENTACAO_TECNICA):
             return 'Aguardando Cliente', _motivo_ag_cli
         if any(f in texto_lower for f in _FRASES_REUNIAO):
+            return 'Aguardando Cliente', _motivo_ag_cli
+        # Fix Y: instrução técnica ao cliente supera abertura com "obrigada/obrigado"
+        # Ex.: "Obrigada por aguardar. 1) Calcule novamente o DLO e transmita ao BC."
+        # Sem este check, _eh_cortesia_finaud retorna True (começa com "obrigada") e o
+        # algoritmo olha para a mensagem anterior (cliente com arquivo) → AF incorreto.
+        _instrucao_cliente = (
+            'calcule ', 'corrija ', 'acesse ', 'importe ', 'exporte ',
+            'transmita a', 'transmita o',
+            'ajuste os saldos', 'ajuste o valor',
+            'gere o relatório', 'gere a substituição',
+            'para solucionar,', 'para solucionar:', 'para corrigir,',
+        )
+        if any(f in texto_flat for f in _instrucao_cliente):
             return 'Aguardando Cliente', _motivo_ag_cli
         if _eh_cortesia_finaud(texto_novo):
             if len(msgs) == 1:

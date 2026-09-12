@@ -3468,3 +3468,69 @@ def test_status_tipo_d_sem_sinal_identificavel():
     )])
     assert status == 'Aguardando Finaud'
     assert motivo == 'Mensagem sem conteúdo identificável — aguarda verificação'
+
+
+# ── Fix Z: "já se encontra disponível" → Concluída ────────────────────────────
+
+def test_fix_z_ja_se_encontra_disponivel_concluida():
+    # Rodrigo Tiberio: "O sistema já se encontra disponível." — deve ser Concluída
+    # Antes do Fix Z o algoritmo retornava Aguardando Cliente porque a frase não
+    # estava em _FRASES_CONCLUSIVAS_FINAUD (só "já está disponível" existia).
+    msgs = [
+        _msg(CLIENTE, corpo='O sistema está com erro. Podem verificar?',
+             assunto='Sistema com erro', destinatarios='suporte@finaud.com.br'),
+        _msg(FINAUD, corpo='Bom dia,\n\nO sistema já se encontra disponível.\n\nAt.',
+             assunto='Sistema com erro', destinatarios='joao@bancox.com.br'),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída', f"Esperado Concluída, obtido: {status} — {motivo}"
+
+
+def test_fix_z_ja_se_encontra_disponivel_variante_sem_acento():
+    # Variante sem acento (normalização defensiva)
+    msgs = [
+        _msg(CLIENTE, corpo='Sistema com erro.', assunto='Sistema com erro',
+             destinatarios='suporte@finaud.com.br'),
+        _msg(FINAUD, corpo='O sistema ja se encontra disponivel.\n\nAt.',
+             assunto='Sistema com erro', destinatarios='joao@bancox.com.br'),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída', f"Esperado Concluída, obtido: {status} — {motivo}"
+
+
+# ── Fix Y: instrução técnica ao cliente supera "obrigada" inicial ─────────────
+
+def test_fix_y_obrigada_instrucao_tecnica_aguardando_cliente():
+    # Andrea Inacio: "Obrigada por aguardar. 1) Calcule novamente o DLO e transmita ao BC."
+    # Antes do Fix Y: _eh_cortesia_finaud retornava True (começa com "obrigada") e
+    # o algoritmo via a mensagem anterior (cliente com anexos) → Aguardando Finaud incorreto.
+    corpo_finaud = (
+        'Prezada Monica, bom dia.\n\n'
+        'Obrigada por aguardar. Recebemos a informação de que os ajustes foram concluídos.\n'
+        '1) Para solucionar as críticas, calcule novamente o DLO, Limites, LEC, '
+        'gere o relatório 2061 07/2026 como Inclusão e transmita a nova versão ao BC.\n'
+        '2) DLI - Cancele o arquivo.\n\n'
+        'Andrea Inacio\nCoordenadora de Suporte'
+    )
+    msgs = [
+        _msg(CLIENTE, corpo='Andreia, segue anexo os erros do DLI e DLO.',
+             assunto='Erro no DLI e DLO', destinatarios='suporte@finaud.com.br',
+             nomes_anexos=['erros_dli_dlo.xlsx']),
+        _msg(FINAUD, corpo=corpo_finaud, assunto='Erro no DLI e DLO',
+             destinatarios='monica@bancox.com.br'),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Cliente', f"Esperado Aguardando Cliente, obtido: {status} — {motivo}"
+
+
+def test_fix_y_obrigada_sem_instrucao_continua_concluida():
+    # "Obrigada" sem instrução técnica → comportamento original preservado
+    # Quando o anterior não tem arquivo, cai em Concluída (cortesia pura de Finaud)
+    msgs = [
+        _msg(CLIENTE, corpo='Obrigado, problema resolvido.', assunto='Suporte',
+             destinatarios='suporte@finaud.com.br'),
+        _msg(FINAUD, corpo='Obrigada pelo retorno. Ficamos à disposição.',
+             assunto='Suporte', destinatarios='joao@bancox.com.br'),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Concluída', f"Esperado Concluída, obtido: {status} — {motivo}"
