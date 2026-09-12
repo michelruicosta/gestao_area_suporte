@@ -1055,6 +1055,8 @@ Como o sistema decide se uma thread está **Aguardando Finaud**, **Aguardando Cl
 
 A classificação olha sempre o **último e-mail da thread** — não o histórico completo. Isso garante que o status reflita sempre o estado atual, não o estado passado.
 
+**Exceção — avisos de leitura automáticos são ignorados (Fix X, 11/09/2026):** quando o último e-mail é um aviso de leitura gerado automaticamente pelo servidor do cliente ("Sua mensagem ... foi lida em ..."), ele é descartado e o status é calculado com base na mensagem anterior. Avisos de leitura não representam ação humana — são gerados pelo servidor de e-mail do cliente sem intervenção da pessoa.
+
 ---
 
 ### 8.1 Aguardando Finaud
@@ -1149,6 +1151,7 @@ fino ou revisão.
 | Cliente informa que **arquivos foram submetidos ao BACEN** | Concluída | Responsabilidade passou para o cliente com o BACEN; Finaud não tem mais ação pendente |
 | Cliente confirma que DLO/sistema está **"normalizado"** + agradece | Concluída | Issue resolvida no lado do cliente |
 | Cliente diz que vai **ligar** (ou chamar) para a Finaud + agradece | Concluída | Resolução encaminhada para canal síncrono (ligação); sem follow-up digital pendente |
+| Finaud (Sarah Sá) envia **"O arquivo do dia XX foi encaminhado e aguarda o aceite"** para cliente Wise | Concluída | O aceite ocorre no portal externo da Wise — sem resposta de e-mail esperada do cliente. Identificador: `'foi encaminhado e aguarda o aceite'` em `_FRASES_CONCLUSIVAS_FINAUD` (Fix W, 11/09/2026) |
 
 > Complementam o código em `scripts/banco_threads.py`. Candidatas a virarem Fixes de código
 > em sessão futura.

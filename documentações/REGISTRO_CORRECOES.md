@@ -23,6 +23,59 @@
 
 ---
 
+### 11/09 21:30 — FIX(status): Fix X — avisos de leitura automáticos ignorados no cálculo de status
+
+**🔎 Em miúdos:** quando o servidor do cliente enviava um aviso de leitura automático (confirmando que leu um e-mail da Finaud), o sistema interpretava isso como "Finaud enviou por último" e marcava a thread como Aguardando Cliente — errado, porque o cliente ainda não tinha respondido de verdade.
+
+**Problema:** `_determinar_status` não distinguia aviso de leitura automático de mensagem humana. O remetente era `suporte@finaud.com.br` → código concluía "Finaud enviou por último" → AC incorreto.
+
+**Correção:** no início de `_determinar_status`, avisos de leitura são detectados pelo padrão do corpo (`'sua mensagem'` no início + `'foi lida em'` no corpo) e removidos do final da lista antes de qualquer análise. O status é calculado com base na última mensagem humana real.
+
+**Arquivo:** `scripts/banco_threads.py` — bloco Fix X, antes de `ultimo = msgs[-1]`.
+
+**Caso reproduzido:** Caso 13 do Bloco 2 — "Erro cálculo do DDR" (`thread_id: 1a0860f84930c842`). Aviso de leitura de 09/09 09:39 causava AC; com Fix X retorna AF corretamente.
+
+**Validação:** ✅ 658 testes passando · 0 regressões · Caso 13 retorna AF automaticamente · commit `6bd8ab9`
+
+---
+
+### 11/09 21:01 — FIX(status/banco): Bloco 2 concluído — correções de status (Fix W + 7 ajustes manuais)
+
+**🔎 Em miúdos:** revisamos os 22 casos suspeitos de status errado com Michel (Bloco 2). Encontramos erros reais em 7 casos e corrigimos tudo — 4 no código, 3 diretamente no banco, e mais 4 threads de emails automáticos que estavam no lugar errado.
+
+**Bloco 2 — resultado (22 casos revisados):**
+- ✅ Corretos (falsos alarmes): Casos 5, 6, 7, 9, 10, 15, 16, 21 e Tipo B (9 casos)
+- ✅ Já corrigidos pelo recálculo anterior: Casos 11, 12, 14, 19, 20 (5 casos)
+- ❌ Erros corrigidos nesta sessão: Casos 1–4, 8, 13, 17, 18 (8 casos)
+
+**Fix W — código (`scripts/banco_threads.py`):**
+- Problema: threads Wise DDR onde Sarah Sá escrevia "foi encaminhado e aguarda o aceite" eram classificadas como AC porque a frase "encaminhado" não estava em `_FRASES_CONCLUSIVAS_FINAUD` (só "enviado" estava). O aceite ocorre no portal externo — sem resposta de e-mail esperada.
+- Correção: adicionado `'foi encaminhado e aguarda o aceite'` à tupla `_FRASES_CONCLUSIVAS_FINAUD`.
+- Impacto: 13 threads Wise DDR corrigidas de AC → Concluída.
+- Teste incluído: `test_status_wise_ddr_encaminhado_aguarda_aceite` (657 passed).
+- Commit: `6e2c678`
+
+**Casos 1–4 — emails automáticos (banco):**
+- Problema: 4 threads de riskdriver@finaud.com.br e contato@finaud.com.br (26/08/2026) tinham chegado ao banco antes de a regra de bloqueio (`_ENDERECOS_EXATOS` em `validador_classificacao.py`) existir. Foram classificadas como SUPORTE e o recálculo lhes deu status AF incorreto.
+- Correção: `destino` alterado de `'principal'` para `'bloqueadas'` + `status_workflow` zerado. As novas chegam bloqueadas automaticamente — sem mudança de código necessária.
+- Backup: `data/backups/20260911_2101_bloco3_correcoes_status/`
+
+**Caso 8 — Erro no DLI e DLO (banco, thread `1a06e15d3e8fc350`):**
+- Problema: Andrea (Finaud) deu instruções técnicas ao cliente para executar no sistema. O código retornou AF "Cliente enviou informações" por ler a penúltima mensagem (do cliente), mas quem aguarda resposta é a Finaud.
+- Correção: AF → AC ("Finaud deu instrucao tecnica ao cliente - aguarda execucao")
+
+**Caso 13 — Erro cálculo do DDR (banco, thread `1a0860f84930c842`):**
+- Problema: a última mensagem era um aviso de leitura automático enviado por suporte@finaud.com.br. O código viu "Finaud enviou por último" e retornou AC. Mas a última mensagem humana foi do cliente reportando erro.
+- Correção: AC → AF ("Aviso de leitura - ultima mensagem humana foi do cliente")
+
+**Caso 18 — Sistema com erro / Rodrigo (banco, thread `1a06dd495217d7fd`):**
+- Problema: Rodrigo informou "O sistema já se encontra disponível." O código retornou AC "Finaud fez pergunta" mas Rodrigo não perguntou — resolveu. Deveria ser Concluída.
+- Correção: AC → Concluída ("Finaud informou resolucao ao cliente - sistema disponivel")
+
+**Validação:** ✅ 657 testes passando · 0 regressões · correções de banco verificadas
+
+---
+
 ### 11/09 — FIX(pipeline): e-mails de colaboradores faltando + pipeline unificado em 5 etapas
 
 **🔎 Em miúdos:** threads que tinham respostas de colaboradores (ex.: Andrea, Rodrigo) fora do canal principal ficavam com status errado — a Finaud aparecia como quem falou por último, mas na verdade o cliente tinha respondido depois. Isso acontecia porque os e-mails dos colaboradores nunca eram buscados. A correção passou por três passos técnicos e uma reorganização do pipeline automático.

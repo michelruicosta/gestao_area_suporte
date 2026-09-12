@@ -9,9 +9,9 @@
 
 | Bloco | O que é | Estado |
 |---|---|---|
-| Bloco 1 | Levantamento automático dos suspeitos | ✅ Concluído |
-| Bloco 2 | Revisão com Michel — um caso por vez | ⬜ Aguarda decisão de Michel |
-| Bloco 3 | Correção no banco + registro + commit | ⬜ Aguarda Bloco 2 |
+| Bloco 1 | Levantamento automático dos suspeitos | ✅ Concluído (11/09/2026) |
+| Bloco 2 | Revisão com Michel — um caso por vez | ✅ Concluído (11/09/2026) |
+| Bloco 3 | Correção no banco + registro + commit | ✅ Concluído (11/09/2026) |
 
 ---
 
@@ -29,7 +29,7 @@
 
 ## Legenda
 
-⬜ aguarda Michel · ✅ correto (falso alarme) · ❌ erro (corrigir no Bloco 3)
+⬜ aguarda Michel · ✅ correto (falso alarme) · ❌ erro corrigido no Bloco 3 · ✅* correto (já corrigido pelo recálculo anterior)
 
 ---
 
@@ -40,27 +40,27 @@
 
 | # | Assunto | Categoria | Último remetente | Data | Decisão |
 |---|---|---|---|---|---|
-| 1 | 📢 Atualização Bacen – RISCOS – 26/08/2026 | SUPORTE | contato@finaud.com.br | 26/08/2026 | ⬜ |
-| 2 | ⚠️ Garantia leiautes FALHOU — 26/08/2026 | SUPORTE | contato@finaud.com.br | 26/08/2026 | ⬜ |
-| 3 | Relatório do Serviço - Finaud Moedas  26/08/2026 1… | SUPORTE | riskdriver@finaud.com.br | 26/08/2026 | ⬜ |
-| 4 | Relatório do Serviço - Finaud Master  26/08/2026 0… | SUPORTE | riskdriver@finaud.com.br | 26/08/2026 | ⬜ |
-| 5 | COLUNA - ENVIAR CADOC 08/09/2026. | SALDOS_CONTABEIS_DIARIOS_4111 | Monica Macedo <monica.macedo@finaud.com.… | 10/09/2026 | ⬜ |
-| 6 | PI Exposure MiraeAsset Securities in Brazil_HK - 2… | DDR_2011 | "Sarah Sá" <suporte@finaud.com.br> | 10/09/2026 | ⬜ |
-| 7 | Re: Pasta Activetrades | DDR_2011 | fernando souza <fernando.souza@finaud.co… | 09/09/2026 | ⬜ |
-| 8 | Erro no DLI e DLO | DLO_2061 | Andrea Inacio <andrea.inacio@finaud.com.… | 09/09/2026 | ⬜ |
-| 9 | DDR 2011 - 03/09/2026 Segue a remessa | DDR_2011 | "Sarah Sá" <suporte@finaud.com.br> | 09/09/2026 | ⬜ |
-| 10 | Re: Arquivo 2061 e 2062 | DLO_2061 | Andrea Inacio <andrea.inacio@finaud.com.… | 09/09/2026 | ⬜ |
-| 11 | 4111 - dia 31/08/2026, 01 a 08/09/2026 | SALDOS_CONTABEIS_DIARIOS_4111 | Miguel Santos <suporte@finaud.com.br> | 09/09/2026 | ⬜ |
-| 12 | 4010, 4060 e planilha LEC. | DLO_2061 | Miguel Santos <suporte@finaud.com.br> | 09/09/2026 | ⬜ |
-| 13 | Erro cálculo do DDR | DDR_2011 | suporte@finaud.com.br | 09/09/2026 | ⬜ |
-| 14 | 4010, 4060 e planilha LEC. | DLO_2061 | Miguel Santos <suporte@finaud.com.br> | 08/09/2026 | ⬜ |
-| 15 | Re: LEC Julho 2026. Segue o DLO (2061) e o DLI (20… | DLO_2061 | Andrea Inacio <andrea.inacio@finaud.com.… | 08/09/2026 | ⬜ |
-| 16 | PI Exposure MiraeAsset Securities in Brazil_HK - 2… | DDR_2011 | Andrea Inacio <andrea.inacio@finaud.com.… | 08/09/2026 | ⬜ |
-| 17 | Wise DDR 01.09 | DDR_2011 | "Sarah Sá" <suporte@finaud.com.br> | 08/09/2026 | ⬜ |
-| 18 | Sistema com erro | SALDOS_CONTABEIS_DIARIOS_4111 | Rodrigo Tiberio <rodrigo.tiberio@finaud.… | 08/09/2026 | ⬜ |
-| 19 | Relatórios DLO 2061, DLI 2062 e DRM 2060- 08/2026 | DLO_2061 | Miguel Santos <suporte@finaud.com.br> | 04/09/2026 | ⬜ |
-| 20 | 4111 - dia 31/08/2026 e 01/09/2026 | SALDOS_CONTABEIS_DIARIOS_4111 | Miguel Santos <suporte@finaud.com.br> | 04/09/2026 | ⬜ |
-| 21 | Erro Cálculo PR - Fourtrade | SUPORTE | suporte <suporte@finaud.com.br> | 04/09/2026 | ⬜ |
+| 1 | 📢 Atualização Bacen – RISCOS – 26/08/2026 | SUPORTE | contato@finaud.com.br | 26/08/2026 | ❌ movida para bloqueadas |
+| 2 | ⚠️ Garantia leiautes FALHOU — 26/08/2026 | SUPORTE | contato@finaud.com.br | 26/08/2026 | ❌ movida para bloqueadas |
+| 3 | Relatório do Serviço - Finaud Moedas  26/08/2026 1… | SUPORTE | riskdriver@finaud.com.br | 26/08/2026 | ❌ movida para bloqueadas |
+| 4 | Relatório do Serviço - Finaud Master  26/08/2026 0… | SUPORTE | riskdriver@finaud.com.br | 26/08/2026 | ❌ movida para bloqueadas |
+| 5 | COLUNA - ENVIAR CADOC 08/09/2026. | SALDOS_CONTABEIS_DIARIOS_4111 | Monica Macedo <monica.macedo@finaud.com.… | 10/09/2026 | ✅ correto (AF) |
+| 6 | PI Exposure MiraeAsset Securities in Brazil_HK - 2… | DDR_2011 | "Sarah Sá" <suporte@finaud.com.br> | 10/09/2026 | ✅* Concluída via recálculo |
+| 7 | Re: Pasta Activetrades | DDR_2011 | fernando souza <fernando.souza@finaud.co… | 09/09/2026 | ✅ correto (Concluída) — campo "Para" vazio investigar em outro chat |
+| 8 | Erro no DLI e DLO | DLO_2061 | Andrea Inacio <andrea.inacio@finaud.com.… | 09/09/2026 | ❌ AF → AC corrigido |
+| 9 | DDR 2011 - 03/09/2026 Segue a remessa | DDR_2011 | "Sarah Sá" <suporte@finaud.com.br> | 09/09/2026 | ✅* Concluída via recálculo |
+| 10 | Re: Arquivo 2061 e 2062 | DLO_2061 | Andrea Inacio <andrea.inacio@finaud.com.… | 09/09/2026 | ✅ correto (AF) |
+| 11 | 4111 - dia 31/08/2026, 01 a 08/09/2026 | SALDOS_CONTABEIS_DIARIOS_4111 | Miguel Santos <suporte@finaud.com.br> | 09/09/2026 | ✅* AC via recálculo |
+| 12 | 4010, 4060 e planilha LEC. | DLO_2061 | Miguel Santos <suporte@finaud.com.br> | 09/09/2026 | ✅* AC via recálculo |
+| 13 | Erro cálculo do DDR | DDR_2011 | suporte@finaud.com.br | 09/09/2026 | ❌ AC → AF corrigido (aviso de leitura mal interpretado) |
+| 14 | 4010, 4060 e planilha LEC. | DLO_2061 | Miguel Santos <suporte@finaud.com.br> | 08/09/2026 | ✅* AC via recálculo |
+| 15 | Re: LEC Julho 2026. Segue o DLO (2061) e o DLI (20… | DLO_2061 | Andrea Inacio <andrea.inacio@finaud.com.… | 08/09/2026 | ✅ correto (AF — prometeu retornar) |
+| 16 | PI Exposure MiraeAsset Securities in Brazil_HK - 2… | DDR_2011 | Andrea Inacio <andrea.inacio@finaud.com.… | 08/09/2026 | ✅* Concluída via recálculo |
+| 17 | Wise DDR 01.09 | DDR_2011 | "Sarah Sá" <suporte@finaud.com.br> | 08/09/2026 | ❌ AC → Concluída corrigido pelo Fix W |
+| 18 | Sistema com erro | SALDOS_CONTABEIS_DIARIOS_4111 | Rodrigo Tiberio <rodrigo.tiberio@finaud.… | 08/09/2026 | ❌ AC → Concluída corrigido |
+| 19 | Relatórios DLO 2061, DLI 2062 e DRM 2060- 08/2026 | DLO_2061 | Miguel Santos <suporte@finaud.com.br> | 04/09/2026 | ✅* AC via recálculo |
+| 20 | 4111 - dia 31/08/2026 e 01/09/2026 | SALDOS_CONTABEIS_DIARIOS_4111 | Miguel Santos <suporte@finaud.com.br> | 04/09/2026 | ✅* AC via recálculo |
+| 21 | Erro Cálculo PR - Fourtrade | SUPORTE | suporte <suporte@finaud.com.br> | 04/09/2026 | ✅ correto (AF — prometeu retornar) |
 
 ---
 
@@ -71,7 +71,7 @@
 
 | # | Assunto | Categoria | Último remetente | Data | Decisão |
 |---|---|---|---|---|---|
-| 1 | DLO JULHO | DLO_2061 | "'Luiza Ferreira Milet' via Suporte" <su… | 09/09/2026 | ⬜ |
+| 1 | DLO JULHO | DLO_2061 | "'Luiza Ferreira Milet' via Suporte" <su… | 09/09/2026 | ✅ correto (AF — Monica precisa ver o DLO) |
 
 ---
 
