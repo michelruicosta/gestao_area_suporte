@@ -1057,6 +1057,8 @@ A classificação olha sempre o **último e-mail da thread** — não o históri
 
 **Exceção — avisos de leitura automáticos são ignorados (Fix X, 11/09/2026):** quando o último e-mail é um aviso de leitura gerado automaticamente pelo servidor do cliente ("Sua mensagem ... foi lida em ..."), ele é descartado e o status é calculado com base na mensagem anterior. Avisos de leitura não representam ação humana — são gerados pelo servidor de e-mail do cliente sem intervenção da pessoa.
 
+**Exceção — instrução técnica ao cliente supera cortesia inicial (Fix Y, 12/09/2026):** quando o último e-mail da Finaud começa com "obrigada/obrigado" mas contém instruções técnicas ao cliente (ex: "Obrigada por aguardar. 1) Calcule novamente o DLO e transmita ao BC."), o status é **Aguardando Cliente** — não Concluída. Sem este check, o algoritmo interpretaria a abertura como cortesia pura, olharia a mensagem anterior (cliente com arquivo) e retornaria Aguardando Finaud incorretamente. Identificadores em `_instrucao_cliente` (local): `'calcule '`, `'transmita a'`, `'gere o relatório'`, `'para solucionar,'` e outros verbos imperativos técnicos.
+
 ---
 
 ### 8.1 Aguardando Finaud
@@ -1152,9 +1154,9 @@ fino ou revisão.
 | Cliente confirma que DLO/sistema está **"normalizado"** + agradece | Concluída | Issue resolvida no lado do cliente |
 | Cliente diz que vai **ligar** (ou chamar) para a Finaud + agradece | Concluída | Resolução encaminhada para canal síncrono (ligação); sem follow-up digital pendente |
 | Finaud (Sarah Sá) envia **"O arquivo do dia XX foi encaminhado e aguarda o aceite"** para cliente Wise | Concluída | O aceite ocorre no portal externo da Wise — sem resposta de e-mail esperada do cliente. Identificador: `'foi encaminhado e aguarda o aceite'` em `_FRASES_CONCLUSIVAS_FINAUD` (Fix W, 11/09/2026) |
+| Finaud informa que o **sistema já se encontra disponível** | Concluída | O problema técnico foi resolvido e Finaud comunicou o cliente. Identificadores: `'já se encontra disponível'` e `'ja se encontra disponivel'` em `_FRASES_CONCLUSIVAS_FINAUD` (Fix Z, 12/09/2026) |
 
-> Complementam o código em `scripts/banco_threads.py`. Candidatas a virarem Fixes de código
-> em sessão futura.
+> Padrões acima já estão implementados em `scripts/banco_threads.py`.
 
 ---
 
