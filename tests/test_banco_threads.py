@@ -579,6 +579,27 @@ def test_status_wise_ddr_encaminhado_aguarda_aceite():
     assert status == 'Concluída', f'Esperado Concluída, got: {status} | {motivo}'
 
 
+def test_status_aviso_leitura_ignorado_retorna_status_penultima():
+    """Fix X: aviso de leitura automático como última mensagem é ignorado.
+    Reproduz Caso 13 — cliente reportou erro, servidor da Picchioni enviou read receipt
+    para suporte@finaud.com.br. Sem o fix: código via suporte@ como Finaud → AC errado.
+    Com o fix: aviso de leitura descartado, penúltima (cliente) determina status → AF.
+    """
+    aviso_leitura = (
+        'Sua mensagem\r\n\r\n'
+        '  Para: viviani.faria@picchioni.com.br\r\n'
+        '  Assunto: Erro cálculo do DDR\r\n'
+        '  Enviada: 09/09/2026, 09:05:33 BRT\r\n\r\n'
+        'foi lida em 09/09/2026, 09:39:58 BRT\r\n'
+    )
+    msgs = [
+        _msg(CLIENTE, corpo='Prezados, Segue erro no cálculo do DDR de 08/09/2026.'),
+        _msg(FINAUD, corpo=aviso_leitura),
+    ]
+    status, motivo = bt._determinar_status(msgs)
+    assert status == 'Aguardando Finaud', f'Esperado Aguardando Finaud, got: {status} | {motivo}'
+
+
 def test_status_finaud_sem_sinal_encerramento():
     """Finaud respondeu mas sem sinal de encerramento → Aguardando Cliente."""
     msgs = [_msg(FINAUD, corpo='Verificamos aqui, precisamos de mais informações.')]

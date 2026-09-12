@@ -812,6 +812,20 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
     if not msgs:
         return 'Aguardando Finaud', 'Sem mensagens registradas'
 
+    # Fix X: avisos de leitura automáticos (read receipts) não representam ação humana.
+    # Padrão: corpo começa com "sua mensagem" e contém "foi lida em".
+    # Ignorar do final da lista para não distorcer o status.
+    _msgs = msgs[:]
+    while _msgs:
+        _chk = (_msgs[-1].get('corpo_texto') or '').strip().lower()
+        if _chk.startswith('sua mensagem') and 'foi lida em' in _chk:
+            _msgs.pop()
+        else:
+            break
+    if not _msgs:
+        return 'Aguardando Finaud', 'Sem mensagens registradas'
+    msgs = _msgs
+
     ultimo        = msgs[-1]
     remetente     = (ultimo.get('remetente')     or '').lower()
     reply_to      = (ultimo.get('reply_to')      or '').lower()
