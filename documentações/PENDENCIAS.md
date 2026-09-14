@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Gestão Área Suporte
 
-**Atualizado:** 2026-09-11
+**Atualizado:** 2026-09-14
 **Organização:** por etapa que bloqueia — reorganizado em 03/08/2026 para seguir as fases sem brechas.
 **Regra:** este arquivo lista **só o que ainda falta** (aberto / aguardando decisão / backlog).
 Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada no
@@ -15,24 +15,17 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ---
 
-### ⚠️ Achado do Bloco 1 — 364 threads ativas sem status definido
+## 🟡 MELHORIA — Empresa não identificada em 276 threads do Resumo Semanal (14/09/2026)
 
-Durante o levantamento, foram encontradas 364 threads com `inativa_desde = None` mas `status_workflow = None`. O sistema não calculou o status dessas threads. Causa não investigada ainda.
+Levantamento real (antes havia 24 no snapshot de 10/09): **276 threads AF/AC com CADOC** retornam "Sem empresa identificada" na função `_extrair_empresa` de `resumo_semanal.py`.
 
-**Próximo passo:** investigar em chat dedicado — o que são essas threads, por que não têm status e se precisam de recálculo.
+**Causa raiz:** `remetente_principal` quase sempre é `suporte@finaud.com.br` (mascarado) ou endereço @finaud.com.br interno — o algoritmo detecta como interno e tenta extrair do assunto, mas não reconhece todos os padrões.
 
----
+**Dois grupos:**
+- **Grupo A (~80):** assunto tem o nome — "COLUNA - ENVIAR DDR", "ACTIVTRADES - ENVIAR DRL", "Trinus DTVM | DLO". Corrigível melhorando `_extrair_empresa` para reconhecer os padrões.
+- **Grupo B (~196):** assunto não tem o nome — "Doc 4111 - data", "DDR 2011 - data". Requer mapeamento remetente → empresa ou enriquecimento do `cadastro_clientes_cadoc.json`.
 
-## 🟡 RESUMO SEMANAL — Identificar empresas sem nome nos cards Retorno Bacen (10/09/2026)
-
-No Resumo Semanal, vários cards de CADOC exibem "Sem empresa identificada (N)" porque o banco de dados não tem o nome da empresa linkado àquelas threads. São threads onde o assunto do e-mail não contém o nome da empresa de forma legível para o sistema.
-
-**Quantos casos afetados:**
-- Aguardando Cliente: DRM 2060 (2), DLO 2061 (1), DDR 2011 (2) = **5 casos**
-- Aguardando Finaud: DRM 2060 (5), DLO 2061 (3), Indício/Atraso (4), COSIF 4111 (2), DDR 2011 (2), DLI 2062 (2), DRL 2160 (1) = **19 casos**
-- Total: **24 casos sem empresa identificada**
-
-**Próximo passo:** abrir chat dedicado para inspecionar as threads sem empresa identificada — ler o `assunto` e `remetente_principal` de cada uma no banco e determinar o nome da empresa que falta.
+**Próximo passo:** implementar melhoria em `_extrair_empresa` para o Grupo A; decidir abordagem do Grupo B (cadastro manual vs. mapeamento automático).
 
 ---
 
@@ -330,7 +323,9 @@ O campo **MOTIVO** exibido na tela de e-mails é hoje muito genérico em vários
 1. Finaud solicitou extrato ou planilha — aguarda envio
 2. Finaud deu orientação técnica — aguarda execução
 3. Finaud propôs reunião ou ligação — aguarda confirmação
-4. Finaud fez pergunta — aguarda resposta
+4. Finaud fez pergunta — aguarda resposta ← **já implementado** (aparece em 50 threads ativas)
+
+**Situação (14/09/2026):** submotivo 4 já está no código e funciona. Submotivos 1, 2, 3 ainda não detectados — precisam de implementação. 25 threads SEM RETORNO com texto antigo serão corrigidas automaticamente quando o recálculo rodar. Distribuição observada nas 25: ~17 orientação técnica, ~5 planilha, ~3 reunião, ~1 pergunta.
 
 ---
 
@@ -345,14 +340,23 @@ O campo **MOTIVO** exibido na tela de e-mails é hoje muito genérico em vários
 
 ---
 
-### Investigação pendente — antes de nomear o grupo restante
+### ✅ Investigação concluída (14/09/2026) — 210 threads em SEM RETORNO
 
-Os ~130 e-mails que sobram da caixa preta (nenhum padrão de entrega nem pergunta detectado) precisam ser investigados:
-1. O que está nesses e-mails que o sistema não consegue identificar?
-2. É possível melhorar a detecção e reduzir esse grupo?
-3. Só depois de investigar: nomear o que sobrar de forma honesta.
+Varredura feita em 14/09/2026. Resultado: **210 threads** SEM RETORNO com este motivo.
 
-**Quando fazer:** próximo chat dedicado — não implementar nada enquanto esta análise não estiver concluída.
+**Distribuição por categoria:** DDR_2011 (125), DLO_2061 (22), RETORNO_BACEN (19), SUPORTE (15), SALDOS_CONTABEIS_DIARIOS_4111 (15), DRM_2060 (7), DRL_2160 (4), DLI_2062 (1), S5 (1), INTERNO (1).
+
+**109/210 têm remetente mascarado** (finaud.com.br) — problema da Parte 5 (Remetente), não afeta o motivo.
+
+**Dois padrões principais identificados:**
+
+1. **Entregas não detectadas (~100-130):** clientes enviando arquivos com "Seguem os arquivos...", "Anexo extratos...", "Enviado o DDR..." — termos que o sistema ainda não reconhece como entrega. Quando os novos termos forem implementados (item 2 abaixo), a maioria sairá da caixa preta e virará "Cliente enviou informações e extratos — aguarda processamento".
+
+2. **Sem corpo / só anexo (~50-70):** cliente enviou apenas anexo, sem texto no corpo. Sem texto para analisar, o sistema sempre cai no genérico. Texto honesto para este grupo: **"Cliente enviou arquivo — aguarda processamento"** (avaliar se merece motivo próprio ou é consolidado no texto de entrega).
+
+**Decisão (14/09/2026):** registrar achado e avançar. Implementar os novos termos de entrega (item 2 abaixo) e depois ver o que sobra de verdade na caixa preta.
+
+**Quando fazer:** junto com a implementação dos novos termos de entrega.
 
 ---
 

@@ -2,6 +2,48 @@
 
 ---
 
+### 14/09 — FIX(motivo): correção cirúrgica de motivo_status em 250 threads arquivadas
+
+**🔎 Em miúdos:** 250 threads SEM RETORNO ainda exibiam textos antigos de motivo na tela — textos que já tinham sido substituídos por versões aprovadas em 27/08/2026 e que já aparecem corretamente nas threads ativas. A causa: `recalcular_status_todos()` só processa threads com `inativa_desde IS NULL`, ignorando arquivadas. Correção feita via SQL direto, sem tocar `status_workflow`.
+
+**Mapeamentos aplicados (250 threads, banco de produção):**
+
+| Texto antigo | Qtd | Texto novo |
+|---|---|---|
+| Cliente enviou conteúdo — aguarda processamento da Finaud | 214 | Cliente enviou informações e extratos — aguarda processamento |
+| Cliente encaminhou — aguarda processamento da Finaud | 17 | Cliente enviou informações e extratos — aguarda processamento |
+| Cliente enviou saudação — possível entrega de arquivo | 11 | Mensagem sem conteúdo identificável — aguarda verificação |
+| Finaud enviou arquivo e aguarda resposta do cliente | 4 | Finaud enviou arquivo — aguarda retorno do cliente |
+| Finaud enviou arquivo sem linguagem de entrega | 2 | Finaud enviou arquivo — aguarda retorno do cliente |
+| Mensagem do cliente sem conteúdo para classificar — aguarda verificação | 1 | Mensagem sem conteúdo identificável — aguarda verificação |
+| Fix R: cliente prometeu retornar — aguardando o cliente | 1 | Cliente prometeu retornar com informações — aguarda retorno |
+
+**Arquivos:** script `/tmp/corrigir_motivos_arquivadas.py` (VPS scratchpad). Backup em `data/backups/20260914_1622_correcao_motivos_arquivadas/`.
+
+**O que ainda aguarda implementação:**
+- 25 threads "Finaud escreveu — aguarda retorno do cliente" → 4 submotivos (submotivos 1-3 precisam de código novo)
+- 210 threads "Cliente escreveu — aguarda resposta da Finaud" → caixa preta (maioria são entregas não detectadas com "Seguem"/"Anexo"/"Enviado")
+
+**Validação:** ✅ VALIDADO — varredura pós-correção confirma 0 textos antigos nas arquivadas (exceto os 2 grupos acima, que aguardam implementação).
+
+---
+
+### 14/09 — ANÁLISE(empresa): 276 threads sem empresa identificada no Resumo Semanal
+
+**🔎 Em miúdos:** o Resumo Semanal mostra "Sem empresa identificada" em 276 threads AF/AC com CADOC. O número era 24 no PENDENCIAS (snapshot de 10/09) — cresceu com o banco. A causa raiz é que o `remetente_principal` quase sempre é mascarado como `suporte@finaud.com.br` ou é um endereço interno da Finaud, e o algoritmo cai no modo de extração pelo assunto, que não reconhece todos os padrões.
+
+**Dois grupos identificados:**
+- **Grupo A (~80):** assunto tem o nome da empresa em padrões não reconhecidos — "NOME - ENVIAR CADOC", "NOME | CADOC", "DLI E DLO - NOME". Auto-corrigível melhorando `_extrair_empresa`.
+- **Grupo B (~196):** assunto não tem o nome — "Doc 4111 - data", "DDR 2011 - data", "4111 - dia X". Requer cadastro de clientes ou mapeamento nome_remetente → empresa.
+
+**Decisão de Michel:** pausar correção, avançar na validação das outras partes primeiro.
+
+**Próximo passo:** registrado em `PENDENCIAS.md` como melhoria de médio prazo em `_extrair_empresa`.
+
+**Validação:** ⚠️ PENDENTE — aguarda priorização.
+
+---
+
 ### 13/09 — FIX(status): recálculo das threads arquivadas (SEM RETORNO) divergentes
 
 **🔎 Em miúdos:** as threads SEM RETORNO (arquivadas) tinham o status congelado no momento em que foram arquivadas. Com a evolução do algoritmo (Fix W, X, Y, Z), 10 dessas threads passaram a ter um status diferente do que o algoritmo calcularia hoje. Corrigimos o banco para refletir o algoritmo atual.

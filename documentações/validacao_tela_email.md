@@ -11,11 +11,11 @@
 | Parte | O que valida | Estado | Detalhes |
 |---|---|---|---|
 | 1 | Status (AF / AC / Concluída) | ✅ Concluída (11/09/2026) | `validacao_status_suspeitos.md` |
-| 2 | Categoria (DDR, DLO, SUPORTE...) | ⬜ Pendente | abaixo |
-| 3 | Motivo (texto do motivo na tela) | ⬜ Pendente | abaixo |
-| 4 | Empresa (nome da empresa na tela) | ⬜ Pendente | abaixo |
+| 2 | Categoria (DDR, DLO, SUPORTE...) | ✅ Concluída (14/09/2026) | abaixo |
+| 3 | Motivo (texto do motivo na tela) | ⚠️ Parcialmente concluída (14/09/2026) | abaixo |
+| 4 | Empresa (nome da empresa na tela) | ⚠️ Achado registrado (14/09/2026) | abaixo |
 | 5 | Remetente (quem enviou o último e-mail) | ⬜ Pendente | abaixo |
-| 6 | 364 threads sem status | ⬜ Pendente | abaixo |
+| 6 | 364 threads sem status | ✅ Concluída (14/09/2026) | abaixo |
 
 ---
 
@@ -27,7 +27,7 @@
 
 ---
 
-## ⬜ Parte 2 — Categoria
+## ✅ Parte 2 — Categoria
 
 ### O que é
 
@@ -54,7 +54,7 @@ O classificador determinístico foi validado em 17/08/2026 com placar 764/768 (9
 
 ---
 
-## ⬜ Parte 3 — Motivo
+## ⚠️ Parte 3 — Motivo
 
 ### O que é
 
@@ -76,13 +76,20 @@ Em 27/08/2026 foi feita uma análise completa dos motivos (76 distintos) com Mic
 - Listar threads com cada motivo pendente de atualização
 - Michel confirma ou ajusta — depois implementar tudo de uma vez
 
-### Estado
+### Resultado (14/09/2026)
 
-⬜ Não iniciada — depende de decisão sobre os motivos pendentes (PENDENCIAS.md) primeiro
+**ATIVAS (1.017 threads):** ✅ 0 sem motivo. Todos os textos aprovados já em uso.
+
+**SEM RETORNO (700 threads):**
+- ✅ 250 threads com textos antigos corrigidos via SQL direto (14/09/2026)
+- ⚠️ 25 threads "Finaud escreveu — aguarda retorno do cliente" — aguardam implementação dos 3 submotivos faltantes (orientação técnica, planilha, reunião)
+- ⚠️ 210 threads "Cliente escreveu — aguarda resposta da Finaud" (caixa preta) — maioria são entregas não detectadas com "Seguem"/"Anexo"/"Enviado"; aguardam expansão dos termos de detecção
+
+**Estado:** ⚠️ Parcialmente concluída — o que estava ao alcance foi corrigido. Os 235 restantes dependem de implementação de código (`_determinar_status` em `scripts/banco_threads.py`). Ver PENDENCIAS.md → seção "TELAS — Melhorar textos do campo MOTIVO".
 
 ---
 
-## ⬜ Parte 4 — Empresa
+## ⚠️ Parte 4 — Empresa
 
 ### O que é
 
@@ -137,7 +144,7 @@ A proposta de correção (coletor + migração histórica) está detalhada em `d
 
 ---
 
-## ⬜ Parte 6 — 364 threads sem status
+## ✅ Parte 6 — 364 threads sem status
 
 ### O que é
 
@@ -164,17 +171,27 @@ Hipótese: essas threads nunca passaram pelo classificador e por isso não têm 
 - Classificar cada uma: automático / thread real
 - Decidir com Michel o que fazer com cada grupo
 
-### Estado
+### Resultado (14/09/2026)
 
-⬜ Não iniciada — aguarda chat dedicado
+- No banco de produção: **0 threads** `destino='principal'` sem status — o pipeline já as processou.
+- 372 threads em `destino='descartes'` sem status — revisadas e confirmadas como corretas:
+  - 226 sem remetente: alertas BACEN, Leiautes, Relatórios do Serviço, FogBugz
+  - 60 via suporte@finaud: notificações 3CX, marketing Muse/Meta, FogBugz
+  - 54 riskdriver@finaud: relatórios diários automáticos
+  - 27 contato@finaud: atualizações BACEN – Riscos
+  - 2 FogBugz: testes de notificação
+  - 3 individuais revisados com Michel: cancelamento Fair Corretora, cancelamento Nova Futura, convite Andrea — todos confirmados como descartes corretos.
+
+**Estado:** ✅ Concluída — nada a corrigir.
 
 ---
 
 ## Ordem sugerida de execução
 
 1. ✅ ~~Parte 1 — Status~~ (concluída)
-2. **Parte 6 — 364 sem status** (mais simples: a maioria parece automático)
-3. **Parte 4 — Empresa** (24 casos — escopo pequeno e bem delimitado)
-4. **Parte 2 — Categoria** (precisa de script novo)
-5. **Parte 3 — Motivo** (depende de decisões pendentes no PENDENCIAS.md)
-6. **Parte 5 — Remetente** (maior esforço — migração de banco)
+2. ✅ ~~Parte 6 — 364 sem status~~ (concluída)
+3. ✅ ~~Parte 2 — Categoria~~ (concluída — 0 sem categoria; multi-CADOC DLI/DLO confirmado como comportamento esperado)
+4. ⚠️ ~~Parte 3 — Motivo~~ (parcial — 250 corrigidos; 235 aguardam implementação de código)
+5. **Parte 5 — Remetente** (maior esforço — migração de banco)
+6. ⚠️ Parte 4 — Empresa (276 casos; achado registrado)
+7. Parte 3 complemento — implementar detecção "Seguem"/"Anexo"/"Enviado" + 3 submotivos "Finaud escreveu"
