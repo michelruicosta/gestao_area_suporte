@@ -15,17 +15,85 @@ Quando uma pendência for **resolvida**, ela **sai daqui** e vira entrada datada
 
 ---
 
-## 🟡 MELHORIA — Empresa não identificada em 276 threads do Resumo Semanal (14/09/2026)
+## 🟡 MELHORIA — Empresa no Resumo Semanal: substituir extração por assunto por mapeamento de domínio (14/09/2026)
 
-Levantamento real (antes havia 24 no snapshot de 10/09): **276 threads AF/AC com CADOC** retornam "Sem empresa identificada" na função `_extrair_empresa` de `resumo_semanal.py`.
+### O problema
 
-**Causa raiz:** `remetente_principal` quase sempre é `suporte@finaud.com.br` (mascarado) ou endereço @finaud.com.br interno — o algoritmo detecta como interno e tenta extrair do assunto, mas não reconhece todos os padrões.
+O Resumo Semanal (e-mail automático) exibe um card por thread CADOC em aberto. Cada card mostra o nome da empresa. Esse nome é calculado pela função `_extrair_empresa()` em `resumo_semanal.py`, que hoje tenta extrair o nome do **assunto do e-mail**.
 
-**Dois grupos:**
-- **Grupo A (~80):** assunto tem o nome — "COLUNA - ENVIAR DDR", "ACTIVTRADES - ENVIAR DRL", "Trinus DTVM | DLO". Corrigível melhorando `_extrair_empresa` para reconhecer os padrões.
-- **Grupo B (~196):** assunto não tem o nome — "Doc 4111 - data", "DDR 2011 - data". Requer mapeamento remetente → empresa ou enriquecimento do `cadastro_clientes_cadoc.json`.
+Resultado: 51 threads ativas (de ~700 totais CADOC) aparecem no Resumo como **"Sem empresa identificada"** — o Resumo fica menos útil para Michel identificar rapidamente quem está pendente.
 
-**Próximo passo:** implementar melhoria em `_extrair_empresa` para o Grupo A; decidir abordagem do Grupo B (cadastro manual vs. mapeamento automático).
+### Por que extração por assunto é ruim
+
+O assunto é livre — cada cliente escreve como quer:
+- `"ACTIVTRADES - ENVIAR PLANILHA DRL"` → funciona (empresa antes do traço)
+- `"Encaminhar a Planilha DRL julho/2026. ATUAL."` → falha (empresa não está no assunto)
+- `"Doc 4111 - 08-09-2026"` → falha (assunto genérico sem nome)
+- `"REMITLY: Planilha LEC"` → falha (dois pontos, não traço)
+- `"PI Exposure MiraeAsset..."` → falha (nome embutido no meio)
+
+Tentar cobrir todos os padrões é uma corrida sem fim — sempre haverá casos não previstos.
+
+### Solução proposta: mapeamento domínio → empresa
+
+Agora que a migração de remetentes foi concluída (764 threads com endereço real do cliente), temos o **domínio do e-mail** disponível em `remetente_principal`:
+
+- `jair.bonetti@westernunion.com` → domínio `westernunion.com` → empresa **Western Union**
+- `jnlima@planner.com.br` → domínio `planner.com.br` → empresa **Planner Corretora**
+- `william.oliveira@miraeinvest.com.br` → **Mirae Asset Securities**
+
+Uma tabela `domínio → empresa` resolve 100% dos casos para clientes cadastrados — independente do assunto. Michel mantém a tabela; quando chega um cliente novo, ele cadastra o domínio.
+
+### Onde fica a tabela
+
+Opção A — arquivo JSON no projeto (`data/mapeamento_empresas.json`):
+```json
+{
+  "westernunion.com": "Western Union",
+  "planner.com.br": "Planner Corretora",
+  "miraeinvest.com.br": "Mirae Asset Securities",
+  "remitly.com": "Remitly",
+  "wise.com": "Wise",
+  "wu.com": "Western Union",
+  "montebravo.com.br": "Monte Bravo",
+  ...
+}
+```
+
+Opção B — tabela no banco SQLite (mesma estrutura das regras de classificação — gerenciável pela tela de manutenção do Passo C).
+
+**Recomendação:** Opção A para começar (mais simples, Michel edita direto). Migrar para Opção B quando a tela de manutenção estiver pronta.
+
+### Impactos
+
+**O que melhora:**
+- Resumo Semanal passa a mostrar o nome certo para todos os clientes cadastrados
+- Zero dependência do formato do assunto — funciona mesmo quando o assunto é genérico
+- Fácil manutenção: novo cliente = nova linha no JSON
+
+**O que não muda:**
+- Threads de clientes ainda não cadastrados continuam como "Sem empresa identificada" — mas Michel sabe que precisa cadastrar
+- A tela de e-mails não é afetada (empresa não aparece lá)
+- Status, categoria e motivo não são afetados
+
+**Risco:**
+- Domínios compartilhados (ex.: `gmail.com`, `outlook.com`) não identificam empresa — esses continuam como "Sem empresa". Baixo risco: clientes BACEN usam domínio corporativo próprio.
+- Dois clientes no mesmo domínio corporativo: improvável em contexto BACEN, mas se ocorrer, precisa de lógica adicional (remetente específico, não só domínio).
+
+### O que Michel precisa fornecer
+
+A lista inicial de mapeamentos: domínio → nome da empresa como deve aparecer no Resumo. Com base nos domínios já vistos no banco (westernunion.com, planner.com.br, miraeinvest.com.br, remitly.com, wise.com, wu.com, montebravo.com.br, globalexchange.br.com, tc.com.br, unicred.com.br, trinusco.com.br, ozcambio.com.br, economatica.com.br, ebury.com, etc.).
+
+### Arquivos a alterar
+
+| Arquivo | O que muda |
+|---|---|
+| `data/mapeamento_empresas.json` | Arquivo novo — tabela domínio → empresa |
+| `scripts/resumo_semanal.py` | `_extrair_empresa()` — consulta o JSON pelo domínio do remetente; mantém extração por assunto como fallback |
+
+### Quando fazer
+
+Após Michel preencher os mapeamentos principais. Implementação é pequena (~20 linhas de código). Chat dedicado.
 
 ---
 
