@@ -14,7 +14,7 @@
 | 2 | Categoria (DDR, DLO, SUPORTE...) | ✅ Concluída (14/09/2026) | abaixo |
 | 3 | Motivo (texto do motivo na tela) | ✅ Concluída (14/09/2026) | abaixo |
 | 4 | Empresa (nome da empresa na tela) | ⚠️ Achado registrado (14/09/2026) | abaixo |
-| 5 | Remetente (quem enviou o último e-mail) | ⚠️ Achado registrado (14/09/2026) | abaixo |
+| 5 | Remetente (quem enviou o último e-mail) | ✅ Concluída (14/09/2026) | abaixo |
 | 6 | 364 threads sem status | ✅ Concluída (14/09/2026) | abaixo |
 
 ---
@@ -153,7 +153,9 @@ A proposta de correção (coletor + migração histórica) está detalhada em `d
 
 **Tela principal:** continua mostrando o cliente correto via Reply-To — sem impacto operacional para Michel. Problema restrito ao dado no banco (afeta telas secundárias e exportações futuras).
 
-**Estado:** ⚠️ Achado registrado — execução pendente de priorização. Ver PENDENCIAS.md → "BANCO/TELAS — Remetente mascarado".
+**Execução (14/09/2026):** 764 threads corrigidas via Reply-To já guardado no JSON. 62 sem Reply-To aguardam re-busca via Gmail API (trabalho separado — registrado em PENDENCIAS.md).
+
+**Estado:** ✅ Concluída (14/09/2026) — 764 corrigidos; 62 restantes aguardam Gmail API.
 
 ---
 
@@ -205,6 +207,6 @@ Hipótese: essas threads nunca passaram pelo classificador e por isso não têm 
 2. ✅ ~~Parte 6 — 364 sem status~~ (concluída)
 3. ✅ ~~Parte 2 — Categoria~~ (concluída — 0 sem categoria; multi-CADOC DLI/DLO confirmado como comportamento esperado)
 4. ✅ ~~Parte 3 — Motivo~~ (concluída — 485 threads corrigidas: 250 via SQL + 235 via recálculo + 3 submotivos implementados)
-5. ⚠️ ~~Parte 5 — Remetente~~ (achado registrado — 820 mascarados, 759 recuperáveis via Reply-To)
+5. ✅ ~~Parte 5 — Remetente~~ (concluída — 764 corrigidos via Reply-To; 62 aguardam Gmail API)
 6. ⚠️ Parte 4 — Empresa (276 casos; achado registrado)
 7. Parte 3 complemento — implementar detecção "Seguem"/"Anexo"/"Enviado" + 3 submotivos "Finaud escreveu"

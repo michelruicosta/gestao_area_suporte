@@ -912,7 +912,7 @@ Ideias levantadas por Michel para evoluir o painel:
 
 ---
 
-### 🟡 BANCO/TELAS — Remetente mascarado: 645 e-mails de clientes guardados com suporte@finaud no lugar do cliente real (identificado 26/08/2026)
+### 🟡 BANCO/TELAS — Remetente mascarado: coletor + 62 threads sem Reply-To (identificado 26/08/2026)
 
 #### O que é o problema
 
@@ -936,11 +936,9 @@ Varredura completa do banco de produção (`/srv/finaud/tec/gestao_area_suporte/
 
 | Situação | Qtd |
 |---|---|
-| Threads com remetente mascarado (`suporte@finaud.com.br`) | 820 (47,2%) — atualizado 14/09/2026 |
-| → Recuperáveis via Reply-To já salvo no JSON | **759** |
-| → Sem Reply-To útil (Wise DDR e similares — precisam X-Original-From via API) | **61** |
-| → Sarah Sá / Pedro Silva / suporte genérico (Finaud enviando pela lista — dado correto) | ~20 |
-| → Facebook/redes sociais roteados pela lista (automáticos) | ~6 (já filtrados) |
+| Threads com remetente mascarado — antes da migração (14/09) | 826 |
+| ✅ Corrigidas via Reply-To (migração 14/09/2026) | **764** |
+| ⏳ Sem Reply-To útil — aguardam X-Original-From via Gmail API | **62** |
 
 O e-mail bruto contém campos que revelam o remetente real:
 - `X-Original-From: George Lucas Ramos Junckes <george.junckes@eqi.com.br>` — nome + e-mail real
@@ -992,7 +990,9 @@ A tela que Michel usa diariamente já mostra o cliente correto. O classificador 
 
 **Quando fazer:** após a Fase 1 estar estável em produção — não bloqueia nada hoje.
 
-**Atualização 14/09/2026 (Parte 5 da validação):** banco cresceu — 820 mascarados (47,2% das 1.736 threads). 759 recuperáveis via Reply-To já no JSON; 61 precisam de re-busca via Gmail API (`X-Original-From`). Tela principal continua mostrando o cliente correto. Decisão de Michel: registrar e avançar.
+**Situação (14/09/2026):** migração histórica concluída — 764 threads corrigidas (ver REGISTRO_CORRECOES.md). Restam 2 pendências:
+1. **Coletor** (`coletor_gmail.py`): novos e-mails ainda entram mascarados — implementar fallback `X-Original-From` → `X-Original-Sender` → `From`
+2. **62 threads** sem Reply-To — re-busca via Gmail API com `format=full` para ler `X-Original-From`
 
 ---
 

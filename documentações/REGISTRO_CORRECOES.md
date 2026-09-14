@@ -2,6 +2,22 @@
 
 ---
 
+### 14/09 — FIX(remetente): migração de 764 remetentes mascarados para endereço real do cliente
+
+**🔎 Em miúdos:** 826 threads tinham o endereço do Google Groups (`suporte@finaud.com.br`) no lugar do e-mail real do cliente. A tela já mostrava o cliente correto (via Reply-To), mas o dado no banco estava errado. Corrigido 764 casos usando o Reply-To guardado no JSON de cada thread.
+
+**Resultado (banco de produção, 14/09/2026):**
+- Atualizadas: 764 threads
+- Sem Reply-To (não recuperáveis agora): 62 threads — aguardam re-busca via Gmail API
+- Erros: 0
+
+**Top domínios restaurados:** westernunion.com (139), planner.com.br (120), colunadtvm.com.br (61), miraeinvest.com.br (59), remitly.com (57), wise.com (55), montebravo.com.br (50)...
+
+**Backup:** `data/backups/20260914_1828/migrar_remetente/`
+**Validação:** ✅ VALIDADO — 0 erros; tela não impactada (já usava Reply-To).
+
+---
+
 ### 14/09 — FEAT(motivo): 3 submotivos para Finaud→Cliente + recálculo de 235 threads arquivadas
 
 **🔎 Em miúdos:** quando a Finaud escreve ao cliente sem entregar um arquivo, o sistema agora distingue 3 situações diferentes em vez de usar sempre o texto genérico "Finaud fez pergunta — aguarda resposta": orientação técnica dada ao cliente, solicitação de planilha/extrato, e proposta de reunião.
