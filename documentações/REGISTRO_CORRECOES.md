@@ -2,6 +2,36 @@
 
 ---
 
+### 13/09 — FIX(status): recálculo das threads arquivadas (SEM RETORNO) divergentes
+
+**🔎 Em miúdos:** as threads SEM RETORNO (arquivadas) tinham o status congelado no momento em que foram arquivadas. Com a evolução do algoritmo (Fix W, X, Y, Z), 10 dessas threads passaram a ter um status diferente do que o algoritmo calcularia hoje. Corrigimos o banco para refletir o algoritmo atual.
+
+**O que foi feito:**
+- Varredura completa das 1696 threads da tela (1027 ativas + 669 SEM RETORNO AF/AC)
+- Ativas: **0 divergências** — todas consistentes com o algoritmo
+- Arquivadas: **10 divergências** encontradas e corrigidas diretamente no banco da VPS
+- Cada thread foi revisada com o texto real da última mensagem antes de aprovar o recálculo
+- Script executado: `/tmp/recalcular_arquivadas.py` na VPS (scratchpad)
+
+**Threads corrigidas:**
+
+| Assunto | Antes | Depois |
+|---|---|---|
+| Doc 4111 - 10-08-2026 | AF | AC — Finaud enviou arquivo |
+| COLUNA - ENVIAR DDR E CADOC 05/08 | AC | AF — Cliente enviou informações |
+| DLO 30.06 - OSLO, HCOMMCOR, LEVYCAM, MONOPOLIO | AF | Concluída |
+| Doc 4111 - 07-08-2026 | AF | AC — Finaud enviou arquivo |
+| Disparos de E-mails recorrentes - DLO | AF | Concluída — e-mail interno |
+| DLO 30.06 - LIMINE DTVM | AF | Concluída |
+| DLO 30.06 versão 2 - REMITLY | AF | Concluída |
+| Posição de Câmbio 13/07 a 17/07 | AC | Concluída — Sarah encaminhou resposta ao suporte interno |
+| ATUAL CORRETORA - Contingência | AF | Concluída — Finaud em Bcc |
+| BACEN - Aviso de Atraso (cv dtvm) | AF | Concluída — Finaud em Bcc |
+
+**Validação:** ✅ VALIDADO — 682 arquivadas já consistentes + 10 corrigidas = 692 total. 0 erros.
+
+---
+
 ### 11/09 — DOCS(validacao): protocolo de validação de status gravado + Bloco 1 executado
 
 **🔎 Em miúdos:** definimos um protocolo em 3 blocos para revisar se os status das threads (Aguardando Finaud, Aguardando Cliente, Concluída) estão certos. O protocolo foi gravado em arquivo para não se perder entre chats. O Bloco 1 (levantamento automático) foi executado e encontrou 22 casos suspeitos para revisar com Michel.
