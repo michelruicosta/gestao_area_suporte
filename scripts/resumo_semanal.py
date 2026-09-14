@@ -18,6 +18,16 @@ import requests
 
 _log = logging.getLogger(__name__)
 
+def _carregar_mapeamento_empresas() -> dict:
+    caminho = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'config', 'mapeamento_empresas.json')
+    try:
+        with open(caminho, encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+_MAPEAMENTO_EMPRESAS: dict = _carregar_mapeamento_empresas()
+
 _NOTIF_ID      = 'resumo_semanal'
 _GRUPOS_NOTIF  = ('administrador', 'gestor', 'operador')
 _ASSUNTO_EMAIL = 'Gestão Área Suporte — Resumo Semanal'
@@ -145,12 +155,12 @@ def _extrair_empresa(assunto: str, remetente: str) -> str:
     is_interno = '@finaud.com.br' in rem or '@finaudtec.com.br' in rem or 'via Suporte' in rem
 
     if not is_interno:
-        # Tenta extrair do domínio do email
-        m = re.search(r'<[^@]+@([^.>]+)\.', rem)
+        # Tenta buscar pelo domínio completo no mapeamento de empresas
+        m = re.search(r'<[^@]+@([^>]+)>', rem)
         if m:
-            domain = m.group(1).lower()
-            if domain not in _DOMINIOS_GENERICOS:
-                return domain.capitalize()
+            domain = m.group(1).lower().strip()
+            if domain in _MAPEAMENTO_EMPRESAS:
+                return _MAPEAMENTO_EMPRESAS[domain]
 
     # Tenta extrair do assunto: empresa antes do nome do CADOC
     sub = assunto or ''
