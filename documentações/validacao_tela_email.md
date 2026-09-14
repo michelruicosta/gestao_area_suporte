@@ -89,30 +89,22 @@ Em 27/08/2026 foi feita uma análise completa dos motivos (76 distintos) com Mic
 
 ---
 
-## ⚠️ Parte 4 — Empresa
+## ⚠️ Parte 4 — Empresa (Resumo Semanal)
 
 ### O que é
 
-Cada thread tem um campo `empresa` exibido na tela. A validação confirma se o nome da empresa está correto para todas as threads ativas.
+⚠️ **Correção de escopo (14/09/2026):** o campo `empresa` não aparece na tela de e-mails (`gestao_email.html` — confirmado). A empresa é calculada dinamicamente pela função `_extrair_empresa` em `scripts/resumo_semanal.py` e aparece apenas no **e-mail semanal automático** com os cards BACEN. Esta parte não é uma validação da tela de e-mails — é uma melhoria do Resumo Semanal.
 
 ### Contexto
 
-Identificados 24 casos "Sem empresa identificada" no Resumo Semanal (cards BACEN). São threads onde o assunto do e-mail não contém o nome da empresa de forma legível para o sistema.
+215 threads ativas com CADOC retornam "Sem empresa identificada" na função `_extrair_empresa`. Dois grupos:
 
-### O que verificar
-
-1. Quantas threads ativas têm `empresa = NULL ou "Sem empresa identificada"`?
-2. Para cada uma: ler o assunto e remetente e determinar o nome correto
-3. Atualizar o banco com o nome certo
-
-### Como fazer
-
-- Script de levantamento no banco
-- Resultado: lista de threads sem empresa para Michel completar
+- **Grupo A (~90):** empresa visível no assunto, mas em padrões não reconhecidos ("COLUNA - ENVIAR DDR", "REMITLY : Movimento", "PI Exposure MiraeAsset...", etc.). Corrigível melhorando a função.
+- **Grupo B (~125):** empresa não está no assunto ("DDR 2011 - data", "Posição de Câmbio..."). Requer mapeamento remetente → empresa.
 
 ### Estado
 
-⬜ Não iniciada — aguarda chat dedicado
+⚠️ Achado registrado — melhoria do Resumo Semanal, não da tela de e-mails. Ver PENDENCIAS.md → "MELHORIA — Empresa não identificada".
 
 ---
 

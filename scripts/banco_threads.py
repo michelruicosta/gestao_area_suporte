@@ -1049,13 +1049,13 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
             return 'Concluída', 'Finaud concluiu a solicitação'
         # §8.8a: solicitação/espera explícita do cliente supera "retornaremos em breve"
         if any(f in texto_flat for f in _FRASES_SOLICITA_EXTRATO):
-            return 'Aguardando Cliente', _motivo_ag_cli
+            return 'Aguardando Cliente', 'Finaud solicitou extrato ou planilha — aguarda envio'
         if any(f in texto_lower for f in _FRASES_AGUARDANDO_FINAUD_ATIVA + _termos_db('Finaud prometeu retornar')):
             return 'Aguardando Finaud', 'Finaud prometeu retornar'
         if any(f in texto_lower for f in _FRASES_ORIENTACAO_TECNICA):
-            return 'Aguardando Cliente', _motivo_ag_cli
+            return 'Aguardando Cliente', 'Finaud deu orientação técnica — aguarda execução'
         if any(f in texto_lower for f in _FRASES_REUNIAO):
-            return 'Aguardando Cliente', _motivo_ag_cli
+            return 'Aguardando Cliente', 'Finaud propôs reunião ou ligação — aguarda confirmação'
         # Fix Y: instrução técnica ao cliente supera abertura com "obrigada/obrigado"
         # Ex.: "Obrigada por aguardar. 1) Calcule novamente o DLO e transmita ao BC."
         # Sem este check, _eh_cortesia_finaud retorna True (começa com "obrigada") e o
@@ -1068,7 +1068,7 @@ def _determinar_status(msgs: list[dict]) -> tuple[str, str]:
             'para solucionar,', 'para solucionar:', 'para corrigir,',
         )
         if any(f in texto_flat for f in _instrucao_cliente):
-            return 'Aguardando Cliente', _motivo_ag_cli
+            return 'Aguardando Cliente', 'Finaud deu orientação técnica — aguarda execução'
         if _eh_cortesia_finaud(texto_novo):
             if len(msgs) == 1:
                 return 'Aguardando Finaud', 'Cliente enviou informações e extratos — aguarda processamento'
