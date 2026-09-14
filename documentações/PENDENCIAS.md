@@ -317,15 +317,15 @@ O campo **MOTIVO** exibido na tela de e-mails é hoje muito genérico em vários
 | [caixa preta — pergunta do cliente] (~70x) | **Cliente fez pergunta — aguarda resposta da Finaud** | Aguardando Finaud | 27/08 tarde |
 | "Fix H: cliente agradeceu sem pergunta ou documento" (41x) + "Cliente confirmou — sem pendência" (39x) | **Cliente agradeceu — problema resolvido** | Concluída | 27/08 tarde |
 | "Finaud encerrou a conversa" (68x) | **Finaud concluiu a solicitação** | Concluída | 27/08 manhã |
-| "Finaud escreveu — aguarda retorno do cliente" (49x) | **4 submotivos abaixo** | Aguardando Cliente | 27/08 manhã |
+| "Finaud escreveu — aguarda retorno do cliente" (49x) | **✅ 4 submotivos implementados (14/09/2026)** | Aguardando Cliente | 27/08 manhã |
 
-**4 submotivos (Aguardando Cliente):**
-1. Finaud solicitou extrato ou planilha — aguarda envio
-2. Finaud deu orientação técnica — aguarda execução
-3. Finaud propôs reunião ou ligação — aguarda confirmação
-4. Finaud fez pergunta — aguarda resposta ← **já implementado** (aparece em 50 threads ativas)
+**4 submotivos implementados (14/09/2026):**
+1. ✅ Finaud solicitou extrato ou planilha — aguarda envio
+2. ✅ Finaud deu orientação técnica — aguarda execução
+3. ✅ Finaud propôs reunião ou ligação — aguarda confirmação
+4. ✅ Finaud fez pergunta — aguarda resposta (já existia)
 
-**Situação (14/09/2026):** submotivo 4 já está no código e funciona. Submotivos 1, 2, 3 ainda não detectados — precisam de implementação. 25 threads SEM RETORNO com texto antigo serão corrigidas automaticamente quando o recálculo rodar. Distribuição observada nas 25: ~17 orientação técnica, ~5 planilha, ~3 reunião, ~1 pergunta.
+**Situação (14/09/2026):** todos implementados. 235 threads SEM RETORNO recalculadas. Ver REGISTRO_CORRECOES.md.
 
 ---
 

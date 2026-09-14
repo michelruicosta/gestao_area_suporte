@@ -12,7 +12,7 @@
 |---|---|---|---|
 | 1 | Status (AF / AC / Concluída) | ✅ Concluída (11/09/2026) | `validacao_status_suspeitos.md` |
 | 2 | Categoria (DDR, DLO, SUPORTE...) | ✅ Concluída (14/09/2026) | abaixo |
-| 3 | Motivo (texto do motivo na tela) | ⚠️ Parcialmente concluída (14/09/2026) | abaixo |
+| 3 | Motivo (texto do motivo na tela) | ✅ Concluída (14/09/2026) | abaixo |
 | 4 | Empresa (nome da empresa na tela) | ⚠️ Achado registrado (14/09/2026) | abaixo |
 | 5 | Remetente (quem enviou o último e-mail) | ⚠️ Achado registrado (14/09/2026) | abaixo |
 | 6 | 364 threads sem status | ✅ Concluída (14/09/2026) | abaixo |
@@ -85,7 +85,19 @@ Em 27/08/2026 foi feita uma análise completa dos motivos (76 distintos) com Mic
 - ⚠️ 25 threads "Finaud escreveu — aguarda retorno do cliente" — aguardam implementação dos 3 submotivos faltantes (orientação técnica, planilha, reunião)
 - ⚠️ 210 threads "Cliente escreveu — aguarda resposta da Finaud" (caixa preta) — maioria são entregas não detectadas com "Seguem"/"Anexo"/"Enviado"; aguardam expansão dos termos de detecção
 
-**Estado:** ⚠️ Parcialmente concluída — o que estava ao alcance foi corrigido. Os 235 restantes dependem de implementação de código (`_determinar_status` em `scripts/banco_threads.py`). Ver PENDENCIAS.md → seção "TELAS — Melhorar textos do campo MOTIVO".
+**Complemento (14/09/2026):**
+- ✅ Implementados 3 submotivos em `_determinar_status()`: "solicitou extrato ou planilha", "deu orientação técnica", "propôs reunião ou ligação"
+- ✅ 235 threads SEM RETORNO recalculadas com código atualizado:
+  - 126 → "Cliente enviou informações e extratos — aguarda processamento"
+  - 62 → "Cliente fez solicitação — aguarda ação da Finaud"
+  - 14 → "Cliente fez pergunta — aguarda resposta da Finaud"
+  - 10 → "Finaud fez pergunta — aguarda resposta"
+  - 10 → "Finaud deu orientação técnica — aguarda execução"
+  - 8 → "Comunicado do BACEN — aguarda análise da Finaud"
+  - 4 → "Finaud solicitou extrato ou planilha — aguarda envio"
+  - 1 → "Comunicado do BACEN — aguarda retorno do cliente"
+
+**Estado:** ✅ Concluída (14/09/2026) — todos os textos aprovados implementados; 485 threads SEM RETORNO corrigidas (250 via SQL + 235 via recálculo com código atualizado).
 
 ---
 
@@ -192,7 +204,7 @@ Hipótese: essas threads nunca passaram pelo classificador e por isso não têm 
 1. ✅ ~~Parte 1 — Status~~ (concluída)
 2. ✅ ~~Parte 6 — 364 sem status~~ (concluída)
 3. ✅ ~~Parte 2 — Categoria~~ (concluída — 0 sem categoria; multi-CADOC DLI/DLO confirmado como comportamento esperado)
-4. ⚠️ ~~Parte 3 — Motivo~~ (parcial — 250 corrigidos; 235 aguardam implementação de código)
+4. ✅ ~~Parte 3 — Motivo~~ (concluída — 485 threads corrigidas: 250 via SQL + 235 via recálculo + 3 submotivos implementados)
 5. ⚠️ ~~Parte 5 — Remetente~~ (achado registrado — 820 mascarados, 759 recuperáveis via Reply-To)
 6. ⚠️ Parte 4 — Empresa (276 casos; achado registrado)
 7. Parte 3 complemento — implementar detecção "Seguem"/"Anexo"/"Enviado" + 3 submotivos "Finaud escreveu"

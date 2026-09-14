@@ -2,6 +2,35 @@
 
 ---
 
+### 14/09 — FEAT(motivo): 3 submotivos para Finaud→Cliente + recálculo de 235 threads arquivadas
+
+**🔎 Em miúdos:** quando a Finaud escreve ao cliente sem entregar um arquivo, o sistema agora distingue 3 situações diferentes em vez de usar sempre o texto genérico "Finaud fez pergunta — aguarda resposta": orientação técnica dada ao cliente, solicitação de planilha/extrato, e proposta de reunião.
+
+**Mudança no código (`scripts/banco_threads.py` → `_determinar_status()`):**
+- `_FRASES_SOLICITA_EXTRATO` → "Finaud solicitou extrato ou planilha — aguarda envio"
+- `_FRASES_ORIENTACAO_TECNICA` + `_instrucao_cliente` → "Finaud deu orientação técnica — aguarda execução"
+- `_FRASES_REUNIAO` → "Finaud propôs reunião ou ligação — aguarda confirmação"
+- Fallback inalterado → "Finaud fez pergunta — aguarda resposta"
+
+**Recálculo de 235 threads SEM RETORNO (banco de produção, 14/09/2026):**
+
+| Novo motivo | Qtd |
+|---|---|
+| Cliente enviou informações e extratos — aguarda processamento | 126 |
+| Cliente fez solicitação — aguarda ação da Finaud | 62 |
+| Cliente fez pergunta — aguarda resposta da Finaud | 14 |
+| Finaud fez pergunta — aguarda resposta | 10 |
+| Finaud deu orientação técnica — aguarda execução | 10 |
+| Comunicado do BACEN — aguarda análise da Finaud | 8 |
+| Finaud solicitou extrato ou planilha — aguarda envio | 4 |
+| Comunicado do BACEN — aguarda retorno do cliente | 1 |
+
+**Backup:** `data/backups/20260914_1757/recalc_arquivadas/`
+**Testes:** 663 passando (3 atualizados + 1 novo `test_passo_b_solicita_planilha`)
+**Validação:** ✅ VALIDADO — 0 erros no recálculo; sem regressões no pytest.
+
+---
+
 ### 14/09 — FIX(motivo): correção cirúrgica de motivo_status em 250 threads arquivadas
 
 **🔎 Em miúdos:** 250 threads SEM RETORNO ainda exibiam textos antigos de motivo na tela — textos que já tinham sido substituídos por versões aprovadas em 27/08/2026 e que já aparecem corretamente nas threads ativas. A causa: `recalcular_status_todos()` só processa threads com `inativa_desde IS NULL`, ignorando arquivadas. Correção feita via SQL direto, sem tocar `status_workflow`.
