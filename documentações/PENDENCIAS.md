@@ -936,8 +936,9 @@ Varredura completa do banco de produção (`/srv/finaud/tec/gestao_area_suporte/
 
 | Situação | Qtd |
 |---|---|
-| Threads com remetente mascarado (`suporte@finaud.com.br`) | 675 (42,5%) |
-| → Clientes externos reais com dado errado no banco | **645** |
+| Threads com remetente mascarado (`suporte@finaud.com.br`) | 820 (47,2%) — atualizado 14/09/2026 |
+| → Recuperáveis via Reply-To já salvo no JSON | **759** |
+| → Sem Reply-To útil (Wise DDR e similares — precisam X-Original-From via API) | **61** |
 | → Sarah Sá / Pedro Silva / suporte genérico (Finaud enviando pela lista — dado correto) | ~20 |
 | → Facebook/redes sociais roteados pela lista (automáticos) | ~6 (já filtrados) |
 
@@ -990,6 +991,8 @@ A tela que Michel usa diariamente já mostra o cliente correto. O classificador 
 | `data/backups/AAAAMMDD_HHMM_fix_remetente/` | Backup obrigatório antes de rodar a migração |
 
 **Quando fazer:** após a Fase 1 estar estável em produção — não bloqueia nada hoje.
+
+**Atualização 14/09/2026 (Parte 5 da validação):** banco cresceu — 820 mascarados (47,2% das 1.736 threads). 759 recuperáveis via Reply-To já no JSON; 61 precisam de re-busca via Gmail API (`X-Original-From`). Tela principal continua mostrando o cliente correto. Decisão de Michel: registrar e avançar.
 
 ---
 

@@ -14,7 +14,7 @@
 | 2 | Categoria (DDR, DLO, SUPORTE...) | ✅ Concluída (14/09/2026) | abaixo |
 | 3 | Motivo (texto do motivo na tela) | ⚠️ Parcialmente concluída (14/09/2026) | abaixo |
 | 4 | Empresa (nome da empresa na tela) | ⚠️ Achado registrado (14/09/2026) | abaixo |
-| 5 | Remetente (quem enviou o último e-mail) | ⬜ Pendente | abaixo |
+| 5 | Remetente (quem enviou o último e-mail) | ⚠️ Achado registrado (14/09/2026) | abaixo |
 | 6 | 364 threads sem status | ✅ Concluída (14/09/2026) | abaixo |
 
 ---
@@ -116,7 +116,7 @@ Identificados 24 casos "Sem empresa identificada" no Resumo Semanal (cards BACEN
 
 ---
 
-## ⬜ Parte 5 — Remetente
+## ⚠️ Parte 5 — Remetente
 
 ### O que é
 
@@ -138,9 +138,18 @@ A proposta de correção (coletor + migração histórica) está detalhada em `d
 - Confirmar o número atual de threads mascaradas no banco de produção
 - Executar a correção proposta (backup + migração) — ver PENDENCIAS.md
 
-### Estado
+### Resultado (14/09/2026)
 
-⬜ Não iniciada — aguarda chat dedicado
+| | Agosto (26/08) | Hoje (14/09) |
+|---|---|---|
+| Total threads no banco | ~1.590 | 1.736 |
+| Remetente mascarado | 645 (40,6%) | **820 (47,2%)** |
+| Recuperáveis via Reply-To (já no JSON) | 645/645 | **759/820** |
+| Sem Reply-To (precisam de re-busca via API) | 0 | **61** |
+
+**Tela principal:** continua mostrando o cliente correto via Reply-To — sem impacto operacional para Michel. Problema restrito ao dado no banco (afeta telas secundárias e exportações futuras).
+
+**Estado:** ⚠️ Achado registrado — execução pendente de priorização. Ver PENDENCIAS.md → "BANCO/TELAS — Remetente mascarado".
 
 ---
 
@@ -192,6 +201,6 @@ Hipótese: essas threads nunca passaram pelo classificador e por isso não têm 
 2. ✅ ~~Parte 6 — 364 sem status~~ (concluída)
 3. ✅ ~~Parte 2 — Categoria~~ (concluída — 0 sem categoria; multi-CADOC DLI/DLO confirmado como comportamento esperado)
 4. ⚠️ ~~Parte 3 — Motivo~~ (parcial — 250 corrigidos; 235 aguardam implementação de código)
-5. **Parte 5 — Remetente** (maior esforço — migração de banco)
+5. ⚠️ ~~Parte 5 — Remetente~~ (achado registrado — 820 mascarados, 759 recuperáveis via Reply-To)
 6. ⚠️ Parte 4 — Empresa (276 casos; achado registrado)
 7. Parte 3 complemento — implementar detecção "Seguem"/"Anexo"/"Enviado" + 3 submotivos "Finaud escreveu"
