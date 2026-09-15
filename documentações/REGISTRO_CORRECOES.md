@@ -2,6 +2,39 @@
 
 ---
 
+### 14/09 — FIX(status): Fix1+Fix2 — Padrão 2 (Finaud→Cliente): saudação e pedido explícito
+
+**🔎 Em miúdos:** quando a Finaud escrevia "Tudo bem?" ou pedia ao cliente "calcule o valor", o sistema não reconhecia como saudação ou pedido explícito e marcava a thread como AF em vez de AC. Corrigido nos dois casos.
+
+**Problema:** `_SAUDACAO_RE` reconhecia `tudo\s+bem` mas não `tudo\s+bom`. `_FRASES_PEDIDO_EXPLICITO` não incluía o verbo `calcule`. 13 casos confirmados com status errado.
+
+**Correção (`scripts/banco_threads.py`):**
+- Fix1: `tudo\s+bem` → `tudo\s+(?:bem|bom)` no `_SAUDACAO_RE`
+- Fix2: `'calcule '` adicionado ao `_FRASES_PEDIDO_EXPLICITO`
+
+**Commit:** `7d83f19` · **Deploy VPS:** 14/09/2026 ✅
+**Validação:** ✅ `pytest tests/ -q`: **669 passed**, zero regressões.
+**Pendente:** recalcular threads afetadas em produção (próxima sessão).
+
+---
+
+### 14/09 — FEAT(resumo): empresa por domínio no Resumo Semanal (mapeamento JSON)
+
+**🔎 Em miúdos:** o Resumo Semanal mostrava "Sem empresa identificada" em 51 threads porque tentava extrair o nome da empresa pelo assunto do e-mail. Agora usa o domínio do remetente (`larissa@cvdtvm.com.br` → CV DTVM) via arquivo JSON de mapeamento.
+
+**Problema:** `_extrair_empresa()` em `resumo_semanal.py` dependia de padrões no assunto — funciona para poucos formatos, falha quando o assunto é genérico ou não segue padrão esperado.
+
+**Correção:**
+- Novo arquivo `config/mapeamento_empresas.json` com 42 domínios mapeados (ex.: `faircorretora.com.br` → Fair Corretora)
+- `_extrair_empresa()` reescrita: consulta o JSON pelo domínio; domínio não mapeado → "Sem empresa identificada"
+- Testes: `tests/test_resumo_semanal.py` — 6 testes novos (domínio mapeado, dois domínios mesma empresa, case insensitive, Padrão 2, interno)
+
+**Commit:** `cb5fc6c` · **Deploy VPS:** 14/09/2026 ✅
+**Validação:** ✅ `pytest tests/ -q`: **669 passed** (incluindo os 6 novos).
+**Limitação documentada:** Padrão 2 (representante externo com domínio diferente do cliente) não é coberto automaticamente — solução futura via tela de manutenção (Passo C). Ver PENDENCIAS.md.
+
+---
+
 ### 14/09 — FIX(remetente): migração de 764 remetentes mascarados para endereço real do cliente
 
 **🔎 Em miúdos:** 826 threads tinham o endereço do Google Groups (`suporte@finaud.com.br`) no lugar do e-mail real do cliente. A tela já mostrava o cliente correto (via Reply-To), mas o dado no banco estava errado. Corrigido 764 casos usando o Reply-To guardado no JSON de cada thread.

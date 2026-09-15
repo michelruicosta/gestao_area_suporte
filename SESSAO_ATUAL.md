@@ -12,10 +12,12 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
+| 14/09 | Empresa no Resumo + Fix1+Fix2 + investigação mensagens Gmail vs sistema | abaixo |
+| 11/09 | Validação de Status: protocolo + Bloco 1 (22 suspeitos) | abaixo |
 | 11/09 | Resumo Semanal: e-mail idêntico ao artefato + caixa BACEN encerrados + fix FOG filter | abaixo |
-| 10/09 | prospeccao_finaud: tela Flask separada Bacen/Receita + ingestão 26 estados | abaixo |
-| 10/09 | Padrão 2 (Finaud→Cliente): tentativa Fix1+Fix2 → revertida por protocolo | abaixo |
-| 10/09 | Jornada: melhorias visuais + filtros bidirecionais + fix label gráfico | abaixo |
+| 10/09 | prospeccao_finaud: tela Flask separada Bacen/Receita + ingestão 26 estados | arquivo |
+| 10/09 | Padrão 2 (Finaud→Cliente): tentativa Fix1+Fix2 → revertida por protocolo | arquivo |
+| 10/09 | Jornada: melhorias visuais + filtros bidirecionais + fix label gráfico | arquivo |
 | 10/09 | Jornada por Colaborador: nova tela FOG completa implementada e deployada | arquivo |
 | 10/09 | Portal: botão copiar senha temporária — tentativa user-select:all → revertida | arquivo |
 | 10/09 | Script testar_status_ia.py criado — Fase 1 pronta para rodar | arquivo |
@@ -69,6 +71,33 @@
 >
 > **Regra:** este arquivo guarda as **3 sessões mais recentes**. O `/fechar` acrescenta a
 > linha nova aqui e move a 4ª sessão para o arquivo.
+
+---
+
+## 📓 Diário da sessão (2026-09-14) — Empresa no Resumo + Fix1+Fix2 + investigação mensagens
+
+### O que foi feito
+
+1. **Empresa no Resumo Semanal — deployado** — `config/mapeamento_empresas.json` (42 domínios) + `_extrair_empresa()` reescrita para usar domínio do remetente em vez do assunto. 6 testes novos. Commit `cb5fc6c`, VPS atualizada. Limitação Padrão 2 documentada em PENDENCIAS.
+
+2. **Fix1+Fix2 — commitado e deployado** — Fix1: `tudo\s+(?:bem|bom)` no `_SAUDACAO_RE`; Fix2: `'calcule '` no `_FRASES_PEDIDO_EXPLICITO`. Cobre 13 casos confirmados de status AF errado. 669 testes passando. Commit `7d83f19`, VPS atualizada.
+
+3. **Investigação: mensagens no Gmail mas não no sistema** — análise completa do caso Remitly (`1a01a9391d25286d`): Hebert enviou direto para `andrea@` às 11:58; o coletor de colaboradores encontrou o e-mail mas o descartou por não ter `In-Reply-To`. A VPS tem `colaboradores_suporte` com 6 e-mails configurados (não estava vazia — era campo local desatualizado). Root cause: coletor ignora e-mails originais (sem In-Reply-To).
+
+4. **Solução desenhada e documentada** — substituir `In-Reply-To` por `threadId` do Gmail como método primário de encaixe + criar threads novas para e-mails de domínios corporativos (filtro por `_DOMINIOS_GENERICOS`) + lista `captura_excecoes` no config para casos de domínio pessoal. Decisão gravada em PENDENCIAS.md (Gap 3 do coletor colaboradores). Implementação depende de simulação prévia nas 6 caixas com OK de Michel.
+
+### Próximo passo
+
+**Cruzando com PENDENCIAS.md — ordem de prioridade:**
+
+- 🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
+- 🟡 **Recalcular threads após Fix1+Fix2** — rode `recalcular_status_todos()` em produção para que as 13 threads marcadas incorretamente recebam AC. Feito no início do próximo chat.
+- 🟡 **Casos 4, 5, 6 (Remitly)** — aguardam decisão de Michel: "Recebido. Obrigada." é AF (ainda processando) ou Concluída? "estarei colocando as remessas em dia" é AF ou Concluída?
+- 🟡 **Gap 3 coletor colaboradores** — implementar + simular nas 6 caixas (Michel aprova antes de rodar). Ver decisão em PENDENCIAS.md.
+- 🟡 **Teste de IA** — rodar `testar_status_ia.py --fase 1`
+- 🟡 **Modal** — Cenário 2b + `white-space: nowrap` na coluna Valor
+
+Último /fechar: 2026-09-14 — memórias revisadas ✅
 
 ---
 
@@ -129,133 +158,6 @@ Deploy concluído — e-mail validado por Michel. Próxima segunda-feira o resum
 - 🟡 Modal — Cenário 2b + `white-space: nowrap` na coluna Valor
 
 Último /fechar: 2026-09-11 — memórias revisadas ✅
-
----
-
-## 📓 Diário da sessão (2026-09-10 sétima sessão) — prospeccao_finaud: tela Flask separada Bacen/Receita
-
-### O que foi feito
-
-1. **Separação arquitetural completa** — a tela de prospecção misturava dados do Bacen e da Receita Federal. Michel identificou o problema e solicitou reconstrução com fontes completamente independentes.
-
-2. **`servidor_prospeccao.py` reescrito** (Flask, porta 8006):
-   - Rota `/api/bacen/*` — lê exclusivamente `data/bacen.db` (5.142 instituições reguladas, Brasil inteiro); filtros: UF, segmento, tipo, nome
-   - Rota `/api/receita/*` — lê exclusivamente `data/uf/{UF}/contatos.db` (Garimpo); filtros: UF, segmento, porte, nome
-   - Nenhuma consulta cruza os dois bancos
-
-3. **`prospeccao.html` reescrito** — duas abas independentes:
-   - "Bacen IF.data": 2.372 instituições ativas (período 202606), colunas Nome / CNPJ Raiz / Segmento / Tipo / UF / Município
-   - "Receita Federal": empresas por UF baixada, colunas Nome / CNPJ / Segmento / Cidade / Porte / Email / Telefone / Score
-   - Cada aba tem badge com total, paginação e botão Excel próprios
-
-4. **Fix `_carregar_bacen()`** — chave primária mudou de `cnpj_raiz` (CNPJ do líder do conglomerado) para `cod_inst` (CNPJ da própria instituição). Resultado: 5.142 chaves localizáveis vs. 657 anteriores. Aplicado em `cruzar_bacen.py` e no servidor.
-
-5. **Ingestão de 26 estados iniciada** — `ingestar_receita.py` + loop de `gerar_leads.py` para todos os estados fora do DF. Um único download de ~6,7 GB da Receita cobre todos. Rodando em background com log em `data/ingestao_todos.log`.
-
-6. **Commit e push** — `a8e34b8` em `michelruicosta/prospeccao_finaud` (branch master). ✅
-
-### Estado atual
-
-**Bacen:** 2.372 instituições ativas visíveis, filtros funcionando, export Excel OK.
-**Receita DF:** 9.048 empresas setor financeiro, filtros e export OK.
-**Receita outros estados:** ingestão em andamento em background.
-
-### Próximo passo
-
-⏳ **Aguardar conclusão da ingestão dos 26 estados** (`data/ingestao_todos.log`). Quando terminar, todos os estados aparecerão automaticamente no dropdown UF da aba Receita Federal — sem reiniciar o servidor.
-
-**Pendências gestao_area_suporte que continuam:**
-- 🔴 Fix status — "Concluída" quando Finaud perguntou algo ao cliente
-- 🔴 Threads irmãs — 11 grupos com thread Concluída + pendente no mesmo caso
-- 🟡 Padrão 2 — retomar em chat novo com protocolo correto
-- 🟡 Modal — Cenário 2b e `white-space: nowrap` na coluna Valor
-- 🟡 Teste de IA — rodar `testar_status_ia.py --fase 1`
-
-Último /fechar: 2026-09-10 — memórias revisadas ✅
-
----
-
-## 📓 Diário da sessão (2026-09-10 sexta sessão) — Padrão 2 (Finaud→Cliente): tentativa Fix1+Fix2 → revertida
-
-### O que foi feito
-
-1. **Retomada do Padrão 2** — com autorização do chat anterior para continuar com os 16 casos fix-claro. Causa raiz confirmada: `_SAUDACAO_RE` não filtrava "Tudo bem?" → `_eh_cortesia_finaud` retornava True → AF errado.
-
-2. **Fix1+Fix2 aplicados e validados internamente:**
-   - Fix1: `tudo\s+(?:bem|bom)` adicionado ao `_SAUDACAO_RE`
-   - Fix2: `'calcule '` e `'gere o relatório'` adicionados ao `_FRASES_PEDIDO_EXPLICITO`
-   - 13 de 13 cases fix-claro corrigidos; 659 testes passando
-
-3. **Violação de protocolo detectada** — o fix foi aplicado sem declarar o plano e aguardar OK de Michel (§3 do CLAUDE.md). Michel cobrou: *"Perai você nem validou comigo antes de fazer algo?"*
-
-4. **Sessão paralela conflituosa** — outro chat Claude rodava simultaneamente fazendo commits. `git revert` direto falhou (conflito no REGISTRO). Solução: aguardar Michel fechar o outro chat, depois `git checkout 73ad3b0~1 -- scripts/banco_threads.py tests/test_banco_threads.py`.
-
-5. **Revert executado e pushado** — commit `00730c3`. Push confirmado por Michel. VPS atualizada.
-
-### Estado atual
-
-**pytest:** 656 passed ✅ (Fix1+Fix2 e 3 testes correspondentes desfeitos).
-**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅.
-**Código:** limpo — `scripts/banco_threads.py` sem Fix1+Fix2.
-**Padrão 2:** volta à fila como 🟡 pendente.
-
-### Próximo passo
-
-🟡 **Padrão 2 — retomar do zero em chat novo** com protocolo correto:
-1. Declarar plano completo (Fix1+Fix2 + casos 4/5/6 para Michel decidir)
-2. Aguardar OK de Michel
-3. Só então implementar
-
-Ver PENDENCIAS.md → "🟡 FIX — Padrão 2".
-
-**Pendências que continuam:**
-- 🔴 Fix status — "Concluída" quando Finaud perguntou algo ao cliente
-- 🔴 Threads irmãs — 11 grupos com thread Concluída + pendente no mesmo caso
-- 🟡 Padrão 2 — 13 casos fix-claro (Fix1+Fix2 pendente) + 3 aguardam Michel
-- 🟡 Modal — Cenário 2b e `white-space: nowrap` na coluna Valor
-- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads
-
-Último /fechar: 2026-09-10 — memórias revisadas ✅
-
----
-
-## 📓 Diário da sessão (2026-09-10 quinta sessão) — Jornada: melhorias visuais + fix label gráfico
-
-### O que foi feito
-
-1. **Dropdown customizado** — `<select>` nativo exibia popup branco no tema escuro (Windows/Chrome). Substituído por `<div>` customizado (`.jcol-cdd-*`) que respeita as variáveis de tema.
-
-2. **Barras verdes removidas** — casos encerrados no FogBugz (`fog.ab = false`) geravam segmentos verdes no gráfico. Fix: skip de `'final'` em `_jcolRenderGrafico()`.
-
-3. **Gargalo badge + contador de passagens** — nó da pessoa com mais dias num FOG ganha badge "mais longo" (borda vermelha); repassagens mostram `↩N×`.
-
-4. **Removido alerta "Casos encerrados não aparecem aqui"** — parágrafo removido do HTML.
-
-5. **Cores dark mode** — overrides `[data-theme="escuro"]` para todas as classes `.jcol-*` correspondendo ao artefato de referência (azul `#1E3A5F`/`#93C5FD`, âmbar `#2D1E00`/`#FCD34D`).
-
-6. **Filtros bidirecionais** — clicar card → atualiza gráfico + lista; clicar barra → destaca mês + filtra lista; chips de legenda → toggleam segmentos. State: `_jcolLegsAtivas`, `_jcolMesFiltro`. Funções: `_jcolToggleLeg`, `_jcolFiltrarMes`, `_jcolSyncCards`, `_jcolSyncLegChips`, `_jcolAplicarFiltros`. Deploy: commit `798bb80`.
-
-7. **Fix label do gráfico** — ao filtrar por segmento ("Passou adiante" = 9), o número acima da barra ficava travado em 10. Fix: `data-ainda`/`data-passou` no elemento; `_jcolSyncLegChips()` recalcula e reescreve o label. Commit `816656c`.
-
-### Estado atual
-
-**pytest:** sem alteração de testes nesta sessão (656 passed ✅).
-**Produção:** `gestao-suporte.finaudapps.com.br` — tela + agendador ativos ✅. Commits `798bb80` e `816656c` publicados.
-**Jornada por Colaborador:** 100% completa — visual igual ao artefato, filtros bidirecionais funcionando, label correto.
-
-### Próximo passo
-
-🟡 **Rodar a Fase 1 do teste de IA** — `python scripts/testar_status_ia.py --fase 1` (custo ~$0,36; requer OPENAI_API_KEY).
-
-**Pendências que continuam:**
-- 🔴 Fix status — "Concluída" quando Finaud perguntou algo ao cliente (executar APÓS o teste de IA)
-- 🔴 Threads irmãs — 11 grupos com thread Concluída + pendente no mesmo caso
-- 🟡 Modal — Cenário 2b (COSIF citada 2×) e `white-space: nowrap` na coluna Valor
-- 🟡 Monitorar caixas colaboradores Gap 3 — 345 threads sem passar por suporte@
-
-Último /fechar: 2026-09-10 — memórias revisadas ✅
-
----
 
 ---
 <!-- fim das 3 sessões recentes -->
