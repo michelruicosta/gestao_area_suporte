@@ -95,6 +95,32 @@ A lista inicial de mapeamentos: domínio → nome da empresa como deve aparecer 
 
 Após Michel preencher os mapeamentos principais. Implementação é pequena (~20 linhas de código). Chat dedicado.
 
+### Limitação atual: Padrão 2 — representante externo com domínio diferente (identificado em 14/09/2026)
+
+O mapeamento por domínio cobre o **Padrão 1**: o remetente usa o próprio domínio corporativo da empresa cliente (`larissa@cvdtvm.com.br` → CV DTVM). Mas existe um **Padrão 2**: a pessoa usa um domínio diferente (pessoal ou de escritório contábil) e representa um cliente.
+
+**Casos identificados no banco:**
+- `carlos-adcon@uol.com.br` → funcionário da Carol DTVM usando e-mail pessoal UOL
+- `fiscal5@mrhenriqueconsult.com.br` → contador/consultor que representa a Remitly
+- `aura@bacenregulatorio.com` → Gabriel Franzo, consultor regulatório da empresa SANTS
+
+Para esses casos o domínio não resolve — `uol.com.br` não identifica nenhuma empresa. A solução atual: ficam como "Sem empresa identificada".
+
+**Duas opções para resolver no futuro:**
+
+**Opção A — Inferir pelo destinatário**
+Se o domínio do remetente é desconhecido, olhar os destinatários do e-mail. Se um dos destinatários pertence a um domínio de cliente já mapeado (`caroldtvm.com.br`), usar essa empresa.
+- ✅ Automático, sem manutenção manual
+- ❌ Falha quando o e-mail vai direto para `suporte@finaud.com.br` sem CC do cliente real
+
+**Opção B — Michel cadastra via tela (recomendada)**
+Quando o Resumo Semanal mostrar "Sem empresa identificada", Michel clica no card e associa manualmente o e-mail à empresa. O sistema aprende: `carlos-adcon@uol.com.br` → Carol DTVM. Da próxima vez resolve sozinho.
+- ✅ Mais robusto — não depende de inferência
+- ✅ Encaixa naturalmente na tela de manutenção (Passo C)
+- ❌ Requer ação manual na primeira ocorrência de cada caso novo
+
+**Quando fazer:** após a tela de manutenção (Passo C) estar pronta — a Opção B seria uma seção natural dela. Não bloqueia a implementação atual do Padrão 1.
+
 ---
 
 ## 🟡 MODAL — Acabamentos menores na leitura inteligente (identificados em 08/09/2026)
@@ -128,7 +154,7 @@ Alinhar os controles de filtro de período da aba Evolução do FogBugz com os d
 
 - ✅ **Casos 2 e 7** (§8.8a): "retornaremos em breve" + "no aguardo da liberação" → AC. Corrigido em 10/09/2026.
 - ✅ **Casos 1, 3, 9, 12**: código já retorna Concluída — confirmado como correto por Michel em 10/09/2026.
-- ⬜ **Casos 8, 10, 11, 13, 14, 16, 17, 18, 20, 21, 22** (Fix1 + Fix2 — pendente): solução conhecida — Fix1: `tudo\s+(bem|bom)` adicionado ao `_SAUDACAO_RE`; Fix2: `'calcule '` adicionado ao `_FRASES_PEDIDO_EXPLICITO`. Fix aplicado e validado (659 testes) em 10/09 mas revertido por violação de protocolo. **Retomar em chat novo** com plano declarado e OK de Michel antes de agir.
+- ✅ **Casos 8, 10, 11, 13, 14, 16, 17, 18, 20, 21, 22** (Fix1 + Fix2 — concluído 14/09/2026): Fix1: `tudo\s+(?:bem|bom)` adicionado ao `_SAUDACAO_RE`; Fix2: `'calcule '` adicionado ao `_FRASES_PEDIDO_EXPLICITO`. 669 testes passando. Commit `7d83f19`, deploy VPS 14/09/2026.
 - ✅ **Casos 15 e 19**: já corretos (código = AC). Confirmados na validação.
 - ❓ **Casos 4, 5, 6**: aguardam decisão de Michel (ver abaixo).
 
@@ -268,19 +294,40 @@ Quando funcionários da Finaud respondem a clientes **sem incluir suporte@finaud
 
 `scripts/coletor_enviados_colaboradores.py` — lê Enviados e Recebidos dos 6 colaboradores do `config.json` (Andrea, Monica, Pedro, Flávio, Sarah, Rodrigo) e adiciona mensagens novas às threads **já existentes** no banco. Roda a cada ciclo de coleta (junto com o Gmail, a cada hora). Nunca cria threads novas.
 
-### Pendente — Gap 3: conversas completamente paralelas
+### Pendente — Gap 3: conversas completamente paralelas (decisão 14/09/2026)
 
-Análise de 02/09/2026 identificou **345 threads** nas caixas Enviados dos 6 colaboradores que **nunca passaram pelo suporte@** e não existem no banco. Entre elas:
-- ~49 **AF** — clientes aguardando resposta da Finaud
-- ~212 **AC** — Finaud aguardando o cliente
-- ~84 **Concluídas** — conversas já encerradas
+🟡 MELHORIA — Coletor de colaboradores: capturar e-mails recebidos diretamente
 
-Ainda não implementado. Exigiria criar threads novas no banco com filtros para:
-- Bounces de mailer-daemon
-- E-mails de teste internos
-- Conversas de consultoria (ex.: Rodrigo × Number One — elaboração de modelo de negócios, 51 msgs)
+**Problema:**
+E-mails enviados por clientes diretamente para um colaborador (andrea@, monica@, etc.),
+sem passar pelo suporte@, não eram capturados quando o colaborador ainda não havia
+respondido por um canal que copia o coleta.oraculo.
 
-**Quando fazer:** chat dedicado — decisão de Michel sobre se e como trazer essas threads para o sistema.
+O coletor de colaboradores só encaixava mensagens com In-Reply-To — e-mails originais
+eram descartados silenciosamente. Caso concreto: Hebert (mrhenriqueconsult.com.br)
+enviou direto para Andrea em 19/08/2026 e o original nunca entrou no sistema.
+
+**Decisão (14/09/2026):**
+
+1. Trocar método de encaixe de "cadeia de resposta" (In-Reply-To) para threadId do Gmail.
+   O Gmail já agrupa tudo da mesma conversa sob o mesmo threadId — o original e as
+   respostas compartilham o mesmo código. Se a thread já existe no banco, o original entra.
+
+2. Para threads genuinamente novas (nenhuma mensagem ainda no banco), criar a thread se:
+   - Remetente usa domínio corporativo (não está em _DOMINIOS_GENERICOS)
+   - OU endereço está na lista `captura_excecoes` do config.json (escape manual)
+
+3. Simular antes de executar para revisar o que seria capturado nas 6 caixas.
+
+**Cenários cobertos após a mudança:**
+- ✅ Cliente → suporte@ → Finaud responde via suporte@
+- ✅ Cliente → suporte@ → Finaud responde de endereço pessoal (andrea@)
+- ✅ Cliente → andrea@ diretamente → Finaud responde via suporte@ (caso Remitly)
+- ✅ Cliente → andrea@ diretamente → Finaud responde de andrea@
+- ❌ Não cobre: cliente usa domínio pessoal (gmail) e não está nas exceções
+
+**Arquivos a modificar:** scripts/coletor_enviados_colaboradores.py
+**Pré-requisito:** simular e Michel aprovar o resultado antes de executar.
 
 ---
 
