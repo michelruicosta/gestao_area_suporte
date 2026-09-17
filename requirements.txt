@@ -29,6 +29,7 @@ httplib2==0.32.0
 uritemplate==4.2.0
 
 # --- Dados / parsing ---
+defusedxml==0.7.1
 python-dateutil==2.9.0.post0
 six==1.17.0
 PyYAML==6.0.3

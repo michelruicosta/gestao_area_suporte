@@ -8,7 +8,7 @@ import os
 import re
 import smtplib
 import sqlite3
-import xml.etree.ElementTree as ET
+import defusedxml.ElementTree as ET
 from collections import defaultdict
 from datetime import date, datetime, timedelta, timezone
 from email.mime.multipart import MIMEMultipart

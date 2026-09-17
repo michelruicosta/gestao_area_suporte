@@ -32,7 +32,7 @@ if (
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 import requests
-import xml.etree.ElementTree as _ET
+import defusedxml.ElementTree as _ET
 from datetime import date, datetime, timezone, timedelta
 from functools import wraps
 
