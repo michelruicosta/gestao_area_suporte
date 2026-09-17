@@ -1827,4 +1827,5 @@ else:
 if __name__ == '__main__':
     porta = int(os.environ.get('PORT', 8004))
     _log.info('Gestão de E-mail — http://localhost:%d', porta)
-    app.run(host='0.0.0.0', port=porta, debug=True, use_reloader=False)
+    debug = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
+    app.run(host='0.0.0.0', port=porta, debug=debug, use_reloader=False)
