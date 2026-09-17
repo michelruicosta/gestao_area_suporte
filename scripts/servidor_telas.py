@@ -1828,4 +1828,4 @@ if __name__ == '__main__':
     porta = int(os.environ.get('PORT', 8004))
     _log.info('Gestão de E-mail — http://localhost:%d', porta)
     debug = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
-    app.run(host='0.0.0.0', port=porta, debug=debug, use_reloader=False)
+    app.run(host='0.0.0.0', port=porta, debug=debug, use_reloader=False)  # nosec B104 — em producao o Gunicorn gerencia o bind; este bloco so roda localmente
