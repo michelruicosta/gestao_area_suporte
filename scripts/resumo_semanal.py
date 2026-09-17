@@ -362,19 +362,15 @@ def buscar_movimento_semanal() -> dict:
             "substr(data_primeira_msg,7,4)||'-'||substr(data_primeira_msg,4,2)||'-'||substr(data_primeira_msg,1,2)"
         )
         (enc,) = conn.execute(
-            f"""
-            SELECT COUNT(*) FROM threads
-            WHERE status_workflow = 'Concluída'
-              AND data_ultima_msg IS NOT NULL AND data_ultima_msg != ''
-              AND {data_iso} >= date('now','-7 days')
-            """,
+            "SELECT COUNT(*) FROM threads "  # nosec B608 — data_iso é SQL hardcoded, não entrada do usuário
+            "WHERE status_workflow = 'Concluída' "
+            "AND data_ultima_msg IS NOT NULL AND data_ultima_msg != '' "
+            "AND " + data_iso + " >= date('now','-7 days')",
         ).fetchone()
         (rec,) = conn.execute(
-            f"""
-            SELECT COUNT(*) FROM threads
-            WHERE data_primeira_msg IS NOT NULL AND data_primeira_msg != ''
-              AND {data_prim_iso} >= date('now','-7 days')
-            """,
+            "SELECT COUNT(*) FROM threads "  # nosec B608 — data_prim_iso é SQL hardcoded, não entrada do usuário
+            "WHERE data_primeira_msg IS NOT NULL AND data_primeira_msg != '' "
+            "AND " + data_prim_iso + " >= date('now','-7 days')",
         ).fetchone()
         conn.close()
         return {'encerradas': enc, 'recebidas': rec, 'saldo': enc - rec}

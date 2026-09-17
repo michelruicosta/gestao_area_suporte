@@ -61,7 +61,7 @@ def main():
 
     ids = [a['thread_id'] for a in alteradas]
     conn.execute(
-        f"UPDATE threads SET status_workflow = 'Concluída', "
+        f"UPDATE threads SET status_workflow = 'Concluída', "  # nosec B608 — placeholders ? gerados por len(ids), valores passados separadamente
         f"motivo_status = 'Fix H: cliente agradeceu sem pergunta ou documento' "
         f"WHERE thread_id IN ({','.join('?' * len(ids))})",
         ids,
