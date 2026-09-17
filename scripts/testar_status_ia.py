@@ -161,7 +161,7 @@ def _threads_fase2(conn: sqlite3.Connection, n_por_status: int = 100) -> list[di
             "SELECT thread_id, assunto, status_workflow, motivo_status, mensagens_json "
             "FROM threads WHERE destino='principal' AND status_workflow=?", (status,)
         ).fetchall()
-        amostra = random.sample(rows, min(n_por_status, len(rows)))
+        amostra = random.sample(rows, min(n_por_status, len(rows)))  # nosec B311 — random.sample() para amostragem de dados estatísticos, não para fins criptográficos
         for row in amostra:
             msgs = json.loads(row['mensagens_json'])
             if not msgs:

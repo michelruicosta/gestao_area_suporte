@@ -27,7 +27,7 @@ def recarregar_regras_do_banco() -> None:
                 "SELECT motivo, termos FROM regras_classificacao WHERE situacao = 'Ativa'"
             ).fetchall()
         _REGRAS_CACHE = {r[0]: json.loads(r[1]) for r in rows}
-    except Exception:
+    except Exception:  # nosec B110 — falha idempotente — operação de banco já foi realizada ou dado não existe
         pass  # banco ainda não tem a tabela ou não está disponível
 
 def _termos_db(motivo: str) -> tuple[str, ...]:
@@ -160,7 +160,7 @@ def criar_banco() -> None:
         ]:
             try:
                 conn.execute(f'ALTER TABLE threads ADD COLUMN {col_def}')
-            except Exception:
+            except Exception:  # nosec B110 — falha idempotente — operação de banco já foi realizada ou dado não existe
                 pass  # coluna já existe
         for col_def in [
             'classif_principal INTEGER NOT NULL DEFAULT 0',
@@ -169,7 +169,7 @@ def criar_banco() -> None:
         ]:
             try:
                 conn.execute(f'ALTER TABLE log_coletas ADD COLUMN {col_def}')
-            except Exception:
+            except Exception:  # nosec B110 — falha idempotente — operação de banco já foi realizada ou dado não existe
                 pass  # coluna já existe
     print(f'Banco criado/verificado: {BANCO}')
 

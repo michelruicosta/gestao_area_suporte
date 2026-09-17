@@ -203,7 +203,7 @@ def parse_data_flexivel(valor) -> "_date | None":
     # RFC 2822 (e-mails Gmail)
     try:
         return _parsedate_rfc2822(s).date()
-    except Exception:
+    except Exception:  # nosec B110 — operação de arquivo não crítica (parse/limpeza); falha retorna None/default
         pass
     # ISO: YYYY-MM-DD ou YYYY-MM-DDTHH:MM:SS
     try:
@@ -285,7 +285,7 @@ def backup_pre_carga(rotulo: str = "carga") -> str | None:
         )
         for antiga in todas[:-7]:
             _shutil.rmtree(antiga.path, ignore_errors=True)
-    except Exception:
+    except Exception:  # nosec B110 — operação de arquivo não crítica (parse/limpeza); falha retorna None/default
         pass
 
     print(f"  [BACKUP] {len(existentes)} arquivos -> {os.path.basename(pasta)}/")
@@ -321,7 +321,7 @@ def limpar_nome_arquivo(nome: str) -> str:
             else:
                 nome_dec += str(conteudo)
         nome = nome_dec
-    except Exception:
+    except Exception:  # nosec B110 — operação de arquivo não crítica (parse/limpeza); falha retorna None/default
         pass
     # Remove caracteres proibidos no Windows
     for c in '\\/:*?"<>|':
@@ -421,7 +421,7 @@ def registrar_execucao(nome_script: str, arquivo_saida: str | None = None) -> No
             entrada["mtime_saida"] = int(os.path.getmtime(arquivo_saida))
         estado[nome_script] = entrada
         _salvar_estado(estado)
-    except Exception:
+    except Exception:  # nosec B110 — operação de arquivo não crítica (parse/limpeza); falha retorna None/default
         pass  # nunca interrompe o pipeline
 
 

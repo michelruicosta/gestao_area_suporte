@@ -124,7 +124,7 @@ def checkin_inicio() -> None:
             status=MonitorStatus.IN_PROGRESS,
             monitor_config=_MONITOR_CONFIG,
         )
-    except Exception:
+    except Exception:  # nosec B110 — falha ao enviar alerta não pode causar outro erro — silenciar é correto aqui
         pass
 
 
@@ -143,7 +143,7 @@ def checkin_fim(ok: bool = True) -> None:
             check_in_id=_checkin_id_atual,
             monitor_config=_MONITOR_CONFIG,
         )
-    except Exception:
+    except Exception:  # nosec B110 — falha ao enviar alerta não pode causar outro erro — silenciar é correto aqui
         pass
     finally:
         _checkin_id_atual = None

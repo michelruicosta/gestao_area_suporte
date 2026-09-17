@@ -123,7 +123,7 @@ def _processo_ativo(pid: int) -> bool:
     """Verifica se um PID ainda está rodando (Windows)."""
     try:
         import subprocess
-        r = subprocess.run(
+        r = subprocess.run(  # nosec B607 B603 — ferramenta de sistema conhecida (git/tasklist/netstat/taskkill); PATH do sistema não é controlável pelo usuário
             ['tasklist', '/FI', f'PID eq {pid}', '/NH'],
             capture_output=True, text=True, timeout=5
         )

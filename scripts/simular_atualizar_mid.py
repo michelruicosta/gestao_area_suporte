@@ -68,7 +68,7 @@ def main():
         print(f'Verificando todas as {total_sem_mid} threads...\n')
     else:
         tamanho = min(100, total_sem_mid)
-        amostra = random.sample(threads_sem_mid, tamanho)
+        amostra = random.sample(threads_sem_mid, tamanho)  # nosec B311 — random.sample() para amostragem de dados estatísticos, não para fins criptográficos
         print(f'Verificando amostra de {tamanho} threads (de {total_sem_mid})...\n')
 
     service = _conectar_gmail()

@@ -129,12 +129,12 @@ def extrair_data_evento(ev: dict) -> "datetime.date | None":
         except Exception:
             try:
                 return dateutil_parser.parse(ts_raw).date()
-            except Exception:
+            except Exception:  # nosec B110 — parse de data em fixture de teste — formato inválido retorna None
                 pass
     data_iso = (ev.get("data_iso") or "").strip()
     if data_iso:
         try:
             return dateutil_parser.parse(data_iso).date()
-        except Exception:
+        except Exception:  # nosec B110 — parse de data em fixture de teste — formato inválido retorna None
             pass
     return None

@@ -1268,7 +1268,7 @@ def api_admin_config_get():
         try:
             dt = datetime.strptime(logs[0]['data_hora'], '%Y-%m-%d %H:%M:%S')
             ultimo_ts = time.mktime(dt.timetuple())
-        except Exception:
+        except Exception:  # nosec B110 — falha ao processar evento não deve derrubar o servidor
             pass
     cfg['ultimo_refresh_ts'] = ultimo_ts
     return jsonify(cfg)
@@ -1605,7 +1605,7 @@ def _buscar_jornada_caso(fog_id: str) -> dict | None:
                 desc   = (ev.findtext('evtDescription') or '').strip()
                 try:
                     dt_ev = datetime.fromisoformat(dt_str.replace('Z', '+00:00')).date()
-                except Exception:
+                except Exception:  # nosec B112 — continue silencioso intencional — erro em dado individual não deve parar o loop inteiro
                     continue
                 m = _re.search(r'Designado para (.+?) por ', desc)
                 if not m:
@@ -1727,7 +1727,7 @@ def _buscar_jornada_colaborador(colaborador: str, de: str, ate: str) -> list[dic
                 desc = (ev.findtext('evtDescription') or '').strip()
                 try:
                     dt_ev = datetime.fromisoformat(dt_str.replace('Z', '+00:00')).date()
-                except Exception:
+                except Exception:  # nosec B112 — continue silencioso intencional — erro em dado individual não deve parar o loop inteiro
                     continue
                 m = _re.search(r'Designado para (.+?) por ', desc)
                 if not m:
@@ -1791,7 +1791,7 @@ def _aquece_cache_fog() -> None:
     try:
         _buscar_fog()
         _log.info('Cache FogBugz pré-aquecido na subida do servidor.')
-    except Exception:
+    except Exception:  # nosec B110 — falha ao processar evento não deve derrubar o servidor
         pass
 
 

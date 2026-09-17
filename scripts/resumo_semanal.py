@@ -337,7 +337,7 @@ def buscar_fog_encerrados_semana(token: str) -> int:
                 dt_closed = datetime.fromisoformat(dt_str.replace('Z', '+00:00')).date()
                 if dt_closed >= corte:
                     total += 1
-            except Exception:
+            except Exception:  # nosec B110 — falha ao contar item individual — ignora e continua iteração
                 pass
         return total
     except Exception:

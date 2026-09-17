@@ -664,7 +664,7 @@ def _extrair_texto_ocr(caminhos: list) -> str:
             texto = pytesseract.image_to_string(img, lang='por+eng').strip()
             if len(texto) >= 30:
                 partes.append(texto)
-        except Exception:
+        except Exception:  # nosec B110 — falha ao processar texto individual — ignora item problemático e continua
             pass
     return '\n\n'.join(partes)
 
@@ -779,7 +779,7 @@ def reavaliar_automaticos(janela_horas: int = 48) -> dict:
         if row['mensagens_json']:
             try:
                 thread['mensagens'] = _json.loads(row['mensagens_json'])
-            except Exception:
+            except Exception:  # nosec B110 — falha ao processar texto individual — ignora item problemático e continua
                 pass
 
         motivo = eh_automatico(thread)
