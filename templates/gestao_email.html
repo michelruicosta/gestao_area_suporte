@@ -3705,6 +3705,14 @@ function _auditRegistrarNavegacao() {
   }).catch(() => {});
 }
 
+function _auditFmtData(ts) {
+  if (!ts) return '—';
+  const [data, hora] = ts.split(' ');
+  if (!data) return ts;
+  const [a, m, d] = data.split('-');
+  return `${d}/${m}/${a} ${hora || ''}`.trim();
+}
+
 async function _auditCarregar() {
   try {
     const d = await _get('/api/admin/log-acesso');
@@ -3724,7 +3732,7 @@ async function _auditCarregar() {
                    : r.origem === 'portal' ? '<span style="background:rgba(16,185,129,.15);color:#34d399;border-radius:4px;padding:1px 6px;font-size:0.78rem">portal</span>'
                    : '—';
       return `<tr>
-        <td>${r.ts || '—'}</td>
+        <td>${_auditFmtData(r.ts)}</td>
         <td style="font-size:0.85rem">${r.email || '—'}</td>
         <td>${tipo}</td>
         <td>${origem}</td>
