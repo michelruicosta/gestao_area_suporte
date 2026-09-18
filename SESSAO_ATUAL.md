@@ -12,9 +12,10 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
+| 18/09 | Trilha de Auditoria — implementação completa + deploy VPS | abaixo |
 | 14/09 | Empresa no Resumo + Fix1+Fix2 + investigação mensagens Gmail vs sistema | abaixo |
 | 11/09 | Validação de Status: protocolo + Bloco 1 (22 suspeitos) | abaixo |
-| 11/09 | Resumo Semanal: e-mail idêntico ao artefato + caixa BACEN encerrados + fix FOG filter | abaixo |
+| 11/09 | Resumo Semanal: e-mail idêntico ao artefato + caixa BACEN encerrados + fix FOG filter | arquivo |
 | 10/09 | prospeccao_finaud: tela Flask separada Bacen/Receita + ingestão 26 estados | arquivo |
 | 10/09 | Padrão 2 (Finaud→Cliente): tentativa Fix1+Fix2 → revertida por protocolo | arquivo |
 | 10/09 | Jornada: melhorias visuais + filtros bidirecionais + fix label gráfico | arquivo |
@@ -74,6 +75,37 @@
 
 ---
 
+## 📓 Diário da sessão (2026-09-18) — Trilha de Auditoria: implementação completa + deploy VPS
+
+### O que foi feito
+
+1. **Trilha de Auditoria completa** — nova tela própria no menu Administração (sidebar), substituindo a tentativa anterior que era uma aba dentro da seção E-mail (lugar errado).
+
+2. **Cobertura total de telas** — `_auditMapearTela()` mapeia todos os `data-pagina` do SPA (E-mails, Fogbugz, Administração) para `{menu, tela}`. `navegar()` interceptado: cada troca de tela dispara heartbeat imediato com menu+tela corretos.
+
+3. **Heartbeat corrigido** — antes enviava `document.title` (genérico); agora usa `_auditTelaAtual` (específico por tela).
+
+4. **Tabela da Trilha** — colunas: Data/Hora (formato BR DD/MM/AAAA), Usuário, Tipo, Origem (app/portal), Menu, Tela. Coluna IP removida a pedido de Michel (dado gravado no banco, não exibido).
+
+5. **Backend** — `banco_threads.py`: migração `ADD COLUMN menu` (idempotente); `registrar_acesso()` com `menu=`; `ler_log_acesso()` retorna `menu`. `servidor_telas.py`: `_log_tela()` inclui `menu`; endpoint heartbeat extrai `menu` do JSON.
+
+6. **Deploy** — 3 commits (`06764ff` · `c7dc66e` · `1f74387`) · push · VPS `active` · 678 testes passando.
+
+### Próximo passo
+
+**Cruzando com PENDENCIAS.md — ordem de prioridade:**
+
+- 🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
+- 🟡 **Recalcular threads após Fix1+Fix2** — rodar `recalcular_status_todos()` em produção para as 13 threads com status errado. Feito no início do próximo chat.
+- 🟡 **Casos 4, 5, 6 (Remitly)** — aguardam decisão de Michel ("Recebido. Obrigada." e "estarei colocando as remessas em dia" — AF ou Concluída?).
+- 🟡 **Gap 3 coletor colaboradores** — implementar + simular nas 6 caixas com OK de Michel.
+- 🟡 **Teste de IA** — rodar `testar_status_ia.py --fase 1`.
+- 🟡 **Modal** — Cenário 2b + `white-space: nowrap` na coluna Valor.
+
+Último /fechar: 2026-09-18 — memórias revisadas ✅
+
+---
+
 ## 📓 Diário da sessão (2026-09-14) — Empresa no Resumo + Fix1+Fix2 + investigação mensagens
 
 ### O que foi feito
@@ -130,34 +162,4 @@
 
 ---
 
-## 📓 Diário da sessão (2026-09-11) — Resumo Semanal: e-mail idêntico ao artefato
-
-### O que foi feito
-
-1. **Template HTML reescrito** — e-mail agora tem layout e texto idênticos ao artefato 545b597b: tiles 2×2 com fundo cinza (#f7f8fa), seção "O que aconteceu nos e-mails", cards BACEN por grupo, separadores HR.
-
-2. **Texto narrativo corrigido** — `_gerar_narrativa()` e `_o_que_aconteceu_corpo()` reescritas para seguir exatamente o template de frases do artefato ("Esta semana, a equipe encerrou/recebeu X casos…"). Antes usava frases diferentes ("Nesta semana, N threads foram encerradas…").
-
-3. **4ª caixa BACEN — "Encerrados esta semana"** — nova função `buscar_bacen_encerrados_semana()` conta RETORNO_BACEN com status_workflow = 'Concluída' nos últimos 7 dias. Caixa verde exibida ao lado das 3 existentes. Número também aparece no texto narrativo.
-
-4. **Fix filtro FogBugz** — `buscar_dados_fog_semanal()` usava `status:open` (trazia 1176 casos, histórico todo). Corrigido para `status:open opened:"2025/01/01..today"`, alinhado com a tela (resultado: ~83 casos, igual à visão consolidada).
-
-5. **Testes, commit, push e deploy** — 656 passando · commit `d7ea78a` · VPS ativa.
-
-### Próximo passo
-
-Deploy concluído — e-mail validado por Michel. Próxima segunda-feira o resumo semanal sairá automaticamente com o novo template. Na próxima sexta o snapshot capturará os dados, habilitando os deltas e a narrativa por categoria CADOC.
-
-**Pendências que continuam (ordem de prioridade cruzada com PENDENCIAS.md):**
-- 🟡 **PRÓXIMA TAREFA: Validação de status** — protocolo gravado em `PENDENCIAS.md` e `documentações/validacao_status_suspeitos.md`. Abrir chat novo e executar Bloco 1 (levantamento automático dos suspeitos)
-- 🔴 Threads irmãs — 11 grupos com thread Concluída + pendente no mesmo caso (revisar um a um com Michel)
-- 🟡 Padrão 2 — retomar em chat novo com protocolo correto (Fix1+Fix2 prontos, aguarda OK)
-- 🟡 Padrão "@colega pode verificar?" — analisar caso Sefer manualmente
-- 🟡 Resumo Semanal — identificar empresas "Sem empresa identificada" (24 casos nos cards BACEN)
-- 🟡 Teste de IA — rodar `testar_status_ia.py --fase 1` antes de qualquer fix de status
-- 🟡 Modal — Cenário 2b + `white-space: nowrap` na coluna Valor
-
-Último /fechar: 2026-09-11 — memórias revisadas ✅
-
----
 <!-- fim das 3 sessões recentes -->

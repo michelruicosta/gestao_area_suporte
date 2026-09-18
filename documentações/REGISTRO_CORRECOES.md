@@ -2,6 +2,28 @@
 
 ---
 
+### 18/09 — FEAT(auditoria): Trilha de Auditoria — implementação completa
+
+**🔎 Em miúdos:** agora o sistema registra automaticamente tudo que você faz: quando entrou, por onde entrou (pela senha do app ou pelo portal), qual menu e tela abriu, e por quanto tempo ficou ativo. Tudo aparece em "Trilha de Auditoria" no menu Administração.
+
+**Problema:** não havia como saber quem acessou o sistema, quais telas visitou nem por onde entrou (app vs portal SSO).
+
+**Correção:**
+- `banco_threads.py`: tabela `log_acesso` com migração `ADD COLUMN menu` (idempotente); `registrar_acesso()` aceita `menu=`; `ler_log_acesso()` retorna `menu`
+- `servidor_telas.py`: `_log_tela()` inclui `menu`; heartbeat endpoint extrai `menu` do JSON; login app/portal e logout já registrados
+- `templates/gestao_email.html`:
+  - Botão "Trilha de Auditoria" na sidebar sob Administração (`data-pagina=auditoria`)
+  - Seção `pag-auditoria` com tabela: Data/Hora (formato BR), Usuário, Tipo, Origem, Menu, Tela
+  - `_auditMapearTela(pag, aba)` — mapeia todos os data-pagina (E-mails, Fogbugz, Administração) para `{menu, tela}`
+  - `navegar()` interceptado: a cada troca de tela, atualiza `_auditTelaAtual` e chama heartbeat imediato
+  - Heartbeat 60 s usa `_auditTelaAtual` em vez de `document.title`
+  - `_admMudarAba()`: removidas referências ao elemento `adm-aba-auditoria` (já removido em sessão anterior)
+
+**Commits:** `06764ff` (implementação completa) · `c7dc66e` (coluna Usuário + remove IP) · `1f74387` (formato data BR) · **Deploy VPS:** 18/09/2026 ✅
+**Validação:** ✅ `pytest tests/ -q`: **678 passed**, zero regressões. Tela validada visualmente por Michel na VPS.
+
+---
+
 ### 14/09 — FIX(status): Fix1+Fix2 — Padrão 2 (Finaud→Cliente): saudação e pedido explícito
 
 **🔎 Em miúdos:** quando a Finaud escrevia "Tudo bem?" ou pedia ao cliente "calcule o valor", o sistema não reconhecia como saudação ou pedido explícito e marcava a thread como AF em vez de AC. Corrigido nos dois casos.

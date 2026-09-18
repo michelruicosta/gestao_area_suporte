@@ -6,6 +6,28 @@
 
 ---
 
+## 📓 Diário da sessão (2026-09-11) — Resumo Semanal: e-mail idêntico ao artefato
+
+### O que foi feito
+
+1. **Template HTML reescrito** — e-mail agora tem layout e texto idênticos ao artefato 545b597b: tiles 2×2 com fundo cinza (#f7f8fa), seção "O que aconteceu nos e-mails", cards BACEN por grupo, separadores HR.
+
+2. **Texto narrativo corrigido** — `_gerar_narrativa()` e `_o_que_aconteceu_corpo()` reescritas para seguir exatamente o template de frases do artefato ("Esta semana, a equipe encerrou/recebeu X casos…"). Antes usava frases diferentes ("Nesta semana, N threads foram encerradas…").
+
+3. **4ª caixa BACEN — "Encerrados esta semana"** — nova função `buscar_bacen_encerrados_semana()` conta RETORNO_BACEN com status_workflow = 'Concluída' nos últimos 7 dias. Caixa verde exibida ao lado das 3 existentes. Número também aparece no texto narrativo.
+
+4. **Fix filtro FogBugz** — `buscar_dados_fog_semanal()` usava `status:open` (trazia 1176 casos, histórico todo). Corrigido para `status:open opened:"2025/01/01..today"`, alinhado com a tela (resultado: ~83 casos, igual à visão consolidada).
+
+5. **Testes, commit, push e deploy** — 656 passando · commit `d7ea78a` · VPS ativa.
+
+### Próximo passo (arquivo — superado)
+
+Deploy concluído — e-mail validado por Michel.
+
+Último /fechar: 2026-09-11 — memórias revisadas ✅
+
+---
+
 ## 📓 Diário da sessão (2026-09-10 quarta sessão) — Jornada por Colaborador: nova tela FOG implementada
 
 ### O que foi feito
