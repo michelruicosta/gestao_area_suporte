@@ -2227,11 +2227,11 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
             <thead>
               <tr>
                 <th>Data/Hora</th>
+                <th>Usuário</th>
                 <th>Tipo</th>
                 <th>Origem</th>
                 <th>Menu</th>
                 <th>Tela</th>
-                <th>IP</th>
               </tr>
             </thead>
             <tbody id="adm-audit-tbody"></tbody>
@@ -3725,11 +3725,11 @@ async function _auditCarregar() {
                    : '—';
       return `<tr>
         <td>${r.ts || '—'}</td>
+        <td style="font-size:0.85rem">${r.email || '—'}</td>
         <td>${tipo}</td>
         <td>${origem}</td>
         <td>${r.menu || '—'}</td>
         <td>${r.tela || '—'}</td>
-        <td style="font-size:0.8rem;color:var(--muted)">${r.ip || '—'}</td>
       </tr>`;
     }).join('');
     vazio.style.display = 'none';
