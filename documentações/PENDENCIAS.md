@@ -170,14 +170,14 @@ Alinhar os controles de filtro de período da aba Evolução do FogBugz com os d
 
 ---
 
-## 🟡 INVESTIGAR — Teste de IA para validar status das threads (identificado em 10/09/2026)
+## 🟡 INVESTIGAR — Teste de IA: avaliar substituição do classificador de regras por IA (identificado em 10/09/2026, objetivo ampliado em 18/09/2026)
 
 ### O que é
 
 Rodar o GPT-4o em paralelo (sem tocar na produção) para comparar o status
 que a IA atribuiria a cada thread com o status que o sistema atual calculou.
-Objetivo: medir quantos erros reais existem e confirmar se a IA é mais
-confiável que o sistema de regras atual.
+
+**Objetivo ampliado (18/09/2026):** além de medir erros atuais, avaliar se a IA pode substituir o classificador de regex — eliminando para sempre o problema de Fix1/Fix2 (palavras novas que o sistema não conhece). A IA lê a intenção da mensagem, não uma lista de palavras. Se a Fase 3 confirmar precisão superior ao regex, o próximo passo é substituir o classificador de regras pela IA.
 
 ### Contexto
 

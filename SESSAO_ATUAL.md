@@ -96,10 +96,10 @@
 **Cruzando com PENDENCIAS.md — ordem de prioridade:**
 
 - 🔴 **Threads irmãs** — 11 grupos com thread Concluída + pendente no mesmo caso. Chat dedicado.
-- 🟡 **Recalcular threads após Fix1+Fix2** — rodar `recalcular_status_todos()` em produção para as 13 threads com status errado. Feito no início do próximo chat.
+- 🟡 **Teste de IA** — Fase 1 nos ~80 suspeitos; avaliar substituição do classificador de regex por IA (elimina erros tipo Fix1/Fix2 para sempre). Ver PENDENCIAS.md.
+- 🟡 **Recalcular threads após Fix1+Fix2** — rodar `recalcular_status_todos()` em produção para as 13 threads com status errado.
 - 🟡 **Casos 4, 5, 6 (Remitly)** — aguardam decisão de Michel ("Recebido. Obrigada." e "estarei colocando as remessas em dia" — AF ou Concluída?).
 - 🟡 **Gap 3 coletor colaboradores** — implementar + simular nas 6 caixas com OK de Michel.
-- 🟡 **Teste de IA** — rodar `testar_status_ia.py --fase 1`.
 - 🟡 **Modal** — Cenário 2b + `white-space: nowrap` na coluna Valor.
 
 Último /fechar: 2026-09-18 — memórias revisadas ✅
