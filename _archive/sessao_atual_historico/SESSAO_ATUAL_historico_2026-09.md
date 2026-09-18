@@ -6,6 +6,20 @@
 
 ---
 
+## 📓 Diário da sessão (2026-09-11 segunda sessão) — Validação de Status: protocolo + Bloco 1
+
+### O que foi feito
+
+1. **Protocolo de validação definido e gravado** — 3 blocos com regras claras de transição, monitoramento e tratamento de achados fora do escopo. Gravado em `PENDENCIAS.md` e `documentações/validacao_status_suspeitos.md`.
+
+2. **Bloco 1 executado** — script de levantamento rodou no banco `data/gestao.db`. Universo: 145 threads Aguardando Finaud + 27 Aguardando Cliente (ativas). Resultado: **22 suspeitos** encontrados.
+   - Tipo A (AF, Finaud enviou por último): 21 casos
+   - Tipo B (AC, cliente enviou por último): 1 caso
+
+3. **Achado fora do escopo** — 364 threads ativas sem `status_workflow` definido. Registrado no `PENDENCIAS.md` para investigar separadamente.
+
+---
+
 ## 📓 Diário da sessão (2026-09-11) — Resumo Semanal: e-mail idêntico ao artefato
 
 ### O que foi feito

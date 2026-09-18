@@ -2,6 +2,21 @@
 
 ---
 
+### 18/09 — DECISÃO(status): Casos 4, 5, 6 (Remitly) — status AF confirmado como correto
+
+**🔎 Em miúdos:** três conversas da Remitly que estavam marcadas como "Aguardando Finaud" foram revisadas com Michel. A decisão é que o status está correto nos três — nenhuma correção de código necessária.
+
+**Casos revisados:**
+- **Caso 4 (Remitly CC - 4010/4016):** já estava Concluída antes mesmo da revisão — o recálculo automático do pipeline corrigiu após Fix1+Fix2. ✅
+- **Caso 5 (Re: Remitly CC - 4010 - 07):** thread capturada com apenas 1 mensagem (Andrea/Finaud: "Recebido. Obrigada!"). Pelo contexto do assunto, Andrea recebeu um arquivo do Hebert e ainda precisa processar. AF está correto. Sem código. ✅
+- **Caso 6 (Re: VIS - ENVIAR CADOC e DDR):** Mônica/Finaud disse "Logo, estarei colocando as remessas em dia" após o cliente enviar o CADOC e DDR. Finaud ainda precisa processar e enviar a remessa. AF está correto. Sem código. ✅
+
+**Observação registrada em PENDENCIAS.md (Teste de IA):** esses dois casos mostram limitações do classificador atual — Caso 5 precisaria do thread completo para ter certeza; Caso 6 exige conhecer o papel da Finaud vs cliente para interpretar "estarei fazendo X". Documentado como cenários a validar na Fase 1 do Teste de IA.
+
+**Validação:** sem código alterado — decisão de negócio confirmada por Michel em 18/09/2026.
+
+---
+
 ### 18/09 — FEAT(auditoria): Trilha de Auditoria — implementação completa
 
 **🔎 Em miúdos:** agora o sistema registra automaticamente tudo que você faz: quando entrou, por onde entrou (pela senha do app ou pelo portal), qual menu e tela abriu, e por quanto tempo ficou ativo. Tudo aparece em "Trilha de Auditoria" no menu Administração.

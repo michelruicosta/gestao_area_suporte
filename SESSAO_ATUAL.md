@@ -12,9 +12,10 @@
 
 | Data | Tema | Onde ler |
 |---|---|---|
+| 18/09 | Casos 4–6 Remitly — decisão de status + conclusão do Padrão 2 | abaixo |
 | 18/09 | Trilha de Auditoria — implementação completa + deploy VPS | abaixo |
 | 14/09 | Empresa no Resumo + Fix1+Fix2 + investigação mensagens Gmail vs sistema | abaixo |
-| 11/09 | Validação de Status: protocolo + Bloco 1 (22 suspeitos) | abaixo |
+| 11/09 | Validação de Status: protocolo + Bloco 1 (22 suspeitos) | arquivo |
 | 11/09 | Resumo Semanal: e-mail idêntico ao artefato + caixa BACEN encerrados + fix FOG filter | arquivo |
 | 10/09 | prospeccao_finaud: tela Flask separada Bacen/Receita + ingestão 26 estados | arquivo |
 | 10/09 | Padrão 2 (Finaud→Cliente): tentativa Fix1+Fix2 → revertida por protocolo | arquivo |
@@ -75,6 +76,39 @@
 
 ---
 
+## 📓 Diário da sessão (2026-09-18 segunda sessão) — Casos 4–6 Remitly: decisão de status + conclusão do Padrão 2
+
+### O que foi feito
+
+1. **Simulação dos Casos 4, 5, 6 (Remitly)** — consultou banco e mostrou contexto completo das 3 threads que aguardavam decisão de Michel.
+
+2. **Caso 4 (Remitly CC - 4010/4016) — já resolvido** — estava Concluída antes mesmo da revisão. O recálculo automático do pipeline corrigiu após Fix1+Fix2. Nenhuma ação necessária.
+
+3. **Casos 5 e 6 confirmados como Aguardando Finaud (correto)** — Michel decidiu: AF está certo nos dois.
+   - Caso 5 (Re: Remitly CC - 4010 - 07): thread com apenas 1 mensagem capturada (Andrea/Finaud: "Recebido. Obrigada!"). Ainda há trabalho da Finaud a fazer.
+   - Caso 6 (Re: VIS - ENVIAR CADOC e DDR): Mônica disse "estarei colocando as remessas em dia" — Finaud ainda precisa processar e enviar ao BACEN.
+
+4. **Dois cenários documentados em PENDENCIAS.md (Teste de IA):**
+   - Cenário A: thread com 1 mensagem — IA pode precisar do thread completo para classificar com segurança
+   - Cenário B: mensagem de intenção futura ("estarei fazendo X") — IA precisa conhecer o papel da Finaud vs cliente
+   - Ponto geral de Michel: prompt precisará de "contexto de negócio" (tipos de documentos, papel de cada parte)
+
+5. **Padrão 2 (Finaud→Cliente) encerrado** — todos os 22 casos resolvidos. Seção marcada ✅ no PENDENCIAS.md; decisão registrada no REGISTRO_CORRECOES.md.
+
+### Próximo passo
+
+**🔴 Threads irmãs — chat dedicado.** 11 grupos com thread Concluída + pendente no mesmo caso. Revisar cada grupo com Michel para separar casos reais de falsos positivos, definir critério de detecção e fluxo de tratamento.
+
+**Pendências restantes (ordem de prioridade):**
+- 🔴 **Threads irmãs** — 11 grupos · chat dedicado
+- 🟡 **Teste de IA** — Fase 1 nos ~80 suspeitos; avaliar substituição do regex por IA. Cenários A e B documentados no PENDENCIAS.md.
+- 🟡 **Gap 3 coletor colaboradores** — implementar threadId-based matching + simular nas 6 caixas (OK de Michel antes de rodar)
+- 🟡 **Modal** — Cenário 2b (citação dupla COSIF) + `white-space: nowrap` na coluna Valor
+
+Último /fechar: 2026-09-18 — memórias revisadas ✅
+
+---
+
 ## 📓 Diário da sessão (2026-09-18) — Trilha de Auditoria: implementação completa + deploy VPS
 
 ### O que foi feito
@@ -130,35 +164,6 @@
 - 🟡 **Modal** — Cenário 2b + `white-space: nowrap` na coluna Valor
 
 Último /fechar: 2026-09-14 — memórias revisadas ✅
-
----
-
-## 📓 Diário da sessão (2026-09-11 segunda sessão) — Validação de Status: protocolo + Bloco 1
-
-### O que foi feito
-
-1. **Protocolo de validação definido e gravado** — 3 blocos com regras claras de transição, monitoramento e tratamento de achados fora do escopo. Gravado em `PENDENCIAS.md` e `documentações/validacao_status_suspeitos.md`.
-
-2. **Bloco 1 executado** — script de levantamento rodou no banco `data/gestao.db`. Universo: 145 threads Aguardando Finaud + 27 Aguardando Cliente (ativas). Resultado: **22 suspeitos** encontrados.
-   - Tipo A (AF, Finaud enviou por último): 21 casos
-   - Tipo B (AC, cliente enviou por último): 1 caso
-
-3. **Achado fora do escopo** — 364 threads ativas sem `status_workflow` definido. Registrado no `PENDENCIAS.md` para investigar separadamente.
-
-### Próximo passo
-
-**Bloco 2 — revisar os 22 suspeitos com Michel.** Abrir chat novo, rodar `/iniciar`, ir direto para `documentações/validacao_status_suspeitos.md`. Apresentar cada caso um a um: Michel responde "correto" ou "erro". Nada é alterado sem resposta de Michel.
-
-**Pendências que continuam (ordem de prioridade):**
-- 🟡 **PRÓXIMA TAREFA: Bloco 2 da Validação** — 22 suspeitos em `documentações/validacao_status_suspeitos.md` aguardam revisão de Michel
-- ⚠️ **Investigar:** 364 threads ativas sem status_workflow — o que são e por que não têm status
-- 🔴 Threads irmãs — 11 grupos com thread Concluída + pendente no mesmo caso
-- 🟡 Padrão 2 — retomar em chat novo com protocolo correto
-- 🟡 Resumo Semanal — 24 casos "Sem empresa identificada"
-- 🟡 Teste de IA — rodar `testar_status_ia.py --fase 1`
-- 🟡 Modal — Cenário 2b + `white-space: nowrap`
-
-Último /fechar: 2026-09-11 — memórias revisadas ✅
 
 ---
 

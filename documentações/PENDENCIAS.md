@@ -148,25 +148,9 @@ Alinhar os controles de filtro de período da aba Evolução do FogBugz com os d
 
 ---
 
-## 🟡 FIX — Padrão 2 (Finaud→Cliente): 13 casos fix-claro pendentes + 3 aguardam decisão de Michel
+## ✅ FIX — Padrão 2 (Finaud→Cliente): todos os 22 casos resolvidos (concluído 18/09/2026)
 
-### Progresso atual
-
-- ✅ **Casos 2 e 7** (§8.8a): "retornaremos em breve" + "no aguardo da liberação" → AC. Corrigido em 10/09/2026.
-- ✅ **Casos 1, 3, 9, 12**: código já retorna Concluída — confirmado como correto por Michel em 10/09/2026.
-- ✅ **Casos 8, 10, 11, 13, 14, 16, 17, 18, 20, 21, 22** (Fix1 + Fix2 — concluído 14/09/2026): Fix1: `tudo\s+(?:bem|bom)` adicionado ao `_SAUDACAO_RE`; Fix2: `'calcule '` adicionado ao `_FRASES_PEDIDO_EXPLICITO`. 669 testes passando. Commit `7d83f19`, deploy VPS 14/09/2026.
-- ✅ **Casos 15 e 19**: já corretos (código = AC). Confirmados na validação.
-- ❓ **Casos 4, 5, 6**: aguardam decisão de Michel (ver abaixo).
-
-### Os 3 casos que aguardam Michel
-
-| # | Assunto | Texto da Finaud | Código atual | Questão |
-|---|---|---|---|---|
-| 4 | Re: Remitly CC - 4010/4016 | "Recebido. Obrigada." | AF | AF (ainda processando) ou **Concluída** (acuse de recebimento = encerrado)? |
-| 5 | Re: Remitly CC - 4010 - 07 | "Recebido. Obrigada!" | AF | Idem caso 4 |
-| 6 | Re: VIS - ENVIAR CADOC e DDR | "estarei colocando as remessas em dia" | AF | AF (ainda trabalhando) ou **Concluída** (aviso que vai processar = dá trabalho encerrado)? |
-
-**Após decisão de Michel:** implementar e commitar.
+Todos os casos revisados. Detalhes no `REGISTRO_CORRECOES.md` (entradas de 10/09, 14/09 e 18/09).
 
 ---
 
@@ -205,6 +189,35 @@ As linhas com divergência são candidatas a erro — Michel decide quem está c
 `scripts/testar_status_ia.py` — lê o banco, manda última mensagem para o
 GPT-4o (temperatura 0), salva resultado em
 `data/teste_status_ia/YYYYMMDD_fase{N}_resultados.csv`.
+
+### Cenários identificados que a IA precisa saber resolver (18/09/2026)
+
+Dois casos reais levantados ao revisar os Casos 4–6 da Remitly mostram limitações que o design do prompt da IA precisa endereçar:
+
+**Cenário A — Thread com mensagem única (Re: Remitly CC - 4010 - 07/2026)**
+O sistema capturou apenas 1 mensagem: Andrea (Finaud) respondendo "Recebido. Obrigada!" ao
+Hebert. Pelo contexto do assunto, ela recebeu um arquivo e ainda precisa processar e enviar
+algo de volta. O status correto é AF — mas com só 1 mensagem capturada é impossível saber
+isso sem ler o thread completo.
+→ **Implicação para a IA:** mandar só a última mensagem pode não ser suficiente. A IA pode
+precisar do thread completo (ou ao menos das últimas N mensagens) para entender o contexto.
+Incluir este caso na Fase 1 para ver se a IA acerta ou erra.
+
+**Cenário B — Mensagem de intenção futura (Re: VIS - ENVIAR CADOC e DDR)**
+A última mensagem é da Mônica (Finaud): "Logo, estarei colocando as remessas em dia." O
+cliente já entregou o que precisava; agora Finaud é quem tem trabalho a fazer. Status correto
+é AF. Para a IA classificar isso certo, ela precisa saber:
+1. Que "estarei fazendo X" = Finaud ainda tem trabalho → AF, não Concluída
+2. Quem é a Finaud (prestadora de serviço que importa arquivos e envia remessas ao BACEN)
+3. Quem é o cliente (empresa que envia posições/planilhas para a Finaud processar)
+→ **Implicação para a IA:** o prompt precisa descrever o papel de cada lado (Finaud vs
+cliente) e os verbos que indicam trabalho pendente de cada parte. Sem esse contexto, a IA
+pode confundir "Finaud disse que vai fazer" com "conversa encerrada".
+
+**Ponto geral levantado por Michel (18/09/2026):** há muitos cenários e muitas situações
+possíveis. A IA pode precisar de um "contexto de negócio" no prompt — explicando o que cada
+lado faz, os tipos de documentos envolvidos (CADOC, DDR, DLO etc.) — para classificar bem
+casos ambíguos sem uma lista interminável de exemplos.
 
 ### Quando fazer
 
