@@ -146,6 +146,21 @@ def criar_banco() -> None:
                 classif_descartes INTEGER NOT NULL DEFAULT 0,
                 classif_revisao   INTEGER NOT NULL DEFAULT 0
             );
+
+            CREATE TABLE IF NOT EXISTS log_acesso (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                ts          TEXT    NOT NULL,
+                email       TEXT    NOT NULL,
+                tipo        TEXT    NOT NULL,
+                origem      TEXT,
+                rota        TEXT,
+                tela        TEXT,
+                ip          TEXT,
+                duracao_seg INTEGER
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_log_acesso_ts
+                ON log_acesso (ts);
         """)
         # Migração segura: adiciona colunas novas sem recriar o banco
         for col_def in [
@@ -1740,6 +1755,42 @@ def ler_log_coletas(limite: int = 30) -> list[dict]:
                       mensagem, classif_principal, classif_descartes, classif_revisao
                FROM log_coletas ORDER BY id DESC LIMIT ?""",
             (limite,)
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+# ── Trilha de auditoria de acesso ─────────────────────────────────────────────
+
+def registrar_acesso(
+    email: str,
+    tipo: str,
+    *,
+    origem: str | None = None,
+    rota: str | None = None,
+    tela: str | None = None,
+    ip: str | None = None,
+) -> None:
+    """Grava um evento de acesso. Falha silenciosamente para nunca derrubar o sistema."""
+    from datetime import datetime as _dt
+    ts = _dt.now().strftime('%Y-%m-%d %H:%M:%S')
+    try:
+        with _conectar() as conn:
+            conn.execute(
+                """INSERT INTO log_acesso (ts, email, tipo, origem, rota, tela, ip)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (ts, email, tipo, origem, rota, tela, ip),
+            )
+    except Exception:  # nosec B110 — log nunca derruba o sistema
+        pass
+
+
+def ler_log_acesso(limite: int = 200) -> list[dict]:
+    """Retorna os últimos N eventos de acesso, mais recente primeiro."""
+    with _conectar() as conn:
+        rows = conn.execute(
+            """SELECT id, ts, email, tipo, origem, rota, tela, ip, duracao_seg
+               FROM log_acesso ORDER BY id DESC LIMIT ?""",
+            (limite,),
         ).fetchall()
     return [dict(r) for r in rows]
 

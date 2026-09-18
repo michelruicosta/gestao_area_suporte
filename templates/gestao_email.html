@@ -1563,6 +1563,7 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
         <button class="email-tab" data-aba="agendamentos" onclick="_admMudarAba('agendamentos',this)">Agendamentos</button>
         <button class="email-tab" data-aba="sem-retorno" onclick="_admMudarAba('sem-retorno',this)">Regras de Sem Retorno</button>
         <button class="email-tab" data-aba="situacao" onclick="_admMudarAba('situacao',this)">Situação da busca</button>
+        <button class="email-tab" data-aba="auditoria" onclick="_admMudarAba('auditoria',this)">Auditoria de acesso</button>
       </div>
 
       <div id="adm-aba-coletor">
@@ -1705,6 +1706,33 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
               <div id="sit-busca-det" style="font-size:0.82rem;color:var(--muted);margin:0">Carregando…</div>
             </div>
             <span class="sit-pill" id="sit-busca-pill">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="adm-aba-auditoria" style="display:none">
+        <div class="admin-card">
+          <h2>Trilha de acesso</h2>
+          <p class="nota-admin" style="margin:0 0 1rem">
+            Registro de quem entrou, qual tela acessou, de onde veio
+            (<strong>app</strong> = senha digitada aqui / <strong>portal</strong> = SSO do portal Finaud)
+            e quanto tempo ficou. O heartbeat atualiza a cada 60 s enquanto a aba estiver visível.
+          </p>
+          <button class="btn-coletar" onclick="_auditCarregar()" style="margin-bottom:1rem">Atualizar</button>
+          <div id="adm-audit-vazio" style="display:none;color:var(--muted);font-size:0.85rem">Nenhum registro ainda.</div>
+          <div class="tabela-wrap" id="adm-audit-wrap" style="display:none">
+            <table class="tabela">
+              <thead>
+                <tr>
+                  <th>Data/Hora</th>
+                  <th>Tipo</th>
+                  <th>Origem</th>
+                  <th>Tela</th>
+                  <th>IP</th>
+                </tr>
+              </thead>
+              <tbody id="adm-audit-tbody"></tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -3518,12 +3546,14 @@ function _admMudarAba(aba, btn) {
   document.getElementById('adm-aba-agendamentos').style.display  = aba === 'agendamentos'  ? '' : 'none';
   document.getElementById('adm-aba-sem-retorno').style.display   = aba === 'sem-retorno'   ? '' : 'none';
   document.getElementById('adm-aba-situacao').style.display      = aba === 'situacao'      ? '' : 'none';
+  document.getElementById('adm-aba-auditoria').style.display     = aba === 'auditoria'     ? '' : 'none';
   const subs = {
     coletor: 'Busca os e-mails da caixa da área neste instante.',
     historico: 'As vezes em que a busca já rodou — últimos 7 dias.',
     agendamentos: 'De quanto em quanto tempo a busca de e-mails roda sozinha.',
     'sem-retorno': 'Quantos dias sem resposta para marcar Sem Retorno.',
     situacao: 'Como está agora: ligado ou parado. Não é o e-mail de aviso.',
+    auditoria: 'Registro de quem entrou, qual tela acessou e quanto tempo ficou.',
   };
   const subEl = document.getElementById('adm-page-sub');
   if (subEl) subEl.textContent = subs[aba] || '';
@@ -3533,12 +3563,14 @@ function _admMudarAba(aba, btn) {
     agendamentos: 'Administração · E-mail · Agendamentos',
     'sem-retorno': 'Administração · E-mail · Regras de Sem Retorno',
     situacao: 'Administração · E-mail · Situação da busca',
+    auditoria: 'Administração · E-mail · Auditoria de acesso',
   };
   document.getElementById('topbar-titulo').textContent = titulosAba[aba] || 'Administração · E-mail';
   if (aba === 'historico')    carregarLogColetas();
   if (aba === 'agendamentos') _admCarregarConfig();
   if (aba === 'sem-retorno')  _admCarregarSr();
   if (aba === 'situacao')     _admCarregarSituacao();
+  if (aba === 'auditoria')    _auditCarregar();
 }
 
 async function _admCarregarConfig() {
@@ -3614,6 +3646,56 @@ async function _admCarregarSituacao() {
     document.getElementById('sit-busca-det').textContent = 'Não foi possível ler a situação.';
   }
 }
+
+async function _auditCarregar() {
+  try {
+    const d = await _get('/api/admin/log-acesso');
+    const logs = d.logs || [];
+    const tbody = document.getElementById('adm-audit-tbody');
+    const wrap  = document.getElementById('adm-audit-wrap');
+    const vazio = document.getElementById('adm-audit-vazio');
+    if (!logs.length) {
+      wrap.style.display  = 'none';
+      vazio.style.display = '';
+      return;
+    }
+    const TIPOS = { login: 'Entrada', logout: 'Saída', acesso: 'Tela aberta', heartbeat: '♥ Ativo' };
+    tbody.innerHTML = logs.map(r => {
+      const tipo   = TIPOS[r.tipo] || r.tipo;
+      const origem = r.origem === 'app' ? '<span style="background:rgba(59,130,246,.15);color:#60a5fa;border-radius:4px;padding:1px 6px;font-size:0.78rem">app</span>'
+                   : r.origem === 'portal' ? '<span style="background:rgba(16,185,129,.15);color:#34d399;border-radius:4px;padding:1px 6px;font-size:0.78rem">portal</span>'
+                   : '—';
+      return `<tr>
+        <td>${r.ts || '—'}</td>
+        <td>${tipo}</td>
+        <td>${origem}</td>
+        <td>${r.tela || '—'}</td>
+        <td style="font-size:0.8rem;color:var(--muted)">${r.ip || '—'}</td>
+      </tr>`;
+    }).join('');
+    vazio.style.display = 'none';
+    wrap.style.display  = '';
+  } catch (e) {
+    document.getElementById('adm-audit-vazio').textContent = 'Não foi possível carregar o log.';
+    document.getElementById('adm-audit-vazio').style.display = '';
+  }
+}
+
+// ── Heartbeat — sinaliza que a aba está ativa a cada 60 s ────────────────────
+(function () {
+  function _enviarHeartbeat() {
+    if (document.visibilityState !== 'visible') return;
+    fetch('/api/audit/heartbeat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rota: window.location.pathname, tela: document.title }),
+    }).catch(() => {});
+  }
+  setInterval(_enviarHeartbeat, 60000);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') _enviarHeartbeat();
+  });
+})();
 
 function _notifMudarAba(aba, btn) {
   document.getElementById('notif-aba-email').hidden = aba !== 'email';

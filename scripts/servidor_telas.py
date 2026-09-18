@@ -690,6 +690,8 @@ def _aplicar_sso_portal() -> bool:
         return False
     session['logado'] = True
     session['email'] = usuario.email
+    session['origem_login'] = 'portal'
+    bt.registrar_acesso(usuario.email, 'login', origem='portal', ip=_ip_cliente())
     return True
 
 
@@ -706,6 +708,32 @@ def _requer_login(f):
     return _wrap
 
 
+# ── Auditoria de acesso ───────────────────────────────────────────────────────
+
+_NOMES_TELAS = {
+    '/':              'Classificação e Status',
+    '/custos':        'Custos',
+    '/configuracoes': 'Configurações',
+}
+
+
+def _ip_cliente() -> str:
+    """IP real do cliente, respeitando proxy reverso (nginx/gunicorn na VPS)."""
+    encaminhado = request.headers.get('X-Forwarded-For', '')
+    return encaminhado.split(',')[0].strip() or (request.remote_addr or '')
+
+
+def _log_tela(rota: str) -> None:
+    tela = _NOMES_TELAS.get(rota, rota)
+    bt.registrar_acesso(
+        session.get('email', ''),
+        'acesso',
+        rota=rota,
+        tela=tela,
+        ip=_ip_cliente(),
+    )
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'GET' and _aplicar_sso_portal():
@@ -717,6 +745,8 @@ def login():
         if email.lower() == _ADMIN_EMAIL.lower() and _senha_confere(senha):
             session['logado'] = True
             session['email']  = _ADMIN_EMAIL
+            session['origem_login'] = 'app'
+            bt.registrar_acesso(_ADMIN_EMAIL, 'login', origem='app', ip=_ip_cliente())
             return redirect(url_for('index'))
         erro = 'E-mail ou senha incorretos.'
     return render_template('gestao_login.html', erro=erro)
@@ -737,6 +767,7 @@ def recuperar_senha():
 
 @app.route('/sair')
 def sair():
+    bt.registrar_acesso(session.get('email', ''), 'logout', ip=_ip_cliente())
     return _redirecionar_ao_portal_saindo()
 
 
@@ -745,6 +776,7 @@ def sair():
 @app.route('/')
 @_requer_login
 def index():
+    _log_tela('/')
     from collections import defaultdict
     _fog = _buscar_fog()
     ativos   = [t for t in _fog if t['status'] == 'Ativo']
@@ -1254,6 +1286,27 @@ def api_admin_log_coletas():
     return jsonify({'logs': logs})
 
 
+@app.route('/api/admin/log-acesso')
+@_requer_login
+def api_admin_log_acesso():
+    logs = bt.ler_log_acesso(limite=200)
+    return jsonify({'logs': logs})
+
+
+@app.route('/api/audit/heartbeat', methods=['POST'])
+@_requer_login
+def api_audit_heartbeat():
+    dados = request.get_json(silent=True) or {}
+    bt.registrar_acesso(
+        session.get('email', ''),
+        'heartbeat',
+        rota=dados.get('rota', ''),
+        tela=dados.get('tela', ''),
+        ip=_ip_cliente(),
+    )
+    return jsonify({'ok': True})
+
+
 @app.route('/api/admin/config', methods=['GET'])
 @_requer_login
 def api_admin_config_get():
@@ -1384,11 +1437,13 @@ def api_historico_limites():
 @app.route('/custos')
 @_requer_login
 def page_custos():
+    _log_tela('/custos')
     return render_template('monitor_custos_ia.html')
 
 
 @app.route('/logout')
 def logout():
+    bt.registrar_acesso(session.get('email', ''), 'logout', ip=_ip_cliente())
     return _redirecionar_ao_portal_saindo()
 
 
@@ -1402,6 +1457,7 @@ def perfil():
 @app.route('/configuracoes')
 @_requer_login
 def configuracoes():
+    _log_tela('/configuracoes')
     return render_template('configuracoes.html')
 
 
