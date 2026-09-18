@@ -186,6 +186,10 @@ def criar_banco() -> None:
                 conn.execute(f'ALTER TABLE log_coletas ADD COLUMN {col_def}')
             except Exception:  # nosec B110 — falha idempotente — operação de banco já foi realizada ou dado não existe
                 pass  # coluna já existe
+        try:
+            conn.execute('ALTER TABLE log_acesso ADD COLUMN menu TEXT')
+        except Exception:  # nosec B110 — coluna já existe em bancos criados após este deploy
+            pass
     print(f'Banco criado/verificado: {BANCO}')
 
 
@@ -1766,6 +1770,7 @@ def registrar_acesso(
     tipo: str,
     *,
     origem: str | None = None,
+    menu: str | None = None,
     rota: str | None = None,
     tela: str | None = None,
     ip: str | None = None,
@@ -1776,9 +1781,9 @@ def registrar_acesso(
     try:
         with _conectar() as conn:
             conn.execute(
-                """INSERT INTO log_acesso (ts, email, tipo, origem, rota, tela, ip)
-                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                (ts, email, tipo, origem, rota, tela, ip),
+                """INSERT INTO log_acesso (ts, email, tipo, origem, menu, rota, tela, ip)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                (ts, email, tipo, origem, menu, rota, tela, ip),
             )
     except Exception:  # nosec B110 — log nunca derruba o sistema
         pass
@@ -1788,7 +1793,7 @@ def ler_log_acesso(limite: int = 200) -> list[dict]:
     """Retorna os últimos N eventos de acesso, mais recente primeiro."""
     with _conectar() as conn:
         rows = conn.execute(
-            """SELECT id, ts, email, tipo, origem, rota, tela, ip, duracao_seg
+            """SELECT id, ts, email, tipo, origem, menu, rota, tela, ip, duracao_seg
                FROM log_acesso ORDER BY id DESC LIMIT ?""",
             (limite,),
         ).fetchall()

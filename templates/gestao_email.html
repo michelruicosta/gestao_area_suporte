@@ -1278,6 +1278,10 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
           <span class="nav-ico">👥</span>
           <span class="nav-txt">Usuários e Perfis</span>
         </button>
+        <button class="nav-item" data-pagina="auditoria" onclick="navegar(this)">
+          <span class="nav-ico">🔍</span>
+          <span class="nav-txt">Trilha de Auditoria</span>
+        </button>
       </div>
     </div>
 
@@ -1563,7 +1567,6 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
         <button class="email-tab" data-aba="agendamentos" onclick="_admMudarAba('agendamentos',this)">Agendamentos</button>
         <button class="email-tab" data-aba="sem-retorno" onclick="_admMudarAba('sem-retorno',this)">Regras de Sem Retorno</button>
         <button class="email-tab" data-aba="situacao" onclick="_admMudarAba('situacao',this)">Situação da busca</button>
-        <button class="email-tab" data-aba="auditoria" onclick="_admMudarAba('auditoria',this)">Auditoria de acesso</button>
       </div>
 
       <div id="adm-aba-coletor">
@@ -1710,32 +1713,6 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
         </div>
       </div>
 
-      <div id="adm-aba-auditoria" style="display:none">
-        <div class="admin-card">
-          <h2>Trilha de acesso</h2>
-          <p class="nota-admin" style="margin:0 0 1rem">
-            Registro de quem entrou, qual tela acessou, de onde veio
-            (<strong>app</strong> = senha digitada aqui / <strong>portal</strong> = SSO do portal Finaud)
-            e quanto tempo ficou. O heartbeat atualiza a cada 60 s enquanto a aba estiver visível.
-          </p>
-          <button class="btn-coletar" onclick="_auditCarregar()" style="margin-bottom:1rem">Atualizar</button>
-          <div id="adm-audit-vazio" style="display:none;color:var(--muted);font-size:0.85rem">Nenhum registro ainda.</div>
-          <div class="tabela-wrap" id="adm-audit-wrap" style="display:none">
-            <table class="tabela">
-              <thead>
-                <tr>
-                  <th>Data/Hora</th>
-                  <th>Tipo</th>
-                  <th>Origem</th>
-                  <th>Tela</th>
-                  <th>IP</th>
-                </tr>
-              </thead>
-              <tbody id="adm-audit-tbody"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
     </section>
 
     <!-- ── Administração · Notificações ───────────────────────────── -->
@@ -2225,6 +2202,40 @@ body.modo-fullscreen::after{content:"Esc para sair";position:fixed;top:14px;righ
         {% else %}
           <div style="padding:32px;text-align:center;color:var(--muted);font-size:13px">Nenhum caso encontrado.</div>
         {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Administração · Trilha de Auditoria ──────────────────── -->
+    <section class="page" id="pag-auditoria">
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1 class="page-titulo">Trilha de Auditoria</h1>
+          <p class="page-sub">Registro de quem entrou, qual menu e tela acessou, de onde veio e quanto tempo ficou.</p>
+        </div>
+      </div>
+      <div class="admin-card">
+        <p class="nota-admin" style="margin:0 0 1rem">
+          <strong>app</strong> = entrou digitando a senha aqui &nbsp;·&nbsp;
+          <strong>portal</strong> = entrou pelo SSO do portal Finaud.
+          O heartbeat registra a cada 60 s enquanto a aba estiver visível — permite calcular o tempo real em cada tela.
+        </p>
+        <button class="btn-coletar" onclick="_auditCarregar()" style="margin-bottom:1rem">Atualizar</button>
+        <div id="adm-audit-vazio" style="display:none;color:var(--muted);font-size:0.85rem">Nenhum registro ainda.</div>
+        <div class="tabela-wrap" id="adm-audit-wrap" style="display:none">
+          <table class="tabela">
+            <thead>
+              <tr>
+                <th>Data/Hora</th>
+                <th>Tipo</th>
+                <th>Origem</th>
+                <th>Menu</th>
+                <th>Tela</th>
+                <th>IP</th>
+              </tr>
+            </thead>
+            <tbody id="adm-audit-tbody"></tbody>
+          </table>
         </div>
       </div>
     </section>
@@ -2760,6 +2771,7 @@ function navegar(btn) {
     'admin-detalhe':     'Administração · E-mail · Detalhe',
     'usuarios':          'Administração · Usuários e Perfis',
     'notificacoes':      'Administração · Notificações',
+    'auditoria':         'Administração · Trilha de Auditoria',
     'fog-casos':          'FOGBUGZ · Lista de Casos',
     'fog-kpis':           'FOGBUGZ · Visão Consolidada',
     'fog-evolucao':       'FOGBUGZ · Evolução',
@@ -2787,9 +2799,13 @@ function navegar(btn) {
   }
   if (pag === 'usuarios') { _usrRenderTabela(); }
   if (pag === 'notificacoes') { _notifCarregar(); }
+  if (pag === 'auditoria') { _auditCarregar(); }
   if (pag !== 'admin') { _pararAutoRefreshLog(); }
   if (pag === 'fog-evolucao') { carregarFogEvo(); }
   if (pag === 'fog-jornada-colab') { _jcolInicializar(); }
+  // registra navegação na trilha de auditoria
+  _auditTelaAtual = _auditMapearTela(pag, aba);
+  _auditRegistrarNavegacao();
 
   if (pag === 'fog-casos') {
     if (!_keepFogFiltros) {
@@ -3546,14 +3562,12 @@ function _admMudarAba(aba, btn) {
   document.getElementById('adm-aba-agendamentos').style.display  = aba === 'agendamentos'  ? '' : 'none';
   document.getElementById('adm-aba-sem-retorno').style.display   = aba === 'sem-retorno'   ? '' : 'none';
   document.getElementById('adm-aba-situacao').style.display      = aba === 'situacao'      ? '' : 'none';
-  document.getElementById('adm-aba-auditoria').style.display     = aba === 'auditoria'     ? '' : 'none';
   const subs = {
     coletor: 'Busca os e-mails da caixa da área neste instante.',
     historico: 'As vezes em que a busca já rodou — últimos 7 dias.',
     agendamentos: 'De quanto em quanto tempo a busca de e-mails roda sozinha.',
     'sem-retorno': 'Quantos dias sem resposta para marcar Sem Retorno.',
     situacao: 'Como está agora: ligado ou parado. Não é o e-mail de aviso.',
-    auditoria: 'Registro de quem entrou, qual tela acessou e quanto tempo ficou.',
   };
   const subEl = document.getElementById('adm-page-sub');
   if (subEl) subEl.textContent = subs[aba] || '';
@@ -3563,14 +3577,12 @@ function _admMudarAba(aba, btn) {
     agendamentos: 'Administração · E-mail · Agendamentos',
     'sem-retorno': 'Administração · E-mail · Regras de Sem Retorno',
     situacao: 'Administração · E-mail · Situação da busca',
-    auditoria: 'Administração · E-mail · Auditoria de acesso',
   };
   document.getElementById('topbar-titulo').textContent = titulosAba[aba] || 'Administração · E-mail';
   if (aba === 'historico')    carregarLogColetas();
   if (aba === 'agendamentos') _admCarregarConfig();
   if (aba === 'sem-retorno')  _admCarregarSr();
   if (aba === 'situacao')     _admCarregarSituacao();
-  if (aba === 'auditoria')    _auditCarregar();
 }
 
 async function _admCarregarConfig() {
@@ -3647,6 +3659,52 @@ async function _admCarregarSituacao() {
   }
 }
 
+// ── Trilha de Auditoria — funções auxiliares ─────────────────────────
+let _auditTelaAtual = { menu: '', tela: '' };
+
+function _auditMapearTela(pag, aba) {
+  const mapaEmail = {
+    'classificados':     { menu: 'E-mails', tela: 'Classificação e Status' },
+    'historico':         { menu: 'E-mails', tela: 'Evolução' },
+    'visao-geral':       { menu: 'E-mails', tela: 'Visão Geral' },
+    'nao-classificados': { menu: 'E-mails', tela: 'Não Classificadas' },
+    'bloqueados':        { menu: 'E-mails', tela: 'Bloqueadas por Regras' },
+  };
+  const mapaFog = {
+    'fog-casos':         { menu: 'Fogbugz', tela: 'Lista de Casos' },
+    'fog-kpis':          { menu: 'Fogbugz', tela: 'Visão Consolidada' },
+    'fog-evolucao':      { menu: 'Fogbugz', tela: 'Evolução' },
+    'fog-jornada-colab': { menu: 'Fogbugz', tela: 'Jornada por Colaborador' },
+  };
+  const mapaAdm = {
+    'usuarios':          { menu: 'Administração', tela: 'Usuários e Perfis' },
+    'notificacoes':      { menu: 'Administração', tela: 'Notificações' },
+    'auditoria':         { menu: 'Administração', tela: 'Trilha de Auditoria' },
+    'admin-detalhe':     { menu: 'Administração', tela: 'E-mail · Detalhe' },
+  };
+  const mapaAdmAba = {
+    'coletor':      { menu: 'Administração', tela: 'E-mail · Buscar agora' },
+    'historico':    { menu: 'Administração', tela: 'E-mail · Histórico de buscas' },
+    'agendamentos': { menu: 'Administração', tela: 'E-mail · Agendamentos' },
+    'sem-retorno':  { menu: 'Administração', tela: 'E-mail · Regras Sem Retorno' },
+    'situacao':     { menu: 'Administração', tela: 'E-mail · Situação' },
+  };
+  if (pag === 'admin') return mapaAdmAba[aba] || { menu: 'Administração', tela: 'E-mail' };
+  return mapaEmail[pag] || mapaFog[pag] || mapaAdm[pag] || { menu: '', tela: pag };
+}
+
+function _auditRegistrarNavegacao() {
+  fetch('/api/audit/heartbeat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      rota: window.location.pathname,
+      menu: _auditTelaAtual.menu,
+      tela: _auditTelaAtual.tela,
+    }),
+  }).catch(() => {});
+}
+
 async function _auditCarregar() {
   try {
     const d = await _get('/api/admin/log-acesso');
@@ -3669,6 +3727,7 @@ async function _auditCarregar() {
         <td>${r.ts || '—'}</td>
         <td>${tipo}</td>
         <td>${origem}</td>
+        <td>${r.menu || '—'}</td>
         <td>${r.tela || '—'}</td>
         <td style="font-size:0.8rem;color:var(--muted)">${r.ip || '—'}</td>
       </tr>`;
@@ -3688,7 +3747,11 @@ async function _auditCarregar() {
     fetch('/api/audit/heartbeat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rota: window.location.pathname, tela: document.title }),
+      body: JSON.stringify({
+        rota: window.location.pathname,
+        menu: _auditTelaAtual.menu,
+        tela: _auditTelaAtual.tela,
+      }),
     }).catch(() => {});
   }
   setInterval(_enviarHeartbeat, 60000);

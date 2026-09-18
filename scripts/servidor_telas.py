@@ -711,9 +711,9 @@ def _requer_login(f):
 # ── Auditoria de acesso ───────────────────────────────────────────────────────
 
 _NOMES_TELAS = {
-    '/':              'Classificação e Status',
-    '/custos':        'Custos',
-    '/configuracoes': 'Configurações',
+    '/':              ('E-mails', 'Classificação e Status'),
+    '/custos':        ('E-mails', 'Custos'),
+    '/configuracoes': ('Administração', 'Configurações'),
 }
 
 
@@ -724,10 +724,11 @@ def _ip_cliente() -> str:
 
 
 def _log_tela(rota: str) -> None:
-    tela = _NOMES_TELAS.get(rota, rota)
+    menu, tela = _NOMES_TELAS.get(rota, ('', rota))
     bt.registrar_acesso(
         session.get('email', ''),
         'acesso',
+        menu=menu,
         rota=rota,
         tela=tela,
         ip=_ip_cliente(),
@@ -1301,6 +1302,7 @@ def api_audit_heartbeat():
         session.get('email', ''),
         'heartbeat',
         rota=dados.get('rota', ''),
+        menu=dados.get('menu', ''),
         tela=dados.get('tela', ''),
         ip=_ip_cliente(),
     )
