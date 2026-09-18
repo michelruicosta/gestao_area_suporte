@@ -488,7 +488,7 @@ def test_fog_suporte_deve_enviar_dia_errado():
     cfg = {'notif_fog_suporte': {'ativa': True, 'grupos': ['administrador'], 'dia_semana': 0}}
     terca = datetime(2026, 9, 8, 10, 0, tzinfo=timezone.utc)  # terça-feira
     novo, enviou = verificar_e_enviar_fog_suporte(
-        cfg, admin_email='test@test.com', token='', agora=terca
+        cfg, admin_email='test@test.com', token='', agora=terca  # nosec B106 — valor literal fictício em arquivo de teste, não é credencial real
     )
     assert not enviou
 
